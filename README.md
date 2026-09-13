@@ -55,5 +55,5 @@ See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/agent-roles.md`](docs/agent-roles.md), and
 [`docs/self-improvement-design.md`](docs/self-improvement-design.md).
 
-This directory is intentionally not a Git repository yet. Create its repository only
-after the initial role and evaluation contracts have been reviewed.
+The local Git baseline is now initialized after the initial role and evaluation contract
+review. No remote repository or active host installation has been changed.

@@ -6,7 +6,8 @@
 
 - Agent 项目目录：`/Users/hang/Documents/myProject/agentflow`
 - 这是从旧仓库 Plugin 提取的独立工作区。
-- 当前没有 `.git`，没有创建远程仓库，也没有切换现有 Codex/Claude 安装源。
+- 当前已初始化本地 Git baseline `f11c3b6`，没有创建远程仓库，也没有切换现有
+  Codex/Claude 安装源。
 - 旧 CLI 仓库：`/Users/hang/Documents/myProject/multi-agent-cli`，继续保留为历史 runtime 和研究实现。
 - 当前 Codex 启用源为 `/Users/hang/plugins/agentflow`，Claude 启用源为
   `~/.claude/skills/agentflow`；它们都不是当前工作区。新项目经过审查后再切换。
@@ -25,6 +26,9 @@
   `tools/lab/validate.py`、`eval_runner.py`、`isolation.py`、`policy.py`。
 - `tools/lab/host_adapter.py` 已提供 Codex/Claude 的显式结构化 Adapter；Claude 可加载
   candidate worktree，当前 Codex CLI 对未安装 candidate 源会 fail-closed，尚未做真实模型 dogfood。
+- 已从 baseline 创建外部 Candidate worktree `/Users/hang/Documents/myProject/agentflow-candidate`
+  和 private-holdout 目录 `/Users/hang/Documents/myProject/agentflow-private-holdout`；布局、
+  初始 artifact digest 和禁改 diff 检查已通过。
 - `python3 tools/lab/validate.py all`、结果对照示例和显式 Adapter smoke test 已通过。
 
 ## 已确认的角色决策
@@ -66,7 +70,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - [x] 增加一个真实形态的 Bug 记录示例和一个前后端并行计划示例。
 - [x] 建立 10 个最小公开评测用例，覆盖角色选择、接口对齐、Reviewer 独立、重复失败重规划和权限边界。
 - [ ] 接入具体 Codex/Claude 宿主 Adapter；通用 Baseline/Candidate Runner 协议和结果归一化已实现。
-- [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；实际 Git worktree dogfood 待新仓库初始化后执行。
+- [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；初始 Git worktree dogfood 已通过，真实模型 dogfood 待宿主配置冻结后执行。
 - [x] 实现确定性 Policy Engine；LLM Governor 只能提出建议，不能直接发布。
 
 ### P1：反馈与检索
@@ -79,7 +83,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 ### P2：发布自动化
 
-- [ ] 新项目完成首轮角色评审后再初始化 Git。
+- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；远程仓库仍未创建。
 - [ ] 配置独立版本、安装、更新、卸载和发布来源。
 - [ ] 用真实任务运行 Human-gated dogfood。
 - [ ] 样本和阈值稳定后再做 Canary、监控和低风险自动回滚。
@@ -89,8 +93,8 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 新对话开始时可以直接使用下面的上下文：
 
-> 继续处理 `/Users/hang/Documents/myProject/agentflow`。这是没有 Git 的独立 Agentflow
-> 工作区。先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
+> 继续处理 `/Users/hang/Documents/myProject/agentflow`。这是已初始化本地 Git、但尚未配置远程的
+> Agentflow 工作区。先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
 > 保留按风险启用的 Bug Investigator/Fixer/Recorder 设计；Plan Architect 只写计划，
 > Supervisor 负责执行授权和调度。P0 契约、公开评测和通用校验/Policy 工具已完成；
 > 下一步接入具体 Codex/Claude Adapter，做真实 human-gated dogfood，再考虑 Git 和安装切换。
@@ -102,5 +106,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - 私有 holdout 必须位于公开项目和 Candidate worktree 之外。
 - 当前校验器使用 Python 标准库实现本项目用到的 Draft 2020-12 子集；尚未替代完整标准验证器。
 - 新项目尚未切换宿主安装源，因此真实使用验证仍需单独进行。
+- Codex candidate 评测当前因 CLI 缺少 per-invocation 本地 Plugin 绑定而 fail-closed；不能把现有
+  已安装 baseline 当作 candidate 结果。
 - `codex plugin list` 显示当前启用源为 `/Users/hang/plugins/agentflow`，Claude 使用
   `~/.claude/skills/agentflow`；两者都不是当前工作区，切换前需要重新确认安装流程。
