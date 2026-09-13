@@ -33,6 +33,8 @@
 - 2026-09-14 的 Claude AF-007 candidate smoke 已通过参数/权限启动阶段；在 300 秒上限内运行约
   195 秒后由宿主返回结构化 `API Error: 502`，未产生评测结果。因此不计为通过，也没有切换
   安装源或写入 candidate；问题当前指向宿主推理网关，不是评测结果。
+- 同日使用 Claude `fable` 做诊断性单 case 重试，约 203 秒后返回相同 502；因此当前证据指向
+  Claude 整体推理网关，而不是 `sonnet` 单一模型路由。
 - `python3 tools/lab/validate.py all`、结果对照示例和显式 Adapter smoke test 已通过。
 
 ## 已确认的角色决策
