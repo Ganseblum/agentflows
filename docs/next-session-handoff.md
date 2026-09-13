@@ -6,7 +6,7 @@
 
 - Agent 项目目录：`/Users/hang/Documents/myProject/agentflow`
 - 这是从旧仓库 Plugin 提取的独立工作区。
-- 当前已初始化本地 Git baseline `f11c3b6`，没有创建远程仓库，也没有切换现有
+- 当前已初始化本地 Git；初始 baseline 为 `f11c3b6`，当前 main 为 `7091c9f`，没有创建远程仓库，也没有切换现有
   Codex/Claude 安装源。
 - 旧 CLI 仓库：`/Users/hang/Documents/myProject/multi-agent-cli`，继续保留为历史 runtime 和研究实现。
 - 当前 Codex 启用源为 `/Users/hang/plugins/agentflow`，Claude 启用源为
@@ -26,9 +26,10 @@
   `tools/lab/validate.py`、`eval_runner.py`、`isolation.py`、`policy.py`。
 - `tools/lab/host_adapter.py` 已提供 Codex/Claude 的显式结构化 Adapter；Claude 可加载
   candidate worktree，当前 Codex CLI 对未安装 candidate 源会 fail-closed，尚未做真实模型 dogfood。
-- 已从 baseline 创建外部 Candidate worktree `/Users/hang/Documents/myProject/agentflow-candidate`
-  和 private-holdout 目录 `/Users/hang/Documents/myProject/agentflow-private-holdout`；布局、
-  初始 artifact digest 和禁改 diff 检查已通过。
+- 已从 baseline 创建外部 Candidate worktree `/Users/hang/Documents/myProject/agentflow-candidate`；
+  当前验证用 Candidate worktree 为 `/Users/hang/Documents/myProject/agentflow-candidate-current`，
+  private-holdout 目录为 `/Users/hang/Documents/myProject/agentflow-private-holdout`；布局、
+  artifact digest 和禁改 diff 检查已通过。
 - 2026-09-14 的 Claude AF-007 candidate smoke 已通过参数/权限启动阶段，但在 20 秒结构化
   输出超时，未产生评测结果；因此不计为通过，也没有切换安装源或写入 candidate。
 - `python3 tools/lab/validate.py all`、结果对照示例和显式 Adapter smoke test 已通过。
@@ -71,7 +72,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - [x] 给两套 Schema 补正例、反例和一致性校验工具。
 - [x] 增加一个真实形态的 Bug 记录示例和一个前后端并行计划示例。
 - [x] 建立 10 个最小公开评测用例，覆盖角色选择、接口对齐、Reviewer 独立、重复失败重规划和权限边界。
-- [ ] 接入具体 Codex/Claude 宿主 Adapter；通用 Baseline/Candidate Runner 协议和结果归一化已实现。
+- [x] 接入具体 Codex/Claude 宿主 Adapter；通用 Baseline/Candidate Runner 协议、结果归一化和 dry-run 请求检查已实现。
 - [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；初始 Git worktree dogfood 已通过，真实模型 dogfood 待宿主配置冻结后执行。
 - [x] 实现确定性 Policy Engine；LLM Governor 只能提出建议，不能直接发布。
 

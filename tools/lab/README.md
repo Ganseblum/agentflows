@@ -24,6 +24,10 @@ python3 tools/lab/policy.py --help
 python3 tools/lab/isolation.py --help
 ```
 
+Before starting a model, validate an adapter request and inspect its resolved workspace,
+permission arguments, plugin directory, and invocation count with `host_adapter.py --dry-run`.
+This still refuses invalid isolation layouts and unsupported candidate bindings.
+
 See [adapter-protocol.md](adapter-protocol.md) for the host adapter boundary. Candidate
 worktrees and private holdouts must be outside the public repository and outside each other;
 `isolation.py` checks that layout and rejects forbidden candidate paths before a release gate.

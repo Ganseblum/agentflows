@@ -239,15 +239,45 @@ def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Pa
     return parse_structured_output("claude", json.dumps(payload))
 
 
+def dry_run_document(request: dict[str, Any], cases: list[dict[str, Any]], workspace: Path, host: str) -> dict[str, Any]:
+    """Return the validated execution plan without starting a host process."""
+    return {
+        "dry_run": True,
+        "host": host,
+        "model": request["model"],
+        "permissions_profile": request["permissions_profile"],
+        "workspace_root": str(workspace),
+        "plugin_dir": str(workspace) if host == "claude" else None,
+        "permission_args": permission_args(host, request["permissions_profile"]),
+        "invocation_count": len(cases) * request["repeat_count"],
+        "cases": [
+            {
+                "case_id": case["case_id"],
+                "repeat_count": request["repeat_count"],
+                "input_ref": case["input_ref"],
+            }
+            for case in cases
+        ],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", choices=["codex", "claude"], required=True)
     parser.add_argument("--timeout-seconds", type=int, default=900)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="validate the request and print the host invocation plan without starting a model",
+    )
     args = parser.parse_args(argv)
 
     try:
         request = load_request()
         workspace, cases = validate_request(request, args.host)
+        if args.dry_run:
+            print(json.dumps(dry_run_document(request, cases, workspace, args.host), ensure_ascii=False))
+            return 0
         results: list[dict[str, Any]] = []
         for case in cases:
             input_path = (Path(request["repository_root"]) / case["input_ref"]).resolve()
