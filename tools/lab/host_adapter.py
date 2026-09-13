@@ -121,7 +121,7 @@ def permission_args(host: str, profile: str) -> list[str]:
             return ["--sandbox", "workspace-write"]
     if host == "claude":
         if profile == "read-only":
-            return ["--permission-mode", "plan", "--disallowed-tools", "Bash", "Write", "Edit"]
+            return ["--permission-mode", "plan", "--disallowed-tools=Bash,Write,Edit"]
         if profile in {"workspace-write", "read-write-workspace"}:
             return ["--permission-mode", "acceptEdits"]
     raise ValueError(f"unsupported {host} permissions_profile: {profile!r}")
@@ -196,7 +196,10 @@ def run_codex(request: dict[str, Any], prompt: str, workspace: Path, schema: Pat
             prompt,
         ]
         started = time.monotonic()
-        completed = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
+        try:
+            completed = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"codex timed out after {timeout} seconds") from exc
         elapsed = (time.monotonic() - started) * 1000
         if completed.returncode != 0:
             raise RuntimeError(completed.stderr.strip() or f"codex exited with {completed.returncode}")
@@ -223,10 +226,14 @@ def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Pa
         prompt,
     ]
     started = time.monotonic()
-    completed = subprocess.run(command, cwd=workspace, text=True, capture_output=True, timeout=timeout, check=False)
+    try:
+        completed = subprocess.run(command, cwd=workspace, text=True, capture_output=True, timeout=timeout, check=False)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"claude timed out after {timeout} seconds") from exc
     elapsed = (time.monotonic() - started) * 1000
     if completed.returncode != 0:
-        raise RuntimeError(completed.stderr.strip() or f"claude exited with {completed.returncode}")
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise RuntimeError(detail[:2000] or f"claude exited with {completed.returncode}")
     payload = parse_structured_output("claude", completed.stdout)
     payload["latency_ms"] = elapsed
     return parse_structured_output("claude", json.dumps(payload))

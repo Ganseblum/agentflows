@@ -29,6 +29,8 @@
 - 已从 baseline 创建外部 Candidate worktree `/Users/hang/Documents/myProject/agentflow-candidate`
   和 private-holdout 目录 `/Users/hang/Documents/myProject/agentflow-private-holdout`；布局、
   初始 artifact digest 和禁改 diff 检查已通过。
+- 2026-09-14 的 Claude AF-007 candidate smoke 已通过参数/权限启动阶段，但在 20 秒结构化
+  输出超时，未产生评测结果；因此不计为通过，也没有切换安装源或写入 candidate。
 - `python3 tools/lab/validate.py all`、结果对照示例和显式 Adapter smoke test 已通过。
 
 ## 已确认的角色决策
