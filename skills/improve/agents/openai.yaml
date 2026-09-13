@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agentflow Improve"
+  short_description: "Improve Agentflow safely from real task evidence"
+  default_prompt: "Use $improve to turn explicit Agentflow feedback into a bounded candidate, compare it with the baseline, and prepare an auditable release decision."
+policy:
+  allow_implicit_invocation: false

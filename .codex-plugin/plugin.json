@@ -1,0 +1,30 @@
+{
+  "name": "agentflow",
+  "version": "0.3.1",
+  "description": "Run host-native multi-agent development and governed evidence-driven improvement workflows.",
+  "author": {
+    "name": "Ganseblum"
+  },
+  "keywords": [
+    "multi-agent",
+    "workflow",
+    "code-review",
+    "audit"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agentflow",
+    "shortDescription": "Coordinate multi-agent coding with review and traceability.",
+    "longDescription": "Use the coding host's native agents as a bounded engineering team with frontend, backend, technical director, supervisor, and reviewer roles. Agentflow defines the workflow and contracts without invoking a separate orchestration CLI or requiring another provider credential.",
+    "developerName": "Ganseblum",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Multi-agent task coordination",
+      "Frontend and backend role delegation",
+      "Independent implementation review",
+      "Architecture decision gates",
+      "Evidence-driven improvement candidates"
+    ],
+    "defaultPrompt": "Use $agentflow to coordinate this coding task with bounded delegation, independent review, and a concise decision record."
+  }
+}

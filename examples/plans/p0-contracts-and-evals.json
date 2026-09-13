@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "plan_id": "PLAN-P0-001",
+  "plan_version": "0.1.0",
+  "status": "proposed",
+  "objective": "Create a verifiable P0 contract and public evaluation baseline for Agentflow without changing host installation or adding a second runtime.",
+  "non_goals": [
+    "Implement cross-session retrieval or vector search.",
+    "Add MCP or automatic publishing.",
+    "Switch the active Codex or Claude installation source."
+  ],
+  "assumptions": [
+    "The host remains responsible for models, tools, permissions, and Agent lifecycle.",
+    "Private holdout cases will be supplied outside this repository when evaluation isolation is implemented.",
+    "The validator must run with the Python standard library only."
+  ],
+  "input_evidence": [
+    {
+      "evidence_id": "DOC-HANDOFF",
+      "source_ref": "docs/next-session-handoff.md",
+      "summary": "Defines the P0 backlog and the boundary between the new workspace and the installed plugin."
+    },
+    {
+      "evidence_id": "DOC-ROLES",
+      "source_ref": "docs/agent-roles.md",
+      "summary": "Defines Bug and Plan role responsibilities and review gates."
+    },
+    {
+      "evidence_id": "DOC-BOUNDARY",
+      "source_ref": "docs/agent-product-boundary.md",
+      "summary": "Defines the host-native product boundary and staged improvement roadmap."
+    }
+  ],
+  "interfaces": [
+    {
+      "interface_id": "IF-VALIDATOR-CLI",
+      "producer": "tools/lab/validate.py",
+      "consumer": "supervisor and CI",
+      "contract": "The command validates schemas, examples, and public eval cases and exits non-zero on structural or consistency errors.",
+      "error_behavior": "Print each failing path and reason, then return exit code 1.",
+      "compatibility": "Python 3 standard library; no external service or model invocation.",
+      "verification_ref": "VER-VALIDATOR"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependency_id": "DEP-SCHEMAS",
+      "description": "Bug and plan schema fields must be stable before examples and evaluator fixtures are authored.",
+      "blocking": true,
+      "owner": "Supervisor"
+    },
+    {
+      "dependency_id": "DEP-FIXTURES",
+      "description": "Public input fixtures must remain visible and sanitized.",
+      "blocking": false,
+      "owner": "Evaluator"
+    }
+  ],
+  "work_packages": [
+    {
+      "package_id": "P0-1",
+      "owner": "Supervisor",
+      "scope": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"],
+      "deliverable": "Version-one Bug Record and Plan JSON Schemas with state and contract fields.",
+      "depends_on": [],
+      "verification": "Validate positive and negative contract examples.",
+      "files": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"]
+    },
+    {
+      "package_id": "P0-2",
+      "owner": "Supervisor",
+      "scope": ["examples/"],
+      "deliverable": "One sanitized valid Bug Record, one valid cross-layer Plan, and intentional invalid examples.",
+      "depends_on": ["P0-1"],
+      "verification": "The contract validator accepts valid examples and rejects invalid examples.",
+      "files": ["examples/"]
+    },
+    {
+      "package_id": "P0-3",
+      "owner": "Backend Engineer",
+      "scope": ["tools/lab/validate.py"],
+      "deliverable": "Dependency-free validator with schema checks and plan/record invariants.",
+      "depends_on": ["P0-1"],
+      "verification": "Run the validator against every public fixture and intentional failure.",
+      "files": ["tools/lab/validate.py"]
+    },
+    {
+      "package_id": "P0-4",
+      "owner": "Evaluator",
+      "scope": ["evals/public/"],
+      "deliverable": "Ten public cases covering role selection, review independence, replanning, and permission boundaries.",
+      "depends_on": ["P0-1"],
+      "verification": "Validate all case records and confirm every input_ref resolves to a fixture.",
+      "files": ["evals/public/"]
+    },
+    {
+      "package_id": "P0-5",
+      "owner": "Reviewer",
+      "scope": ["all P0 artifacts"],
+      "deliverable": "Independent review of schema semantics, examples, public cases, and validator output.",
+      "depends_on": ["P0-2", "P0-3", "P0-4"],
+      "verification": "Review the actual files and rerun the full validation command.",
+      "files": []
+    }
+  ],
+  "parallel_lanes": [
+    {
+      "lane_id": "LANE-SCHEMA",
+      "work_package_ids": ["P0-1"],
+      "can_run_when": "Immediately after the P0 scope is accepted."
+    },
+    {
+      "lane_id": "LANE-ARTIFACTS",
+      "work_package_ids": ["P0-2", "P0-3", "P0-4"],
+      "can_run_when": "After P0-1 defines the stable schema fields."
+    },
+    {
+      "lane_id": "LANE-REVIEW",
+      "work_package_ids": ["P0-5"],
+      "can_run_when": "After all artifact and validator checks are available."
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "criterion_id": "AC-SCHEMA",
+      "criterion": "Bug Record and Plan documents have explicit required fields, enumerated states, and review/rollback evidence.",
+      "evidence": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"]
+    },
+    {
+      "criterion_id": "AC-EXAMPLES",
+      "criterion": "Positive examples pass and intentional invalid examples fail for an observable reason.",
+      "evidence": ["examples/", "tools/lab/validate.py"]
+    },
+    {
+      "criterion_id": "AC-EVALS",
+      "criterion": "Ten public evaluation cases are structurally valid and reference existing sanitized inputs.",
+      "evidence": ["evals/public/"]
+    }
+  ],
+  "verification": [
+    {
+      "check_id": "VER-VALIDATOR",
+      "command": "python3 tools/lab/validate.py all",
+      "expected": "All schemas, examples, and public evaluation cases pass; intentional invalid examples are rejected as expected.",
+      "required": true
+    },
+    {
+      "check_id": "VER-MANIFEST",
+      "command": "claude plugin validate .",
+      "expected": "Claude Plugin manifest validation passes.",
+      "required": true
+    }
+  ],
+  "review_gates": [
+    {
+      "gate_id": "GATE-CONTRACT",
+      "owner": "Technical Director",
+      "check": "Schema state transitions and plan execution boundaries are unambiguous.",
+      "decision": "required"
+    },
+    {
+      "gate_id": "GATE-INDEPENDENT-REVIEW",
+      "owner": "Reviewer",
+      "check": "Review the actual artifacts and validator output without modifying them.",
+      "decision": "required"
+    }
+  ],
+  "rollback_points": [
+    {
+      "point_id": "RB-P0-SCHEMA",
+      "trigger": "A schema change invalidates existing role or improvement contracts.",
+      "action": "Revert the P0 artifact batch before any installation switch.",
+      "owner": "Supervisor"
+    },
+    {
+      "point_id": "RB-P0-EVAL",
+      "trigger": "Public cases or validator produce ambiguous or underpowered results.",
+      "action": "Keep the active 0.3.1 installation unchanged and revise the P0 contracts.",
+      "owner": "Supervisor"
+    }
+  ],
+  "unresolved_decisions": []
+}

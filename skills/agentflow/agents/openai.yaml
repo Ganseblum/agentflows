@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentflow"
+  short_description: "Coordinate multi-agent coding with review and traceability"
+  default_prompt: "Use $agentflow to run this task with host-native frontend, backend, technical director, and reviewer roles as needed."

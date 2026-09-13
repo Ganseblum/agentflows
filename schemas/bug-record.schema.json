@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/bug-record.schema.json",
+  "title": "Agentflow bug record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bug_id",
+    "title",
+    "status",
+    "severity",
+    "objective",
+    "symptom",
+    "expected_behavior",
+    "actual_behavior",
+    "reproduction",
+    "affected_slices",
+    "attribution",
+    "confidence",
+    "agentflow_version",
+    "source_revision",
+    "evidence",
+    "regression_checks"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "bug_id": {
+      "type": "string",
+      "pattern": "^BUG-[A-Z0-9][A-Z0-9._-]*$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": ["open", "fixed-pending-review", "verified", "rejected"]
+    },
+    "severity": { "enum": ["low", "medium", "high", "critical"] },
+    "objective": { "type": "string", "minLength": 1 },
+    "symptom": { "type": "string", "minLength": 1 },
+    "expected_behavior": { "type": "string", "minLength": 1 },
+    "actual_behavior": { "type": "string", "minLength": 1 },
+    "reproduction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deterministic", "steps"],
+      "properties": {
+        "deterministic": { "type": "boolean" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string", "minLength": 1 },
+            "model": { "type": "string", "minLength": 1 },
+            "fixture": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "affected_slices": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "attribution": {
+      "enum": [
+        "workflow_policy",
+        "role_prompt",
+        "context",
+        "tool_or_host",
+        "model_limit",
+        "product_code",
+        "evaluation",
+        "unknown"
+      ]
+    },
+    "root_cause": { "type": "string", "minLength": 1 },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "fix_hypothesis": { "type": "string", "minLength": 1 },
+    "agentflow_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "kind", "ref"],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "kind": {
+            "enum": [
+              "user-feedback",
+              "trace",
+              "reproduction",
+              "test",
+              "review",
+              "commit",
+              "other"
+            ]
+          },
+          "ref": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "regression_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["pass", "fail", "not-run"] },
+          "command": { "type": "string", "minLength": 1 },
+          "evidence_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "source_revision", "evidence_refs"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1 },
+        "source_revision": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "verified_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer", "decision", "evidence_refs"],
+      "properties": {
+        "reviewer": { "type": "string", "minLength": 1 },
+        "decision": {
+          "enum": ["approved", "changes_requested", "blocked"]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reviewed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "rejection_reason": { "type": "string", "minLength": 1 },
+    "known_boundaries": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "recorded_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "fixed-pending-review" } },
+        "required": ["status"]
+      },
+      "then": { "required": ["resolution"] }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "verified" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["resolution", "review"],
+        "properties": {
+          "review": {
+            "properties": { "decision": { "const": "approved" } },
+            "required": ["decision"]
+          },
+          "regression_checks": {
+            "contains": {
+              "type": "object",
+              "properties": { "status": { "const": "pass" } },
+              "required": ["status"]
+            },
+            "not": {
+              "contains": {
+                "type": "object",
+                "properties": { "status": { "const": "fail" } },
+                "required": ["status"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "rejected" } },
+        "required": ["status"]
+      },
+      "then": { "required": ["rejection_reason"] }
+    }
+  ]
+}

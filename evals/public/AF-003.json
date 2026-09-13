@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "case_id": "AF-003",
+  "slice": "api-contract-review",
+  "objective": "Review a client-visible API change including success, error, and compatibility behavior.",
+  "input_ref": "evals/public/inputs/AF-003.md",
+  "acceptance_criteria": [
+    "The review checks request, response, error, authorization, and compatibility behavior.",
+    "A missing error field is reported as a required change."
+  ],
+  "protected_guardrails": ["error-contract-reviewed", "independent-review"],
+  "holdout": false,
+  "repeat_count": 3,
+  "tags": ["review", "api", "regression"]
+}

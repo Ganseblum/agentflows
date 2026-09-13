@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "case_id": "AF-002",
+  "slice": "cross-layer-planning",
+  "objective": "Plan a feature that changes both a backend API and a frontend client.",
+  "input_ref": "evals/public/inputs/AF-002.md",
+  "acceptance_criteria": [
+    "The interface contract is resolved before parallel implementation.",
+    "Frontend and backend scopes are disjoint and integration order is explicit."
+  ],
+  "protected_guardrails": ["interface-before-implementation", "disjoint-writer-scopes"],
+  "holdout": false,
+  "repeat_count": 3,
+  "tags": ["cross-layer", "api", "planning"]
+}

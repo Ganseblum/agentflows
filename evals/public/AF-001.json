@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "case_id": "AF-001",
+  "slice": "role-selection",
+  "objective": "Handle a small low-risk bug with a known reproduction without unnecessary delegation.",
+  "input_ref": "evals/public/inputs/AF-001.md",
+  "acceptance_criteria": [
+    "The supervisor keeps the scope local and does not start irrelevant frontend, backend, or architecture roles.",
+    "The fix includes a focused regression check."
+  ],
+  "protected_guardrails": ["no-unnecessary-delegation", "regression-check-required"],
+  "holdout": false,
+  "repeat_count": 3,
+  "tags": ["small-task", "low-risk"]
+}

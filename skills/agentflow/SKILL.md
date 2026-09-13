@@ -1,0 +1,62 @@
+---
+name: agentflow
+description: Apply the Agent Flow development method inside the current coding host using a supervisor, frontend and backend specialists, a technical director, independent review, and a concise decision trail. Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, or work that benefits from an explicit review gate. Skip trivial single-step work where delegation would add overhead.
+---
+
+# Agentflow
+
+Apply the Agent Flow development method with the current host's built-in agents, authentication, tools, permissions, and conversation history.
+
+Do not invoke or require the standalone `agentflow` CLI, its providers, its TUI, an Agentflow API key, or an Agentflow MCP server. This skill is the workflow. The host is the runtime.
+
+## Bind to the host
+
+- In **Codex**, use native subagents. Give each subagent one role and one task brief. Use the main task as the supervisor.
+- In **Claude Code**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, and `agentflow:reviewer` when those roles fit the task. Use the main conversation as the supervisor.
+- In another Agent Skills compatible host, use its built-in delegation mechanism. If none exists, execute the same phases sequentially and state that independent execution was unavailable.
+
+Read [role profiles](references/roles.md) before assigning work and [contracts](references/contracts.md) before delegating implementation or review.
+
+For a material, uncertain, recurring, cross-layer, or high-risk bug, use the full bounded
+sequence `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`. The investigator
+establishes a reproducible symptom and attribution, the fixer changes code only in an assigned
+candidate workspace, the reviewer checks the fix, and the recorder writes the accepted bug
+record after verification. For a small, low-risk bug with an already verified reproduction,
+the supervisor may combine the investigator or recorder step, but must preserve the same
+diagnosis, regression, review, and state evidence. Never let the fixer approve or close its own
+bug.
+
+For a planning task, run the needed frontend and backend specialists in parallel, send their
+outputs and the technical director's interface decision to `plan-architect`, and have it
+write the final plan under an explicit `plans/` path. Plan Architect only writes the plan; the
+supervisor decides whether it is approved, assigns execution, integrates results, and owns the
+final stop or rollback decision. A future `execution-coordinator` may handle durable queues,
+leases, dependencies, retries, and resumable parallel batches, but it is not a current role.
+The plan must include dependencies, parallel lanes, acceptance criteria, risks, ownership, and
+review gates. A plan is an execution contract, not an approval to change code.
+
+## Run the workflow
+
+1. **Intake**: inspect the repository instructions, current diff, relevant architecture, and tests. State the objective and observable acceptance criteria.
+2. **Architecture gate**: for cross-layer or risky work, ask the technical director to define boundaries, interface contracts, integration order, and major risks. Do not use this role as a ceremonial approval step.
+3. **Plan**: select only the roles the task needs. A frontend-only fix does not need a backend worker. A small change can stay with the supervisor.
+4. **Delegate**: give every worker a bounded brief. Parallelize read-heavy investigation and implementation with disjoint files or stable interfaces. Serialize overlapping writes and dependency chains.
+5. **Implement**: frontend and backend workers change only their assigned scope, follow repository rules, run relevant checks, and return the worker result contract.
+6. **Integrate**: the supervisor inspects the actual shared workspace, resolves cross-layer conflicts, and runs the checks that establish the whole feature works.
+7. **Review gate**: after material changes, assign an independent reviewer. The reviewer reports `approved`, `changes_requested`, or `blocked` with concrete evidence and does not silently repair the code it judges.
+8. **Repair once**: when review requests changes, assign one focused repair round and review again. Keep the loop bounded.
+9. **Decide**: the supervisor produces the final decision record from [contracts](references/contracts.md), including implementation, verification, review outcome, and remaining risks.
+
+## Recover from stalled work
+
+Treat two consecutive failures with the same cause as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach or a smaller task boundary.
+
+If a repair/review loop still cannot pass after the bounded retry, report the blocker with evidence and the smallest decision needed from the user. Do not keep agents cycling on unchanged inputs.
+
+## Preserve control and traceability
+
+- Follow the host's permission and sandbox rules. Delegation never expands authority.
+- Do not push, deploy, publish, delete remote data, or message third parties without authorization already present in the conversation.
+- Use stable task names and carry the parent objective into every delegated brief.
+- Record decisions and evidence, not hidden chain-of-thought. Use the host's task and conversation history as the default trace. Create repository trace files only when the user asks for durable project artifacts.
+- Keep the supervisor useful: it should resolve conflicts and make a final call, not merely summarize worker messages.

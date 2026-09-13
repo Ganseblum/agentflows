@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/evaluation-result.schema.json",
+  "title": "Agentflow baseline or candidate evaluation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_id",
+    "source_kind",
+    "source_revision",
+    "artifact_digest",
+    "agentflow_version",
+    "suite_revision",
+    "host",
+    "model",
+    "permissions_profile",
+    "fixture_revision",
+    "repeat_count",
+    "suite_case_count",
+    "observed_context",
+    "case_results",
+    "summary",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "result_id": { "type": "string", "minLength": 1 },
+    "source_kind": { "enum": ["baseline", "candidate"] },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "artifact_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$"
+    },
+    "agentflow_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "suite_revision": { "type": "string", "minLength": 1 },
+    "host": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "permissions_profile": { "type": "string", "minLength": 1 },
+    "fixture_revision": { "type": "string", "minLength": 1 },
+    "repeat_count": { "type": "integer", "minimum": 1 },
+    "suite_case_count": { "type": "integer", "minimum": 1 },
+    "observed_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "model", "permissions_profile", "fixture_revision", "evidence_refs"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "permissions_profile": { "type": "string", "minLength": 1 },
+        "fixture_revision": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "case_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "slice", "holdout", "protected_guardrails", "repetitions"],
+        "properties": {
+          "case_id": { "type": "string", "minLength": 1 },
+          "slice": { "type": "string", "minLength": 1 },
+          "holdout": { "type": "boolean" },
+          "protected_guardrails": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "repetitions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "accepted",
+                "first_pass_review",
+                "correction_count",
+                "escaped_defects",
+                "permission_violations",
+                "unnecessary_delegation",
+                "tool_failures",
+                "latency_ms"
+              ],
+              "properties": {
+                "accepted": { "type": "boolean" },
+                "first_pass_review": { "type": "boolean" },
+                "correction_count": { "type": "integer", "minimum": 0 },
+                "escaped_defects": { "type": "integer", "minimum": 0 },
+                "permission_violations": { "type": "integer", "minimum": 0 },
+                "unnecessary_delegation": { "type": "boolean" },
+                "tool_failures": { "type": "integer", "minimum": 0 },
+                "latency_ms": { "type": "number", "minimum": 0 },
+                "evidence_refs": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptance_rate",
+        "first_pass_review_rate",
+        "correction_count",
+        "escaped_defects",
+        "permission_violations",
+        "unnecessary_delegation_count",
+        "tool_failures",
+        "latency_ms"
+      ],
+      "properties": {
+        "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "first_pass_review_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "correction_count": { "type": "integer", "minimum": 0 },
+        "escaped_defects": { "type": "integer", "minimum": 0 },
+        "permission_violations": { "type": "integer", "minimum": 0 },
+        "unnecessary_delegation_count": { "type": "integer", "minimum": 0 },
+        "tool_failures": { "type": "integer", "minimum": 0 },
+        "latency_ms": { "type": "number", "minimum": 0 }
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  }
+}

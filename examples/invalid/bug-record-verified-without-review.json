@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "bug_id": "BUG-INVALID-001",
+  "title": "Verified record without independent review",
+  "status": "verified",
+  "severity": "low",
+  "objective": "Demonstrate that a verified bug requires independent evidence.",
+  "symptom": "The record claims verification.",
+  "expected_behavior": "A verified record includes a passing regression check and an approved review.",
+  "actual_behavior": "The record has no resolution or review.",
+  "reproduction": {
+    "deterministic": true,
+    "steps": ["Read the record."]
+  },
+  "affected_slices": ["validation"],
+  "attribution": "unknown",
+  "confidence": "low",
+  "agentflow_version": "0.3.1",
+  "source_revision": "invalid-example",
+  "evidence": [
+    {"evidence_id": "E-INVALID", "kind": "other", "ref": "invalid-example"}
+  ],
+  "regression_checks": [
+    {"name": "missing review check", "status": "pass"}
+  ]
+}
