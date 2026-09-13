@@ -1,12 +1,12 @@
 # Agentflow 新对话交接清单
 
-更新时间：2026-09-13
+更新时间：2026-09-14
 
 ## 当前工作区
 
 - Agent 项目目录：`/Users/hang/Documents/myProject/agentflow`
 - 这是从旧仓库 Plugin 提取的独立工作区。
-- 当前已初始化本地 Git；初始 baseline 为 `f11c3b6`，当前 main 为 `7091c9f`，没有创建远程仓库，也没有切换现有
+- 当前已初始化本地 Git；初始 baseline 为 `f11c3b6`，当前 main 为 `34484fc`，没有创建远程仓库，也没有切换现有
   Codex/Claude 安装源。
 - 旧 CLI 仓库：`/Users/hang/Documents/myProject/multi-agent-cli`，继续保留为历史 runtime 和研究实现。
 - 当前 Codex 启用源为 `/Users/hang/plugins/agentflow`，Claude 启用源为
