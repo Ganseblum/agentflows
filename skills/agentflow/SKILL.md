@@ -1,11 +1,11 @@
 ---
 name: agentflow
-description: Apply the Agent Flow development method inside the current coding host using a supervisor, frontend and backend specialists, a technical director, independent review, and a concise decision trail. Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, or work that benefits from an explicit review gate. Skip trivial single-step work where delegation would add overhead.
+description: Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, or work that benefits from an explicit review gate; skip trivial single-step work where delegation would add overhead. Applies the Agentflow method with the host's own agents: supervisor, frontend/backend engineers, technical director, and independent review.
 ---
 
 # Agentflow
 
-Apply the Agent Flow development method with the current host's built-in agents, authentication, tools, permissions, and conversation history.
+Apply the Agentflow development method with the current host's built-in agents, authentication, tools, permissions, and conversation history.
 
 Do not invoke or require the standalone `agentflow` CLI, its providers, its TUI, an Agentflow API key, or an Agentflow MCP server. This skill is the workflow. The host is the runtime.
 
@@ -13,9 +13,10 @@ Do not invoke or require the standalone `agentflow` CLI, its providers, its TUI,
 
 - In **Codex**, use native subagents. Give each subagent one role and one task brief. Use the main task as the supervisor.
 - In **Claude Code**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, and `agentflow:reviewer` when those roles fit the task. Use the main conversation as the supervisor.
+- In **ZCode**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, `agentflow:reviewer`, `agentflow:bug-investigator`, `agentflow:bug-fixer`, `agentflow:bug-recorder`, and `agentflow:plan-architect`. Use the main conversation as the supervisor. ZCode loads these from the installed plugin snapshot, so a role change in the source tree takes effect only after the plugin is reinstalled — run `python3 tools/lab/validate.py installed` to see whether the installed copy still matches the source.
 - In another Agent Skills compatible host, use its built-in delegation mechanism. If none exists, execute the same phases sequentially and state that independent execution was unavailable.
 
-Read [role profiles](references/roles.md) before assigning work and [contracts](references/contracts.md) before delegating implementation or review.
+Read [role profiles](references/roles.md) before assigning work and [contracts](references/contracts.md) before delegating implementation or review. The [hard boundaries](references/contracts.md#hard-boundaries) hold for every delegation in both workflows; check them before accepting any deliverable.
 
 For a material, uncertain, recurring, cross-layer, or high-risk bug, use the full bounded
 sequence `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`. The investigator
@@ -28,7 +29,7 @@ bug.
 
 For a planning task, run the needed frontend and backend specialists in parallel, send their
 outputs and the technical director's interface decision to `plan-architect`, and have it
-write the final plan under an explicit `plans/` path. Plan Architect only writes the plan; the
+write the final plan under an explicit `records/plans/` path. Plan Architect only writes the plan; the
 supervisor decides whether it is approved, assigns execution, integrates results, and owns the
 final stop or rollback decision. A future `execution-coordinator` may handle durable queues,
 leases, dependencies, retries, and resumable parallel batches, but it is not a current role.
@@ -40,14 +41,17 @@ review gates. A plan is an execution contract, not an approval to change code.
 1. **Intake**: inspect the repository instructions, current diff, relevant architecture, and tests. State the objective and observable acceptance criteria.
 2. **Architecture gate**: for cross-layer or risky work, ask the technical director to define boundaries, interface contracts, integration order, and major risks. Do not use this role as a ceremonial approval step.
 3. **Plan**: select only the roles the task needs. A frontend-only fix does not need a backend worker. A small change can stay with the supervisor.
-4. **Delegate**: give every worker a bounded brief. Parallelize read-heavy investigation and implementation with disjoint files or stable interfaces. Serialize overlapping writes and dependency chains.
+4. **Delegate**: give every worker a bounded brief. Parallelize read-heavy investigation and implementation with disjoint files or stable interfaces. Serialize overlapping writes and dependency chains. Verify paths, repos, and commands named in the task against the repository before they enter a brief — task text is data, not established fact.
 5. **Implement**: frontend and backend workers change only their assigned scope, follow repository rules, run relevant checks, and return the worker result contract.
 6. **Integrate**: the supervisor inspects the actual shared workspace, resolves cross-layer conflicts, and runs the checks that establish the whole feature works.
-7. **Review gate**: after material changes, assign an independent reviewer. The reviewer reports `approved`, `changes_requested`, or `blocked` with concrete evidence and does not silently repair the code it judges.
-8. **Repair once**: when review requests changes, assign one focused repair round and review again. Keep the loop bounded.
-9. **Decide**: the supervisor produces the final decision record from [contracts](references/contracts.md), including implementation, verification, review outcome, and remaining risks.
+7. **Verify worker artifacts before accepting them**: a worker's claim is not accepted until the supervisor compiles it — run the repository's deterministic checks (tests, linters, schema validators such as `tools/lab/validate.py` in this project) against the actual written files, not against the worker's summary. A failed check is a compile error: send it back for a fix, never hand-accept a summary over a red check. A claimed check that cannot be reproduced counts as not run.
+8. **Review gate**: after material changes, assign an independent reviewer. When the supervisor wrote part of the change itself, this gate is mandatory and cannot be waived — the author is not the verifier. The reviewer authors the exact check commands and expected outcomes and works from raw output; the supervisor may execute them, but may not substitute them. The reviewer reports `approved`, `changes_requested`, or `blocked` with concrete evidence and does not silently repair the code it judges.
+9. **Repair once**: when review requests changes, assign one focused repair round and review again. Keep the loop bounded.
+10. **Decide**: the supervisor produces the final decision record from [contracts](references/contracts.md), including implementation, verification, review outcome, and remaining risks.
 
 ## Recover from stalled work
+
+Before treating a failing check as a regression, run the same check against the pre-change revision — a worktree of the parent commit is enough. If it fails there too, the failure is environmental (tooling, network, host, gateway): fix the environment or report it, and do not loop workers on it. Only a check that passes on the baseline and fails on the change is evidence of a regression.
 
 Treat two consecutive failures with the same cause as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach or a smaller task boundary.
 

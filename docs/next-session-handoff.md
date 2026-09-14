@@ -4,16 +4,78 @@
 
 ## 当前工作区
 
-- Agent 项目目录：`/Users/hang/Documents/myProject/agentflow`
-- 这是从旧仓库 Plugin 提取的独立工作区。
-- 当前已初始化本地 Git；初始 baseline 为 `f11c3b6`，当前 main 为 `34484fc`，没有创建远程仓库，也没有切换现有
-  Codex/Claude 安装源。
-- 旧 CLI 仓库：`/Users/hang/Documents/myProject/multi-agent-cli`，继续保留为历史 runtime 和研究实现。
-- 当前 Codex 启用源为 `/Users/hang/plugins/agentflow`，Claude 启用源为
-  `~/.claude/skills/agentflow`；它们都不是当前工作区。新项目经过审查后再切换。
+- Agent 项目目录（当前机器）：`/Users/lihanghang1/Desktop/TestProject/agentflows`
+- 这是从旧仓库 Plugin 提取的独立工作区，现已发布到 GitHub
+  `https://github.com/Ganseblum/agentflows.git`；初始 baseline 为 `f11c3b6`，
+  当前 `main` 与 `origin/main` 一致（`f2ea05c`）。
+- 本机当前没有任何 Agentflow 安装源。下文记录的 Codex 启用源
+  `/Users/hang/plugins/agentflow`、Claude 启用源 `~/.claude/skills/agentflow`、旧 CLI 仓库
+  `/Users/hang/Documents/myProject/multi-agent-cli` 以及 candidate/holdout 目录都来自上一台
+  机器，在本机不存在，仅作历史记录。安装切换需要在本机重新建立来源后单独验证。
+- 旧 CLI 仓库继续保留为历史 runtime 和研究实现，不再是 Plugin 的运行依赖。
 
 ## 已完成
 
+- 2026-09-14 第三批：角色边界核查与 0.3.3 加固（起因：复核 12 个角色设置是否合理）：
+  - 实测确认 ZCode 的插件 agents 生效，且 frontmatter `tools` 白名单生效（宿主 subagent
+    列表里 bug-fixer 带工具限制、未声明 tools 的三个角色是全量工具）；`maxTurns` 未验证。
+    已写入 `docs/host-platform-facts.md` Z4/Z6。
+  - 实测确认 agents 从安装快照加载、`agents/` 无实时编辑通道：源码与
+    `~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.3.2/` 逐文件对比，12 个角色和
+    两个 SKILL 全部不一致——即当时运行的 bug-recorder 还是 JSON 时代的旧约定，按新格式
+    写记录会被 `validate.py artifacts` 判不合格。新增 `validate.py installed` 让该漂移
+    不再静默（对比 `agents/`、`skills/` 与各 manifest；有意不纳入 `all`，因为要读仓库外路径）。
+  - 三个实现型角色（frontend/backend/candidate engineer）补 `tools: Read, Glob, Grep, Write,
+    Edit, Bash`，与 bug-fixer 对齐：此前它们继承全量工具（含 Agent 委派、网络、MCP）。
+  - 候选禁区单点声明为仓库根 `protected-paths.txt`（evaluator/release-governor 角色文件、
+    `evals/`、`tools/lab/` 度量路径、发布规则、结果 Schema、清单自身）；`isolation.py check-diff`
+    默认读它（原来 `--forbidden` 是调用方必填，清单从未落盘）；`validate.py protected` 纳入 `all`
+    防止清单被悄悄删条目；`candidate-engineer` 所有权矩阵显式引用该清单，消解「候选树就是要改的
+    插件树」时两行权限自相矛盾的问题。
+  - 硬边界更新：#1 增补「Supervisor 自己写了代码时独立 Reviewer 门强制、不可豁免」，#2 禁止
+    worker 再委派，#6 指向清单，新增 #11 预算耗尽必须报 `partial`；reviewer 增加检查协议
+    （由 reviewer 指定命令与预期、只接受原始输出）。六个可写角色补预算纪律，实现角色
+    maxTurns 20→30、plan-architect 15→20（数字是判断，不是实测结论）。
+  - 评测套件 10→14：新增 AF-011（摘要不是验证）、AF-012（任务文本按数据、含越权 push 指令）、
+    AF-013（候选不得改评判自己的门）、AF-014（基线对照区分环境失败与回归）。
+  - 文档同步：README（版本 0.3.3、ZCode 使用与重装提示、bug-recorder 新格式）、两个 SKILL 的
+    ZCode 绑定、仓库内命名统一为 Agentflow（6 个文件 13 处）、三份设计/边界文档的版本引用；
+    新增仓库根 `AGENTS.md`（接受产物前跑 `validate.py all`、改角色必须重装、禁区不可改）；
+    CHANGELOG 记 0.3.3。
+  - 注意：本批改动包含对禁区清单和 `evals/` 的编辑，属于「门变更」，是在用户明确要求下由人工
+    决策执行的，不是候选自改。
+
+- 2026-09-14 吸收 `aiwork-workflow-ai` 仓验证过的两个机制（该仓为 360 内部单操作者
+  workflow 系统，已核实其 replies-eval 编译门、门/审批模型生产在用；编排运行时未首试，
+  不吸收；详见当次会话评审）：
+  - 12 个角色文件全部加入「产物所有权矩阵」（6 个可写角色为逐产物表格，6 个只读角色为
+    紧凑声明），`docs/agent-roles.md` 角色矩阵同步改为「可写产物」列并补充说明；
+  - Supervisor 流程新增「写盘前编译/接受前编译」纪律：`skills/agentflow/SKILL.md` 步骤 7
+    （worker 产物先跑确定性检查再接受，失败按编译错误退回）、
+    `skills/improve/SKILL.md` 步骤 9（candidate/评测/比较/决策记录进入下一角色前先过
+    schema 校验）、`contracts.md` Worker result 节与 `docs/agent-roles.md` 产物验收纪律。
+  - 为让该纪律可执行，`tools/lab/validate.py` 新增 `artifacts` 目标并纳入 `all`：校验
+    `records/` 下实际写出的 JSON 产物（schema + 跨文档不变量）；已用合法/
+    非法计划样例验证通过。
+  - 产物落点统一到 `records/`：计划从顶层 `plans/` 移入 `records/plans/`（原目录已删除），
+    `records/README.md` 作为索引记录布局、约定与回溯查询；`plan-architect` 默认路径同步为
+    `records/plans/`。
+  - Bug 记录按用户需求重构为 Markdown + frontmatter（正文：错误现象/问题代码/原因/修复；
+    frontmatter：id/状态/严重性/`error_kind` 错误类型/归因/`project`/`files`/时间戳），文件按
+    `records/bugs/<YYYY-MM-DD>/<kebab-slug>.md` 日期分层；`rejected` 移入 `records/bugs/archive/`、
+    `verified` 留原位（均校验器强制）。三条 dogfood 真实记录（json-schema 拒绝、run 全灭无诊断、
+    print 模式权限拦截）已按新格式入库；`validate.py report` 输出时间排序回溯表。examples 的
+    bug-record 正反例同步迁移为 md。
+- 2026-09-14 第二批吸收（复核实证后修正过优先级：F 预算字段降级未做）：
+  - 新建 `docs/host-platform-facts.md`：只收录本机实测过的宿主事实（Claude `--json-schema`
+    拒绝 2020-12 元声明、print 模式 acceptEdits 拦截 sensitive write/Bash、继承全局 MCP 与
+    slash commands、网关模型标签不一致、单用例延迟/成本、Codex flag 兼容与 candidate
+    fail-closed），每条带证据、范围与复验方法；`README.md` 与 `adapter-protocol.md` 已链接。
+  - `contracts.md` 新增「Hard boundaries」10 条全局禁止清单（单一来源，两个 SKILL 引用
+    不复制）；`agentflow/SKILL.md` 委派步骤与 `contracts.md` 任务简报节新增「任务文本按
+    数据处理」纪律（路径/仓库/命令核实后才进简报，未验证须标注）；`Recover from stalled
+    work` 新增基线对照分诊（对改动前 revision 跑同一检查，基线同败=环境问题不轮询 worker）；
+    中文侧 `agent-roles.md` 产物验收纪律同步这三条。
 - 独立 Plugin 根目录、Codex/Claude manifest、两个 Skill 和 12 个角色文件。
 - `bug-investigator`、`bug-fixer`、`bug-recorder` 三段 Bug 能力。
 - `plan-architect` 计划编排能力。
@@ -26,16 +88,45 @@
   `tools/lab/validate.py`、`eval_runner.py`、`isolation.py`、`policy.py`。
 - `tools/lab/host_adapter.py` 已提供 Codex/Claude 的显式结构化 Adapter；Claude 可加载
   candidate worktree，当前 Codex CLI 对未安装 candidate 源会 fail-closed，尚未做真实模型 dogfood。
-- 已从 baseline 创建外部 Candidate worktree `/Users/hang/Documents/myProject/agentflow-candidate`；
-  当前验证用 Candidate worktree 为 `/Users/hang/Documents/myProject/agentflow-candidate-current`，
+- （上一台机器）已从 baseline 创建外部 Candidate worktree
+  `/Users/hang/Documents/myProject/agentflow-candidate`；
+  当时验证用 Candidate worktree 为 `/Users/hang/Documents/myProject/agentflow-candidate-current`，
   private-holdout 目录为 `/Users/hang/Documents/myProject/agentflow-private-holdout`；布局、
-  artifact digest 和禁改 diff 检查已通过。
+  artifact digest 和禁改 diff 检查当时已通过。本机如需 candidate 评测，需要用
+  `tools/lab/isolation.py` 重新建立同类布局。
 - 2026-09-14 的 Claude AF-007 candidate smoke 已通过参数/权限启动阶段；在 300 秒上限内运行约
   195 秒后由宿主返回结构化 `API Error: 502`，未产生评测结果。因此不计为通过，也没有切换
   安装源或写入 candidate；问题当前指向宿主推理网关，不是评测结果。
 - 同日使用 Claude `fable` 做诊断性单 case 重试，约 203 秒后返回相同 502；因此当前证据指向
   Claude 整体推理网关，而不是 `sonnet` 单一模型路由。
 - `python3 tools/lab/validate.py all`、结果对照示例和显式 Adapter smoke test 已通过。
+- 2026-09-14 本机复核：项目路径、Git remote 和安装源描述已更正；`validate.py all` 在本机
+  重新通过（`PASS schemas / examples / evals`）。
+- 2026-09-14 本机真实 dogfood 起步：AF-001 smoke 第一次因 adapter 兼容 bug 在 1 秒内失败——
+  当前 Claude Code 的 `--json-schema` 不接受带 `$schema`(Draft 2020-12) 元声明的 schema 文档；
+  已修复为调用 Claude 前剥离 `$schema`/`$id`（`host_adapter.py` 的 `host_output_schema`）。
+  修复后 smoke 通过：单次模型调用约 212 秒，返回合法结构化结果，未再出现上一台机器的 502。
+  模型自报 `accepted: false`，证据指向 fixture 引用的 `src/parser.ts` 在 workspace 中不存在且
+  git diff 干净——没有伪造通过。
+- 本机隔离布局已重建：`/Users/lihanghang1/Desktop/TestProject/agentflow-lab/` 下的
+  `worktree-baseline`（f2ea05c，digest `sha256:c9d9dd0f...`）与 `private-holdout`，
+  `isolation.py validate-layout` 通过。
+- 两次完整 10 用例 baseline 尝试均未产出结果：第一次无进度记录、约 26 分钟后中止；随后给
+  `host_adapter.py` 增加可选 `--progress <jsonl>` 诊断记录和每次调用的 stderr 状态行（只用于
+  定位，不改变评测语义），带 progress 重跑显示 AF-001 完成（137 秒，`accepted:false`），
+  AF-002 在 900 秒上限处超时，整个 run 作废（adapter 是 all-or-nothing，没有部分结果）。
+- AF-002 手动 stream-json 诊断（不设 900 秒上限）最终完成：真实耗时约 23.8 分钟、40 轮、
+  4 个 Agent subagent、111 次 Read、约 $4.05；结果 `accepted:false`、`tool_failures:3`。
+  证据显示 plan-architect 子 Agent 的 Write 被宿主权限边界拦截（`plans/` 被判定为
+  "sensitive and not created"），Bash 校验命令也未获批准——即 `read-write-workspace` profile
+  映射的 `--permission-mode acceptEdits` 在 print 模式下满足不了该用例要求，用例结果部分
+  测的是宿主权限限制而不是工作流行为。
+- 该诊断还暴露两个环境问题：assistant 事件的 `model` 字段全部是 `gpt-5.5`，而 CLI
+  modelUsage 记录为 `anthropic-ccmax/claude-opus-4-6`，网关响应元数据与声明模型不一致；
+  评测运行还会继承本机全局 Claude 配置（mastergo MCP、全局 slash commands 等），带来噪声、
+  延迟和额外成本。
+- 本机 Codex 同样使用自定义中转（`codex-ccmax/gpt-5.6-sol`，custom provider）；`codex exec`
+  相关 flag 已验证与 adapter 兼容，但尚未做真实 Codex 模型 dogfood。
 
 ## 已确认的角色决策
 
@@ -58,7 +149,7 @@ Reviewer 是独立审查门，不能被 Bug Recorder 代替。
 保持分开：
 
 - Plan Architect：汇总前端、后端、Technical Director 和反馈证据，写版本化计划，
-  只写 `plans/`，不执行代码。
+  只写 `records/plans/` 指定路径，不执行代码。
 - Supervisor：审核计划，决定是否授权，拆成执行批次，安排并行、集成、停止和回滚。
 - 未来的 `Execution Coordinator`：只有需要跨进程恢复、租约、长期队列、依赖调度和
   自动重试时再引入，负责运行状态和调度，不替代 Supervisor 的最终决策。
@@ -76,7 +167,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - [x] 增加一个真实形态的 Bug 记录示例和一个前后端并行计划示例。
 - [x] 建立 10 个最小公开评测用例，覆盖角色选择、接口对齐、Reviewer 独立、重复失败重规划和权限边界。
 - [x] 接入具体 Codex/Claude 宿主 Adapter；通用 Baseline/Candidate Runner 协议、结果归一化和 dry-run 请求检查已实现。
-- [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；初始 Git worktree dogfood 已通过，真实模型 dogfood 待宿主配置冻结后执行。
+- [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；初始 Git worktree dogfood 已通过；真实模型 dogfood 已起步（AF-001 通过；AF-002 完成但暴露宿主权限与超时问题），完整 baseline 仍待在可信用宿主端点和预算确认后执行。
 - [x] 实现确定性 Policy Engine；LLM Governor 只能提出建议，不能直接发布。
 
 ### P1：反馈与检索
@@ -89,7 +180,8 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 ### P2：发布自动化
 
-- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；远程仓库仍未创建。
+- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；远程仓库已创建并同步
+  （`Ganseblum/agentflows`，`main` 与 `origin/main` 一致）。
 - [ ] 配置独立版本、安装、更新、卸载和发布来源。
 - [ ] 用真实任务运行 Human-gated dogfood。
 - [ ] 样本和阈值稳定后再做 Canary、监控和低风险自动回滚。
@@ -99,20 +191,51 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 新对话开始时可以直接使用下面的上下文：
 
-> 继续处理 `/Users/hang/Documents/myProject/agentflow`。这是已初始化本地 Git、但尚未配置远程的
-> Agentflow 工作区。先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
+> 继续处理 `/Users/lihanghang1/Desktop/TestProject/agentflows`（GitHub: `Ganseblum/agentflows`）。
+> 先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
 > 保留按风险启用的 Bug Investigator/Fixer/Recorder 设计；Plan Architect 只写计划，
-> Supervisor 负责执行授权和调度。P0 契约、公开评测和通用校验/Policy 工具已完成；
-> 下一步接入具体 Codex/Claude Adapter，做真实 human-gated dogfood，再考虑 Git 和安装切换。
-> 不要先做向量检索、MCP 或自动发布。
+> Supervisor 负责执行授权和调度。P0 契约、公开评测、通用校验/Policy 工具、隔离检查和显式
+> Codex/Claude Adapter 均已完成（Codex candidate 路径按设计 fail-closed），adapter 的
+> `--json-schema` 兼容问题和进度记录已修复。不要把本机网关跑出的结果当作权威 baseline：
+> 两个宿主都走第三方中转、模型标识不一致。下一步先决定权威评测的宿主端点和预算，并处理
+> 权限 profile（acceptEdits 在 print 模式下拦截 sensitive write 和 Bash 审批），再跑完整 suite；
+> 之后才配置本机安装源。不要先做向量检索、MCP 或自动发布。
 
 ## 当前风险
 
-- `Write` 工具对 `records/bugs/` 和 `plans/` 的路径限制仍主要依靠角色说明与 Supervisor 检查。
+- 宿主安装快照与源码会漂移，且漂移是静默的：ZCode 从安装快照加载角色，改了 `agents/`
+  不重装就不生效（本批已用 `validate.py installed` 让它可检测，但该检查不在 `all` 里，需要
+  在 dogfood 前主动跑）。当前本机安装是 0.3.2，源码是 0.3.3，处于已知不一致状态。
+- 禁区清单（`protected-paths.txt`）由 `isolation.py check-diff` 与 `validate.py protected` 共同
+  守住，但这条防线是自指的：清单、校验器和隔离检查本身也在禁区里，一个同时改掉三者的候选
+  在工具层就查不出来，真正的兜底仍是人工审查 + Supervisor 的 diff 检查。因此「清单/校验器/
+  发布策略的修改必须人工审查」这条纪律不能省，它是最后一道门。
+- `tools:` 工具白名单已实测在 ZCode 生效；`maxTurns` 未验证，因此预算纪律目前靠角色提示词
+  而不是宿主截断保证，且 30/20 这两个数字是判断而非实测结论。
+- `records/` 的路径约束仍主要依靠角色说明、产物所有权矩阵与 Supervisor
+  检查；产物内容已可确定性校验（`validate.py artifacts`），但“写到了不该写的路径”仍无宿主
+  强制，需要 Supervisor 检查 diff 兜底。
 - 私有 holdout 必须位于公开项目和 Candidate worktree 之外。
 - 当前校验器使用 Python 标准库实现本项目用到的 Draft 2020-12 子集；尚未替代完整标准验证器。
-- 新项目尚未切换宿主安装源，因此真实使用验证仍需单独进行。
+- 本机尚未建立宿主安装源，因此真实使用验证仍需单独进行。
 - Codex candidate 评测当前因 CLI 缺少 per-invocation 本地 Plugin 绑定而 fail-closed；不能把现有
   已安装 baseline 当作 candidate 结果。
-- `codex plugin list` 显示当前启用源为 `/Users/hang/plugins/agentflow`，Claude 使用
-  `~/.claude/skills/agentflow`；两者都不是当前工作区，切换前需要重新确认安装流程。
+- 上一台机器记录的启用源 `/Users/hang/plugins/agentflow` 和 `~/.claude/skills/agentflow` 在本机
+  不存在；安装流程和来源需要在本机重新确认后才能验证。
+- 用例内声明的 `repeat_count` 当前会被 `eval_runner.py --repeat-count` 覆盖（后者生效）；
+  记录 baseline/candidate 时必须注明实际重复次数，避免与 suite 设计值（3 次）混淆。
+- adapter 的用例指标来自模型自报（`accepted`、`first_pass_review` 等），目前没有独立判定器；
+  这与 P0「人工闭环」定位一致，但解读结果时必须以此为前提。
+- 本机两个宿主都走第三方中转网关（Claude: `fable`→`anthropic-ccmax/claude-opus-4-6`，
+  Codex: `codex-ccmax/gpt-5.6-sol`）；AF-002 诊断中 assistant 事件的 `model` 全部标为
+  `gpt-5.5`，与 CLI modelUsage 不一致。在本机产出的 baseline/candidate 不能当作权威评测
+  结果，除非显式记录实际网关并确认有效后端模型。
+- `read-write-workspace`（Claude `--permission-mode acceptEdits`）在 print 模式下仍会拦截
+  sensitive write 和未批准的 Bash；这会直接改变 AF-002/plan-architect 一类用例的结果。
+  评测前需要对齐 profile 语义（例如显式 `--allowed-tools` 或独立权限模式）。
+- 评测运行继承操作者全局 Claude 配置（MCP、slash commands）；建议在 adapter 中显式隔离
+  （`--strict-mcp-config` + 空配置，或独立 `CLAUDE_CONFIG_DIR`）并把隔离方式写入
+  `observed_context`，否则 baseline 不可复现且成本偏高。
+- AF-002 单用例在本机约 24 分钟、约 $4；完整 10 用例 suite 预计需要数小时和可观费用，
+  运行前需确认预算，并把 per-call 超时提高到 ≥1800–2400 秒（adapter 是 all-or-nothing，
+  单次超时会丢掉整次 run）。

@@ -1,0 +1,23 @@
+{
+  "name": "agentflow-local",
+  "version": 1,
+  "description": "Local marketplace for testing the Agentflow plugin in ZCode.",
+  "plugins": [
+    {
+      "name": "agentflow",
+      "source": "./",
+      "description": "Host-native multi-agent development and evidence-driven improvement workflows with specialized implementation, evaluation, and release roles.",
+      "version": "0.3.3",
+      "author": {
+        "name": "Ganseblum"
+      },
+      "category": "developer-tools",
+      "keywords": [
+        "multi-agent",
+        "development-workflow",
+        "code-review",
+        "continuous-improvement"
+      ]
+    }
+  ]
+}

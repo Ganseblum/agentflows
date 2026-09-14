@@ -21,7 +21,8 @@
     "verification",
     "review_gates",
     "rollback_points",
-    "unresolved_decisions"
+    "unresolved_decisions",
+    "recorded_at"
   ],
   "properties": {
     "schema_version": { "const": 1 },
@@ -29,6 +30,8 @@
       "type": "string",
       "pattern": "^PLAN-[A-Z0-9][A-Z0-9._-]*$"
     },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
     "plan_version": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"

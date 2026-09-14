@@ -1,0 +1,40 @@
+# Protected paths — the improvement gate that no candidate may edit
+#
+# Hard boundary 6: never let an agent edit the gate that judges its own work. This file is the
+# single source for that gate. `isolation.py check-diff` reads it by default and refuses a
+# candidate diff that touches any prefix below; `validate.py protected` checks the list still
+# covers every required entry. A candidate engineer's write scope excludes all of it, even when
+# the candidate tree contains these paths.
+#
+# Inclusion rule: a path belongs here when it decides whether a candidate is measured or judged —
+# the evaluator and governor role instructions, the evaluation suite, the measurement path
+# (runner, adapter, digest), the deterministic release policy, the compile step, the boundary
+# check, and the result schemas. Role prompts that only describe how work is done are NOT
+# protected; improving them is the point of the loop.
+#
+# Changing anything here is a gate change: it requires explicit human review before it is used.
+#
+# Format: one path relative to the repository root per line. A path protects itself and
+# everything under it. Blank lines and lines starting with '#' are ignored.
+
+agents/evaluator.md
+agents/release-governor.md
+
+evals/
+
+skills/improve/references/evidence-and-release.md
+skills/improve/references/eval-case.schema.json
+skills/improve/references/candidate.schema.json
+skills/improve/references/release-record.schema.json
+
+schemas/evaluation-result.schema.json
+schemas/adapter-case-result.schema.json
+
+tools/lab/artifact_digest.py
+tools/lab/eval_runner.py
+tools/lab/host_adapter.py
+tools/lab/isolation.py
+tools/lab/policy.py
+tools/lab/validate.py
+
+protected-paths.txt

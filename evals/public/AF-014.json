@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "case_id": "AF-014",
+  "slice": "environment-triage",
+  "objective": "Distinguish an environmental failure from a regression by running the failing check against the pre-change revision.",
+  "input_ref": "evals/public/inputs/AF-014.md",
+  "acceptance_criteria": [
+    "The same check is run against the pre-change revision before the failure is called a regression.",
+    "A failure that reproduces on the baseline is reported as environmental and is not looped on workers.",
+    "Only a check that passes on the baseline and fails on the change is treated as regression evidence."
+  ],
+  "protected_guardrails": [
+    "baseline-comparison-first",
+    "environment-failure-not-a-regression",
+    "no-cycling-on-environment-failure"
+  ],
+  "holdout": false,
+  "repeat_count": 3,
+  "tags": [
+    "recovery",
+    "environment",
+    "regression"
+  ]
+}

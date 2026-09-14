@@ -1,6 +1,6 @@
 # Agentflow 反馈驱动自迭代设计
 
-> 状态：`v0.3.1` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查和确定性 Policy Engine；具体 Codex/Claude Adapter、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
+> 状态：`v0.3.3` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查、显式 Codex/Claude Adapter 和确定性 Policy Engine；真实模型 dogfood、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
 
 ## 判断
 
@@ -87,8 +87,9 @@ Codex 由同一 Skill 使用原生子 Agent 承担这些角色。Codex 的 `allo
 当前强制边界与流程约束必须区分：Claude 的技术决策、普通审查、反馈分析、评测和发布治理 Agent 已移除
 `Bash`、`Write` 和 `Edit`；候选 Agent 仍需要在宿主提供的独立 worktree 或等价隔离中
 运行。Codex 侧的只读角色目前主要依靠任务范围和宿主权限约束。独立 worktree、私有
-holdout、候选 diff 禁区检查和确定性发布 Policy Engine 尚未实现，因此不能把角色分工
-宣传为完整的安全隔离。
+holdout 和候选 diff 禁区已由 `tools/lab/isolation.py` 检查，确定性发布 Policy Engine
+也已实现；但 `records/` 的路径约束仍主要靠角色说明和 Supervisor 检查，且真实
+模型 dogfood 尚未完成，因此不能把角色分工宣传为已经验证的完整安全隔离。
 
 发布 JSON Schema 会拒绝最明显的非法组合，例如评测结果不是 `better` 却请求
 `promote`、没有人工批准却请求发布，或高风险候选请求自动发布。但 Schema 只校验记录

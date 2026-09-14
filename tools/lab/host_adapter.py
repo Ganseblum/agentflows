@@ -208,8 +208,16 @@ def run_codex(request: dict[str, Any], prompt: str, workspace: Path, schema: Pat
     return parse_structured_output("codex", json.dumps(payload))
 
 
+def host_output_schema(schema: Path) -> str:
+    """Return the case-result schema without meta-schema declarations some hosts reject."""
+    document = json.loads(schema.read_text(encoding="utf-8"))
+    for key in ("$schema", "$id"):
+        document.pop(key, None)
+    return json.dumps(document, separators=(",", ":"))
+
+
 def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Path, timeout: int) -> dict[str, Any]:
-    schema_text = schema.read_text(encoding="utf-8")
+    schema_text = host_output_schema(schema)
     command = [
         "claude",
         "--print",
@@ -261,16 +269,29 @@ def dry_run_document(request: dict[str, Any], cases: list[dict[str, Any]], works
     }
 
 
+def write_progress(path: Path | None, record: dict[str, Any]) -> None:
+    """Append one diagnostic progress line; never part of the evaluation result."""
+    if path is None:
+        return
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", choices=["codex", "claude"], required=True)
     parser.add_argument("--timeout-seconds", type=int, default=900)
+    parser.add_argument(
+        "--progress",
+        help="append per-invocation progress and failure records to this JSONL file",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="validate the request and print the host invocation plan without starting a model",
     )
     args = parser.parse_args(argv)
+    progress_path = Path(args.progress).expanduser().resolve() if args.progress else None
 
     try:
         request = load_request()
@@ -285,10 +306,44 @@ def main(argv: list[str] | None = None) -> int:
             repetitions: list[dict[str, Any]] = []
             for repetition in range(1, request["repeat_count"] + 1):
                 prompt = prompt_for_case(request, case, input_text, repetition)
-                if args.host == "codex":
-                    result = run_codex(request, prompt, workspace, CASE_RESULT_SCHEMA, args.timeout_seconds)
-                else:
-                    result = run_claude(request, prompt, workspace, CASE_RESULT_SCHEMA, args.timeout_seconds)
+                started = time.monotonic()
+                write_progress(
+                    progress_path,
+                    {"event": "start", "case_id": case["case_id"], "repetition": repetition},
+                )
+                try:
+                    if args.host == "codex":
+                        result = run_codex(request, prompt, workspace, CASE_RESULT_SCHEMA, args.timeout_seconds)
+                    else:
+                        result = run_claude(request, prompt, workspace, CASE_RESULT_SCHEMA, args.timeout_seconds)
+                except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                    write_progress(
+                        progress_path,
+                        {
+                            "event": "failed",
+                            "case_id": case["case_id"],
+                            "repetition": repetition,
+                            "elapsed_ms": round((time.monotonic() - started) * 1000),
+                            "error": str(exc),
+                        },
+                    )
+                    error(f"{case['case_id']} repetition {repetition} failed: {exc}")
+                    raise
+                elapsed_ms = round((time.monotonic() - started) * 1000)
+                write_progress(
+                    progress_path,
+                    {
+                        "event": "completed",
+                        "case_id": case["case_id"],
+                        "repetition": repetition,
+                        "elapsed_ms": elapsed_ms,
+                        "accepted": result.get("accepted"),
+                    },
+                )
+                print(
+                    f"host adapter: {case['case_id']} repetition {repetition} completed in {elapsed_ms} ms",
+                    file=sys.stderr,
+                )
                 repetitions.append(result)
             results.append(
                 {

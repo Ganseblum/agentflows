@@ -62,3 +62,18 @@ Candidate `artifact_digest` values are produced by `artifact_digest.py`. The dig
 includes normalized relative paths, regular-file mode bits, sizes, and content hashes;
 `.git` and Python cache directories are excluded, symlinks are rejected, and the manifest
 format is deterministic.
+
+Observed host behaviors that constrain this protocol — schema meta-declaration rejection,
+print-mode permission boundaries, config inheritance, gateway model-label integrity, and
+per-case latency — are recorded with their evidence in
+[host platform facts](../../docs/host-platform-facts.md). Update that table from real runs,
+not from memory.
+
+For longer runs, pass `host_adapter.py --progress <path>` to append one diagnostic JSONL
+record per invocation (`start`, `completed`, or `failed` with elapsed time and error).
+Progress records are operator diagnostics only: they are not part of the adapter result,
+do not change the evaluation context, and are never consumed by `eval_runner.py`.
+
+Some hosts reject the Draft 2020-12 `$schema`/`$id` declarations inside `--json-schema`.
+The adapter strips those two keys before invoking Claude; the schema body still fully
+constrains the structured output, and Codex receives the original file path.

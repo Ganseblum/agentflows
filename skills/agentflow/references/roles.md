@@ -1,10 +1,10 @@
-# Agent Flow role profiles
+# Agentflow role profiles
 
 Roles are capabilities, not mandatory stages. Select only the roles that reduce risk or allow useful parallel work.
 
 ## Supervisor
 
-The current host's main task is the supervisor. It owns intake, decomposition, permissions, integration, final verification, and the final decision. It may implement small glue changes, but it must inspect delegated work rather than trusting summaries.
+The current host's main task is the supervisor. It owns intake, decomposition, permissions, integration, final verification, and the final decision. It may implement small glue changes, but it must inspect delegated work rather than trusting summaries, and it may not waive the independent review gate for code it wrote itself.
 
 The supervisor decides whether to delegate, keeps scopes from overlapping, and stops loops that are not producing new evidence.
 
