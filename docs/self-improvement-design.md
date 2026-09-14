@@ -98,11 +98,12 @@ holdout 和候选 diff 禁区已由 `tools/lab/isolation.py` 检查，确定性�
 
 ## 下一步实现顺序
 
-1. 将 Plugin 提取成独立主仓库，先建立清晰的版本与发布边界。
-2. 为现有 JSON Schema 补代表性示例数据和 Draft 2020-12 一致性校验工具。
-3. 建立最小离线评测集，覆盖小任务不拆分、跨层接口、Reviewer 独立、重复失败重规划和权限边界。
-4. 写一个宿主适配的评测入口，对同一组任务运行 Baseline 和 Candidate，并输出逐任务结构结果。
-5. 强制候选 worktree、私有 holdout 和候选 diff 禁区，再实现确定性发布 Policy Engine。
-6. 把 candidate record 绑定 Git revision、Plugin 版本、制品摘要和评测集 revision。
-7. 先运行 Human-gated dogfood；样本和阈值稳定后再加入本地反馈池、全文检索和 Canary。
-8. 最后才考虑跨宿主反馈仓库和可选 MCP，且 MCP 只承担状态、证据和审批，不运行另一套 Agent 循环。
+当前 P0 的仓库、Schema、公开用例、隔离检查、Adapter 和 Policy Engine 已落地，但真实行为评测
+仍受 fixture、权限、运行恢复和独立判定限制。下一步按以下顺序收敛：
+
+1. 修复候选 diff 必须带冻结基线的门控，并补齐 Agent 安全 frontmatter 与 Schema 校验的回归测试。
+2. 将插件源码、任务 fixture、评测控制面和 private holdout 分离；每个 repetition 独立重置并保存可恢复结果。
+3. 持久化原始轨迹，核实 provider/model 身份，隔离宿主全局配置，并加入独立的任务判定器。
+4. 在可信端点上运行 2–3 个真实 smoke，再决定是否运行完整公开 suite 和冻结阈值。
+5. 评测闭环稳定后，再建设本地反馈池、全文检索和 Canary。
+6. 最后才考虑跨宿主反馈仓库和可选 MCP；MCP 只承担状态、证据和审批，不运行另一套 Agent 循环。

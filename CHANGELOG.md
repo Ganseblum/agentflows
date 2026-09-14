@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Require a frozen parent revision for candidate protected-diff checks and remove command-line
+  replacements for the protected path set.
+- Tighten the dependency-free validator's JSON Schema equality and RFC 3339 date-time handling.
+- Clarify host-specific installation drift, Bash/network boundaries, and the current evaluation
+  readiness limits in the documentation.
+
 ## 0.3.3 — 2026-09-14
 
 Boundary-hardening release after reviewing the role set against the host's actual enforcement.

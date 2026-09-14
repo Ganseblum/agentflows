@@ -13,7 +13,7 @@ affected_slices:
   - host-adapter
   - evaluation-harness
 recorded_at: 2026-09-14T12:04:08Z
-updated_at: 2026-09-14T12:40:00Z
+updated_at: 2026-09-14T15:46:55Z
 source_revision: f2ea05c
 agentflow_version: 0.3.1
 regression_status: pass
@@ -82,3 +82,9 @@ schema 主体保持不变，仍完整约束结构化输出；Codex 路径继续�
 - 状态保持 `fixed-pending-review`：修复经过 smoke 验证，但尚无独立 Reviewer 批准，按规则不得写 verified。
 - 已记入 `docs/host-platform-facts.md`（Claude Code C1）。
 - 修复尚未提交（working tree），提交后更新 `source_revision`。
+
+## Correction (2026-09-14)
+
+记录创建时的“修复尚未提交”是当时的时间点证据。后续修复已在提交 `77e1577` 落地，
+并已由当前工作树保留；`source_revision: f2ea05c` 仍表示问题发现时的源版本，不表示修复
+仍未提交。状态继续保持 `fixed-pending-review`，直到独立 Reviewer 批准。

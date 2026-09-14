@@ -132,7 +132,7 @@ Supervisor 未授予的 MCP 工具。「委派不扩大权限」因此既是纪�
 
 自迭代候选的禁止写入面在仓库根 `protected-paths.txt` 单点声明：Evaluator / Release Governor
 角色文件、`evals/` 评测套件、`tools/lab/` 度量路径、发布规则、结果 Schema 和清单自身。
-`tools/lab/isolation.py check-diff` 默认读取该清单并拒绝触碰禁区的候选 diff；
+`tools/lab/isolation.py check-diff --base <frozen-parent-revision>` 固定读取该清单，并拒绝触碰禁区的候选 diff；
 `tools/lab/validate.py protected`（`all` 已包含）在清单不再覆盖必需条目时失败。清单、必需条目
 集合与发布策略的修改属于门变更，必须经人工审查——候选不能靠改门来让自己通过。
 

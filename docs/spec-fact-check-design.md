@@ -69,8 +69,9 @@ findings:
     suggestion: 最小修复或需澄清的问题（可选）
 ```
 
-排序：severity 降序；同 severity 按 boundary 聚类。该结构可直接嵌入现有 Worker result 的
-`risks` 扩展项，先不新增 schema。
+排序：severity 降序；同 severity 按 boundary 聚类。先把该结构作为 Worker result 同级的
+`findings` 字段/响应对象约定，仍不新增 schema；待真实核对样本稳定后，再决定是否将其固化
+为受校验的契约。
 
 ### 3.3 与计划字段的映射
 
@@ -181,10 +182,11 @@ disallowedTools: Bash, Write, Edit
 - **编排单点**：Supervisor 就是主会话，没有持久状态；长任务依赖会话历史，跨进程恢复、
   租约、重试全部空缺，Execution Coordinator 仅为预留（agent-roles.md:106-107、
   SKILL.md:34-35）。
-- **流转结构性受限**：worker 禁止再委派（contracts.md:12），每一跳必须由主循环驱动，
-  宿主没有 agent→agent 通道。
-- **强制力不足**：`maxTurns` 未验证（Z6）、路径级权限不存在（C7），预算纪律与写权限
-  靠提示词 + Supervisor diff 兜底。
+- **流转结构性受限**：worker 默认禁止再委派（contracts.md:12）；在当前角色白名单配置下，
+  每一跳由主循环驱动。宿主可以提供 agent→agent 通道，但若未来显式授予该工具，必须重新
+  审查流转约束，不能假设为默认能力。
+- **强制力不足**：`maxTurns` 未验证（Z6）、路径级权限不存在（C7）；工具级白名单由宿主
+  强制时可以形成硬边界，预算纪律与路径范围仍需 Supervisor diff 和人工门兜底。
 - **评测可信度**：adapter 指标为模型自报，缺独立判定器（next-session-handoff.md:227）；
   本机模型标签不可信（C6）；真实模型 dogfood 未完成（self-improvement-design.md:3、:92）。
 - **文档漂移**：角色在 agents/*.md、references/roles.md、docs/agent-roles.md 三处重复，
@@ -249,7 +251,7 @@ disallowedTools: Bash, Write, Edit
 
 **修正后的优先级**：先解 C2/C5（权限 profile + 断点续跑/部分结果落盘），让完整 baseline
 可运行；再补独立判定器与可信端点；manifest 版本一致性校验可作为 `validate.py` 的低成本
-增强（不触碰 protected 逻辑，仅新增只读检查）。
+增强，但它会修改 protected 的 gate 文件，必须走人工审查后再落地，不能当作候选的普通只读改动。
 
 ## 9. 角色的专业性与准确性：领域检查单分层（讨论稿，待确认后再改）
 

@@ -38,11 +38,11 @@ Codex 与 Claude Code 都支持基于 `SKILL.md` 的可复用工作流。共享 
 | 调用入口 | `$agentflow` | `/agentflow:agentflow` |
 | 工作流定义 | 共用 `skills/agentflow/SKILL.md` | 共用同一文件 |
 | 多 Agent 执行 | Codex 原生 subagents | Claude Code 原生 subagents |
-| 专用角色 | Skill 在任务简报中指定角色 | Plugin 同时提供四个 `agents/*.md` |
+| 专用角色 | Skill 在任务简报中指定角色 | Plugin 提供实现、架构、审查、Bug 与改进治理角色 |
 | 权限与认证 | 继承 Codex 当前任务 | 继承 Claude Code 当前会话 |
 | 留痕 | Codex 任务和子 Agent 历史 | Claude Code 会话和 Agent 历史 |
 
-Claude Code 原生支持 Plugin 内的 Agent 定义，所以提供 frontend engineer、backend engineer、technical director 和 reviewer。Codex 的 Plugin 只需要共享 Skill，由 Skill 为原生子 Agent 注入相同角色契约。核心范式一致，宿主适配保持薄层。
+Claude Code 原生支持 Plugin 内的 Agent 定义，所以 Plugin 同时提供 frontend/backend engineer、technical director、reviewer、Bug 角色、plan-architect 及改进治理角色。Codex 的 Plugin 主要通过共享 Skill 为原生子 Agent 注入相同角色契约。核心范式一致，宿主适配保持薄层。
 
 反馈驱动的自迭代由独立 `skills/improve` 控制面处理，设计与发布边界见 [反馈驱动自迭代设计](self-improvement-design.md)。它不会在日常任务结束后自行修改已安装 Plugin。
 
@@ -90,10 +90,10 @@ Supervisor 是当前 Codex 任务或 Claude Code 主会话，不需要再创建�
 
 ## 后续优先级
 
-1. 用真实的前后端跨层任务分别在 Codex 和 Claude Code 做行为测试，记录角色误触发、漏触发和上下文丢失。
-2. 增加最小评测用例，覆盖小任务不拆分、跨层任务先定接口、Reviewer 独立和重复失败重规划。
+1. 修复评测隔离、fixture、逐次结果恢复和独立判定，让 Baseline/Candidate 结果可解释。
+2. 用真实的前后端跨层任务分别在 Codex 和 Claude Code 做小规模行为测试，记录角色误触发、漏触发和上下文丢失。
 3. 根据实测缩短任务契约和角色提示，控制 token 与等待成本。
-4. 将 `plugins/agentflow` 抽成独立仓库，使它与旧 CLI 的版本生命周期解耦。
+4. 在可信评测闭环稳定后，再建设跨任务反馈与检索。
 5. 只有出现跨宿主持久治理需求后，再评估共享 MCP/Core。
 
 ## 宿主规范依据

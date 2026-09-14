@@ -168,6 +168,35 @@ def json_equal_key(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
+def json_values_equal(left: Any, right: Any) -> bool:
+    """Compare JSON values using JSON Schema equality (booleans are not numbers)."""
+    if isinstance(left, bool) or isinstance(right, bool):
+        return type(left) is type(right) and left == right
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return left == right
+    return type(left) is type(right) and left == right
+
+
+RFC3339_DATE_TIME = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
+)
+
+
+def parse_rfc3339_date_time(value: str) -> dt.datetime:
+    """Parse the RFC 3339 subset supported by the standard library.
+
+    Repository artifacts accept either case for the RFC 3339 ``T``/``Z`` separators.
+    Leap-second values (``:60``) remain intentionally unsupported because Python's
+    ``datetime`` cannot represent them.
+    """
+    if RFC3339_DATE_TIME.fullmatch(value) is None:
+        raise ValueError("must be an RFC 3339 date-time")
+    parsed = dt.datetime.fromisoformat(value[:-1] + "+00:00" if value[-1] in "Zz" else value)
+    if parsed.tzinfo is None:
+        raise ValueError("must include a timezone offset")
+    return parsed
+
+
 def is_type(value: Any, expected: str) -> bool:
     if expected == "object":
         return isinstance(value, dict)
@@ -252,10 +281,10 @@ class SchemaValidator:
                 errors.append(ValidationError(path, f"cannot resolve $ref {schema['$ref']!r}: {exc}"))
             return errors
 
-        if "const" in schema and instance != schema["const"]:
+        if "const" in schema and not json_values_equal(instance, schema["const"]):
             errors.append(ValidationError(path, f"must equal {schema['const']!r}"))
 
-        if "enum" in schema and instance not in schema["enum"]:
+        if "enum" in schema and not any(json_values_equal(instance, item) for item in schema["enum"]):
             errors.append(ValidationError(path, f"must be one of {schema['enum']!r}"))
 
         expected_type = schema.get("type")
@@ -279,7 +308,7 @@ class SchemaValidator:
                         errors.append(ValidationError(path, f"does not match {schema['pattern']!r}"))
             if schema.get("format") == "date-time":
                 try:
-                    dt.datetime.fromisoformat(instance.replace("Z", "+00:00"))
+                    parse_rfc3339_date_time(instance)
                 except ValueError:
                     errors.append(ValidationError(path, "must be an RFC 3339 date-time"))
 
@@ -390,9 +419,9 @@ def validate_timestamp_order(document: dict[str, Any], path: Path) -> list[Valid
     parsed: dict[str, dt.datetime] = {}
     for name, raw in timestamps:
         try:
-            parsed[name] = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            parsed[name] = parse_rfc3339_date_time(raw)
         except ValueError:
-            return [ValidationError(str(path), f"{name} must be an ISO 8601 date-time value")]
+            return [ValidationError(str(path), f"{name} must be an RFC 3339 date-time value")]
     now = dt.datetime.now(dt.timezone.utc)
     for name, value in parsed.items():
         if value > now + dt.timedelta(minutes=5):

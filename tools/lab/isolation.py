@@ -95,12 +95,19 @@ def create_worktree(args: argparse.Namespace) -> int:
     return 0
 
 
-def changed_paths(candidate: Path, base: str | None) -> list[str]:
-    commands = [["git", "-C", str(candidate), "diff", "--name-only"]]
-    if base:
-        commands[0].append(base)
-    commands.append(["git", "-C", str(candidate), "diff", "--cached", "--name-only"])
-    commands.append(["git", "-C", str(candidate), "ls-files", "--others", "--exclude-standard"])
+def changed_paths(candidate: Path, base: str) -> list[str]:
+    verify_base = ["git", "-C", str(candidate), "rev-parse", "--verify", f"{base}^{{commit}}"]
+    verified = subprocess.run(verify_base, text=True, capture_output=True, check=False)
+    if verified.returncode != 0:
+        raise RuntimeError(f"base revision does not resolve to a commit: {base!r}")
+
+    # Compare the complete candidate tree with the frozen parent. Disable rename detection so
+    # both the old protected path and the new path are visible to the gate.
+    commands = [
+        ["git", "-C", str(candidate), "diff", "--no-renames", "--name-only", base],
+        ["git", "-C", str(candidate), "ls-files", "--others", "--exclude-standard"],
+        ["git", "-C", str(candidate), "ls-files", "--others", "--ignored", "--exclude-standard"],
+    ]
     paths: set[str] = set()
     for command in commands:
         completed = subprocess.run(command, text=True, capture_output=True, check=False)
@@ -112,14 +119,10 @@ def changed_paths(candidate: Path, base: str | None) -> list[str]:
 
 def check_diff(args: argparse.Namespace) -> int:
     candidate = resolved(args.candidate)
-    source = resolved(args.protected_file) if args.protected_file else PROTECTED_PATHS_FILE
+    source = PROTECTED_PATHS_FILE
     try:
-        if args.forbidden:
-            forbidden = [item.strip("/").replace("\\", "/") for item in args.forbidden]
-            declared_by = "command line"
-        else:
-            forbidden = load_protected_paths(source)
-            declared_by = str(source)
+        forbidden = load_protected_paths(source)
+        declared_by = str(source)
     except (OSError, ValueError) as exc:
         print(f"FAIL candidate diff: cannot load protected paths: {exc}", file=sys.stderr)
         return 1
@@ -165,16 +168,7 @@ def main(argv: list[str] | None = None) -> int:
 
     diff_parser = subparsers.add_parser("check-diff")
     diff_parser.add_argument("--candidate", required=True)
-    diff_parser.add_argument("--base")
-    diff_parser.add_argument(
-        "--forbidden",
-        action="append",
-        help="override the declared protected prefixes; defaults to protected-paths.txt",
-    )
-    diff_parser.add_argument(
-        "--protected-file",
-        help="read protected prefixes from this file instead of the repository's protected-paths.txt",
-    )
+    diff_parser.add_argument("--base", required=True, help="frozen parent revision to compare against")
     diff_parser.set_defaults(handler=check_diff)
 
     args = parser.parse_args(argv)

@@ -25,7 +25,7 @@ trim the gate surface it is judged by.
 
 `validate.py installed` compares the runtime components of the source checkout (`agents/`,
 `skills/`, the manifests) against an installed plugin snapshot, defaulting to the ZCode cache for
-the version in `plugin.json` (override with `--path <dir>`). A stale or absent snapshot is a
+the version in `plugin.json` (override with `--path <dir>`). A stale or mismatched snapshot is a
 failure; the check exits 0 with `SKIP` when no local install exists at all. It is deliberately
 **not** part of `all`: it reads outside the repository, and a clone or a candidate worktree must not
 fail repository validation. Run it before a dogfood run and after changing any role, because hosts
@@ -54,6 +54,8 @@ slowest expected multi-agent case and use the progress file to locate a failure.
 See [adapter-protocol.md](adapter-protocol.md) for the host adapter boundary. Candidate
 worktrees and private holdouts must be outside the public repository and outside each other;
 `isolation.py` checks that layout and rejects forbidden candidate paths before a release gate.
-`isolation.py check-diff` reads `protected-paths.txt` by default, so the forbidden set is declared
-in the repository rather than passed ad hoc; `--forbidden` overrides it and `--protected-file`
-points at a different list.
+`isolation.py check-diff` always reads `protected-paths.txt` from the tool's repository and requires
+`--base <frozen-parent-revision>`. The base is mandatory so committed, staged, unstaged, deleted,
+renamed, ignored, and untracked changes are all considered; there is no command-line replacement
+for the protected set. Invoke the script from a trusted source checkout, not a candidate-controlled
+copy of the tool or the protected list.

@@ -31,7 +31,9 @@ Version `0.3.3` provides:
 - Codex, Claude Code, ZCode, and portable Agent Plugin manifests.
 
 Implementation roles declare an explicit tool allowlist (`Read, Glob, Grep, Write, Edit, Bash`), so
-a worker cannot delegate further, reach the network, or use MCP tools the supervisor did not grant.
+a worker does not receive the host's native delegation or MCP tools through that allowlist. Bash
+still follows the host's sandbox and may have capabilities that are not implied by the tool names;
+network isolation must be verified from the host, not inferred from this list.
 `bug-recorder` writes only the explicitly assigned sanitized record under `records/bugs/`, and
 `plan-architect` writes only the explicitly assigned plan under `records/plans/`. Neither role can
 close a bug, authorize code execution, or publish a Plugin. The supervisor must inspect the
@@ -41,7 +43,15 @@ constraints on the `Write` tool; see [AGENTS.md](AGENTS.md).
 The candidate gate surface — the evaluator and governor role files, the evaluation suite, the
 measurement path, the release rules, and the result schemas — is declared once in
 [`protected-paths.txt`](protected-paths.txt). `isolation.py check-diff` rejects a candidate diff
-that touches it, and `validate.py protected` keeps the list from being quietly trimmed.
+that touches it. Run it from the trusted source checkout with the frozen parent revision:
+
+```sh
+python3 tools/lab/isolation.py check-diff \
+  --candidate <tree> \
+  --base <frozen-parent-revision>
+```
+
+`validate.py protected` keeps the list from being quietly trimmed.
 
 The three Bug roles are selectable capabilities, not a mandatory ceremony for every issue.
 Use the full Investigator → Fixer → Reviewer → Recorder flow for material, uncertain,
@@ -66,8 +76,8 @@ See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/self-improvement-design.md`](docs/self-improvement-design.md), and
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) for observed host constraints.
 
-The repository is published at `https://github.com/Ganseblum/agentflows`. A local ZCode install of
-`0.3.2` exists on the development machine and predates the current source, which is exactly the
-drift `validate.py installed` reports; the host installation has not been switched to the current
-version yet. That switch follows the first human-gated dogfood run on a verified model endpoint.
-
+The source checkout currently declares version `0.3.3`. This is not by itself proof that a host is
+running that version: ZCode loads installed snapshots and Codex may load a separate plugin cache.
+Before dogfood, compare the actual host snapshot with `python3 tools/lab/validate.py installed
+--path <installed-plugin-root>` (or the host-specific default) and record the result. Do not switch
+an installation until the first human-gated dogfood run uses a verified model endpoint.

@@ -4,14 +4,16 @@
 
 ## 当前工作区
 
-- Agent 项目目录（当前机器）：`/Users/lihanghang1/Desktop/TestProject/agentflows`
-- 这是从旧仓库 Plugin 提取的独立工作区，现已发布到 GitHub
-  `https://github.com/Ganseblum/agentflows.git`；初始 baseline 为 `f11c3b6`，
-  当前 `main` 与 `origin/main` 一致（`f2ea05c`）。
-- 本机当前没有任何 Agentflow 安装源。下文记录的 Codex 启用源
-  `/Users/hang/plugins/agentflow`、Claude 启用源 `~/.claude/skills/agentflow`、旧 CLI 仓库
-  `/Users/hang/Documents/myProject/multi-agent-cli` 以及 candidate/holdout 目录都来自上一台
-  机器，在本机不存在，仅作历史记录。安装切换需要在本机重新建立来源后单独验证。
+- Agent 项目目录（当前机器）：`/Users/hang/Documents/myProject/agentflow`
+- 当前配置的 Git remote 为 `https://github.com/Ganseblum/my-agents.git`；当前 `main` 与本地
+  `origin/main` 一致，HEAD 为 `b3c49e9`。远程是否已同步以实际 `git remote -v` 和 fetch
+  结果为准，不把历史机器的仓库名当成事实。
+- 本机没有可由 `validate.py installed` 默认发现的 ZCode Agentflow 安装源。当前 Codex 会话
+  可见的缓存是个人插件目录下的 `0.3.1` 快照；显式运行
+  `python3 tools/lab/validate.py installed --path /Users/hang/.codex/plugins/cache/personal/agentflow/0.3.1`
+  会失败，说明它与源码 `0.3.3` 漂移。安装切换需要在本机重新建立来源后单独验证。
+- 下文记录的上一台机器路径、旧 CLI 仓库、candidate/holdout 目录均只作历史证据，不代表当前
+  工作区存在。
 - 旧 CLI 仓库继续保留为历史 runtime 和研究实现，不再是 Plugin 的运行依赖。
 
 ## 已完成
@@ -28,8 +30,8 @@
   - 三个实现型角色（frontend/backend/candidate engineer）补 `tools: Read, Glob, Grep, Write,
     Edit, Bash`，与 bug-fixer 对齐：此前它们继承全量工具（含 Agent 委派、网络、MCP）。
   - 候选禁区单点声明为仓库根 `protected-paths.txt`（evaluator/release-governor 角色文件、
-    `evals/`、`tools/lab/` 度量路径、发布规则、结果 Schema、清单自身）；`isolation.py check-diff`
-    默认读它（原来 `--forbidden` 是调用方必填，清单从未落盘）；`validate.py protected` 纳入 `all`
+  `evals/`、`tools/lab/` 度量路径、发布规则、结果 Schema、清单自身）；`isolation.py check-diff`
+  现在要求带冻结 parent revision 并固定读取它；`validate.py protected` 纳入 `all`
     防止清单被悄悄删条目；`candidate-engineer` 所有权矩阵显式引用该清单，消解「候选树就是要改的
     插件树」时两行权限自相矛盾的问题。
   - 硬边界更新：#1 增补「Supervisor 自己写了代码时独立 Reviewer 门强制、不可豁免」，#2 禁止
@@ -108,9 +110,9 @@
   修复后 smoke 通过：单次模型调用约 212 秒，返回合法结构化结果，未再出现上一台机器的 502。
   模型自报 `accepted: false`，证据指向 fixture 引用的 `src/parser.ts` 在 workspace 中不存在且
   git diff 干净——没有伪造通过。
-- 本机隔离布局已重建：`/Users/lihanghang1/Desktop/TestProject/agentflow-lab/` 下的
-  `worktree-baseline`（f2ea05c，digest `sha256:c9d9dd0f...`）与 `private-holdout`，
-  `isolation.py validate-layout` 通过。
+- 上一台机器曾重建隔离布局：`/Users/lihanghang1/Desktop/TestProject/agentflow-lab/` 下的
+  `worktree-baseline`（f2ea05c，digest `sha256:c9d9dd0f...`）与 `private-holdout`；这只是
+  历史证据，当前工作区需要重新建立并运行 `isolation.py validate-layout`。
 - 两次完整 10 用例 baseline 尝试均未产出结果：第一次无进度记录、约 26 分钟后中止；随后给
   `host_adapter.py` 增加可选 `--progress <jsonl>` 诊断记录和每次调用的 stderr 状态行（只用于
   定位，不改变评测语义），带 progress 重跑显示 AF-001 完成（137 秒，`accepted:false`），
@@ -180,8 +182,8 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 ### P2：发布自动化
 
-- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；远程仓库已创建并同步
-  （`Ganseblum/agentflows`，`main` 与 `origin/main` 一致）。
+- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；当前配置的 remote 为
+  `Ganseblum/my-agents.git`，本地 `main` 与 `origin/main` 一致（HEAD `b3c49e9`）。
 - [ ] 配置独立版本、安装、更新、卸载和发布来源。
 - [ ] 用真实任务运行 Human-gated dogfood。
 - [ ] 样本和阈值稳定后再做 Canary、监控和低风险自动回滚。
@@ -191,7 +193,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 新对话开始时可以直接使用下面的上下文：
 
-> 继续处理 `/Users/lihanghang1/Desktop/TestProject/agentflows`（GitHub: `Ganseblum/agentflows`）。
+> 继续处理 `/Users/hang/Documents/myProject/agentflow`（remote: `Ganseblum/my-agents.git`）。
 > 先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
 > 保留按风险启用的 Bug Investigator/Fixer/Recorder 设计；Plan Architect 只写计划，
 > Supervisor 负责执行授权和调度。P0 契约、公开评测、通用校验/Policy 工具、隔离检查和显式
@@ -203,9 +205,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 ## 当前风险
 
-- 宿主安装快照与源码会漂移，且漂移是静默的：ZCode 从安装快照加载角色，改了 `agents/`
-  不重装就不生效（本批已用 `validate.py installed` 让它可检测，但该检查不在 `all` 里，需要
-  在 dogfood 前主动跑）。当前本机安装是 0.3.2，源码是 0.3.3，处于已知不一致状态。
+- 宿主安装快照与源码会漂移，且漂移是静默的：ZCode 从安装快照加载角色，Codex 也可能从
+  单独缓存加载技能。默认 `validate.py installed` 只查 ZCode；当前 Codex 0.3.1 缓存需用
+  `--path` 显式检查，源码是 0.3.3，处于已知不一致状态。
 - 禁区清单（`protected-paths.txt`）由 `isolation.py check-diff` 与 `validate.py protected` 共同
   守住，但这条防线是自指的：清单、校验器和隔离检查本身也在禁区里，一个同时改掉三者的候选
   在工具层就查不出来，真正的兜底仍是人工审查 + Supervisor 的 diff 检查。因此「清单/校验器/
@@ -217,7 +219,8 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
   强制，需要 Supervisor 检查 diff 兜底。
 - 私有 holdout 必须位于公开项目和 Candidate worktree 之外。
 - 当前校验器使用 Python 标准库实现本项目用到的 Draft 2020-12 子集；尚未替代完整标准验证器。
-- 本机尚未建立宿主安装源，因此真实使用验证仍需单独进行。
+- 本机尚未建立可由默认检查发现的宿主安装源；Codex 的 0.3.1 缓存已通过显式路径检查确认
+  漂移，因此真实使用验证仍需先完成安装切换。
 - Codex candidate 评测当前因 CLI 缺少 per-invocation 本地 Plugin 绑定而 fail-closed；不能把现有
   已安装 baseline 当作 candidate 结果。
 - 上一台机器记录的启用源 `/Users/hang/plugins/agentflow` 和 `~/.claude/skills/agentflow` 在本机
