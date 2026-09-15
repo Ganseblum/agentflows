@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.3.5 — 2026-09-15
+
+Rule patches carried over from a real cross-layer feature run (a conversation-share landing page
+mirroring an existing chat surface). Every miss that passed the gates fell in one class — runtime
+wiring, layout, and ordering that static reading cannot prove — and the largest cost came from
+replicating an existing UI and extending a frozen contract without a reference-as-spec inventory.
+The patches target assertion type and reference discipline, not gate strength. The source review's
+anchors and claims were verified against this tree before applying; applied on explicit user
+request.
+
+- New hard boundary 13: an absence claim ("nothing was written", "the request never fired")
+  requires reading the authoritative sink — the directory listing, receiving table, queue, or
+  transport log — directly; an indirect index (search tool, cache, sampled dashboard) failing to
+  show it is not evidence of absence. (Boundary 12 covers positive tool-behavior claims; this one
+  covers negative claims.)
+- Final decision record gains a `claims` ledger: every user-visible claim mapped to the check that
+  would fail if it were false; a claim covered only by reading code is `unverified`, and any
+  unverified user-visible claim makes the outcome `partial`, not `complete`. SKILL.md step 10 and
+  the reviewer's check protocol carry the same rule. Step 8 requires the end-to-end path a real
+  user would take to execute before the gate closes, and re-opens the gate for later user-visible
+  changes (re-review may be scoped to the delta).
+- Worker task brief gains three disciplines: **Replication briefs** (the reference implementation
+  is the specification; inventory it at `path:line`; acceptance is a measured comparison),
+  **Extension inventory** (grep the existing contract surface before adding a carrier; a worker
+  who finds an equivalent carrier stops and reports), and **Mirror briefs** (a branch table
+  against the reference `path:function` precedes implementation).
+- New `## Verification stand-ins` section: a mock, stub, fixture set, or local contract harness is
+  verification apparatus, not the deliverable; inventory the consumer's required surface up front,
+  record later gaps as verification gaps and re-run the checks they covered, and keep responses
+  contract-faithful so a contract mismatch fails against the stand-in instead of hiding behind it.
+- Frontend engineer: runtime-context wiring (route params, route element construction, providers,
+  portals, layout mounts) is not proven by unit tests — name the runtime check that would fail if
+  the wiring were wrong, or report it as not run under risks.
+- Plan Architect: a parity inventory task (replicate / omit-with-reason / defer) runs before
+  implementing a surface that must mirror an existing implementation, and the plan lists the
+  required surface of any verification stand-in with the end-to-end check placed before the
+  review gate.
+- Docs: Chinese discipline mirror updated in `docs/agent-roles.md`; new
+  [`docs/iteration-log.md`](docs/iteration-log.md) records trigger, change, and solved problem per
+  version.
+- Development release: no baseline/candidate evaluation evidence, not a governed candidate
+  promotion. The installed host snapshot lags the source until the marketplace is refreshed and
+  the plugin is reinstalled; `validate.py installed` reports that drift.
+
 ## 0.3.4 — 2026-09-15
 
 - Record and prevent this session's incident class: bug records BUG-20260915-002 (fault injection

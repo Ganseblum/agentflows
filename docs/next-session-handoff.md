@@ -18,6 +18,19 @@
 
 ## 已完成
 
+- 2026-09-15 第九批：应用「对话分享」复盘补丁 + 迭代记录（用户要求）：
+  - 按外部项目复盘文档（`aiwork-workflow-ai` 的 `复盘-agentflow优化建议.md`）应用 P1–P9，
+    应用前逐条核对锚点与源码一致：`contracts.md` 新增硬边界 13（缺席断言读权威落点）、
+    Final decision record 增加 `claims` 台账、简报三纪律（Replication / Mirror /
+    Extension inventory）、新小节 `Verification stand-ins`；`SKILL.md` step 8（e2e 先于
+    关门 + 后置用户可见改动重开门）与 step 10（claims 台账）；`reviewer.md`、
+    `frontend-engineer.md`、`plan-architect.md` 对应条款；中文侧 `docs/agent-roles.md` 同步。
+  - 新增 [`iteration-log.md`](iteration-log.md)：按版本记录触发/改动/解决什么/未决；README
+    已索引；CHANGELOG 记 0.3.5；五份 manifest 与 README/三份设计文档版本引用同步 0.3.5。
+  - 状态：源码 0.3.5，本机 ZCode 快照仍 0.3.4 → `validate.py installed` 报红属预期；刷新
+    marketplace 并重装后转绿。本轮为开发版本，无对照评测证据，不得表述为"已验证的改进"。
+  - 补充：0.3.5 补丁的覆盖缺口——复盘未提议配套 AF-* 评测用例（与边界 12 先例一致：
+    同类漏检再犯时升级用例）。
 - 2026-09-15 第八批：0.3.4 发布（用户授权 push 与发布）：
   - 本会话第四~七批改动（横切机制契约、计划 `shared_mechanisms[]`、门缺口加固、事故记录）
     按主题拆成 4 个提交推送（`21062c0`、`abbffa9`、`985e631`、`8255df6`），均已到
@@ -27,8 +40,8 @@
   - **发布性质必须写明**：这是开发版本发布，**没有** baseline/candidate 对照评测证据。
     按 improve 环的定义它不是一次受治理的候选晋升（release-governor 门未参与），
     因此不得表述为"已验证的改进"。真实模型 dogfood 仍未完成。
-  - 发布后状态：本机 ZCode 快照为 0.3.3，需刷新 marketplace 并重装才与 0.3.4 一致；
-    在此之前 `validate.py installed` 报红属预期（已在风险节说明）。
+  - 发布后状态：本机 ZCode 快照随后已重装到 0.3.4，`validate.py installed` 曾观测 PASS；
+    第九批把源码推到 0.3.5，再次进入待刷新重装状态（报红属预期，已在风险节说明）。
   - 顺手修正交接文档的陈旧当前态（remote 名、HEAD、安装源描述在上一轮之后已过时）。
 
 - 2026-09-15 第七批：事故的记录与防复发（用户问"这些事故能记录和避免吗"，答案落地）：
@@ -302,9 +315,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 ## 当前风险
 
 - 宿主安装快照与源码会漂移，且漂移是静默的：ZCode 从安装快照加载角色，Codex 也可能从
-  单独缓存加载技能。默认 `validate.py installed` 只查 ZCode；本机快照已于 2026-09-15 重装到
-  0.3.3，随后源码发布 0.3.4，因此在本机再次刷新并重装之前，`installed` 会以"没有源码版本的
-  快照"报红——这是预期状态，不是回归。重装后应转绿。
+  单独缓存加载技能。默认 `validate.py installed` 只查 ZCode。2026-09-15 观测：快照重装到
+  0.3.4 后 `installed` PASS；随后源码进入 0.3.5（复盘补丁批次），在刷新 marketplace 并重装
+  之前 `installed` 会以"没有源码版本的快照"报红——这是预期状态，不是回归。重装后应转绿。
 - 禁区清单（`protected-paths.txt`）由 `isolation.py check-diff` 与 `validate.py protected` 共同
   守住，但这条防线是自指的：清单、校验器和隔离检查本身也在禁区里，一个同时改掉三者的候选
   在工具层就查不出来，真正的兜底仍是人工审查 + Supervisor 的 diff 检查。因此「清单/校验器/
