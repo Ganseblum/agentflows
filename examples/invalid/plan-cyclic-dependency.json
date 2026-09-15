@@ -7,7 +7,10 @@
   "non_goals": [],
   "assumptions": [],
   "input_evidence": [
-    {"evidence_id": "E-PLAN-INVALID", "source_ref": "invalid-example"}
+    {
+      "evidence_id": "E-PLAN-INVALID",
+      "source_ref": "invalid-example"
+    }
   ],
   "interfaces": [],
   "dependencies": [],
@@ -15,24 +18,35 @@
     {
       "package_id": "P-A",
       "owner": "Supervisor",
-      "scope": ["a"],
+      "scope": [
+        "a"
+      ],
       "deliverable": "A",
-      "depends_on": ["P-B"],
+      "depends_on": [
+        "P-B"
+      ],
       "verification": "Check A"
     },
     {
       "package_id": "P-B",
       "owner": "Supervisor",
-      "scope": ["b"],
+      "scope": [
+        "b"
+      ],
       "deliverable": "B",
-      "depends_on": ["P-A"],
+      "depends_on": [
+        "P-A"
+      ],
       "verification": "Check B"
     }
   ],
   "parallel_lanes": [
     {
       "lane_id": "LANE-INVALID",
-      "work_package_ids": ["P-A", "P-B"],
+      "work_package_ids": [
+        "P-A",
+        "P-B"
+      ],
       "can_run_when": "Never"
     }
   ],
@@ -40,7 +54,9 @@
     {
       "criterion_id": "AC-INVALID",
       "criterion": "The cyclic plan must be rejected.",
-      "evidence": ["invalid-example"]
+      "evidence": [
+        "invalid-example"
+      ]
     }
   ],
   "verification": [
@@ -68,5 +84,6 @@
     }
   ],
   "unresolved_decisions": [],
-  "recorded_at": "2026-09-14T08:00:00Z"
+  "recorded_at": "2026-09-14T08:00:00Z",
+  "shared_mechanisms": []
 }

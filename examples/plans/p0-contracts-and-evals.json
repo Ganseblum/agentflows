@@ -60,45 +60,75 @@
     {
       "package_id": "P0-1",
       "owner": "Supervisor",
-      "scope": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"],
+      "scope": [
+        "schemas/bug-record.schema.json",
+        "schemas/plan.schema.json"
+      ],
       "deliverable": "Version-one Bug Record and Plan JSON Schemas with state and contract fields.",
       "depends_on": [],
       "verification": "Validate positive and negative contract examples.",
-      "files": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"]
+      "files": [
+        "schemas/bug-record.schema.json",
+        "schemas/plan.schema.json"
+      ]
     },
     {
       "package_id": "P0-2",
       "owner": "Supervisor",
-      "scope": ["examples/"],
+      "scope": [
+        "examples/"
+      ],
       "deliverable": "One sanitized valid Bug Record, one valid cross-layer Plan, and intentional invalid examples.",
-      "depends_on": ["P0-1"],
+      "depends_on": [
+        "P0-1"
+      ],
       "verification": "The contract validator accepts valid examples and rejects invalid examples.",
-      "files": ["examples/"]
+      "files": [
+        "examples/"
+      ]
     },
     {
       "package_id": "P0-3",
       "owner": "Backend Engineer",
-      "scope": ["tools/lab/validate.py"],
+      "scope": [
+        "tools/lab/validate.py"
+      ],
       "deliverable": "Dependency-free validator with schema checks and plan/record invariants.",
-      "depends_on": ["P0-1"],
+      "depends_on": [
+        "P0-1"
+      ],
       "verification": "Run the validator against every public fixture and intentional failure.",
-      "files": ["tools/lab/validate.py"]
+      "files": [
+        "tools/lab/validate.py"
+      ]
     },
     {
       "package_id": "P0-4",
       "owner": "Evaluator",
-      "scope": ["evals/public/"],
+      "scope": [
+        "evals/public/"
+      ],
       "deliverable": "Ten public cases covering role selection, review independence, replanning, and permission boundaries.",
-      "depends_on": ["P0-1"],
+      "depends_on": [
+        "P0-1"
+      ],
       "verification": "Validate all case records and confirm every input_ref resolves to a fixture.",
-      "files": ["evals/public/"]
+      "files": [
+        "evals/public/"
+      ]
     },
     {
       "package_id": "P0-5",
       "owner": "Reviewer",
-      "scope": ["all P0 artifacts"],
+      "scope": [
+        "all P0 artifacts"
+      ],
       "deliverable": "Independent review of schema semantics, examples, public cases, and validator output.",
-      "depends_on": ["P0-2", "P0-3", "P0-4"],
+      "depends_on": [
+        "P0-2",
+        "P0-3",
+        "P0-4"
+      ],
       "verification": "Review the actual files and rerun the full validation command.",
       "files": []
     }
@@ -106,17 +136,25 @@
   "parallel_lanes": [
     {
       "lane_id": "LANE-SCHEMA",
-      "work_package_ids": ["P0-1"],
+      "work_package_ids": [
+        "P0-1"
+      ],
       "can_run_when": "Immediately after the P0 scope is accepted."
     },
     {
       "lane_id": "LANE-ARTIFACTS",
-      "work_package_ids": ["P0-2", "P0-3", "P0-4"],
+      "work_package_ids": [
+        "P0-2",
+        "P0-3",
+        "P0-4"
+      ],
       "can_run_when": "After P0-1 defines the stable schema fields."
     },
     {
       "lane_id": "LANE-REVIEW",
-      "work_package_ids": ["P0-5"],
+      "work_package_ids": [
+        "P0-5"
+      ],
       "can_run_when": "After all artifact and validator checks are available."
     }
   ],
@@ -124,17 +162,25 @@
     {
       "criterion_id": "AC-SCHEMA",
       "criterion": "Bug Record and Plan documents have explicit required fields, enumerated states, and review/rollback evidence.",
-      "evidence": ["schemas/bug-record.schema.json", "schemas/plan.schema.json"]
+      "evidence": [
+        "schemas/bug-record.schema.json",
+        "schemas/plan.schema.json"
+      ]
     },
     {
       "criterion_id": "AC-EXAMPLES",
       "criterion": "Positive examples pass and intentional invalid examples fail for an observable reason.",
-      "evidence": ["examples/", "tools/lab/validate.py"]
+      "evidence": [
+        "examples/",
+        "tools/lab/validate.py"
+      ]
     },
     {
       "criterion_id": "AC-EVALS",
       "criterion": "Ten public evaluation cases are structurally valid and reference existing sanitized inputs.",
-      "evidence": ["evals/public/"]
+      "evidence": [
+        "evals/public/"
+      ]
     }
   ],
   "verification": [
@@ -181,5 +227,17 @@
   ],
   "unresolved_decisions": [],
   "recorded_at": "2026-09-13T22:05:00Z",
-  "updated_at": "2026-09-14T09:30:00Z"
+  "updated_at": "2026-09-14T09:30:00Z",
+  "shared_mechanisms": [
+    {
+      "mechanism_id": "SM-VALIDATE-ALL",
+      "kind": "compile-gate",
+      "registration_ref": "tools/lab/validate.py:main",
+      "behavior": "Any plan acceptance runs validate.py all; a red check is a compile error returned to the worker.",
+      "affected_surfaces": [
+        "all work packages",
+        "supervisor acceptance"
+      ]
+    }
+  ]
 }

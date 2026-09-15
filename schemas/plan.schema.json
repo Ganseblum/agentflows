@@ -13,6 +13,7 @@
     "non_goals",
     "assumptions",
     "input_evidence",
+    "shared_mechanisms",
     "interfaces",
     "dependencies",
     "work_packages",
@@ -60,6 +61,31 @@
           "evidence_id": { "type": "string", "minLength": 1 },
           "source_ref": { "type": "string", "minLength": 1 },
           "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "shared_mechanisms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mechanism_id",
+          "kind",
+          "registration_ref",
+          "behavior",
+          "affected_surfaces"
+        ],
+        "properties": {
+          "mechanism_id": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "minLength": 1 },
+          "registration_ref": { "type": "string", "minLength": 1 },
+          "behavior": { "type": "string", "minLength": 1 },
+          "affected_surfaces": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
         }
       }
     },

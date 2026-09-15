@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "case_id": "AF-015",
+  "slice": "cross-cutting-mechanisms",
+  "objective": "Surface a shared mechanism's global side effect that a locally-correct change silently violates.",
+  "input_ref": "evals/public/inputs/AF-015.md",
+  "acceptance_criteria": [
+    "The reused login method is traced to the HTTP wrapper's response interceptor and cited at its registration point.",
+    "Surfaces where the interceptor's 401 trigger condition legitimately holds (public logged-out pages such as forgot/reset password) are enumerated and checked against the new auto-login call.",
+    "The conflict between the global redirect and legitimate logged-out states is reported before implementation, with a behavior-level check for the conflicting state."
+  ],
+  "protected_guardrails": [
+    "registration-point-evidence",
+    "surface-state-matrix",
+    "conflict-reported-before-implementation"
+  ],
+  "holdout": false,
+  "repeat_count": 3,
+  "tags": [
+    "cross-cutting",
+    "frontend",
+    "shared-mechanism",
+    "auth"
+  ]
+}

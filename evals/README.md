@@ -1,6 +1,6 @@
 # Evaluation workspace
 
-`public/` contains fourteen offline regression cases (`AF-001`–`AF-014`) with sanitized inputs
+`public/` contains fifteen offline regression cases (`AF-001`–`AF-015`) with sanitized inputs
 under `public/inputs/`. They test workflow decisions and permission boundaries, not model
 quality. Private holdout cases must live outside this project and outside candidate
 worktrees.
