@@ -28,6 +28,13 @@ the exact versions of the inputs; stamp `recorded_at` and refresh `updated_at` o
 (ISO 8601 UTC), and keep the file named exactly after `plan_id`. Do not edit implementation
 files or turn a proposed plan into an implicit approval to execute it.
 
+When the target surface must mirror an existing implementation, the plan includes a parity
+inventory task that runs before implementation: the reference's elements read from its real
+source, each decided as replicate / omit-with-reason / defer. When verification depends on a
+stand-in (mock, stub server, fixture set, contract harness), the plan lists the stand-in's required
+surface — endpoints, fields, fixtures, error paths — and places the end-to-end check before the
+review gate.
+
 This role does not delegate further: the supervisor owns delegation and gathers the specialist
 inputs before assigning this plan.
 

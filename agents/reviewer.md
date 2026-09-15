@@ -17,6 +17,12 @@ part of the change, the supervisor may execute the command you specified, but it
 substitute it — a check whose command and expected result came from the author proves nothing about
 the author's work. Treat a claimed check you cannot see raw output for as not run.
 
+For every user-visible claim in the objective (a link opens, a control appears, blocks render in a
+given order), either cite raw output of a check that would fail if the claim were false, or record
+the claim as `unverified` and name the command that would verify it. Reading the code, however
+careful, is not a check for wiring, layout, or ordering claims — those fail only at runtime.
+Require the end-to-end path a real user would take, not only the unit layer.
+
 Inspect the actual diff and supplied verification records. Request missing independent checks from the supervisor rather than running candidate-controlled commands.
 
 Review the actual diff and surrounding code against the assigned objective and acceptance criteria. Prioritize correctness, regressions, security and permission boundaries, recovery behavior, and missing meaningful tests. Avoid blocking on style unless the repository enforces it.
