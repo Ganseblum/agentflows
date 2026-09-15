@@ -2,6 +2,63 @@
 
 ## Unreleased
 
+- Record and prevent this session's incident class: bug records BUG-20260915-002 (fault injection
+  executed on the real repository; a `git checkout` "recovery" reset `protected-paths.txt` to its
+  committed version and silently discarded uncommitted edits — caught one command later by
+  `validate.py protected`) and BUG-20260915-003 (three consecutive rounds each shipped a behavior
+  claim asserted from reasoning and falsified by a minimal experiment; the third masked a fully
+  demonstrated gate bypass). Prevention: new hard boundary 12 in `contracts.md` — a claim about how
+  a tool, framework, or host behaves is a hypothesis until a minimal experiment reproduces it — and
+  an "Experiments and recovery" rule set in `AGENTS.md` (inject only on throwaway copies; never
+  `git checkout`/`restore` to undo an experiment on the real tree; a recovery counts only after the
+  check is re-run and observed green; no suppressed output on commands whose success is claimed).
+- Audit round on the gate changes above; two corrections and one closed hole (human-authorized):
+  - A full bypass of the test gate was demonstrated and closed. `unittest discover` imports
+    packages found in subdirectories of the start directory, and import-time code runs before any
+    assertion: an added `tests/<subdir>/` module that replaces a pinned test method makes a broken
+    assertion pass, so `validate.py tests` returned PASS over a real gate regression. The
+    declared-content check now rejects every undeclared entry in `tests/`, directories included.
+    Re-verified by fault injection: the same attack now fails with the offending entry named;
+    `__pycache__` still does not trip it.
+  - The previous round's mechanism claim was corrected: a stray `tests/__init__.py` is inert under
+    `discover -s tests` (it only imports when discovery starts from the repository root). The
+    check still rejects it; the documentation no longer credits it with the neutralization it
+    cannot perform under this runner.
+  - `skills/improve/references/` is protected wholesale. `episode.schema.json` had been the one
+    governance schema a candidate could still edit (the other three improve-reference schemas and
+    the release rules were already protected). The required-entry set now demands all five files
+    in that directory individually, so narrowing the prefix back cannot silently drop one.
+- Close the four gate gaps found in the whole-project review (human-authorized gate changes):
+  - `schemas/` joins [`protected-paths.txt`](protected-paths.txt) wholesale, and the pinned
+    regression test is protected by file (`tests/test_lab_contracts.py`). The record schemas are the
+    compile target for candidate artifacts and the test pins `validate.py`/`isolation.py`; all were
+    editable by the candidate whose work they judge. Required-entry set in `validate.py` extended to
+    demand coverage of both record schemas and the test file.
+  - The test directory is covered by a declared-content assertion instead of a directory prefix.
+    Protecting `tests/` outright blocked on `tests/__pycache__/*.pyc` — artifacts any candidate
+    carries after running the checks — which would have made the gate fail every candidate that
+    tested its own work, and a gate that fails honest work invites bypass. The assertion rejects
+    undeclared `.py` files in the directory, closing the neutralization vector (a package
+    `__init__` or shim that patches the pinned tests) that file-level protection alone leaves open.
+    The test subprocess also runs with `PYTHONDONTWRITEBYTECODE=1`.
+  - New `validate.py manifests`: the five hand-synced manifests must agree on plugin name and
+    version. A missed bump previously surfaced only after a host reinstall.
+  - New `validate.py tests`: the repository's regression tests run as part of the deterministic set.
+    `all` now covers seven checks instead of five. The orphaned-test gap is closed — the tests were
+    passing but nothing ran them.
+  - Verified by fault injection: a bumped version in one manifest, a removed protected entry, a
+    broken assertion, and an injected `tests/__init__.py` each fail their check; a stray
+    `__pycache__` does not.
+- Add the implicit-behavior discipline: briefs split `write_scope` from `read_scope` (read scope
+  strictly wider), require shared cross-cutting mechanisms to be discovered by framework
+  registration-point search, declared explicitly (empty set included), traced to a registration
+  `path:line` (evidence terminates the trace, not layer count), and checked across surfaces ×
+  legitimate states. Carried in plans by a required `shared_mechanisms[]` field with mandatory
+  `registration_ref`; clauses added to frontend-engineer, backend-engineer, reviewer, and
+  bug-investigator (mechanism-vs-caller conflicts attribute to `missing-constraint`). New eval case
+  AF-015 and bug record BUG-20260915-001 from the real axios-401-interceptor case. Includes
+  `plan.schema.json`, `evals/` — a contract/gate change executed on explicit user request, pending
+  human confirmation.
 - Require a frozen parent revision for candidate protected-diff checks and remove command-line
   replacements for the protected path set.
 - Tighten the dependency-free validator's JSON Schema equality and RFC 3339 date-time handling.

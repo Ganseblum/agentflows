@@ -18,6 +18,89 @@
 
 ## 已完成
 
+- 2026-09-15 第七批：事故的记录与防复发（用户问"这些事故能记录和避免吗"，答案落地）：
+  - 两条正式 bug 记录入库（`records/bugs/2026-09-15/`，均 `fixed-pending-review`）：
+    - `BUG-20260915-002`（severity: medium）：故障注入在真实仓库执行 + `git checkout`
+      "恢复"把 `protected-paths.txt` 重置回提交版、冲掉未提交编辑 + 输出被吞、恢复未验证。
+      归因 `missing-constraint` / `workflow_policy`——缺的是流程约束不是知识。
+    - `BUG-20260915-003`（severity: high）：连续三轮"推演代替实验"的行为断言类（调用链、
+      schema 可查性、`__init__` 机制三例），第三例掩盖了实际存在的完整绕过。同归因。
+  - 防复发三层：`contracts.md` 硬边界 12（行为断言在最小实验复现前只是假设；是边界 4
+    对 supervisor 自身推断的推广）；`AGENTS.md` 新增「Experiments and recovery」规则
+    （注入只在 /tmp 副本、禁止用 checkout/restore 撤销实验、恢复必须复跑检查观察到绿、
+    不得吞掉要主张成功率的命令输出）；既有门作检测兜底（本次 `validate.py protected`
+    在一条命令内抓住回退，实证有效）。
+  - 实务建议（给仓库所有者）：确认一批就提交一批。本次事故损失面（~25 个未提交文件被
+    单文件 mishap 波及）完全来自长尾未提交；分批提交后同类 mishap 的恢复是一条命令。
+  - 若边界 12 后同类断言再犯，按 improve 环升级为评测用例（记录 -003 Notes 已写明触发
+    条件与本轮不加的理由）。
+
+- 2026-09-15 第六批：门变更复审（用户授权）——修一个被我引入又被复验揪出的完整绕过，并补
+  一处治理缺口：
+  - **实证驱动的复审纠正了上一批的两处错误结论**：(1) `tests/__init__.py` 在
+    `discover -s tests` 下惰性、根本不执行（实验 exit=0），上一批文档给它的"中和"能力是
+    错的；(2) 真正的向量是**子目录**：`unittest discover` 会导入起点目录下的子目录包，
+    导入副作用先于任何断言运行。实验中 `tests/asub/` 模块在导入时替换被钉住的测试方法，
+    配合改坏的断言，`validate.py tests` 返回 PASS——**完整绕过实锤**。修复：内容断言从
+    "拒绝未声明 .py"改为"拒绝一切未声明条目（含目录）"，`__pycache__` 除外。故障注入复验：
+    同一攻击现在 FAIL 且点名 `tests/asub`；改坏断言仍 FAIL；有 `__pycache__` 仍 PASS。
+  - **`skills/improve/references/` 整体进禁区**：`episode.schema.json` 是四个治理 schema 中
+    唯一没被保护的。必需条目集合改为逐文件要求该目录全部五个文件，防止前缀收窄时静默
+    丢保护。
+  - **操作事故与教训（写在这里给后续会话看）**：本轮一次故障注入错误地在真实仓库而非
+    副本上执行，随后用 `git checkout protected-paths.txt`"恢复"——但该文件已提交，
+    checkout 把它重置回 0.3.3 提交版，冲掉了本会话全部未提交编辑（schemas/、tests/ 条目
+    与注释块）；恢复时又用 `2>/dev/null` 吞掉了报错，且未验证结果。靠 `validate.py
+    protected` 的 FAIL 才发现。两条纪律写入本节：**故障注入一律在 /tmp 副本上做**；
+    **恢复操作必须观察验证结果（跑一次检查确认绿），未观察的恢复不算恢复**——与
+    AGENTS.md"无法复现的检查记为未运行"同构。最终 `all` 七项全 PASS，文件内容已人工重建
+    为目标状态。
+  - 审计方法备注：本轮所有结论都以最小可复现实验落地（exit code 与输出原文），
+    不以推演代替；上两批的两处过度表述教训已内化为本批的工作方式。
+
+- 2026-09-15 第五批：全项目复核后补齐四处门缺口（用户授权，属门变更）：
+  - `schemas/` 整体进 `protected-paths.txt`，回归测试按**文件**保护
+    （`tests/test_lab_contracts.py`）。理由：记录 schema 是候选产物的编译目标、测试钉住
+    `validate.py`/`isolation.py`，两者原本都可被"正在被它们评判的候选"编辑。
+    `validate.py` 的必需条目集合同步要求覆盖两个记录 schema 与该测试文件。
+  - 测试目录不用目录前缀保护，改用「声明内容」断言。原因是第一批实现暴露的真缺陷：
+    整目录保护会让 `tests/__pycache__/*.pyc`（任何跑过检查的候选都会生成）匹配禁区前缀，
+    于是门对每个跑过自己测试的候选误报 FAIL——门一旦误伤正常流程就会诱使人绕过它，
+    比漏检更危险。断言改为拒绝目录内未声明的 `.py` 文件，堵住文件级保护单独留下的中和
+    向量（放一个包 `__init__` 或垫片去 patch 被钉住的测试）；测试子进程同时带
+    `PYTHONDONTWRITEBYTECODE=1`。
+  - 新增 `validate.py manifests`：五份手工同步的 manifest 必须在插件名与版本上一致。此前漏
+    bump 只在宿主重装后才暴露。
+  - 新增 `validate.py tests`：仓库回归测试接入确定性检查集，`all` 从 5 项变 7 项。
+    「测试存在但没人跑」的孤儿问题关闭。
+  - 用故障注入验证四项检查都会失败：改一份 manifest 版本、删一条禁区条目、改坏一个断言、
+    注入 `tests/__init__.py`；而残留的 `__pycache__` 不会触发阻断。
+  - 单测（`tests/test_lab_contracts.py`）此前未接入任何门：无 CI、无 hook、不在 `all`、
+    AGENTS.md 未提。现在 `all` 包含它，AGENTS.md 与 `tools/lab/README.md` 都写明可直接运行，
+    并记录了一个交互：在候选工作树内跑 lab 工具会留下 `__pycache__`，`check-diff` 会把它列为
+    changed path（因为包含被忽略文件），但不匹配禁区前缀因此不会 blocked。
+
+- 2026-09-15 第四批：隐式行为纪律（起因：用户报告真实前端 bug——全局导航自动登录复用
+  `login()`，方法本身正确，但 axios 封装的响应拦截器在 `code===401` 时跳登录页，与忘记/
+  重置密码页的合法未登录态冲突，用户无法使用该流程）：
+  - 诊断：写入范围被严格定义、读取范围空白；横切机制（拦截器/守卫/全局监听）类别在
+    所有契约中不存在。该 bug 是两个缺陷叠加：追踪止步于复用方法自身逻辑（下一层就是
+    拦截器），且缺少「表面 × 合法状态」交集检查（未登录在该页面是正确状态）。经两轮
+    复核纠正了最初的两处过度表述（"不在调用链上"——其实追一层就能看见机制；"缺行可
+    结构查出"——实际不可查，可查的是显式空声明）。
+  - 落地（用户 2026-09-15 明确授权，含禁区/契约面变更，待人工最终确认）：
+    `contracts.md` 简报拆 `write_scope`/`read_scope`（读取严格大于写入）+ 隐式行为检查
+    （注册点搜索发现机制、显式声明空集、表面×状态矩阵、`path:line` 注册点引用为深度
+    终止条件、残差声明）；`frontend-engineer.md`/`reviewer.md`/`bug-investigator.md` 条款
+    （reviewer 要求行为级证据而非"读过代码"；investigator 对意外全局行为先枚举隐式代码、
+    归因 `missing-constraint`）；`plan.schema.json` 必填 `shared_mechanisms[]`
+    （`registration_ref` 必填，正反例已同步，反例仍只因循环依赖失败）；`AF-015` 用例与
+    input；`BUG-20260915-001` 记录（`error_kind: missing-constraint`，
+    `attribution: workflow_policy`）；中文侧 `agent-roles.md` 与 SKILL.md 步骤 4 同步。
+  - 边界与残留：语义漏检做不出确定性检查，本纪律强制提问并要求证据、不能证明答案
+    正确；异类新缺陷靠反馈环逐案吸收。外部项目（paipai-new-fe）自身的代码修复不在
+    本仓范围。
+
 - 2026-09-14 第三批：角色边界核查与 0.3.3 加固（起因：复核 12 个角色设置是否合理）：
   - 实测确认 ZCode 的插件 agents 生效，且 frontmatter `tools` 白名单生效（宿主 subagent
     列表里 bug-fixer 带工具限制、未声明 tools 的三个角色是全量工具）；`maxTurns` 未验证。
