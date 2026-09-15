@@ -5,18 +5,31 @@
 ## 当前工作区
 
 - Agent 项目目录（当前机器）：`/Users/hang/Documents/myProject/agentflow`
-- 当前配置的 Git remote 为 `https://github.com/Ganseblum/my-agents.git`；当前 `main` 与本地
-  `origin/main` 一致，HEAD 为 `b3c49e9`。远程是否已同步以实际 `git remote -v` 和 fetch
-  结果为准，不把历史机器的仓库名当成事实。
-- 本机没有可由 `validate.py installed` 默认发现的 ZCode Agentflow 安装源。当前 Codex 会话
-  可见的缓存是个人插件目录下的 `0.3.1` 快照；显式运行
-  `python3 tools/lab/validate.py installed --path /Users/hang/.codex/plugins/cache/personal/agentflow/0.3.1`
-  会失败，说明它与源码 `0.3.3` 漂移。安装切换需要在本机重新建立来源后单独验证。
+- 当前配置的 Git remote 为 `https://github.com/Ganseblum/agentflows.git`；`main` 与
+  `origin/main` 一致。远程是否已同步以实际 `git remote -v` 和 fetch 结果为准，不把历史机器的
+  仓库名当成事实。
+- 本机 ZCode 已有可被 `validate.py installed` 默认发现的安装源：local-directory marketplace
+  指向本仓库，快照缓存为 `~/.zcode/cli/plugins/cache/agentflow-local/agentflow/<version>/`。
+  该快照在 2026-09-15 重装过一次；发布新版本后需刷新 marketplace 再重装，否则 `installed`
+  会报"没有源码版本的快照"。Codex 侧 `0.3.1` 缓存路径来自上一台机器，仅作历史记录。
 - 下文记录的上一台机器路径、旧 CLI 仓库、candidate/holdout 目录均只作历史证据，不代表当前
   工作区存在。
 - 旧 CLI 仓库继续保留为历史 runtime 和研究实现，不再是 Plugin 的运行依赖。
 
 ## 已完成
+
+- 2026-09-15 第八批：0.3.4 发布（用户授权 push 与发布）：
+  - 本会话第四~七批改动（横切机制契约、计划 `shared_mechanisms[]`、门缺口加固、事故记录）
+    按主题拆成 4 个提交推送（`21062c0`、`abbffa9`、`985e631`、`8255df6`），均已到
+    `origin/main`。
+  - 发布：CHANGELOG `Unreleased` → `0.3.4 — 2026-09-15`；五份 manifest 同步 0.3.4
+    （`validate.py manifests` 强制一致）；README 与三份设计/边界文档的当前版本引用同步。
+  - **发布性质必须写明**：这是开发版本发布，**没有** baseline/candidate 对照评测证据。
+    按 improve 环的定义它不是一次受治理的候选晋升（release-governor 门未参与），
+    因此不得表述为"已验证的改进"。真实模型 dogfood 仍未完成。
+  - 发布后状态：本机 ZCode 快照为 0.3.3，需刷新 marketplace 并重装才与 0.3.4 一致；
+    在此之前 `validate.py installed` 报红属预期（已在风险节说明）。
+  - 顺手修正交接文档的陈旧当前态（remote 名、HEAD、安装源描述在上一轮之后已过时）。
 
 - 2026-09-15 第七批：事故的记录与防复发（用户问"这些事故能记录和避免吗"，答案落地）：
   - 两条正式 bug 记录入库（`records/bugs/2026-09-15/`，均 `fixed-pending-review`）：
@@ -289,8 +302,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 ## 当前风险
 
 - 宿主安装快照与源码会漂移，且漂移是静默的：ZCode 从安装快照加载角色，Codex 也可能从
-  单独缓存加载技能。默认 `validate.py installed` 只查 ZCode；当前 Codex 0.3.1 缓存需用
-  `--path` 显式检查，源码是 0.3.3，处于已知不一致状态。
+  单独缓存加载技能。默认 `validate.py installed` 只查 ZCode；本机快照已于 2026-09-15 重装到
+  0.3.3，随后源码发布 0.3.4，因此在本机再次刷新并重装之前，`installed` 会以"没有源码版本的
+  快照"报红——这是预期状态，不是回归。重装后应转绿。
 - 禁区清单（`protected-paths.txt`）由 `isolation.py check-diff` 与 `validate.py protected` 共同
   守住，但这条防线是自指的：清单、校验器和隔离检查本身也在禁区里，一个同时改掉三者的候选
   在工具层就查不出来，真正的兜底仍是人工审查 + Supervisor 的 diff 检查。因此「清单/校验器/

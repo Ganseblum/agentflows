@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.4 — 2026-09-15
 
 - Record and prevent this session's incident class: bug records BUG-20260915-002 (fault injection
   executed on the real repository; a `git checkout` "recovery" reset `protected-paths.txt` to its
