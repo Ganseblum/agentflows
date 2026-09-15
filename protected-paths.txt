@@ -9,8 +9,28 @@
 # Inclusion rule: a path belongs here when it decides whether a candidate is measured or judged —
 # the evaluator and governor role instructions, the evaluation suite, the measurement path
 # (runner, adapter, digest), the deterministic release policy, the compile step, the boundary
-# check, and the result schemas. Role prompts that only describe how work is done are NOT
+# check, the record contracts that compile step enforces, the regression tests that pin the gate
+# tools, and the result schemas. Role prompts that only describe how work is done are NOT
 # protected; improving them is the point of the loop.
+#
+# Three prefixes below are deliberately broad. `schemas/` covers the record contracts that
+# `validate.py` compiles candidate artifacts against: a candidate that loosens the schema it is
+# measured by has edited its own gate. `skills/improve/references/` is the improvement loop's
+# rulebook — the evidence-and-release rules and the episode, candidate, eval-case, and
+# release-record schemas (episode.schema.json is protected by this entry; it had been the one
+# governance schema a candidate could still edit). Both mean a legitimate contract or rule change
+# is a human-reviewed change rather than a candidate edit — that is the intended trade.
+#
+# The regression tests are protected by file, not by directory, and `validate.py tests` asserts
+# the directory holds exactly its declared entries. Protecting the whole directory instead would
+# block on `tests/__pycache__/*.pyc` — artifacts any candidate carries after running the checks —
+# so the gate would fail every candidate that tested its own work. The declared-content check
+# must reject directories as well as files: `unittest discover` imports packages found in
+# subdirectories, and import-time code runs before any assertion. A demonstrated bypass adds a
+# subdirectory whose module replaces a pinned test method at import time, so a broken assertion
+# passes and the gate returns PASS. A stray `tests/__init__.py` is inert under
+# `discover -s tests` (it is imported only by discovery started from the repository root); the
+# entry check rejects it regardless.
 #
 # Changing anything here is a gate change: it requires explicit human review before it is used.
 #
@@ -22,13 +42,10 @@ agents/release-governor.md
 
 evals/
 
-skills/improve/references/evidence-and-release.md
-skills/improve/references/eval-case.schema.json
-skills/improve/references/candidate.schema.json
-skills/improve/references/release-record.schema.json
+skills/improve/references/
 
-schemas/evaluation-result.schema.json
-schemas/adapter-case-result.schema.json
+schemas/
+tests/test_lab_contracts.py
 
 tools/lab/artifact_digest.py
 tools/lab/eval_runner.py

@@ -12,7 +12,9 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterable
@@ -43,8 +45,15 @@ REQUIRED_PROTECTED_PATHS = {
     "agents/evaluator.md",
     "agents/release-governor.md",
     "evals",
-    "skills/improve/references/evidence-and-release.md",
+    "schemas/bug-record.schema.json",
+    "schemas/plan.schema.json",
     "schemas/evaluation-result.schema.json",
+    "skills/improve/references/evidence-and-release.md",
+    "skills/improve/references/episode.schema.json",
+    "skills/improve/references/eval-case.schema.json",
+    "skills/improve/references/candidate.schema.json",
+    "skills/improve/references/release-record.schema.json",
+    "tests/test_lab_contracts.py",
     "tools/lab/artifact_digest.py",
     "tools/lab/eval_runner.py",
     "tools/lab/host_adapter.py",
@@ -53,6 +62,22 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/validate.py",
     "protected-paths.txt",
 }
+
+# Declared contents of `tests/`. The directory is not a protected prefix — generated
+# `__pycache__` entries there would otherwise block every candidate that ran the checks — so the
+# pinned test files are protected individually and this list asserts nothing else appears. A new
+# test file is a human-authored change to this list plus the protection entry above.
+EXPECTED_TEST_FILES = ("test_lab_contracts.py",)
+
+# Every manifest that carries the plugin name and version. They are bumped by hand, so a missed
+# bump would otherwise surface only after a host reinstall. The pointer locates the value.
+MANIFEST_POINTERS = (
+    ("plugin.json", ()),
+    ("marketplace.json", ("plugins", 0)),
+    (".zcode-plugin/plugin.json", ()),
+    (".claude-plugin/plugin.json", ()),
+    (".codex-plugin/plugin.json", ()),
+)
 
 # Components whose content decides installed plugin behavior. Anything outside this list
 # (docs, records, evals) may legitimately differ between a source checkout and a snapshot.
@@ -818,6 +843,112 @@ def validate_protected_paths() -> list[ValidationError]:
     return errors
 
 
+def manifest_value(name: str, pointer: tuple[Any, ...]) -> tuple[str | None, list[ValidationError]]:
+    """Read a nested manifest value by pointer, e.g. ("plugins", 0, "version")."""
+    path = ROOT / name
+    if not path.is_file():
+        return None, [ValidationError(name, "manifest is missing")]
+    document, load_errors = load_json(path)
+    if load_errors:
+        return None, load_errors
+    value: Any = document
+    for part in pointer:
+        if isinstance(part, int):
+            if not isinstance(value, list) or len(value) <= part:
+                return None, [ValidationError(name, f"manifest has no {'.'.join(map(str, pointer))!s}")]
+            value = value[part]
+        else:
+            if not isinstance(value, dict) or part not in value:
+                return None, [ValidationError(name, f"manifest has no {'.'.join(map(str, pointer))!s}")]
+            value = value[part]
+    if not isinstance(value, dict):
+        return None, [ValidationError(name, "manifest entry must be an object")]
+    return value, []
+
+
+def validate_manifests() -> list[ValidationError]:
+    """Require the hand-synced manifests to agree on the plugin name and version."""
+    errors: list[ValidationError] = []
+    names: dict[str, str] = {}
+    versions: dict[str, str] = {}
+    for name, pointer in MANIFEST_POINTERS:
+        entry, entry_errors = manifest_value(name, pointer)
+        if entry_errors:
+            errors.extend(entry_errors)
+            continue
+        version = entry.get("version")
+        if not isinstance(version, str) or not version:
+            errors.append(ValidationError(name, "manifest is missing a version string"))
+        else:
+            versions[name] = version
+        plugin_name = entry.get("name")
+        if not isinstance(plugin_name, str) or not plugin_name:
+            errors.append(ValidationError(name, "manifest is missing a name string"))
+        else:
+            names[name] = plugin_name
+    if len(set(versions.values())) > 1:
+        reference = versions.get("plugin.json")
+        for name, version in sorted(versions.items()):
+            if version != reference:
+                errors.append(
+                    ValidationError(name, f"version {version!r} disagrees with plugin.json {reference!r}")
+                )
+    if len(set(names.values())) > 1:
+        reference = names.get("plugin.json")
+        for name, plugin_name in sorted(names.items()):
+            if plugin_name != reference:
+                errors.append(
+                    ValidationError(name, f"name {plugin_name!r} disagrees with plugin.json {reference!r}")
+                )
+    return errors
+
+
+def validate_unit_tests() -> list[ValidationError]:
+    """Assert the declared test layout, then run the repository's regression tests.
+
+    `tests/` is protected by file rather than by directory so that generated `__pycache__` entries
+    do not block a candidate that ran the checks. This declared-content assertion is the other half
+    of that trade, and it must cover directories, not only `.py` files: `unittest discover` imports
+    every matching module under the start directory, including packages in subdirectories, and
+    import-time code runs before any assertion. A demonstrated bypass adds `tests/<subdir>/` whose
+    module replaces a pinned test method at import time, so the broken assertion passes and the
+    gate returns PASS. The scan therefore rejects every entry that is not declared here. These
+    tests pin `validate.py` and `isolation.py`, so a failure is a gate regression.
+    """
+    errors: list[ValidationError] = []
+    tests_dir = ROOT / "tests"
+    if not tests_dir.is_dir():
+        return [ValidationError("tests", "the test directory is missing")]
+    allowed = set(EXPECTED_TEST_FILES) | {"__pycache__"}
+    for entry in sorted(tests_dir.iterdir()):
+        if entry.name.startswith(".") or entry.name in allowed:
+            continue
+        errors.append(
+            ValidationError(
+                f"tests/{entry.name}",
+                "unexpected entry in the test directory; declare it here and in protected-paths.txt",
+            )
+        )
+    for name in EXPECTED_TEST_FILES:
+        if not (tests_dir / name).is_file():
+            errors.append(ValidationError(f"tests/{name}", "declared test file is missing"))
+    if errors:
+        return errors
+    completed = subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "-s", "tests"],
+        cwd=str(ROOT),
+        text=True,
+        capture_output=True,
+        check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    if completed.returncode == 0:
+        return []
+    detail = (completed.stderr.strip() or completed.stdout.strip()).splitlines()
+    summary = detail[-1] if detail else "no output"
+    return [ValidationError("tests", f"unit tests failed (exit {completed.returncode}): {summary}")]
+
+
 def plugin_identity() -> tuple[str, str, str] | None:
     """Return (marketplace, plugin, version) for the source checkout, when declared."""
     manifest, load_errors = load_json(ROOT / "plugin.json")
@@ -980,7 +1111,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "target",
-        choices=["schemas", "examples", "evals", "artifacts", "protected", "installed", "all", "report"],
+        choices=[
+            "schemas",
+            "examples",
+            "evals",
+            "artifacts",
+            "protected",
+            "manifests",
+            "tests",
+            "installed",
+            "all",
+            "report",
+        ],
         help="contract set to validate, or 'report' to list bug records",
     )
     parser.add_argument(
@@ -1007,12 +1149,16 @@ def main(argv: list[str] | None = None) -> int:
         "evals": [("evals", validate_evals)],
         "artifacts": [("artifacts", validate_workspace_artifacts)],
         "protected": [("protected", validate_protected_paths)],
+        "manifests": [("manifests", validate_manifests)],
+        "tests": [("tests", validate_unit_tests)],
         "all": [
             ("schemas", validate_schemas),
             ("examples", validate_examples),
             ("evals", validate_evals),
             ("artifacts", validate_workspace_artifacts),
             ("protected", validate_protected_paths),
+            ("manifests", validate_manifests),
+            ("tests", validate_unit_tests),
         ],
     }[args.target]
 

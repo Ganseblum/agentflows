@@ -41,9 +41,10 @@ resulting paths and verification evidence because the host does not enforce arbi
 constraints on the `Write` tool; see [AGENTS.md](AGENTS.md).
 
 The candidate gate surface — the evaluator and governor role files, the evaluation suite, the
-measurement path, the release rules, and the result schemas — is declared once in
-[`protected-paths.txt`](protected-paths.txt). `isolation.py check-diff` rejects a candidate diff
-that touches it. Run it from the trusted source checkout with the frozen parent revision:
+measurement path, the release rules, the record schemas under `schemas/`, the pinned regression
+test, and the list itself — is declared once in [`protected-paths.txt`](protected-paths.txt).
+`isolation.py check-diff` rejects a candidate diff that touches it. Run it from the trusted source
+checkout with the frozen parent revision:
 
 ```sh
 python3 tools/lab/isolation.py check-diff \
@@ -51,7 +52,8 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` keeps the list from being quietly trimmed.
+`validate.py protected` keeps the list from being quietly trimmed, and `validate.py all` now also
+requires the five manifests to agree on name and version and runs the repository's regression tests.
 
 The three Bug roles are selectable capabilities, not a mandatory ceremony for every issue.
 Use the full Investigator → Fixer → Reviewer → Recorder flow for material, uncertain,
@@ -65,7 +67,7 @@ retrieval, a private holdout service, canary rollout, and automatic rollback are
 implemented yet. Human approval is the default release boundary.
 
 The workspace contains the P0 implementation slice: Bug Record and Plan contracts, sanitized
-positive/negative examples, fourteen public evaluation cases, a dependency-free contract
+positive/negative examples, fifteen public evaluation cases, a dependency-free contract
 validator (including the installed-snapshot drift check), an explicit host-adapter result protocol,
 isolation checks, a fail-closed Codex/Claude host-adapter wrapper, and a deterministic policy
 evaluator. Real model dogfood, private holdout service, and installation/release switch

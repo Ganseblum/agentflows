@@ -20,8 +20,26 @@ before accepting a worker's record, and treat failures as compile errors.
 
 `validate.py protected` checks that [`protected-paths.txt`](../../protected-paths.txt) still covers
 every required gate path — the evaluator and governor roles, the evaluation suite, the measurement
-path, the release rules, and the result schemas. `all` includes it, so a candidate cannot quietly
-trim the gate surface it is judged by.
+path, the release rules, the record schemas, and the regression tests for the gate tools. `all`
+includes it, so a candidate cannot quietly trim the gate surface it is judged by.
+
+`validate.py manifests` requires the five hand-synced manifests (`plugin.json`,
+`marketplace.json`, `.zcode-plugin/`, `.claude-plugin/`, `.codex-plugin/`) to agree on the plugin
+name and version; a missed bump would otherwise surface only after a host reinstall.
+
+`validate.py tests` asserts the declared contents of `tests/` and runs
+`python3 -m unittest discover -s tests` with `PYTHONDONTWRITEBYTECODE=1`. Both are in `all`. The
+tests pin `validate.py` and `isolation.py`, so a failure is a gate regression. The test files are
+protected individually rather than by directory prefix: protecting `tests/` outright would block on
+`tests/__pycache__/*.pyc`, which any candidate carries after running the checks, and a gate that
+fails honest work invites bypass. The declared-content assertion rejects every undeclared entry,
+directories included, and the reason is a demonstrated bypass: `unittest discover` imports packages
+found in subdirectories, and import-time code runs before any assertion — an added subdirectory
+whose module replaces a pinned test method makes a broken assertion pass and the gate return PASS.
+(A stray `tests/__init__.py` is inert under `discover -s tests` and only imports when discovery
+starts from the repository root; the entry check rejects it regardless.) Running lab tools inside a
+candidate worktree still leaves `__pycache__` entries in `check-diff`'s changed paths, because that
+check includes ignored files; they are listed, not blocked.
 
 `validate.py installed` compares the runtime components of the source checkout (`agents/`,
 `skills/`, the manifests) against an installed plugin snapshot, defaulting to the ZCode cache for
