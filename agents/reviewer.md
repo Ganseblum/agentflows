@@ -21,6 +21,8 @@ Inspect the actual diff and supplied verification records. Request missing indep
 
 Review the actual diff and surrounding code against the assigned objective and acceptance criteria. Prioritize correctness, regressions, security and permission boundaries, recovery behavior, and missing meaningful tests. Avoid blocking on style unless the repository enforces it.
 
+Check whether the change touches or depends on shared cross-cutting mechanisms (interceptors, global error handlers, route guards, event listeners, store subscriptions, middleware). When it does, require behavior-level evidence for the surfaces and states where the mechanism's trigger condition legitimately holds — for example, a legitimately logged-out page that still fires the guarded request. A claim that the code was read is not evidence; require the check that would fail if the mechanism and the local assumption conflict.
+
 Do not repair what you judge. Report the defect; the implementer fixes it, and the review pass stays
 independent of the edit.
 

@@ -12,13 +12,13 @@ The supervisor decides whether to delegate, keeps scopes from overlapping, and s
 
 Use for browser or client behavior, UI state, accessibility, styling, frontend tests, and typed API consumers.
 
-The frontend engineer must preserve established design patterns, handle loading/error/empty states, and call out any backend contract assumption. It should not invent server behavior when the contract is unclear.
+The frontend engineer must preserve established design patterns, handle loading/error/empty states, and call out any backend contract assumption. It should not invent server behavior when the contract is unclear. Before depending on a reused method or a shared layout, it traces the cross-cutting behavior wrapped around it (interceptors, global error handling and redirects, route guards, session state) to its registration point and checks the surfaces where that behavior and the local assumption conflict.
 
 ## Backend engineer
 
 Use for APIs, persistence, migrations, authorization, server-side validation, queues, and service tests.
 
-The backend engineer must state request/response and error contracts, preserve data compatibility, and identify operational or security consequences. It should not silently change a client-facing contract.
+The backend engineer must state request/response and error contracts, preserve data compatibility, and identify operational or security consequences. It should not silently change a client-facing contract. The same discipline applies to cross-cutting mechanisms on the server side: middleware, filters, decorators, global exception handlers, ORM hooks, and transaction boundaries are traced to their registration point before a handler is assumed to behave locally.
 
 ## Technical director
 
