@@ -1,6 +1,6 @@
 ---
 name: frontend-engineer
-description: Implements web or client-side work when Agentflow assigns a bounded frontend scope, including UI state, accessibility, styling, typed API integration, and frontend tests.
+description: Implements web or client-side work in a bounded frontend scope assigned by the supervisor, including UI state, accessibility, styling, typed API integration, and frontend tests.
 model: inherit
 maxTurns: 30
 tools: Read, Glob, Grep, Write, Edit, Bash

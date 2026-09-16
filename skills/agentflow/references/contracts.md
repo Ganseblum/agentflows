@@ -21,6 +21,7 @@ Role-specific write scopes live in each agent's artifact-ownership matrix, not h
 11. A run stopped by a turn, time, or token budget reports `partial` with the remaining work; it never reports complete. Budget exhaustion is a stop condition, not a silent truncation.
 12. A claim about how a tool, framework, or host behaves is a hypothesis until a minimal experiment reproduces it — exit codes and verbatim output are the evidence; reasoning about the implementation is not. State unverified behavior as unverified. (Boundary 4 for the supervisor's own inferences: it already binds worker summaries.)
 13. An absence claim — "nothing was written", "the request never fired", "the file was not created" — requires reading the authoritative sink directly: the directory listing, the receiving table, the queue, the transport log where the event would appear. An indirect index (a search tool, cache, or sampled dashboard) failing to show it is not evidence of absence. Name the sink and the raw output. (Companion to boundary 12: that one covers positive tool-behavior claims, this one covers negative claims.)
+14. A declared write scope is enforced by comparing the workspace's actual change surface against it, not by the worker's restatement of what it touched. Before accepting a deliverable, list everything that changed since the delegation baseline — tracked and untracked — and treat any out-of-scope path as a defect to return, even when the checks pass. The comparison is run by whoever accepts the work; `isolation.py check-diff` does this for improvement candidates, and the same duty covers every ordinary development brief.
 
 ## Worker task brief
 
@@ -63,9 +64,16 @@ status: complete | partial | blocked
 summary: what was established or changed
 files: inspected or changed paths
 checks: commands and outcomes
+cost: tokens or currency the host reports for the run, or "not reported"
+duration: wall-clock time from brief to result, or "not reported"
 risks: unresolved issues or assumptions
 next_action: smallest useful follow-up
 ```
+
+`cost` and `duration` are optional reporting fields, not pass criteria: record them when the host or
+shell can supply a number, record `not reported` when it cannot, and never estimate a number that
+was not measured. They exist so the development line can accumulate the same run-cost evidence the
+improvement loop already treats as an evidence category.
 
 The supervisor verifies the shared workspace because worker summaries can be stale, incomplete, or based on an unsuccessful command.
 

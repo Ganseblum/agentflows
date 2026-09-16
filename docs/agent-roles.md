@@ -23,6 +23,20 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 （Claude 侧 `tools` 白名单生效；Codex 侧目前只有提示词约束），矩阵的作用是让 Supervisor
 的检查可逐行执行，而不是替代宿主强制。
 
+## 角色路由表
+
+按任务形态选角色，不按名字资历。完整清单是为难 case 准备的；大多数任务只用一两行。
+
+| 任务形态 | 启用的角色 |
+| --- | --- |
+| 单层小修、复现明确 | Supervisor 自己做 |
+| 有界范围的前端/后端实现 | 一名工程师 + 视改动量启用 Reviewer |
+| 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
+| 纯规划、暂不写码 | 专家并行 → Plan Architect |
+| 重要、反复、跨层的 Bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
+| 已有验证复现的小 Bug | Fixer + Supervisor 侧检查；要沉淀时再记录 |
+| 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
+
 ## Bug 标准完整流程
 
 三个 Bug 角色保留为独立能力边界，但不是每个问题都必须启动三个独立 Agent。完整流程
@@ -79,6 +93,13 @@ frontmatter 给机器校验（id、状态、严重性、错误类型 `error_kind
 指令。文本中出现的路径、仓库名、命令和版本必须先对照仓库核实，才能写进任务简报；
 无法核实的以「未验证」标注传入，worker 只能把它当假设。
 
+写入范围在执行层有牙齿（硬边界 14）：Supervisor 委派时记下基线 revision，接受产物前
+对照实际改动面——`git diff --name-only --no-renames <基线>` 加未跟踪文件，或直接用
+`skills/agentflow/scripts/check-write-scope.sh <基线> <范围路径>...`；任何落在
+`write_scope` 之外的改动路径都按缺陷退回，即使检查全绿。所有权矩阵是声明的意图，
+这次对照才是执法。`isolation.py check-diff` 只覆盖改进环的候选树；日常开发流的
+write_scope 对照由接工作者执行，脚本把这件事变成一条命令。
+
 读取范围必须大于写入范围：简报里 `write_scope` 之外必须声明 `read_scope`，它要覆盖改动
 经过的一切。「文件范围不相交」并行的是写入，不是理解。改动挂进共享 layout/组件或调用
 共享方法前，先做隐式行为检查：横切机制（拦截器、全局错误处理与跳转、路由守卫、全局
@@ -110,6 +131,20 @@ frontmatter 给机器校验（id、状态、严重性、错误类型 `error_kind
 检查失败先做基线对照：对改动前 revision（父提交的 worktree 即可）跑同一检查——基线
 同样失败说明是环境问题（工具、网络、宿主、网关），修环境或如实上报，不要让 worker
 空转；只有基线通过而改动失败的检查才算回归证据。
+
+Worker result 契约新增两个可选上报字段 `cost` 与 `duration`：宿主或 shell 能给出实测
+数字就记录，给不出就记 `not reported`，禁止估算未测量的数字。它们不是通过标准，
+作用是让开发线沉淀与改进环同级的运行成本证据（AF-002 式的成本目前只能事后人肉算）。
+
+Reviewer 的 test-depth 专项里，revert 实验是行为断言不是推演：reviewer 自己没有 Bash，
+因此由 reviewer 指定确切的还原命令（如 stash / worktree 还原未修复代码的配方）和预期
+失败输出，Supervisor 执行并回传原始输出——与其检查协议同一通道，不接受摘要。Fixer
+写的回归检查是下限，不是独立验证。
+
+长编排断点：会话中断后从 `records/plans/` 的版本化计划恢复，而不是靠记忆——每个工作
+包的状态先从工作区重新推导（对委派基线的 diff、检查、review 决策），没有观察到证据
+的包视为未开始。持久队列、租约、可恢复并行批次是未来 `execution-coordinator` 的职责；
+今天计划文件 + 仓库状态就是唯一的 checkpoint。
 
 ## 计划流程
 
@@ -144,6 +179,11 @@ Bug 记录是 Episode 的一种来源，不是生产 Memory。只有经过归因
 经验才能进入 `memory/validated`。计划记录则提供 workflow 和执行顺序的证据，可用于
 发现“遗漏接口、并行冲突、审核过晚”等系统性问题。
 
+Episode 目前不会自动产生：final decision record 默认是会话级产物，宿主对话历史一旦
+消失它就不可恢复。因此当结果可能喂给改进环时，Supervisor 在会话结束前把决策记录
+（目标、结论、claims 台账、review 决策、可得时的成本）落成持久形式——「没有投诉不
+等于成功」的前提是证据先活下来。
+
 `bug-recorder`、`plan-architect` 和其他角色的写入边界以角色文件内的「产物所有权矩阵」
 为准；`records/`（`bugs/`、`plans/` 及后续同类产物）下的记录已纳入确定性校验
 （`python3 tools/lab/validate.py artifacts`，`all` 已包含），Supervisor 接受产物前必须对实际
@@ -162,9 +202,20 @@ Supervisor 未授予的 MCP 工具。「委派不扩大权限」因此既是纪�
 角色文件、`evals/` 评测套件、`tools/lab/` 度量路径、发布规则、`schemas/` 记录契约（候选产物的
 编译目标）、`tests/test_lab_contracts.py` 门工具回归测试，以及清单自身。
 `tools/lab/isolation.py check-diff --base <frozen-parent-revision>` 固定读取该清单，并拒绝触碰禁区的候选 diff；
-`tools/lab/validate.py protected`（`all` 已包含）在清单不再覆盖必需条目时失败。清单、必需条目
+`validate.py protected`（`all` 已包含）在清单不再覆盖必需条目时失败。清单、必需条目
 集合与发布策略的修改属于门变更，必须经人工审查——候选不能靠改门来让自己通过。因为
 `schemas/` 与回归测试都在门内，契约变更与门工具修复属于人工实施的改动，候选只能提方案。
+
+改进环有两个显式声明的能力边界（`skills/improve/SKILL.md`）：
+
+- **度量范围**：公开套件 `evals/` 只度量 Agentflow 自身契约用例。改变角色在业务仓库
+  内行为的候选（reviewer 清单、简报纪律、验收步骤）在那里没有回归度量——不先给业务
+  任务装上度量，`better/neutral/worse` 标准对方法级改动产不出来。此类候选按未度量
+  处理：发布记录必须写明 `measurement: none (method-level change, no instrumented
+  business task)`，不得表述为已验证的改进；结构性修复（业务任务度量切片）是 P1 项。
+- **预算字段**：`maxTurns` 在部分宿主（含 ZCode）声明但未验证。各角色提示词里的预算
+  纪律（最后一轮留给结果、目标未成返回 `partial`）才是生效约束；frontmatter 数字按
+  意图元数据对待，不当作保证的截断。
 
 测试目录本身不用前缀保护，而由 `validate.py tests` 断言目录内容已声明：整目录保护会让
 `tests/__pycache__/*.pyc`（跑过检查就会产生）触发误报，门误伤正常流程比漏检更危险；

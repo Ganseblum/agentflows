@@ -1,6 +1,6 @@
 ---
 name: backend-engineer
-description: Implements server-side work when Agentflow assigns a bounded backend scope, including APIs, persistence, authorization, validation, migrations, and service tests.
+description: Implements server-side work in a bounded backend scope assigned by the supervisor, including APIs, persistence, authorization, validation, migrations, and service tests.
 model: inherit
 maxTurns: 30
 tools: Read, Glob, Grep, Write, Edit, Bash

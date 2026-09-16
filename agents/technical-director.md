@@ -1,6 +1,6 @@
 ---
 name: technical-director
-description: Makes read-only cross-layer architecture decisions for Agentflow when a feature changes interfaces, security boundaries, persistence, sequencing, or other costly-to-reverse design choices.
+description: Makes read-only cross-layer architecture decisions when a feature changes interfaces, security boundaries, persistence, sequencing, or other costly-to-reverse design choices. Use for conflicting proposals or expensive-to-reverse decisions, not routine single-layer fixes.
 model: inherit
 maxTurns: 12
 tools: Read, Glob, Grep

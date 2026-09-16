@@ -51,6 +51,22 @@ The candidate write scope excludes every path declared in [`protected-paths.txt`
 
 Changes to permissions, tool access, hooks, MCP connections, release policy, evaluator instructions, holdout data, or automatic-promotion thresholds always require human review. Never let a candidate relax the gate used to approve itself.
 
+**Measured scope.** The public suite under `evals/` measures Agentflow against its own contract
+cases. A candidate that changes how roles behave *inside business repositories* — reviewer
+checklists, brief disciplines, acceptance steps — has no regression measurement there: the
+`better / neutral / worse` standard of this loop cannot be produced for method-level changes
+without instrumenting a business task. Treat such a candidate as unmeasured: its evidence is the
+reasoning plus any incident or review findings that triggered it, its release record must state
+`measurement: none (method-level change, no instrumented business task)`, and it must not be
+described as a verified improvement. The structural fix — an instrumented slice of real
+business-repository tasks — is a P1 item, not something a candidate may improvise.
+
+**Budget fields are declared, not enforced.** `maxTurns` in an agent's frontmatter is not
+verified on every host (on ZCode it is declared but unverified). The budget discipline in each
+role's prompt — reserve the final turn for the result, return `partial` when the objective is
+unmet — is the operative constraint; treat the frontmatter number as intent metadata, not a
+guaranteed truncation.
+
 The hard-boundary list in the agentflow skill's [contracts](../agentflow/references/contracts.md#hard-boundaries) applies to every improvement role as well.
 
 ## Stop bad loops

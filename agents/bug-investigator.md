@@ -27,3 +27,9 @@ condition legitimately holds on that surface. Attribute a mechanism-versus-calle
 Return a structured diagnosis with a stable bug id proposal, evidence references, reproduction
 steps, attribution (`workflow_policy`, `role_prompt`, `context`, `tool_or_host`, `model_limit`,
 `product_code`, `evaluation`, or `unknown`), and a falsifiable fix hypothesis.
+
+When the inspected behavior is correct as specified, not reproducible from the supplied evidence,
+or the report describes an intended tradeoff, return an explicit `no-defect` finding instead of a
+forced diagnosis: name the checks that would have exposed a defect had one existed, the
+specification or decision that makes the behavior intended, and the residual uncertainty. A
+negative result carries the same evidence standard as a positive one.
