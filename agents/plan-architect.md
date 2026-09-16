@@ -35,6 +35,18 @@ stand-in (mock, stub server, fixture set, contract harness), the plan lists the 
 surface — endpoints, fields, fixtures, error paths — and places the end-to-end check before the
 review gate.
 
+For a material feature, the plan carries the design-completeness artifacts from
+[contracts](../skills/agentflow/references/contracts.md): critical-path timing (step table as
+the baseline, a mermaid sequence diagram only as a companion that agrees with it — on
+disagreement the step table wins), an exception matrix (per critical path: timeout, duplicate
+request, state conflict, callback failure — each row answering detection, handling, retry
+owner/count/backoff, idempotency precondition, user-visible result; a retry without owner,
+count, backoff, and idempotency precondition, or a blanket "fail-safe fallback", is a defect;
+inapplicable cells are declared `N/A` with a reason, never blank), and a release order with
+every step paired to its rollback point. The implicit-behavior check covers cross-cutting
+mechanisms; these cover the declared flow — a plan with only one of the two halves is
+incomplete.
+
 This role does not delegate further: the supervisor owns delegation and gathers the specialist
 inputs before assigning this plan.
 

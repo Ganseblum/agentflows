@@ -15,6 +15,7 @@ hard cases; most tasks use one or two rows.
 | Planning request, no code yet | Specialists in parallel → Plan Architect |
 | Material, uncertain, recurring, or cross-layer bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | Small bug with a verified reproduction | Fixer + Supervisor-side check; record when it should persist |
+| Review of documents authored under another system's rules | Supervisor (archive + review record) + Reviewer; findings become bug records with `provenance: external` |
 | Plugin/role-instruction improvement | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
 ## Supervisor
@@ -51,7 +52,7 @@ Specialist audits — security, test depth, documentation accuracy — run throu
 
 ## Bug investigator
 
-Use when a bug's scope, cause, or attribution is unclear — especially cross-module, cross-layer, or host-related failures. Read-only; it returns a structured diagnosis with reproduction steps, severity, attribution, and a falsifiable fix hypothesis, never a fix. When the behavior turns out to be correct as specified, it returns an explicit `no-defect` finding with the same evidence standard.
+Use when a bug's scope, cause, or attribution is unclear — especially cross-module, cross-layer, or host-related failures. Read-only; it returns a structured diagnosis with reproduction steps, severity (P0–P3), attribution, provenance, and a falsifiable fix hypothesis, never a fix. Provenance (`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`) is justified with evidence — a citation for an owning clause, or an explicit statement that no clause covers the artifact — because it decides whether the record may later drive an Agentflow change. When the behavior turns out to be correct as specified, it returns an explicit `no-defect` finding with the same evidence standard. It checks `records/bugs/recurrence/` first: a bug matching an existing class is proposed as a recurrence occurrence, not a fresh class.
 
 For unexpected global behavior (a redirect or toast the local code never requested), it first enumerates what runs implicitly in the affected context — interceptors, guards, global listeners — before attributing to the visible call chain.
 
@@ -61,7 +62,7 @@ Use once a diagnosis exists. It implements the smallest compatible fix plus a fo
 
 ## Bug recorder
 
-Use when a diagnosed bug's evidence should persist — recurring classes, process incidents, anything the improvement loop may later consume. It writes exactly the one `records/bugs/<date>/<slug>.md` path the supervisor assigns, with sanitized frontmatter and narrative. It may not mark a record `verified` from a fixer summary alone; that requires an approved independent review plus a passing regression check.
+Use when a diagnosed bug's evidence should persist — recurring classes, process incidents, anything the improvement loop may later consume. It writes exactly the one `records/bugs/<date>/<slug>.md` path the supervisor assigns, with sanitized frontmatter and narrative; when the bug belongs to a recurrence class it also carries `class_id` + `occurrence`, and the ledger under `records/bugs/recurrence/` lists it. Consolidation state (`consolidated` / `consolidated_in`) is written only from an actual Agentflow release that absorbed the class — the tier (`single` / `recurred` / `escalated`) is derived by the validator, never hand-marked. It may not mark a record `verified` from a fixer summary alone; that requires an approved independent review plus a passing regression check.
 
 ## Plan architect
 

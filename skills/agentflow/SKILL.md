@@ -34,7 +34,44 @@ supervisor decides whether it is approved, assigns execution, integrates results
 final stop or rollback decision. A future `execution-coordinator` may handle durable queues,
 leases, dependencies, retries, and resumable parallel batches, but it is not a current role.
 The plan must include dependencies, parallel lanes, acceptance criteria, risks, ownership, and
-review gates. A plan is an execution contract, not an approval to change code.
+review gates. A plan is an execution contract, not an approval to change code. For a material
+feature the plan carries the design-completeness artifacts from
+[contracts](references/contracts.md): critical-path timing (step table as baseline), an
+exception matrix per critical path, and a release order paired with rollback points.
+
+## Second-pass review of external documents
+
+When the user asks for a review of documents authored under another system's rules (for example
+a proposal/spec/design/plan produced inside a business repository's own template system), run
+the independent reviewer role against those documents and land the evidence here:
+
+1. Locate or create the feature-anchored directory `records/reviews/<project>-<feature-slug>/`.
+   The directory is anchored on the reviewed feature, not the date: the same feature may be
+   reviewed repeatedly (today, tomorrow, after fixes) and every round is one more
+   `review-<YYYY-MM-DD>-<NNN>.md` file in the same directory. Archive **verbatim copies** of
+   the round's documents under `archive/<date>-<NNN>/` — one snapshot subdirectory per round so
+   same-named documents never collide — and record the target repository's current commit as
+   `source_revision`: later edits there must not retroactively change what was reviewed. A
+   re-review focuses on the delta since the previous round's review_id.
+2. The reviewer applies this repo's review contract to the snapshot (the reviewer profile's
+   check protocol and, where relevant, the design-completeness artifacts above).
+3. File every finding as a bug record under `records/bugs/` with `project` set to the target
+   repository. Attribution separates the two upgrade loops: `provenance: external` +
+   `attribution: product_code` marks a template/rule gap in the target system — the evidence
+   pool for upgrading that system's templates; `provenance: agentflow` means this repo's review
+   contract should have caught it. When the target system's upgrade lands, backfill
+   `fix_revision` with its commit. References must stay self-contained: a `files` entry either
+   resolves inside this repository or is repo-qualified (`<repo>@<revision>:<path>`) — a bare
+   external path fails validation because it dangles for anyone without that repository — and
+   the body embeds the decisive snippet or quoted sentence so the record stays readable when
+   the other repository is absent.
+4. Write `review-<date>-<NNN>.md` (contract: `schemas/review.schema.json`; filename equals
+   review_id) with the decision, the findings list, and the archived-doc references, then run
+   `python3 tools/lab/validate.py artifacts` — it cross-checks that every archived document and
+   every referenced finding actually exists.
+
+The full bridge workflow, attribution table, and known limits (cross-repo recurrence tiers are
+not auto-derived) live in [records/reviews/README.md](../../../records/reviews/README.md).
 
 ## Run the workflow
 
