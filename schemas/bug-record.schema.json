@@ -12,6 +12,7 @@
     "severity",
     "error_kind",
     "attribution",
+    "provenance",
     "project",
     "files",
     "recorded_at"
@@ -25,7 +26,10 @@
     "status": {
       "enum": ["open", "fixed-pending-review", "verified", "rejected"]
     },
-    "severity": { "enum": ["low", "medium", "high", "critical"] },
+    "severity": {
+      "description": "Priority grade: P0 = critical (data loss, security, release blocker), P1 = high, P2 = medium, P3 = low.",
+      "enum": ["P0", "P1", "P2", "P3"]
+    },
     "error_kind": {
       "enum": [
         "ai-ignored-doc",
@@ -50,6 +54,10 @@
         "unknown"
       ]
     },
+    "provenance": {
+      "description": "Where the flawed behavior or artifact came from — the field that decides whether this record is Agentflow evidence. agentflow: Agentflow's own surface (a clause, role, gate, evaluation, brief discipline, or tool under tools/lab/). session-artifact: produced ad hoc inside the session and covered by no Agentflow clause (the agent's own plan, analysis, decision, or code). user-input: supplied by the user. external: pre-existing product code, host, tool, or environment. undetermined: not yet established — the record must name the missing evidence and resolve it before the improvement loop consumes the record.",
+      "enum": ["agentflow", "session-artifact", "user-input", "external", "undetermined"]
+    },
     "project": { "type": "string", "minLength": 1 },
     "files": {
       "type": "array",
@@ -61,6 +69,16 @@
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
+    },
+    "class_id": {
+      "description": "Failure class this record belongs to; the recurrence ledger lives at records/bugs/recurrence/<class_id>.md.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "occurrence": {
+      "description": "Which occurrence of the class this record is (1 = first). A digit string: Markdown frontmatter values are strings, not YAML numbers.",
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$"
     },
     "recorded_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" },
@@ -74,16 +92,37 @@
       "enum": ["approved", "changes_requested", "blocked"]
     },
     "regression_status": { "enum": ["pass", "fail", "not-run"] },
-    "rejection_reason": { "type": "string", "minLength": 1 }
+    "rejection_reason": { "type": "string", "minLength": 1 },
+    "closure_criteria": {
+      "description": "Measurable condition that must hold before the bug counts as closed: a named metric, log absence, or check output. Required for verified; 'works as expected' is not a criterion.",
+      "type": "string",
+      "minLength": 1
+    },
+    "fix_revision": {
+      "description": "Commit, PR, or release where the fix landed (repo-qualified when the fix is in another repository).",
+      "type": "string",
+      "minLength": 1
+    }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "attribution": { "enum": ["workflow_policy", "role_prompt"] }
+        },
+        "required": ["attribution"]
+      },
+      "then": {
+        "properties": { "provenance": { "const": "agentflow" } }
+      }
+    },
     {
       "if": {
         "properties": { "status": { "const": "verified" } },
         "required": ["status"]
       },
       "then": {
-        "required": ["reviewer", "review_decision", "regression_status"],
+        "required": ["reviewer", "review_decision", "regression_status", "closure_criteria"],
         "properties": {
           "review_decision": { "const": "approved" },
           "regression_status": { "const": "pass" }

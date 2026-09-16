@@ -1,10 +1,11 @@
 ---
 bug_id: BUG-INVALID-001
-title: Verified record without independent review
+title: verified 记录缺少独立审查
 status: verified
-severity: low
+severity: P3
 error_kind: other
 attribution: workflow_policy
+provenance: agentflow
 project: example-project
 files:
   - examples/invalid/bug-record-verified-without-review.md
@@ -12,15 +13,15 @@ recorded_at: 2026-09-14T08:00:00Z
 agentflow_version: 0.2.0
 ---
 
-## Symptom
+## 现象
 
-The record claims verification.
+该记录声称已修复并验证。
 
-## Root cause
+## 根因
 
-Demonstrates that a verified bug requires independent evidence: this record omits the reviewer,
-review decision, and regression status that the schema demands for `status: verified`.
+用于演示 `verified` 状态必须有独立证据：本记录刻意省略了 schema 对
+`status: verified` 强制要求的 `reviewer`、`review_decision` 与 `regression_status`。
 
-## Fix
+## 修复
 
-Not applicable — this is an intentionally invalid example; the validator must reject it.
+不适用——这是刻意的非法示例；校验器必须拒绝它。

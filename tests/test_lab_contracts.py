@@ -70,6 +70,195 @@ class ValidatorRegressionTests(unittest.TestCase):
 
         self.assertEqual(set(changed), {"tracked.txt", "ordinary.txt", "ignored.ignored"})
 
+    def test_bug_record_severity_uses_priority_grades(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "BUG-20260101-001",
+            "title": "t",
+            "status": "open",
+            "severity": "high",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+        }
+        errors = validator.validate(dict(base))
+        self.assertTrue(any("severity" in error.path for error in errors))
+        self.assertFalse(validator.validate(dict(base, severity="P1")))
+
+    def test_bug_record_provenance_is_required_and_guards_agentflow_attribution(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "BUG-20260101-002",
+            "title": "t",
+            "status": "open",
+            "severity": "P2",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+        }
+        without = dict(base)
+        without.pop("provenance")
+        self.assertTrue(
+            any("provenance" in f"{error.path} {error.message}" for error in validator.validate(without))
+        )
+        contradiction = dict(base, attribution="workflow_policy", provenance="external")
+        self.assertTrue(
+            any("provenance" in f"{error.path} {error.message}" for error in validator.validate(contradiction))
+        )
+        self.assertFalse(validator.validate(dict(base, attribution="workflow_policy", provenance="agentflow")))
+        self.assertFalse(validator.validate(dict(base, provenance="session-artifact")))
+
+    def test_recurrence_ledger_requires_consolidation_version(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "recurrence.schema.json")
+        base = {
+            "class_id": "some-class",
+            "title": "t",
+            "status": "consolidated",
+            "first_record": "BUG-20260101-001",
+            "occurrences": ["BUG-20260101-001"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+        }
+        self.assertTrue(validator.validate(dict(base)))
+        self.assertFalse(validator.validate(dict(base, consolidated_in="0.3.4")))
+
+    def test_recurrence_ledger_filename_must_equal_class_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "wrong-name.md"
+            path.write_text(
+                "---\n"
+                "class_id: right-name\n"
+                "title: t\n"
+                "status: unconsolidated\n"
+                "first_record: BUG-20260101-001\n"
+                "occurrences:\n"
+                "  - BUG-20260101-001\n"
+                "recorded_at: 2026-01-01T00:00:00Z\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_recurrence_markdown(path)
+        self.assertTrue(any("filename must equal class_id" in error.message for error in errors))
+
+    def test_bug_record_verified_requires_closure_criteria(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "BUG-20260101-003",
+            "title": "t",
+            "status": "verified",
+            "severity": "P2",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+            "reviewer": "r",
+            "review_decision": "approved",
+            "regression_status": "pass",
+        }
+        errors = validator.validate(dict(base))
+        self.assertTrue(any("closure_criteria" in f"{e.path} {e.message}" for e in errors))
+        self.assertFalse(
+            validator.validate(dict(base, closure_criteria="validate.py tests no longer reports the bypass"))
+        )
+
+    def test_external_references_require_embedded_fragment_and_inline_citation(self) -> None:
+        path = ROOT / "records" / "fixture.md"
+        frontmatter = {
+            "files": ["example-project@r1:services/api/orders.go"],
+        }
+        no_fragment = validate.validate_external_excerpts(frontmatter, "正文没有片段。", path)
+        self.assertTrue(any("embedded fragment" in error.message for error in no_fragment))
+        fragment_but_uncited = validate.validate_external_excerpts(
+            frontmatter, "```\ncode\n```\n", path
+        )
+        self.assertTrue(any("must be cited in the body" in error.message for error in fragment_but_uncited))
+        complete = validate.validate_external_excerpts(
+            frontmatter,
+            "问题代码见 `example-project@r1:services/api/orders.go`：\n```\ncode\n```\n",
+            path,
+        )
+        self.assertEqual(complete, [])
+        self.assertEqual(validate.validate_external_excerpts({"files": ["agents/reviewer.md"]}, "", path), [])
+
+    def test_body_references_prose_must_resolve_and_quotations_are_exempt(self) -> None:
+        path = ROOT / "records" / "fixture.md"
+        dangling = validate.validate_body_references(
+            "改动见 other/place/missing.md 的实现。", path
+        )
+        self.assertTrue(any("exists neither" in error.message for error in dangling))
+        personal = validate.validate_body_references(
+            "证据在 /Users/someone/project/file.md 里。", path
+        )
+        self.assertTrue(any("personal absolute path" in error.message for error in personal))
+        quoted = validate.validate_body_references(
+            "报错原文：\n```\nWrite tool result: plans/legacy-file.json not created\n```\n"
+            "当时的命令是 `python3 tools/lab/host_adapter.py`。\n",
+            path,
+        )
+        self.assertEqual(quoted, [])
+        resolved = validate.validate_body_references(
+            "依据 agents/reviewer.md 的检查协议。", path
+        )
+        self.assertEqual(resolved, [])
+        url_only = validate.validate_body_references(
+            "详见 https://example.com/spec.md。", path
+        )
+        self.assertEqual(url_only, [])
+
+    def test_body_references_cover_cjk_paths_and_skip_version_slashes(self) -> None:
+        path = ROOT / "records" / "fixture.md"
+        cjk_dangling = validate.validate_body_references(
+            "关联设计见 other-repo/docs/缺失文档.md 的说明。", path
+        )
+        self.assertTrue(any("缺失文档.md" in error.message for error in cjk_dangling))
+        cjk_resolved = validate.validate_body_references(
+            "见 records/bugs/README.md 的约定。", path
+        )
+        self.assertEqual(cjk_resolved, [])
+        versions = validate.validate_body_references(
+            "该行为在 0.3.4/0.3.5 均适用。", path
+        )
+        self.assertEqual(versions, [])
+
+    def test_review_record_id_matches_recorded_at_and_is_unique(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            record_dir = base / "records" / "reviews" / "demo-feature"
+            (record_dir / "archive").mkdir(parents=True)
+            (record_dir / "archive" / "doc.md").write_text("x", encoding="utf-8")
+            path = record_dir / "review-20260101-001.md"
+            path.write_text(
+                "---\n"
+                "review_id: REV-20260101-001\n"
+                "title: t\n"
+                "target_project: p\n"
+                "target_feature: f\n"
+                "source_revision: abc1234\n"
+                "reviewed_docs:\n"
+                "  - archive/doc.md\n"
+                "decision: approved\n"
+                "recorded_at: 2026-01-02T00:00:00Z\n"
+                "---\n\n## 评审结论\n\nx\n",
+                encoding="utf-8",
+            )
+            relative = Path("records/reviews/demo-feature/review-20260101-001.md")
+            seen: dict[str, Path] = {}
+            errors = validate.validate_review_markdown(path, relative, seen)
+            self.assertTrue(
+                any("review_id date must match recorded_at" in error.message for error in errors)
+            )
+            errors = validate.validate_review_markdown(path, relative, seen)
+            self.assertTrue(
+                any("duplicate review_id" in error.message for error in errors)
+            )
+
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:
         subprocess.run(

@@ -1,10 +1,11 @@
 ---
 bug_id: BUG-20260915-001
-title: Shared axios 401 interceptor redirects on legitimately logged-out pages, breaking forgot/reset password
+title: 共享 axios 401 拦截器在合法未登录页面触发跳转，破坏忘记/重置密码流程
 status: fixed-pending-review
-severity: high
+severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
+provenance: agentflow
 project: paipai-new-fe
 files:
   - skills/agentflow/references/contracts.md
@@ -18,13 +19,13 @@ affected_slices:
   - frontend-implementation
   - independent-review
 recorded_at: 2026-09-15T02:30:00Z
-updated_at: 2026-09-15T02:30:00Z
+updated_at: 2026-09-16T12:03:24Z
 source_revision: 33962ee
 agentflow_version: 0.3.3
 regression_status: pass
 ---
 
-## Symptom
+## 现象
 
 在全局 layout 的顶部导航加入自动登录：复用已有的 `login()` 方法，成功后同步状态栏，失败
 本地 catch。该方法单独看是正确的——发请求、成功更新状态、失败捕获。
@@ -37,7 +38,7 @@ regression_status: pass
 补充同类的第二个风险面：当方法或参数从根层级经父节点传入时，传参链上的改写同样不在
 局部 diff 内。
 
-## Root cause
+## 根因
 
 两个独立缺陷叠加，任何一个被注意到都能拦住它：
 
@@ -49,7 +50,7 @@ regression_status: pass
 对 Agentflow 而言归因为 `workflow_policy`：委派简报只定义写入范围，未定义读取范围；
 没有任何步骤要求枚举"不经调用栈直接触发却会运行的代码"。写入边界严格、读取边界空白。
 
-## Fix
+## 修复
 
 按两轮复核后收敛的设计落地（方案与理由见 `docs/spec-fact-check-design.md` 相关讨论及
 本次会话记录）：
@@ -68,13 +69,13 @@ regression_status: pass
   每个声明机制必须引用其注册点；未涉及时显式空数组），正反例计划同步。
 - `evals/public/AF-015.json`：本案例的回归用例。
 
-## Regression check
+## 回归检查
 
 - `python3 tools/lab/validate.py all` 全部 PASS（含新增 AF-015 与 plan schema 字段）。
 - `python3 -m unittest discover -s tests` 6 个用例通过。
 - AF-015 与 input 已入库，`validate.py evals` 通过。
 
-## Notes
+## 备注
 
 - `project: paipai-new-fe` 取自 `docs/spec-fact-check-design.md` §9.6 的目标仓库名，来自
   会话上下文推断，未对仓库本身核实；如实际项目名不同，按记录规则追加更正而非改写。

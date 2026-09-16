@@ -1,14 +1,15 @@
 ---
 bug_id: BUG-API-001
-title: Reviewer accepted a changed error shape without checking the client contract
+title: Reviewer 接受错误响应结构变更但未核对客户端契约
 status: verified
-severity: medium
+severity: P2
 error_kind: ai-ignored-doc
 attribution: role_prompt
+provenance: agentflow
 project: example-project
 files:
-  - services/api/orders.go
-  - clients/web/src/api/orders.ts
+  - example-project@r1:services/api/orders.go
+  - example-project@r1:clients/web/src/api/orders.ts
 affected_slices:
   - review
   - cross-layer
@@ -19,44 +20,49 @@ agentflow_version: 0.2.0
 reviewer: independent-review-example
 review_decision: approved
 regression_status: pass
+closure_criteria: AF-003 用例断言错误结构检查存在；`python3 tools/lab/validate.py evals` PASS，删掉该断言则用例 FAIL
+fix_revision: mock-commit-abc123 (example)
 ---
 
-## Symptom
+## 现象
 
-A reviewer approved a backend change that altered the error response of the orders API even
-though the frontend client still parsed the old shape. The plan explicitly required error-shape
-compatibility; the reviewer reported only on the success response.
+Reviewer 批准了一个后端改动：orders API 的错误响应结构被改变，而前端客户端仍在按旧结构
+解析。计划中明确要求错误结构保持兼容，reviewer 只报告了成功响应路径。
 
-## Problem code
+## 问题代码
 
 ```go
-// services/api/orders.go — error envelope changed from {"error": "..."} to {"code": ..., "message": ...}
+// example-project@r1:services/api/orders.go — 错误信封从 {"error": "..."} 变为 {"code": ..., "message": ...}
 func writeError(w http.ResponseWriter, err error) {
     json.NewEncoder(w).Encode(map[string]any{"code": "ORD-ERR", "message": err.Error()})
 }
 ```
 
-## Root cause
+前端客户端仍按旧结构解析（`example-project@r1:clients/web/src/api/orders.ts`）：
 
-The reviewer role prompt described "check the implementation" but did not explicitly require
-checking declared error contracts against consumers, so the reviewer validated the success path
-only. Classified `ai-ignored-doc`: an existing documented contract was not enforced by the role.
+> 客户端从 `resp.data.error` 读取错误文案；信封改为 `{code, message}` 后该字段为
+> `undefined`，错误提示静默丢失。
 
-## Fix
+## 根因
 
-The reviewer contract and the public evaluation case now explicitly require error-shape and
-compatibility checks (see `skills/agentflow/references/contracts.md` and `evals/public/AF-003.json`).
+reviewer 角色提示词只写了"检查实现"，没有明确要求把声明的错误契约与消费方对照核查，
+于是 reviewer 只验证了成功路径。归因 `ai-ignored-doc`：既有文档化契约没有被角色执行。
 
-## Regression check
+## 修复
 
-- pass: `python3 tools/lab/validate.py evals` — the API contract review case enforces error-shape checking.
+reviewer 契约与公开评测用例现在显式要求错误结构与兼容性检查（见
+`skills/agentflow/references/contracts.md` 与 `evals/public/AF-003.json`）。
 
-## Review
+## 回归检查
+
+- pass：`python3 tools/lab/validate.py evals` —— API 契约审查用例强制检查错误结构。
+
+## 审查
 
 - reviewer: independent-review-example
 - decision: approved
-- evidence: review record E-API-REVIEW; regression check above passed after the fix.
+- evidence: review record E-API-REVIEW；修复后上述回归检查通过。
 
-## Notes
+## 备注
 
-Sanitized example record.
+脱敏示例记录。

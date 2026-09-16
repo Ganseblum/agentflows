@@ -1,10 +1,11 @@
 ---
 bug_id: BUG-20260914-002
-title: A single invocation timeout aborts the entire evaluation run with no diagnostics
+title: 单次调用超时即中断整个评测运行，且无诊断信息
 status: fixed-pending-review
-severity: medium
+severity: P2
 error_kind: missing-constraint
 attribution: product_code
+provenance: agentflow
 project: agentflows
 files:
   - tools/lab/host_adapter.py
@@ -12,13 +13,13 @@ affected_slices:
   - host-adapter
   - evaluation-harness
 recorded_at: 2026-09-14T12:04:08Z
-updated_at: 2026-09-14T12:40:00Z
+updated_at: 2026-09-16T12:03:24Z
 source_revision: f2ea05c
 agentflow_version: 0.3.1
 regression_status: pass
 ---
 
-## Symptom
+## 现象
 
 第一次完整 10 用例 baseline 在约 26 分钟后中止，`baseline-run.log` 只有：
 
@@ -35,7 +36,7 @@ host adapter: claude timed out after 900 seconds
 2. 让一个用例（24 分钟的跨层用例 AF-002）超时。
 3. adapter 退出码 1，无用例级输出，无部分结果文件。
 
-## Problem code
+## 问题代码
 
 修复前 `host_adapter.py` 把所有结果攒在内存里、最后一次性打印，失败只剩一个退出码：
 
@@ -49,12 +50,12 @@ for case in cases:
 print(json.dumps({... "case_results": results}))   # 只在全部成功后输出一次
 ```
 
-## Root cause
+## 根因
 
 adapter 设计里没有任何每次调用的进度记录和部分结果落盘——失败处理只有最终退出码。
 这属于当时设计缺少约束（missing-constraint）：没有人规定"单次失败必须可归因"。
 
-## Fix
+## 修复
 
 `host_adapter.py` 新增 `--progress <jsonl>` 与逐调用 stderr 状态行：
 
@@ -71,11 +72,11 @@ write_progress(progress_path, {"event": "completed", ..., "accepted": result.get
 
 纯诊断性质，不改变评测语义，`eval_runner.py` 不消费它。
 
-## Regression check
+## 回归检查
 
 - 通过：带 `--progress` 重跑，`baseline-progress.jsonl` 精确记录每次调用，定位到 AF-002 repetition 1 在 900 秒超时。
 
-## Notes
+## 备注
 
 - 超时的 run 仍会丢弃内存中结果，只有诊断存活；部分结果持久化/断点续跑未实现（已知边界）。
 - AF-002 本身仍超默认 900 秒上限，相关权限问题另见 BUG-20260914-003。

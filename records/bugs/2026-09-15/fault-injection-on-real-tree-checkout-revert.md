@@ -1,10 +1,11 @@
 ---
 bug_id: BUG-20260915-002
-title: Fault injection ran on the real repository; a git-checkout "recovery" silently reverted protected-paths.txt to its committed version
+title: 故障注入在真实仓库执行；git checkout「恢复」把 protected-paths.txt 静默重置回提交版
 status: fixed-pending-review
-severity: medium
+severity: P2
 error_kind: missing-constraint
 attribution: workflow_policy
+provenance: agentflow
 project: agentflows
 files:
   - protected-paths.txt
@@ -14,13 +15,13 @@ affected_slices:
   - gate-maintenance
   - lab-tooling
 recorded_at: 2026-09-15T03:23:11Z
-updated_at: 2026-09-15T03:23:11Z
+updated_at: 2026-09-16T12:03:24Z
 source_revision: 33962ee
 agentflow_version: 0.3.3
 regression_status: pass
 ---
 
-## Symptom
+## 现象
 
 第六批评审中验证「清单删掉 improve references 前缀必须 FAIL」时，故障注入被错误地执行在
 真实仓库而非 /tmp 副本上。随后的"恢复"更糟：
@@ -44,7 +45,7 @@ git checkout protected-paths.txt 2>/dev/null
 检查正确地把"清单回退"当成了门回归报警。随后手工重建文件到目标状态，`all` 七项复验全
 绿。
 
-## Root cause
+## 根因
 
 三个缺失的约束叠加，没有任何一条写在当时的纪律里：
 
@@ -58,7 +59,7 @@ git checkout protected-paths.txt 2>/dev/null
 归因 `workflow_policy` 而非 `model_limit`：操作者当时具备全部知识（知道要用副本、知道
 checkout 语义），缺的是强制这些动作的流程约束。
 
-## Fix
+## 修复
 
 `AGENTS.md` 新增实验与恢复规则（本记录同批落地）：
 
@@ -71,13 +72,13 @@ checkout 语义），缺的是强制这些动作的流程约束。
 实务建议（对仓库所有者）：每个确认批次尽早提交。本次事故的损失面取决于 ~25 个未提交
 文件；分批提交后同类 mishap 的恢复就是一条 `git checkout`。
 
-## Regression check
+## 回归检查
 
 - 规则已写入 `AGENTS.md`；`python3 tools/lab/validate.py all` 七项 PASS。
 - 检测路径已实证：清单被回退时 `validate.py protected` 在一条命令内 FAIL——防线是"预防
   失败、检测成功"，本次事故本身就是该检测的回归证据。
 
-## Notes
+## 备注
 
 - 状态 `fixed-pending-review`：规则修复尚无独立 Reviewer 判定。
 - 完整事故叙述与教训另见 `docs/next-session-handoff.md` 第六批。

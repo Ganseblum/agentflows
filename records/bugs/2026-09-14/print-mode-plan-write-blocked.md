@@ -1,10 +1,11 @@
 ---
 bug_id: BUG-20260914-003
-title: Print-mode evaluation profile cannot complete plan-writing cases
+title: print 模式评测权限档无法完成写计划的用例
 status: open
-severity: medium
+severity: P2
 error_kind: host-compat
 attribution: evaluation
+provenance: agentflow
 project: agentflows
 files:
   - tools/lab/host_adapter.py
@@ -14,12 +15,12 @@ affected_slices:
   - cross-layer-planning
   - evaluation-harness
 recorded_at: 2026-09-14T12:04:08Z
-updated_at: 2026-09-14T12:40:00Z
+updated_at: 2026-09-16T12:03:24Z
 source_revision: f2ea05c
 agentflow_version: 0.3.1
 ---
 
-## Symptom
+## 现象
 
 AF-002 诊断运行中，plan-architect 子 Agent 的 Write 被宿主拒绝，Bash 校验命令未获批准。
 最终 `accepted: false`、`tool_failures: 3`，单用例约 23.8 分钟 / $4.05。stream 证据原文：
@@ -29,7 +30,7 @@ Write tool result: plans/AF-002-activity-list.json classified as sensitive and n
 Bash result: validator command required approval and was not run
 ```
 
-## Problem code
+## 问题代码
 
 ```python
 # tools/lab/host_adapter.py (current)
@@ -39,13 +40,13 @@ def permission_args(host: str, profile: str) -> list[str]:
             return ["--permission-mode", "acceptEdits"]   # print 模式仍拦敏感写/审批 Bash
 ```
 
-## Root cause
+## 根因
 
 `read-write-workspace` 映射到 `--permission-mode acceptEdits`，而 Claude Code 2.1.268 在
 `--print` 模式下仍拦截敏感路径写入和需要审批的 Bash。需要写计划的评测用例在该 profile
 下测到的是宿主权限限制，不是工作流行为。
 
-## Fix
+## 修复
 
 未修复，方案决策中：
 
@@ -54,6 +55,6 @@ def permission_args(host: str, profile: str) -> list[str]:
 
 决策依据待补：宿主在 print 模式下的完整权限矩阵（见 `docs/host-platform-facts.md` C2）。
 
-## Notes
+## 备注
 
 - 观察环境：Claude Code 2.1.268 + 网关映射模型；其他宿主行为未验证。

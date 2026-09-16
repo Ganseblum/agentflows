@@ -26,6 +26,8 @@ import artifact_digest  # noqa: E402  (sibling module, standard library only)
 
 ROOT = Path(__file__).resolve().parents[2]
 BUG_RECORD_SCHEMA = ROOT / "schemas" / "bug-record.schema.json"
+RECURRENCE_SCHEMA = ROOT / "schemas" / "recurrence.schema.json"
+REVIEW_SCHEMA = ROOT / "schemas" / "review.schema.json"
 PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
 SCHEMA_PATHS = [
     ROOT / "schemas",
@@ -46,6 +48,8 @@ REQUIRED_PROTECTED_PATHS = {
     "agents/release-governor.md",
     "evals",
     "schemas/bug-record.schema.json",
+    "schemas/recurrence.schema.json",
+    "schemas/review.schema.json",
     "schemas/plan.schema.json",
     "schemas/evaluation-result.schema.json",
     "skills/improve/references/evidence-and-release.md",
@@ -457,9 +461,215 @@ def validate_timestamp_order(document: dict[str, Any], path: Path) -> list[Valid
     return []
 
 
-BUG_REQUIRED_HEADINGS = ("## Symptom", "## Root cause")
+BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
 BUG_ARCHIVE_DIR = "archive"
+RECURRENCE_DIR = "recurrence"
 BUG_SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+
+def version_tuple(value: str) -> tuple[int, int, int]:
+    """Numeric ordering key for the semver-like versions the schemas enforce."""
+    match = re.match(r"^(\d+)\.(\d+)\.(\d+)", value)
+    if not match:
+        return (0, 0, 0)
+    return tuple(int(part) for part in match.groups())  # type: ignore[return-value]
+
+
+def validate_recurrence_markdown(path: Path) -> list[ValidationError]:
+    """Validate one recurrence ledger: schema, timestamp order, filename/class_id agreement."""
+    frontmatter, body, errors = load_bug_markdown(path)
+    if errors or frontmatter is None:
+        return errors
+    try:
+        validator = SchemaValidator(RECURRENCE_SCHEMA)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")]
+    errors.extend(validator.validate(frontmatter))
+    if errors:
+        return errors
+    errors.extend(validate_timestamp_order(frontmatter, path))
+    errors.extend(validate_body_references(body, path))
+    if path.stem != frontmatter.get("class_id"):
+        errors.append(
+            ValidationError(str(path), "ledger filename must equal class_id")
+        )
+    return errors
+
+
+BODY_PATH_PATTERN = re.compile(
+    r"(?:\.\./|\./)?[\w.][\w.\-]*(?:/[\w.\-]+)+\.[A-Za-z]{2,8}"
+)
+QUALIFIED_REF_PATTERN = re.compile(r"[A-Za-z0-9_.\-]+@[A-Za-z0-9_.\-]+:\S+")
+URL_PATTERN = re.compile(r"https?://\S+")
+
+
+def prose_without_quotations(body: str) -> str:
+    """Plain prose only: fenced blocks and inline code spans are quotations, not claims."""
+    segments: list[str] = []
+    in_fence = False
+    for line in body.splitlines():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            segments.append(line)
+    prose = "\n".join(segments)
+    return re.sub(r"`[^`]*`", " ", prose)
+
+
+def validate_body_references(body: str, path: Path) -> list[ValidationError]:
+    """Every doc/code path the record itself claims must resolve; quotations are exempt.
+
+    A path in plain prose is the record's own reference: it must exist in this repository
+    (or next to the record) or be a repo-qualified reference. Fenced blocks and inline code
+    are quotations — evidence quoted verbatim, including historical paths — and are not
+    scanned. Personal absolute paths are banned outright: they are neither portable nor
+    evidence. URLs cannot be validated and are supplementary at most, never the evidence.
+    """
+    errors: list[ValidationError] = []
+    prose = prose_without_quotations(body)
+    if re.search(r"/Users/|/home/|(?<![A-Za-z0-9_.])~/", prose):
+        errors.append(
+            ValidationError(
+                str(path),
+                "personal absolute path in prose — records are portable evidence; "
+                "use a repo-relative or repo-qualified reference",
+            )
+        )
+    cleaned = URL_PATTERN.sub(" ", prose)
+    cleaned = QUALIFIED_REF_PATTERN.sub(" ", cleaned)
+    for token in BODY_PATH_PATTERN.findall(cleaned):
+        if (ROOT / token).is_file() or (path.parent / token).is_file():
+            continue
+        errors.append(
+            ValidationError(
+                str(path),
+                f"body references {token!r} which exists neither in this repository nor next "
+                "to the record — carry the evidence (quote it, archive it, or use a "
+                "repo-qualified reference)",
+            )
+        )
+    return errors
+
+
+def validate_external_excerpts(
+    frontmatter: dict[str, Any], body: str, path: Path
+) -> list[ValidationError]:
+    """External references must carry their evidence: an embedded fragment, cited at its address.
+
+    A repo-qualified reference is an address, not evidence — the record must embed the decisive
+    fragment (a fenced code block for code, a blockquote for document passages) and cite the
+    qualified address in the body next to it, so the record stays readable and checkable when
+    the other repository is absent.
+    """
+    errors: list[ValidationError] = []
+    external = [
+        entry
+        for entry in frontmatter.get("files") or []
+        if isinstance(entry, str) and "@" in entry.partition(":")[0] and ":" in entry
+    ]
+    if not external:
+        return errors
+    has_fragment = "```" in body or any(
+        line.lstrip().startswith(">") for line in body.splitlines()
+    )
+    if not has_fragment:
+        errors.append(
+            ValidationError(
+                str(path),
+                "external references require an embedded fragment in the body "
+                "(fenced code block for code, blockquote for document passages)",
+            )
+        )
+    for entry in external:
+        if entry not in body:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"external reference {entry!r} must be cited in the body next to its excerpt",
+                )
+            )
+    return errors
+
+
+def validate_review_markdown(
+    path: Path, relative: Path, seen_review_ids: dict[str, Path]
+) -> list[ValidationError]:
+    """Validate one review record: schema, timestamp order, layout, archived-doc existence.
+
+    Layout: records/reviews/<project>-<feature-slug>/review-<YYYY-MM-DD>-<NNN>.md — the
+    directory is anchored on the reviewed feature (the same feature may be reviewed many
+    times), and the filename must equal the review_id so rounds sort chronologically.
+    """
+    frontmatter, body, errors = load_bug_markdown(path)
+    if errors or frontmatter is None:
+        return errors
+    try:
+        validator = SchemaValidator(REVIEW_SCHEMA)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")]
+    errors.extend(validator.validate(frontmatter))
+    if errors:
+        return errors
+    errors.extend(validate_timestamp_order(frontmatter, path))
+    errors.extend(validate_body_references(body, path))
+    review_id = frontmatter.get("review_id")
+    if isinstance(review_id, str):
+        if review_id in seen_review_ids:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"duplicate review_id {review_id!r} already declared in {seen_review_ids[review_id]}",
+                )
+            )
+        else:
+            seen_review_ids[review_id] = path
+    parts = relative.parts  # ("records", "reviews", "<project>-<feature-slug>", "review-<date>-<NNN>.md")
+    if len(parts) != 4:
+        errors.append(
+            ValidationError(str(path), "review records live in records/reviews/<project>-<feature-slug>/")
+        )
+    else:
+        if "-" not in parts[2] or parts[2].startswith("-") or parts[2].endswith("-"):
+            errors.append(
+                ValidationError(str(path), "review directory must be named <project>-<feature-slug>")
+            )
+        if isinstance(review_id, str):
+            m = re.fullmatch(r"REV-(\d{4})(\d{2})(\d{2})-(\d{3})", review_id)
+            if m:
+                expected_stem = f"review-{m.group(1)}-{m.group(2)}-{m.group(3)}-{m.group(4)}"
+                if path.stem != expected_stem:
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"filename must be {expected_stem}.md to match review_id {review_id!r}",
+                        )
+                    )
+                recorded = frontmatter.get("recorded_at")
+                if isinstance(recorded, str):
+                    try:
+                        recorded_date = dt.datetime.fromisoformat(
+                            recorded.replace("Z", "+00:00")
+                        ).date()
+                    except ValueError:
+                        recorded_date = None
+                    if recorded_date is not None and recorded_date.strftime("%Y%m%d") != "".join(m.group(1, 2, 3)):
+                        errors.append(
+                            ValidationError(
+                                str(path),
+                                f"review_id date must match recorded_at date {recorded_date.isoformat()}",
+                            )
+                        )
+            elif path.stem != review_id:
+                errors.append(
+                    ValidationError(str(path), "review record filename must match its review_id date and seq")
+                )
+    for doc in frontmatter.get("reviewed_docs") or []:
+        if isinstance(doc, str) and not (path.parent / doc).is_file():
+            errors.append(
+                ValidationError(str(path), f"archived document {doc!r} not found next to the review record")
+            )
+    return errors
 
 
 def validate_bug_markdown(path: Path) -> list[ValidationError]:
@@ -479,10 +689,10 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
     for heading in BUG_REQUIRED_HEADINGS:
         if not heading_present(body, heading):
             errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
-    if frontmatter.get("status") != "open" and not heading_present(body, "## Fix"):
-        errors.append(ValidationError(str(path), "body section '## Fix' is required unless the bug is open"))
-    if frontmatter.get("status") == "verified" and not heading_present(body, "## Review"):
-        errors.append(ValidationError(str(path), "body section '## Review' is required for a verified record"))
+    if frontmatter.get("status") != "open" and not heading_present(body, "## 修复"):
+        errors.append(ValidationError(str(path), "body section '## 修复' is required unless the bug is open"))
+    if frontmatter.get("status") == "verified" and not heading_present(body, "## 审查"):
+        errors.append(ValidationError(str(path), "body section '## 审查' is required for a verified record"))
     return errors
 
 
@@ -754,6 +964,11 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     if not records_root.is_dir():
         return errors
     seen_bug_ids: dict[str, Path] = {}
+    seen_review_ids: dict[str, Path] = {}
+    record_versions: dict[str, str] = {}
+    ledgers: dict[str, dict[str, Any]] = {}
+    class_records: list[tuple[str, Any, str, Path]] = []
+    review_findings: list[tuple[list, Path]] = []
     for path in sorted(records_root.rglob("*")):
         if not path.is_file():
             continue
@@ -762,15 +977,55 @@ def validate_workspace_artifacts() -> list[ValidationError]:
         if parts[0:2] == ("records", "bugs"):
             if path.name == "README.md":
                 continue
+            if parts[2:3] == (RECURRENCE_DIR,):
+                if path.suffix != ".md":
+                    errors.append(
+                        ValidationError(str(path), "recurrence ledgers are Markdown files; unexpected non-md file")
+                    )
+                    continue
+                ledger_errors = validate_recurrence_markdown(path)
+                errors.extend(ledger_errors)
+                if ledger_errors:
+                    continue
+                frontmatter, _, _ = load_bug_markdown(path)
+                class_id = frontmatter.get("class_id") if frontmatter else None
+                if isinstance(class_id, str):
+                    if class_id in ledgers:
+                        errors.append(
+                            ValidationError(str(path), f"duplicate class_id {class_id!r} already declared in {ledgers[class_id]['path']}")
+                        )
+                    else:
+                        ledgers[class_id] = {"path": path, "frontmatter": frontmatter}
+                continue
             if path.suffix != ".md":
                 errors.append(ValidationError(str(path), "bug records are Markdown files; unexpected non-md file"))
                 continue
-            frontmatter, _, load_errors = load_bug_markdown(path)
+            frontmatter, body, load_errors = load_bug_markdown(path)
             if load_errors or frontmatter is None:
                 errors.extend(load_errors)
                 continue
             errors.extend(validate_bug_markdown(path))
             errors.extend(validate_bug_layout(frontmatter, path, relative, seen_bug_ids))
+            errors.extend(validate_external_excerpts(frontmatter, body, path))
+            errors.extend(validate_body_references(body, path))
+            for entry in frontmatter.get("files") or []:
+                # Self-contained evidence: a reference either resolves inside this repository
+                # or is explicitly repo-qualified (<repo>@<revision>:<path>) — a bare path that
+                # exists nowhere dangles for anyone who receives the records without the
+                # other repository.
+                if not isinstance(entry, str):
+                    continue
+                head, sep, _ = entry.partition(":")
+                if sep and "@" in head:
+                    continue
+                if not (ROOT / entry).is_file():
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"files entry {entry!r} exists neither in this repository nor as a "
+                            "repo-qualified reference (<repo>@<revision>:<path>)",
+                        )
+                    )
             status = frontmatter.get("status")
             if parts[2:3] == (BUG_ARCHIVE_DIR,):
                 if status != "rejected":
@@ -781,6 +1036,27 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(
                     ValidationError(str(path), "a rejected record must be moved into records/bugs/archive/")
                 )
+            bug_id = frontmatter.get("bug_id")
+            version = frontmatter.get("agentflow_version")
+            if isinstance(bug_id, str) and isinstance(version, str):
+                record_versions[bug_id] = version
+            class_id = frontmatter.get("class_id")
+            if isinstance(class_id, str):
+                class_records.append((class_id, frontmatter.get("occurrence"), str(bug_id or ""), path))
+        elif parts[0:2] == ("records", "reviews"):
+            if len(parts) != 4 or not re.fullmatch(
+                r"review-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name
+            ):
+                # Only feature-directory-level review-*.md files are records; README, archived
+                # evidence copies, and anything nested deeper (archive/...) are not.
+                continue
+            review_errors = validate_review_markdown(path, relative, seen_review_ids)
+            errors.extend(review_errors)
+            if review_errors:
+                continue
+            frontmatter, _, _ = load_bug_markdown(path)
+            if frontmatter:
+                review_findings.append((frontmatter.get("findings") or [], path))
         elif parts[0:2] == ("records", "plans"):
             if path.name == "README.md":
                 continue
@@ -799,6 +1075,59 @@ def validate_workspace_artifacts() -> list[ValidationError]:
             if isinstance(expected_id, str) and path.stem != expected_id:
                 errors.append(
                     ValidationError(str(path), f"filename stem must equal the record id {expected_id!r}")
+                )
+
+    # Cross-check recurrence ledgers against the records they claim.
+    for class_id, entry in ledgers.items():
+        ledger_path = entry["path"]
+        frontmatter = entry["frontmatter"]
+        first_record = frontmatter.get("first_record")
+        occurrences = frontmatter.get("occurrences") or []
+        for bug_id in [first_record, *occurrences]:
+            if isinstance(bug_id, str) and bug_id not in seen_bug_ids:
+                errors.append(
+                    ValidationError(str(ledger_path), f"references unknown bug_id {bug_id!r}")
+                )
+        if frontmatter.get("status") == "consolidated":
+            for bug_id in occurrences:
+                if isinstance(bug_id, str) and bug_id in seen_bug_ids and bug_id not in record_versions:
+                    errors.append(
+                        ValidationError(
+                            str(ledger_path),
+                            f"occurrence {bug_id!r} of a consolidated class must carry agentflow_version "
+                            "so it can be placed before or after the consolidation",
+                        )
+                    )
+    used_occurrences: dict[str, dict[str, Path]] = {}
+    for class_id, occurrence, bug_id, path in class_records:
+        if class_id not in ledgers:
+            errors.append(
+                ValidationError(str(path), f"class_id {class_id!r} has no ledger under records/bugs/recurrence/")
+            )
+            continue
+        if not (isinstance(occurrence, str) and occurrence.isdigit() and int(occurrence) >= 1):
+            errors.append(
+                ValidationError(str(path), "a record with class_id must declare occurrence as a positive digit string")
+            )
+            continue
+        if occurrence in used_occurrences.setdefault(class_id, {}):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"occurrence {occurrence} of class {class_id!r} is already used by {used_occurrences[class_id][occurrence]}",
+                )
+            )
+        used_occurrences[class_id][occurrence] = path
+        listed = ledgers[class_id]["frontmatter"].get("occurrences") or []
+        if bug_id not in listed:
+            errors.append(
+                ValidationError(str(path), f"bug_id {bug_id!r} is not listed in ledger {class_id!r}")
+            )
+    for findings, review_path in review_findings:
+        for bug_id in findings:
+            if isinstance(bug_id, str) and bug_id not in seen_bug_ids:
+                errors.append(
+                    ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
     return errors
 
@@ -1072,11 +1401,11 @@ def validate_installed(path_value: str | None) -> tuple[str, list[ValidationErro
 
 def bug_report() -> list[ValidationError]:
     """Print a retrospective table of all bug records, then exit."""
-    rows: list[tuple[str, str, str, str, str, str]] = []
+    rows: list[tuple[str, str, str, str, str, str, str]] = []
     bugs_root = ROOT / "records" / "bugs"
     if bugs_root.is_dir():
         for path in sorted(bugs_root.rglob("*.md")):
-            if path.name == "README.md":
+            if path.name == "README.md" or path.parent.name == RECURRENCE_DIR:
                 continue
             frontmatter, _, errors = load_bug_markdown(path)
             if errors or not frontmatter:
@@ -1089,11 +1418,69 @@ def bug_report() -> list[ValidationError]:
                     str(frontmatter.get("severity", "")),
                     str(frontmatter.get("error_kind", "")),
                     str(frontmatter.get("title", "")),
+                    str(frontmatter.get("provenance", "")),
                 )
             )
     rows.sort()
-    for recorded, bug_id, status, severity, error_kind, title in rows:
-        print(f"{recorded}\t{bug_id}\t{status}\t{severity}\t{error_kind}\t{title}")
+    for recorded, bug_id, status, severity, error_kind, title, provenance in rows:
+        print(f"{recorded}\t{bug_id}\t{status}\t{severity}\t{error_kind}\t{title}\t{provenance}")
+    return []
+
+
+def recurrence_report() -> list[ValidationError]:
+    """Print the recurrence ledger table: per class, consolidation state and recurrence tier.
+
+    The tier is derived, not declared: `single` (one occurrence), `recurred` (two or more
+    occurrences), `escalated` (at least one occurrence recorded on a version newer than the
+    consolidation version). Counts use the referenced records' `agentflow_version`.
+    """
+    records_root = ROOT / "records" / "bugs"
+    versions: dict[str, str] = {}
+    for path in sorted(records_root.glob("*/*.md")):
+        frontmatter, _, load_errors = load_bug_markdown(path)
+        if load_errors or not frontmatter:
+            continue
+        bug_id = frontmatter.get("bug_id")
+        version = frontmatter.get("agentflow_version")
+        if isinstance(bug_id, str) and isinstance(version, str):
+            versions[bug_id] = version
+    rows: list[tuple[str, str, str, int, int, str]] = []
+    ledger_dir = records_root / RECURRENCE_DIR
+    if ledger_dir.is_dir():
+        for path in sorted(ledger_dir.glob("*.md")):
+            if path.name == "README.md":
+                continue
+            frontmatter, _, load_errors = load_bug_markdown(path)
+            if load_errors or not frontmatter:
+                continue
+            occurrences = frontmatter.get("occurrences") or []
+            consolidated_in = frontmatter.get("consolidated_in")
+            post = 0
+            if isinstance(consolidated_in, str):
+                consolidated_key = version_tuple(consolidated_in)
+                for bug_id in occurrences:
+                    version = versions.get(bug_id) if isinstance(bug_id, str) else None
+                    if version and version_tuple(version) > consolidated_key:
+                        post += 1
+            if post >= 1:
+                tier = "escalated"
+            elif len(occurrences) >= 2:
+                tier = "recurred"
+            else:
+                tier = "single"
+            rows.append(
+                (
+                    str(frontmatter.get("class_id", "")),
+                    str(frontmatter.get("status", "")),
+                    str(consolidated_in or "-"),
+                    len(occurrences),
+                    post,
+                    tier,
+                )
+            )
+    rows.sort()
+    for class_id, status, consolidated_in, count, post, tier in rows:
+        print(f"{class_id}\t{status}\t{consolidated_in}\t{count}\t{post}\t{tier}")
     return []
 
 
@@ -1122,8 +1509,9 @@ def main(argv: list[str] | None = None) -> int:
             "installed",
             "all",
             "report",
+            "recurrence",
         ],
-        help="contract set to validate, or 'report' to list bug records",
+        help="contract set to validate, or 'report'/'recurrence' for retrospective tables",
     )
     parser.add_argument(
         "--path",
@@ -1134,6 +1522,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.target == "report":
         errors = bug_report()
+        return 1 if errors else 0
+
+    if args.target == "recurrence":
+        errors = recurrence_report()
         return 1 if errors else 0
 
     if args.target == "installed":
