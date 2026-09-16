@@ -18,6 +18,32 @@
 
 ## 已完成
 
+- 2026-09-16 第十批：0.3.6「执行层牙齿与诚实标注」发布（用户授权，起因：能力盘点发现
+  四类声明-执行缺口）：
+  - **write_scope 执法**（此前业务仓库里纯约定，`isolation.py check-diff` 只管改进环候选
+    树）：硬边界 14 + 新脚本 `skills/agentflow/scripts/check-write-scope.sh <base> <scope>...`
+    （列出基线以来的全部改动——tracked/untracked/删除/双端改名——逐路径对照声明范围，越界
+    即 FAIL 并点名）。实测三用例：界内 OK、越界精确点名 3 个 skills 路径、坏 revision 报
+    usage error。SKILL.md 步骤 7、contracts.md、中文镜像同步。
+  - **断点恢复协议**：会话中断从 `records/plans/` 版本化计划恢复，工作包状态从工作区
+    重新推导（对委派基线的 diff、检查、review 决策），无证据视为未开始；持久队列/租约
+    仍是未来 `execution-coordinator`。
+  - **episode 捕获纪律**：SKILL.md 步骤 10——结果可能喂改进环时，会话结束前把决策记录
+    （目标/结论/claims 台账/review 决策/成本）落成持久形式；对话一丢证据不可恢复。
+  - **方法级改动诚实标注**：improve SKILL 显式声明 `evals/` 只测 Agentflow 自身契约用例，
+    改变角色在业务仓库内行为的候选按 `measurement: none (method-level change, no
+    instrumented business task)` 发布，不得称已验证；业务任务度量切片列为 P1。
+  - **maxTurns 诚实声明**：ZCode 声明未验证（事实 Z6），预算纪律以提示词为准，frontmatter
+    数字按意图元数据对待。
+  - **小项**：worker result 增加可选 `cost`/`duration`（实测或 `not reported`，禁止估算）；
+    reviewer test-depth 的 revert 实验显式化为「reviewer 定命令与预期、supervisor 执行回传
+    原始输出」；`references/roles.md` 补全 12 角色画像 + 任务形态路由表；四个角色
+    description 去掉 "for Agentflow" 限定；中文镜像 `docs/agent-roles.md` 全量同步。
+  - 版本发布：五份 manifest 0.3.6、CHANGELOG、README、三份设计文档版本引用、迭代记录
+    §0.3.6。发布性质同 0.3.4/0.3.5：开发版本，无 baseline/candidate 对照证据。
+  - 本批含上一批遗留的 4 个未提交文件（reviewer 专项审查、investigator no-defect、
+    roles.md 两条、SKILL.md step 8 浏览器归属），一并进入本版。
+
 - 2026-09-15 第九批：应用「对话分享」复盘补丁 + 迭代记录（用户要求）：
   - 按外部项目复盘文档（`aiwork-workflow-ai` 的 `复盘-agentflow优化建议.md`）应用 P1–P9，
     应用前逐条核对锚点与源码一致：`contracts.md` 新增硬边界 13（缺席断言读权威落点）、
@@ -268,35 +294,50 @@ Reviewer 是独立审查门，不能被 Bug Recorder 代替。
 当前不增加通用 Task Recorder。宿主会话和事件负责基础留痕，Plan Architect 记录计划，
 Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store。
 
-## 未完成任务
+## 待办（分级）
 
-### P0：先形成可验证的人工闭环
+> 2026-09-16 重整：原「未完成任务」的 P0 已全部关闭，保留其中仍开放的项；并入 0.3.6
+> 能力盘点确认的新缺口。分级含义：P0 = 不做则方法的可信度或安全性有实际缺口；P1 = 让
+> 改进环真正有燃料和度量；P2 = 数据充分后的自动化。看进度按级别定点看这一节即可，
+> 逐版细节在 `iteration-log.md`。
 
-- [x] 定义 `bug-record.schema.json`，包含状态、复现、归因、严重性、版本、证据和回归结果。
-- [x] 定义 `plan.schema.json`，包含目标、非目标、接口、依赖、并行批次、验收、风险、回滚和输入证据。
-- [x] 给两套 Schema 补正例、反例和一致性校验工具。
-- [x] 增加一个真实形态的 Bug 记录示例和一个前后端并行计划示例。
-- [x] 建立 10 个最小公开评测用例，覆盖角色选择、接口对齐、Reviewer 独立、重复失败重规划和权限边界。
-- [x] 接入具体 Codex/Claude 宿主 Adapter；通用 Baseline/Candidate Runner 协议、结果归一化和 dry-run 请求检查已实现。
-- [x] 实现 Candidate worktree、private holdout 布局和候选 diff 禁区检查工具；初始 Git worktree dogfood 已通过；真实模型 dogfood 已起步（AF-001 通过；AF-002 完成但暴露宿主权限与超时问题），完整 baseline 仍待在可信用宿主端点和预算确认后执行。
-- [x] 实现确定性 Policy Engine；LLM Governor 只能提出建议，不能直接发布。
+### P0 — 可信度与安全基线
 
-### P1：反馈与检索
+- [ ] 在可信宿主端点跑一次小规模（2–3 用例）完整 baseline/candidate 对照 smoke，让
+  「方法有效性」第一次有数字；这是解开「继续加条款还是先验证」的前提（原 P0 遗留：
+  完整 baseline 仍被网关/权限/超时阻塞）。
+- [ ] 处理评测权限 profile：`read-write-workspace`（Claude acceptEdits）在 print 模式下
+  拦截 sensitive write 与 Bash 审批，直接改变 AF-002 一类用例结果；需显式
+  `--allowed-tools` 或独立权限模式。
+- [ ] 评测环境隔离：显式 `--strict-mcp-config` + 空配置（或独立 `CLAUDE_CONFIG_DIR`），
+  并写入 `observed_context`；否则 baseline 不可复现且成本偏高。
+- [ ] 独立任务判定器：当前 `accepted`/`first_pass_review` 等指标来自模型自报；至少给
+  核心用例配确定性或人工判定。
+- [ ] `maxTurns` 在 ZCode 实一次（事实 Z6 只确认了 `tools` 白名单生效）；在此之前预算
+  纪律按提示词约束对待（0.3.6 已把这条诚实声明写进 improve SKILL）。
 
-- [ ] 定义 Trace → sanitized Episode 的转换和脱敏/同意/保留期限。
-- [ ] 建立本地 Episode Store，先做版本、宿主、任务类型、归因、结果和时间过滤。
-- [ ] 使用 SQLite FTS5 检索脱敏摘要，命中结果返回 evidence id、来源、版本范围和适用边界。
-- [ ] 分离 `evidence/normalized` 与 `memory/validated`，成功、失败和反例都保留。
-- [ ] 从旧 CLI 抽象事件幂等、SQLite 原子写、审批租约、过期和失败聚类语义；不迁 Provider、TUI 或旧 Runner。
+### P1 — 改进环的燃料与度量（证据管道）
 
-### P2：发布自动化
+- [ ] 最小 episode 落盘：让 final decision record（含 claims 台账）可落 `records/`，先
+  不做角色、不做 store——supervisor 写文件即可；没有它 feedback-analyst 与
+  bug-investigator 实际重合，improve 环没有输入（0.3.6 只落了「会话结束前捕获」纪律）。
+- [ ] 方法级改动的度量切片：挑一个真实业务仓库（如 aiwork）的代表性任务集做
+  instrumented 评测，让 reviewer 清单一类改动能产出 better/neutral/worse（0.3.6 的
+  `measurement: none` 标注是过渡态，不是终点）。
+- [ ] Trace → sanitized Episode 转换、脱敏/同意/保留期限；本地 Episode Store + SQLite
+  FTS5 检索（原 P1 内容，依赖上一条的落盘）。
+- [ ] `records/` 路径越界的宿主强制（当前矩阵 + 校验器 + supervisor diff 兜底）；
+  `execution-coordinator`（断点恢复的持久化版本）待跨会话恢复需求真实出现再做。
+- [ ] 角色-文档一致性检查（agents ↔ roles.md ↔ 中文镜像 ↔ SKILL 手工同步面）：
+  最低成本形态是一个断言清单，防 0.3.3 manifest 漏 bump 同类的漂移。
 
-- [x] 新项目完成首轮角色评审后初始化本地 Git baseline；当前配置的 remote 为
-  `Ganseblum/my-agents.git`，本地 `main` 与 `origin/main` 一致（HEAD `b3c49e9`）。
-- [ ] 配置独立版本、安装、更新、卸载和发布来源。
-- [ ] 用真实任务运行 Human-gated dogfood。
-- [ ] 样本和阈值稳定后再做 Canary、监控和低风险自动回滚。
-- [ ] 只有出现跨宿主共享状态需求时，才增加只提供 evidence/eval/approval/release/rollback 的 MCP。
+### P2 — 数据充分后的自动化
+
+- [ ] 独立版本、安装、更新、卸载和发布来源配置。
+- [ ] 真实任务 Human-gated dogfood 后，样本和阈值稳定再做 Canary、监控和低风险自动回滚。
+- [ ] 跨宿主共享状态需求出现时，才增加只暴露 evidence/eval/approval/release/rollback 的
+  MCP。
+- [ ] 盲化 A/B、多次重复与统计置信区间（承接原 P2）。
 
 ## 新对话建议起点
 

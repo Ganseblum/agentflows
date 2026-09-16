@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.3.6 — 2026-09-16
+
+Execution-layer teeth for declared boundaries, plus honesty labels for what is still unmeasured.
+Trigger: a capability review found that write scopes, resumability, evidence capture, and
+method-level changes were declared but had no enforcement or measurement path.
+
+- New hard boundary 14: a declared write scope is enforced by comparing the workspace's actual
+  change surface against it, not by the worker's restatement. The supervisor records the baseline
+  revision at delegation and lists everything that changed (tracked and untracked) before
+  accepting; any out-of-scope path is a defect to return even when checks pass. Ships with
+  `skills/agentflow/scripts/check-write-scope.sh <base> <scope>...` — a one-command diff-against-
+  scope check for ordinary development briefs (`isolation.py check-diff` remains the improvement
+  loop's candidate-tree gate). Tested on in-scope, out-of-scope, and bad-revision cases.
+- Worker result contract gains optional `cost` and `duration` fields: record measured numbers or
+  `not reported`, never estimates — the development line can now accumulate the run-cost evidence
+  the improvement loop already treats as an evidence category.
+- Reviewer test-depth mode: the revert experiment that proves a regression check fails on the
+  unfixed code is behavioral, not prose — the reviewer names the exact revert command and expected
+  failing output, the supervisor executes and returns raw output (same channel as the check
+  protocol). A fixer-written regression check is the floor, not independent verification.
+- SKILL.md: step 10 requires capturing the decision record durably before the session ends when
+  the outcome may feed the improvement loop (episodes do not self-collect; once the conversation
+  is gone the evidence is unrecoverable); the recovery section defines session-death resumption
+  from the versioned plan under `records/plans/` — re-derive each work package's state from the
+  workspace, treat unobserved packages as not started.
+- `references/roles.md`: complete profiles for all twelve roles (the bug chain, plan architect,
+  and the four improvement roles had no profile entries) plus a task-shape routing table.
+- Agent descriptions: removed the "for Agentflow" / "when Agentflow assigns" qualifier from
+  reviewer, technical-director, frontend-engineer, and backend-engineer so hosts route them
+  correctly in ordinary business repositories.
+- Improve skill declares two capability limits: (1) measured scope — the public suite measures
+  Agentflow against its own contract cases, so method-level candidates (role behavior inside
+  business repositories) are released as `measurement: none (method-level change, no instrumented
+  business task)` and never described as verified; (2) `maxTurns` is declared but unverified on
+  ZCode — the prompt-level budget discipline is the operative constraint, the frontmatter number
+  is intent metadata.
+- Chinese mirror `docs/agent-roles.md` updated for all of the above; `docs/next-session-handoff.md`
+  now carries a P0/P1/P2-prioritized backlog replacing the stale unchecked task list.
+- Development release: same status as 0.3.4/0.3.5 — no baseline/candidate evaluation evidence.
+  The installed snapshot lags the source until the marketplace is refreshed and the plugin is
+  reinstalled; `validate.py installed` reports that drift.
+
 ## 0.3.5 — 2026-09-15
 
 Rule patches carried over from a real cross-layer feature run (a conversation-share landing page
