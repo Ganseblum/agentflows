@@ -1,6 +1,6 @@
 # Agentflow 反馈驱动自迭代设计
 
-> 状态：`v0.3.6` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查、显式 Codex/Claude Adapter 和确定性 Policy Engine；真实模型 dogfood、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
+> 状态：`v0.4.0` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查、显式 Codex/Claude Adapter 和确定性 Policy Engine；真实模型 dogfood、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
 
 ## 判断
 

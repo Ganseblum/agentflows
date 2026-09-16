@@ -19,6 +19,10 @@
 | 0.3.4 | 2026-09-15 | 会话内三类事故 + 全项目门复核 | 硬边界 12、实验/恢复纪律、门缺口加固、横切机制纪律 | CHANGELOG 0.3.4；`records/bugs/2026-09-15/` |
 | 0.3.5 | 2026-09-15 | 对话分享落地页复盘的 9 条补丁 | 运行时接线验收、参照物先行、替身面盘点、缺席断言纪律 | CHANGELOG 0.3.5；本文件 §0.3.5 |
 | 0.3.6 | 2026-09-16 | 能力盘点发现「声明了但没有执法/度量」的四类缺口 | write_scope 执行层对照、断点恢复协议、episode 捕获纪律、方法级改动诚实标注 | CHANGELOG 0.3.6；本文件 §0.3.6 |
+| 0.3.7 | 2026-09-16 | 记录语言混用（英文 title + 中文正文 + 英文章标题，跨机器又见中文 title） | 单语约定 + 章节标题固定中文字面量（门变更）+ 存量 6 条与示例统一 | CHANGELOG 0.3.7；本文件 §0.3.7 |
+| 0.3.8 | 2026-09-16 | 再犯类无机器可查的落点；severity 档位不够直观 | P0–P3 优先级 + 类台账（未归纳/已归纳 + 归纳版本）+ 推导档位单次/再犯/归纳后再犯 | CHANGELOG 0.3.8；本文件 §0.3.8 |
+| 0.3.9 | 2026-09-16 | 分不清问题是不是 Agentflow 产生的（自己写的计划/分析 vs 方法条款） | 必填 `provenance` + 归因铁律（schema 强制）+ 改进环过滤规则 | CHANGELOG 0.3.9；本文件 §0.3.9 |
+| 0.4.0 | 2026-09-16 | 系统复盘 `aiwork-workflow-ai`：设计模板的工程血肉、issue 记录优点、双仓评审桥 | 设计完备性三纪律 + closure_criteria/fix_revision/变更记录 + `records/reviews/` 二次评审桥 | CHANGELOG 0.4.0；本文件 §0.4.0 |
 
 ---
 
@@ -133,3 +137,131 @@
   行为已实测；条款对真实运行的影响无度量。这本身就是本批声明的盲区之一——业务任务
   度量切片是 P1。
 - **未决**：分级待办的完整清单见 `docs/next-session-handoff.md`「待办（分级）」。
+
+## 0.3.7 — 记录语言统一（2026-09-16，当前源码，宿主快照待重装）
+
+- **触发**：用户指出已有记录语言混用——同一文件内英文 `title` + 中文正文 + 英文章节
+  标题（`## Symptom` 等）；另一台机器产出的记录用中文 title，语料层面三种做法并存。
+  根因是没有写下来的记录语言约定。
+- **改了什么**：
+  - 约定写入 `records/README.md`：机器层英文 ASCII（frontmatter 键/枚举、slug/ID/路径、
+    `project`）；章节标题为**固定中文字面量**（`## 现象`/`## 根因`/`## 修复`/`## 问题代码`/
+    `## 审查`）；人读层一条记录单语、title 与正文同语言、默认中文；
+  - **门变更（用户明确指示下由人工实施）**：`tools/lab/validate.py` 的
+    `BUG_REQUIRED_HEADINGS` 与 Fix/Review 检查改为中文字面量，错误消息同步；负向实验
+    验证：英文标题 → `body section '## 现象' is required`，中文标题 → 通过；
+  - 存量 6 条记录 title + 章节标题中文化，各自刷新 `updated_at=2026-09-16T11:48:32Z`；
+    examples 正反例全文翻译到同一形式（反例保持仅因 verified-缺审查而非法）；
+  - `agents/bug-recorder.md`、`records/bugs/README.md`、中文镜像 `docs/agent-roles.md` 同步。
+- **解决了什么**：记录内部不再混语；`validate.py report` 表格与正文同语言；新记录有
+  校验器强制的写法（标题字面量）；跨机器/跨项目的记录有同一份约定可依。
+- **未决**：宿主快照仍为 0.3.4，需刷新 marketplace 重装后 `installed` 转绿；本批含
+  禁区（validator）变更，属人工实施；无对照评测证据（同 0.3.4–0.3.6 定位）。
+
+## 0.3.8 — 再犯类台账与 P 级严重度（2026-09-16，当前源码，宿主快照待重装）
+
+- **触发**：用户要求（1）严重度用更好懂的档位（P0–P3）标记；（2）建立"自迭代升级"追踪——
+  同类问题改了又出现、再修再出现要加重标记，单独文件夹区分，并记录"在第几个升级里
+  归纳修复、之后再犯没有"。现状缺口：记录之间没有字段关联，"这类问题在 0.3.4 归纳过、
+  至今未再犯"只存在于正文散文，机器查不到。
+- **改了什么**：
+  - `severity` 改优先级档位 `P0`（critical）/`P1`（high）/`P2`（medium）/`P3`（low），
+    存量 6 条与正反例同步迁移；`report` 第 4 列直接输出档位；
+  - 新类台账 `records/bugs/recurrence/<class_id>.md`（契约 `schemas/recurrence.schema.json`）：
+    `status` = `unconsolidated`（未归纳升级）/ `consolidated`（已归纳升级 + `consolidated_in`
+    版本）；`occurrences` 列记录 id；记录的 `class_id` + `occurrence` 与之交叉关联；
+  - 档位由事实**推导**（禁止手写）：新增 `validate.py recurrence` 输出 `single`（只有一次）/
+    `recurred`（改了又出现）/ `escalated`（归纳后再犯——根据记录 `agentflow_version` 是否
+    高于 `consolidated_in` 自动判定，是触发 improve 环升级的最高档加重标记）；
+  - 门变更（用户指示下人工实施）：validator 遍历排除台账目录并新增台账校验 + 交叉引用
+    检查（引用记录必须存在、带 class_id 的记录必须有台账且被台账列出、occurrence 唯一、
+    已归纳类的记录必须带 agentflow_version）；新 schema 进必需保护区清单；钉住测试 +3 例；
+  - 回填首个真实台账 `unverified-behavior-claims`（0.3.4 经边界 12 归纳，至今 0 次再犯）；
+  - 角色与文档：`bug-recorder`（档位、台账职责、归纳状态只能来自真实发布）、
+    `bug-investigator`（先查台账、提议 class_id/occurrence）、两份 records README、
+    roles.md、improve SKILL（台账是一等 episode 源）、中文镜像。
+- **解决了什么**：一类问题现在有完整的机器可查时间线（首现 → 归纳版本 → 再犯记录 →
+  档位自动加重）；"改了又出现"不再依赖人记得比对旧记录。
+- **效果状态**：条款与工具行为已在 /tmp 副本上做过四组负向实验 + 一组正向（escalated）
+  验证；对真实运行的效果无对照评测（同前）。
+- **未决**：宿主快照仍为 0.3.4；本批含 schemas/ 与 validator 的门变更，属人工实施；
+  跨项目（aiwork 等）的类台账沿用同一目录、用 `project` 字段区分。
+
+## 0.3.9 — 来源归属 provenance（2026-09-16，当前源码，宿主快照待重装）
+
+- **触发**：用户指出——必须能区分问题是不是 Agentflow 产生的：会话里"自己写的计划和分析"
+  与 Agentflow 条款/角色/门的产物混在一起，improve 环可能把模型即兴发挥的缺陷当成方法的
+  证据去改；此前 `attribution` 只在"哪一层出错"上作答，没有"产物归谁"的字段。
+- **改了什么**：
+  - 新必填字段 `provenance`：`agentflow`（Agentflow 自身表面：条款/角色/门/评测/简报纪律/
+    tools 工具）/ `session-artifact`（会话内即兴产出、无条款覆盖）/ `user-input` /
+    `external`（业务仓既有代码、宿主、工具、环境）/ `undetermined`（必须写明缺的证据）；
+  - **归因铁律**（schema 强制）：`attribution` 为 `workflow_policy`/`role_prompt` 时
+    `provenance` 必须为 `agentflow`——不能既把责任归给 Agentflow 的规则、又承认产物不来自
+    Agentflow；
+  - 改进环过滤：improve SKILL 步骤 2/4 与 feedback-analyst 角色明确"只有 `agentflow` 记录是
+    候选证据，其余是上下文/反例，`undetermined` 先解决归属"；
+  - `validate.py report` 追加第 7 列（既有列号不变，`cut -f5` 等用法不受影响），支持
+    `awk -F'\t' '$7=="agentflow"'` 过滤；存量 6 条与正反例迁移；
+  - 判定依据要求：investigator 归 `agentflow` 须引用覆盖条款 `path:line`，归
+    `session-artifact` 须写明无条款覆盖及理由。
+- **解决了什么**：每条记录现在必须先回答"这是不是 Agentflow 的问题"，且答案受 schema
+  一致性约束；改进环的证据面从"所有 bug 记录"收窄为"确属 Agentflow 的记录"。
+- **效果状态**：规则在 /tmp 副本上做过负向实验（缺字段被拒、矛盾归因被拒、非 Agentflow
+  取值合法）；对真实运行的效果无对照评测（同前）。
+- **未决**：宿主快照仍为 0.3.4；本批含 schema/validator/钉住测试的门变更，属人工实施。
+
+## 0.4.0 — 吸收 aiwork 仓库的优点（2026-09-16，当前源码，宿主快照待重装）
+
+- **触发**：用户要求系统看 `aiwork-workflow-ai`（角色/rule/模板/docs/features 体系），
+  合理吸收、避开坑点。评估结论：其设计模板有 agentflow 缺的「工程血肉」（时序/异常
+  矩阵/发布顺序），issue 记录有关闭条件/修复落点/变更记录三个可吸收优点，且用户的实际
+  用法（aiwork 产出、agentflow 二次评审）需要一座证据桥。
+- **批 1（设计完备性 + issue 优点）**：
+  - `contracts.md` 新增「重要特性设计完备性三件套」：关键链路时序（步骤表为基准、图
+    作补充且不得不同口径）、异常矩阵（超时/重复/冲突/回调失败 × 检测/处理/重试方·次数·
+    退避/幂等前提/用户可见/告警；废话兜底按缺陷退回）、发布顺序×回滚点配对——与既有
+    隐式行为检查互补（那个管横切机制，这个管声明流程）；plan-architect、
+    technical-director、中文镜像同步；
+  - `closure_criteria`（verified 必填，可度量关闭判据）+ `fix_revision`（修复落点）+
+    `## 变更记录` 正文约定（流转 append 流水）。
+- **批 2（评审桥）**：
+  - `records/reviews/<日期>/<project>-<slug>/`：review.md + archive/ 逐字快照 +
+    `source_revision`；契约 `schemas/review.schema.json`；
+  - 工作流（SKILL 新节 + 路由行 + reviews/README + 中文镜像）：先快照再评审、发现逐条
+    进 `records/bugs/`、`provenance` 分流升级回路（external=升级业务仓模板的证据池，
+    agentflow=升级本仓 review 契约）、`fix_revision` 闭环；
+  - 校验器强制：快照在盘、findings 的 bug_id 存在、日期目录/命名格式。
+- **避开的坑**（见交接文档第十四批记录）：不引入按阶段文档模板体系、不做双状态机、
+  不写个人绝对路径、检查不许"条件允许时执行"。
+- **效果状态**：负向实验（/tmp）：缺 closure_criteria 的 verified 被拒、review 引用
+  不存在 bug_id 被拒、快照缺失被拒；对真实运行无对照评测（同前）。
+- **未决**：跨仓再犯类 escalated 档位不能自动推导（consolidated_in 绑本仓 semver），
+  先用 report 聚类；宿主快照重装；含 schemas/validator/钉住测试门变更，属人工实施。
+- **发布前用户修订两处（0.4.0 未提交时并入）**：
+  - **评审目录改为 feature 锚**：用户指出按日期分目录在「同一 feature 反复评审」场景下
+    是错的——今天/明天/修完再评会散落在互不相干的日期目录里。改为
+    `<project>-<feature-slug>/` 一个 feature 一个目录，每轮 `review-<日期>-<NNN>.md`
+    （文件名 = review_id），快照进 `archive/<日期>-<序号>/`（同名文档跨轮不冲突），
+    再评审聚焦上轮 delta；
+  - **引用自包含**：用户提出可移植性缺口——仓给了别人，记录里引用的外部仓/文件就成了
+    悬空引用。规则（validator 强制）：`files` 条目要么本仓路径（查在盘），要么仓限定
+    `<repo>@<revision>:<path>`；裸外部路径 FAIL。仓限定是地址、正文内嵌片段/原文才是
+    证据（代码贴 `## 问题代码`、文档引关键原文）；`@<revision>` 不自检，快照完整性由
+    评审桥的 `archive/` 承担。正例已改为仓限定演示形式。
+  - **片段规则升级为机器强制**（用户追问"能不能 copy 或记录片段"）：含仓限定引用的
+    记录，正文必须存在内嵌片段（代码围栏块或文档引用块）**且**片段旁出现该仓限定地址
+    原文，两者缺一 FAIL（`validate_external_excerpts`，钉住单测 + /tmp 负向实验各覆盖
+    一条）；评审发现的 `files` 优先指向本仓快照
+    `records/reviews/<feature>/archive/<轮次>/<doc>.md`（整份 copy 在 archive，本仓路径
+    直接过在盘检查），原始仓限定地址写正文。
+  - **正文引用规则**（用户明确"禁用引用、保留实际、关联的上下文/文档/代码也要处理"）：
+    `validate_body_references` 应用于 bug 记录、评审记录与类台账——散文里的路径是记录
+    自己的主张，必须在盘或仓限定；围栏块与内联代码是**引文**（逐字证据、含历史路径）
+    豁免；个人绝对路径禁止；URL 至多补充、不得作证据。存量 6 条实测零误伤（3 处历史
+    路径全在引文里，原样保留）；钉住单测覆盖拒绝/豁免/解析三种形态。
+  - **发布前自审修复四个缺陷**（当批代码当批审，钉住单测 + /tmp 实验验证）：①正文路径
+    模式不识别中文 token——aiwork 场景的核心形态（`docs/缺失文档.md`）会漏检，改用
+    `\w` 类模式并实验确认版本号斜杠（`0.3.4/0.3.5`）不误伤；②review walker 按文件名
+    匹配不看深度——archive 深处同名 `review-*.md` 快照会被误校验，改为仅第 4 层；③
+    review_id 无全局唯一性检查；④review_id 日期与 recorded_at 不校验一致性。

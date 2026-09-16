@@ -18,6 +18,74 @@
 
 ## 已完成
 
+- 2026-09-16 第十四批：0.4.0 吸收 aiwork 仓库优点（用户指示，含**门变更**）：
+  - 起因：用户要求系统评估 `aiwork-workflow-ai`（模板/issue/双仓用法），合理吸收。
+  - 批 1：设计完备性三纪律（关键链路时序·步骤表基准 / 异常矩阵·四强制行 / 发布顺序×
+    回滚点）进 contracts.md + plan-architect + technical-director + 中文镜像；
+    `closure_criteria`（verified 必填）+ `fix_revision` + `## 变更记录` 约定。
+  - 批 2：`records/reviews/` 评审桥——review.md + archive/ 逐字快照 + source_revision，
+    契约 `schemas/review.schema.json`；SKILL 新节 + 路由行 + reviews/README；`provenance`
+    分流（external=业务仓模板升级证据池 / agentflow=本仓 review 契约）。
+  - **门变更**：2 个 schema 字段 + verified 条件 + review schema + validator reviews
+    遍历/交叉引用 + 必需保护区条目 + 钉住测试。负向实验（/tmp）：缺 closure_criteria
+    被拒、引用不存在 bug_id 被拒、快照缺失被拒。
+  - 避开的坑（有意不吸收）：按阶段文档模板体系、双状态机（collaboration_stage×
+    internal_phase）、个人绝对路径、巨型单 README、"条件允许时执行 validate"的松动、
+    格式四轮迁移史。
+  - 已知边界：跨仓再犯类 escalated 不能自动推导；先用 report 聚类。版本 0.4.0 全套。
+  - **发布前用户修订两处（并入 0.4.0）**：①评审目录改 feature 锚
+    （`<project>-<feature-slug>/` + 每轮 `review-<日期>-<NNN>.md` + `archive/<日期>-<序号>/`
+    快照——同一 feature 反复评审不再散落日期目录）；②引用自包含（`files` 外部路径必须
+    `<repo>@<revision>:<path>` 仓限定，裸外部路径 validator FAIL；**含外部引用的记录正文
+    必须内嵌片段且片段旁标注仓限定地址原文，缺一 FAIL**——`validate_external_excerpts`
+    + 钉住单测；评审发现的 `files` 优先指向本仓 archive 快照，整份 copy 由评审桥承担，
+    记录只嵌决定性片段——回应"仓库给别人用"的可移植性问题）；③**正文引用规则**
+    （`validate_body_references`，bug/评审/台账三链同用）：散文路径必须在盘或仓限定、
+    围栏块与内联代码作引文豁免（存量 3 处历史路径零误伤）、个人绝对路径禁止、URL 只作
+    补充不作证据——回应"禁用引用、保留实际、关联上下文也要处理"。
+
+- 2026-09-16 第十三批：0.3.9 来源归属 `provenance`（用户指示，含**门变更**）：
+  - 起因：用户要求记清"问题是不是 Agentflow 产生的"——区分 Agentflow 条款/角色/门的产物
+    与会话内自己写的计划/分析，否则改进环会把非 Agentflow 的缺陷当证据。
+  - 新必填字段 `provenance`：`agentflow` / `session-artifact` / `user-input` / `external` /
+    `undetermined`（写明缺的证据）；
+  - **归因铁律**（schema 强制）：`attribution` = `workflow_policy`/`role_prompt` ⇒
+    `provenance` 必须 `agentflow`；
+  - 改进环过滤（improve SKILL 步骤 2/4 + feedback-analyst）：只有 `agentflow` 是候选证据；
+  - `report` 追加第 7 列（列号不变），`awk -F'\t' '$7=="agentflow"'` 可过滤；
+  - **门变更**：schema 字段 + guard、report 列、钉住测试 +1 例；负向实验（/tmp）：
+    缺字段被拒、矛盾归因（workflow_policy + external）被拒、`session-artifact` 合法；
+  - 存量 6 条与正反例迁移；investigator/recorder/feedback-analyst/roles.md/两份 README/
+    中文镜像同步；版本 0.3.9 全套。
+
+- 2026-09-16 第十二批：0.3.8 再犯类台账 + P 级严重度（用户指示，含**门变更**）：
+  - 起因：用户要求严重度用 P0–P3 好懂的档位；并建立自迭代升级追踪——同类问题"改了又
+    出现/再修再出现"要加重标记、单独文件夹区分、记录"在第几个升级归纳、之后再犯没有"。
+  - `severity`：`P0`/`P1`/`P2`/`P3`（原 critical/high/medium/low），存量 6 条与正反例迁移。
+  - 类台账 `records/bugs/recurrence/<class_id>.md`（新契约 `schemas/recurrence.schema.json`）：
+    `unconsolidated`/`consolidated` + `consolidated_in` 版本；记录侧 `class_id` + `occurrence`。
+  - 档位**推导不手写**：`validate.py recurrence` 输出 `single`/`recurred`/`escalated`
+    （escalated = 记录 `agentflow_version` 高于 `consolidated_in`，自动加重）。
+  - **门变更**：validator 新增台账遍历/校验/交叉引用 + 新查询目标；新 schema 进必需保护区
+    清单；钉住测试 +3。负向实验（/tmp 副本）：旧 severity 被拒、无台账的 class_id 被拒、
+    台账未列出的记录被拒、已归纳类缺版本被拒；正向：合法再犯记录 → `escalated`。
+  - 回填首个台账 `unverified-behavior-claims`（0.3.4 归纳，0 次再犯）。
+  - 角色/文档：`bug-recorder`、`bug-investigator`、roles.md、两份 README、improve SKILL
+    （台账为一等 episode 源）、中文镜像；版本 0.3.8 全套。发布性质同前：开发版本，无对照评测。
+
+- 2026-09-16 第十一批：0.3.7 记录语言统一（用户指示，含**门变更**）：
+  - 起因：记录混用——同文件内英文 `title` + 中文正文 + 英文章节标题；另一台机器的记录
+    用中文 title。约定此前不存在于任何文档。
+  - 约定（`records/README.md` + 中文镜像）：机器层英文 ASCII；章节标题固定中文字面量
+    `## 现象`/`## 根因`/`## 修复`/`## 问题代码`/`## 审查`；人读层单语、title 与正文同语言、
+    默认中文。
+  - **门变更**：`tools/lab/validate.py` 标题字面量与 Fix/Review 检查改中文（用户明确指示
+    下人工实施）。负向实验：英文标题 → `body section '## 现象' is required`；中文 → 通过。
+  - 存量 6 条记录 title + 章节标题中文化（`updated_at=2026-09-16T11:48:32Z`）；examples
+    正反例全文翻译；`agents/bug-recorder.md`、`records/bugs/README.md` 同步。
+  - 版本：五 manifest 0.3.7、CHANGELOG、README 与三份设计文档引用、迭代记录 §0.3.7。
+  - 发布性质同前：开发版本，无对照评测证据；宿主快照待重装。
+
 - 2026-09-16 第十批：0.3.6「执行层牙齿与诚实标注」发布（用户授权，起因：能力盘点发现
   四类声明-执行缺口）：
   - **write_scope 执法**（此前业务仓库里纯约定，`isolation.py check-diff` 只管改进环候选

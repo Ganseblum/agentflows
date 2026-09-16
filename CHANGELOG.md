@@ -1,5 +1,166 @@
 # Changelog
 
+## 0.4.0 — 2026-09-16
+
+Absorbed from a systematic review of `aiwork-workflow-ai` (its design templates, issue records,
+and spec-first workflow), at explicit user direction — as disciplines and contracts, not
+templates, keeping this repo's single-plan-contract shape.
+
+Batch 1 — design completeness and issue-record merits:
+
+- New "design completeness for material features" discipline in `contracts.md` (and the
+  plan-architect / technical-director prompts, plus the Chinese mirror): (1) critical-path
+  timing with the step table as the baseline and a mermaid sequence diagram only as a companion
+  that must agree (disagreement makes the diagram the defect; process steps never pile into the
+  architecture diagram); (2) an exception matrix per critical path — timeout, duplicate request,
+  state conflict, callback failure — each row answering detection, handling, retry
+  owner/count/backoff, idempotency precondition, user-visible result; a retry without those
+  specifics, or a blanket "fail-safe fallback", is a defect; `N/A` with reason, never blank;
+  (3) a release order with every step paired to its rollback point. These complement the
+  existing implicit-behavior check (that one guards cross-cutting mechanisms; these guard the
+  declared flow).
+- `closure_criteria` (required for `verified`): a measurable closure condition — named metric,
+  log absence, or check output; "works as expected" is not a criterion.
+- `fix_revision`: where the fix landed (commit/PR/release, repo-qualified when cross-repo).
+- `## 变更记录` body convention: one appended line per state transition, so history survives
+  the single `updated_at` timestamp.
+- Gate change, human-directed: two schema fields + the verified conditional; pinned tests
+  extended (closure criteria required, verified sample updated).
+
+Batch 2 — the external-document review bridge:
+
+- New record subtree `records/reviews/<YYYY-MM-DD>/<project>-<slug>/` (contract
+  `schemas/review.schema.json`): `review.md` plus verbatim snapshots of the reviewed documents
+  in `archive/`, with `source_revision` pinning the target repository's commit.
+- The bridge workflow (SKILL "Second-pass review of external documents", routing-table row,
+  `records/reviews/README.md`, Chinese mirror): archive first, review the snapshot, file each
+  finding as a bug record, then cross-link. `provenance` splits the upgrade loops — `external`
+  findings are the evidence pool for upgrading the target system's rules/templates (the stated
+  use case: `aiwork-workflow-ai`), `agentflow` findings upgrade this repo's review contract;
+  `fix_revision` closes the loop when the target system's upgrade lands.
+- Gate change, human-directed: validator walks `records/reviews/` (review records validated;
+  archived evidence copies accepted as-is), cross-checks that every `reviewed_docs` entry
+  exists on disk and every `findings` bug_id exists under `records/bugs/`; the review schema
+  joins the required protected set.
+- Review layout is feature-anchored, not date-anchored (user correction before release): one
+  directory per reviewed feature (`<project>-<feature-slug>`), one `review-<YYYY-MM-DD>-<NNN>.md`
+  file per round (filename equals review_id), one `archive/<date>-<NNN>/` snapshot subdirectory
+  per round — the same feature may be reviewed repeatedly, and rounds stack in one directory
+  instead of scattering across dates.
+- Self-contained references (user-raised portability gap: records given to someone without the
+  other repository must stay readable): a `files` entry either resolves inside this repository
+  or is repo-qualified as `<repo>@<revision>:<path>`; bare paths that exist nowhere are rejected
+  by the validator. A repo-qualified reference is an address, not evidence: the record body
+  must embed the decisive fragment (fenced code block for code, blockquote for document
+  passages) and cite the qualified address next to it — both enforced by the validator, with a
+  pinned regression test. For findings from a second-pass review, the preferred `files` entry
+  is the archived snapshot inside `records/reviews/.../archive/` (the verbatim copy already
+  lives in this repository); whole-document copies are the review archive's job, records embed
+  fragments.
+- Body-reference rules (user direction: ban dangling references everywhere, records must carry
+  real evidence): in plain prose, every doc/code path is the record's own claim — it must
+  resolve in this repository (or next to the record) or be repo-qualified. Fenced blocks and
+  inline code are quotations — verbatim evidence including historical paths — and are exempt.
+  Personal absolute paths (`/Users/...`, `~/...`) are banned outright; URLs cannot be validated
+  and are supplementary at most, never the evidence. Enforced by `validate_body_references` on
+  bug records, review records, and recurrence ledgers; the existing corpus passes with zero
+  false positives (its three historical paths live inside quotations and stay untouched);
+  pinned tests cover rejection, exemption, and resolution.
+- Self-review round on the same batch fixed four defects before release: the body-path
+  pattern now recognizes CJK path tokens (the dominant form in the aiwork use case) while
+  still ignoring version-like slashes (`0.3.4/0.3.5` is not a path); the review walker only
+  treats `review-*.md` at the feature-directory level as records (an identically named
+  snapshot deeper under `archive/` was previously mis-validated); `review_id` is now globally
+  unique across reviews; and `review_id`'s date must match `recorded_at`. All verified by
+  pinned tests and throwaway-copy experiments.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
+## 0.3.9 — 2026-09-16
+
+Provenance: a required field that answers "is this Agentflow's problem", at explicit user
+direction. Without it, a defect produced by the agent's own ad-hoc plan or analysis could be
+consumed by the improvement loop as evidence about Agentflow.
+
+- New required frontmatter field `provenance`: `agentflow` (Agentflow's own surface — clause,
+  role, gate, evaluation, brief discipline, `tools/lab/` tools), `session-artifact` (ad-hoc
+  session output no clause covers — the agent's own plan, analysis, decision, or code),
+  `user-input`, `external` (pre-existing product code, host, tool, environment), `undetermined`
+  (the missing evidence must be named). All six records and both examples migrated.
+- Schema-enforced contradiction guard: `attribution: workflow_policy` or `role_prompt` forces
+  `provenance: agentflow` — an Agentflow policy cannot own a defect whose carrier was not
+  Agentflow's.
+- Improvement-loop filter (improve SKILL steps 2 and 4, feedback-analyst prompt): only
+  `agentflow` records are candidate evidence about Agentflow itself; `session-artifact`,
+  `user-input`, and `external` are context and counterexamples; `undetermined` must have its
+  provenance resolved before entering a cluster.
+- `validate.py report` appends provenance as column 7; existing column positions are unchanged
+  (`cut -f5` still selects error kind). Filter with
+  `python3 tools/lab/validate.py report | awk -F'\t' '$7=="agentflow"'`.
+- Gate change, human-directed: schema field, guard rule, report column, and pinned tests (the
+  required field, the contradiction rejection, and non-Agentflow values accepted). Negative test
+  on a throwaway copy: a record missing `provenance` is rejected; `attribution: workflow_policy`
+  with `provenance: external` is rejected; `session-artifact` with an unrelated attribution
+  passes.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
+## 0.3.8 — 2026-09-16
+
+Recurrence tracking and P-grade severity, at explicit user direction. A bug and its later
+relapse had no machine-visible link, and "which upgrade absorbed this class, and has it come
+back since" lived only in prose.
+
+- `severity` now uses priority grades — `P0` (critical: data loss, security, release blocker),
+  `P1` (high), `P2` (medium), `P3` (low) — replacing low/medium/high/critical; `validate.py
+  report` prints the grade directly. All six records and both examples migrated.
+- New recurrence ledger: `records/bugs/recurrence/<class_id>.md` (contract
+  `schemas/recurrence.schema.json`) — one file per failure class that recurred or was
+  consolidated; plain single-occurrence bugs get none. `status` is `unconsolidated`（未归纳升级）
+  or `consolidated`（已归纳升级）with `consolidated_in` naming the absorbing release;
+  `occurrences` lists record ids, and versions are read from the records themselves. Records of
+  a class carry `class_id` + `occurrence`.
+- The tier is derived, never hand-marked: `validate.py recurrence` prints `single` / `recurred` /
+  `escalated`, where `escalated` means an occurrence recorded on a version newer than the
+  consolidation — the aggravated marker that triggers the improve-loop escalation (re-consolidate
+  with an eval case; the improve SKILL treats the ledger as a first-class episode source).
+- Gate change, human-directed: the validator walks and cross-checks the ledger — referenced
+  records must exist, a record with `class_id` must have its ledger and be listed, occurrence
+  numbers must be unique, and a consolidated class's records must carry `agentflow_version`.
+  `schemas/recurrence.schema.json` joins the required protected set; pinned tests extended
+  (severity grades, consolidation requirement, filename/class_id agreement). Negative tests on a
+  throwaway copy: legacy `severity: high` rejected; ledger-less `class_id` rejected; unlisted
+  occurrence rejected; consolidated occurrence without a version rejected; a structurally valid
+  post-consolidation occurrence reports `escalated`.
+- First ledger backfilled: `unverified-behavior-claims` (consolidated in 0.3.4 via hard boundary
+  12, zero recurrences since).
+- Roles and docs: `bug-recorder` (grades, ledger duties, consolidation written only from an
+  actual release), `bug-investigator` (checks the ledger first, proposes class + occurrence),
+  both records READMEs, the roles reference, and the Chinese mirror.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
+## 0.3.7 — 2026-09-16
+
+Record language convention, executed at explicit user direction. The archive mixed languages
+inside each file (English titles over Chinese bodies) and the required body headings were English
+literals; records produced elsewhere had already chosen Chinese titles.
+
+- New convention (`records/README.md`): the machine layer stays English/ASCII — frontmatter keys
+  and enum values, slugs, ids, paths, `project`. Body section headings are fixed literals too, in
+  Chinese — `## 现象`, `## 根因`, `## 修复`, `## 问题代码`, `## 审查` — matched exactly by the
+  validator, never translated per record. The human layer (title and prose) uses one language per
+  record with the title matching the body's language, defaulting to Chinese.
+- Gate change, human-directed: `tools/lab/validate.py` now requires the Chinese heading literals
+  (`BUG_REQUIRED_HEADINGS`, the `## 修复` rule, the `## 审查` rule for verified records). Negative
+  test on a throwaway file: English headings are rejected (`body section '## 现象' is required`),
+  Chinese headings pass.
+- All six existing records normalized — titles and section headings to Chinese, each edit
+  refreshing `updated_at`; the valid and invalid examples under `examples/` translated to the same
+  form; `agents/bug-recorder.md` and both records READMEs carry the convention.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.3.6 — 2026-09-16
 
 Execution-layer teeth for declared boundaries, plus honesty labels for what is still unmeasured.
