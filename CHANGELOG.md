@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.6.0 — 2026-09-17
+
+First measurement surface for method-level changes — changes that alter how roles behave inside
+business repositories and have no regression signal in `evals/public/`. Three document-review
+cases run against a pinned snapshot of a real enterprise repository that is made read-only when
+seeded and re-checked after every host call; a deterministic grader scores the agent's findings
+against defects planted before the run. The public surface carries only sanitized briefs and
+abstracted seed lists — the snapshot, the seed patch, the symbol-to-path mapping, and all raw
+results stay local.
+
+- New `evals/business/` suite: `BT-001` seed-defect document review, `BT-002` internal
+  contradiction, `BT-003` cross-document consistency, each with a sanitized brief under `inputs/`
+  and an abstracted seed list under `seeds/`. A seed counts as a hit only when one finding names
+  the seeded document and its text contains one of the seed's literal anchors.
+- New `skills/improve/references/business-case.schema.json`: the eval-case contract plus
+  `target_id`, `target_pin` (full sha), `target_docs`, `seeds_ref`, `findings_contract`, and
+  `grading.min_seed_recall`. The target fields are structure-checked only, deliberately — the
+  public validator must not depend on the private snapshot being present.
+- New `tools/lab/seed_grader.py`: deterministic offline scoring into `hits` / `missed` /
+  `unmatched`; `accepted` is overwritten as "seed recall at or above the case threshold" and
+  `escaped_defects` as the missed-seed count. Unmatched findings are recorded, not penalized. An
+  unknown match strategy or a missing/unparsable findings artifact fails closed (exit code 2)
+  instead of scoring zero.
+- Runner and adapter business surface: `eval_runner.py --business-root`; the host adapter's
+  business request branch requires the six business case fields, one shared pin, and a
+  `workspace-write` permission profile (a read-only profile cannot write the findings artifact);
+  a real run also requires `--seed-patch`, checks the snapshot HEAD against `target_pin`, requires
+  the seed patch to be cleanly reversible, and re-checks the snapshot file set and the `git diff`
+  digest after every host
+  call. `isolation.py layout_errors` gains an optional fourth position for the snapshot root.
+- `validate.py` wires `evals/business/` into the schema map and `validate_business_evals`, and
+  `tools/lab/seed_grader.py` joins the protected gate list. The pinned test file gains 39 tests
+  (58 total).
+- Gate change, human-directed: `validate.py`, `eval_runner.py`, `host_adapter.py`,
+  `isolation.py`, `protected-paths.txt`, and `tests/test_lab_contracts.py` were edited to land
+  this batch.
+- Post-review follow-ups (human-directed): the judgement words that decide whether a gate
+  applies are now defined in the agentflow skill (`small change`, `risky work`, `the same
+  cause`) and mirrored in `docs/agent-roles.md`; the improvement episode schema constrains
+  `provenance` (required `carrier` and `sanitized`, no extra keys); `validate.py`'s duplicate
+  `docs` CLI choice is removed; a GitHub Actions workflow runs the deterministic checks on
+  push and pull requests; two diagnostic defects are fixed — `run_codex` now reads the result
+  file by path (its `NamedTemporaryFile` handle had no `read_text`, so every codex run failed),
+  and a failed claude invocation now reports the error from its stdout JSON instead of the
+  harmless stderr warning that used to mask it; a business run also passes
+  `--add-dir <snapshot root>` (resolved to an absolute path) because claude's `--print` mode
+  scopes tool file access to the working directory, so the first smoke attempts could not read
+  the snapshot at all — covered by two argv regression tests and a host-platform-facts row.
+- Development release: no baseline/candidate evaluation evidence. The business smoke run is
+  blocked on three open P0 items — trusted endpoint (U-01), measured permission profile (U-02),
+  snapshot placement (U-03) — so the `measurement: none` transitional state for method-level
+  changes is **not** retired by this release. The installed host snapshot lags the source until
+  the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.5.2 — 2026-09-17
 
 Self-audit of the 0.5.0/0.5.1 surface: one silent gate gap, one dead code path, five stale

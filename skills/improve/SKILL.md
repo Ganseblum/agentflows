@@ -53,13 +53,18 @@ Changes to permissions, tool access, hooks, MCP connections, release policy, eva
 
 **Measured scope.** The public suite under `evals/` measures Agentflow against its own contract
 cases. A candidate that changes how roles behave *inside business repositories* — reviewer
-checklists, brief disciplines, acceptance steps — has no regression measurement there: the
-`better / neutral / worse` standard of this loop cannot be produced for method-level changes
-without instrumenting a business task. Treat such a candidate as unmeasured: its evidence is the
-reasoning plus any incident or review findings that triggered it, its release record must state
-`measurement: none (method-level change, no instrumented business task)`, and it must not be
-described as a verified improvement. The structural fix — an instrumented slice of real
-business-repository tasks — is a P1 item, not something a candidate may improvise.
+checklists, brief disciplines, acceptance steps — has no regression measurement there. When such
+a method-level hypothesis has a matching business case, run the comparison through the business
+slice under `evals/business/`: three document-review cases on a pinned, read-only snapshot of a
+business repository, scored deterministically by `tools/lab/seed_grader.py` against defects
+planted before the run, so the loop's `better / neutral / worse` standard can be produced. Coverage
+is currently narrow — only the aiwork document-review class — and any method-level change without
+a matching business case is still unmeasured: its evidence is the reasoning plus any incident or
+review findings that triggered it, its release record must state `measurement: none (method-level
+change, no instrumented business task)`, and it must not be described as a verified improvement.
+The first business slice is graded **smoke**: it proves the pipeline and the grader work, and its
+numbers are not an authoritative baseline until the trusted endpoint, the measured permission
+profile, and the snapshot placement (PLAN-BUSINESS-EVAL-001's U-01 / U-02 / U-03) are closed.
 
 **Budget fields are declared, not enforced.** `maxTurns` in an agent's frontmatter is not
 verified on every host (on ZCode it is declared but unverified). The budget discipline in each

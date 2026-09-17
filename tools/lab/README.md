@@ -81,9 +81,17 @@ Pass `--progress <jsonl>` to append one diagnostic record per invocation (`start
 is all-or-nothing: one invocation failure aborts it, so size `--timeout-seconds` for the
 slowest expected multi-agent case and use the progress file to locate a failure.
 
+Business suites (`--suite evals/business`) add a request-level `business_root` (the pinned
+read-only snapshot, fourth isolation position) and six per-case fields (`target_id`, `target_pin`,
+`target_docs`, `seeds_ref`, `findings_contract`, `grading`); a real run also requires `--seed-patch`.
+After every host call the adapter re-checks the snapshot's changed file set and `git diff` digest,
+and `seed_grader` then overwrites the host's self-reported `accepted`/`escaped_defects`.
+
 See [adapter-protocol.md](adapter-protocol.md) for the host adapter boundary. Candidate
 worktrees and private holdouts must be outside the public repository and outside each other;
-`isolation.py` checks that layout and rejects forbidden candidate paths before a release gate.
+`validate-layout` accepts an optional `--business-root`, a fourth position (a business task
+snapshot root) that must not overlap or nest with any of the other three. `isolation.py` checks
+that layout and rejects forbidden candidate paths before a release gate.
 `isolation.py check-diff` always reads `protected-paths.txt` from the tool's repository and requires
 `--base <frozen-parent-revision>`. The base is mandatory so committed, staged, unstaged, deleted,
 renamed, ignored, and untracked changes are all considered; there is no command-line replacement

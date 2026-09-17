@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "case_id": "BT-003",
+  "seeds": [
+    {
+      "seed_id": "BT-003-S1",
+      "doc_ref": "docs/features/feature-C/design/be/tech-design-backend.md",
+      "category": "cross-document-value-mismatch",
+      "description": "故障等待上限（一个以秒为单位的配置键）在技术方案里被改成一个较小的取值，而验收文档冻结的口径仍是十分钟；技术方案同一份文档的其他位置还留着旧值，形成部分载体已改、部分未改。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["300", "300 秒"],
+        "mode": "any"
+      }
+    },
+    {
+      "seed_id": "BT-003-S2",
+      "doc_ref": "docs/features/feature-C/plan/be/backend-plan.md",
+      "category": "cross-document-value-mismatch",
+      "description": "实施计划为故障探测间隔写了一个新的配置键与取值，与技术方案冻结的探测间隔不一致；计划文档自身也在其他位置保留原取值。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["probe_interval_seconds=25", "25 秒"],
+        "mode": "any"
+      }
+    },
+    {
+      "seed_id": "BT-003-S3",
+      "doc_ref": "docs/features/feature-C/spec/qa/spec-acceptance.md",
+      "category": "terminology-ambiguity",
+      "description": "验收文档在描述恢复后的放行行为时使用了一个未定义的内部叫法；文档没有说明它在验收上对应什么可观察结果，读者无法据此写成用例。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["静默放行"],
+        "mode": "any"
+      }
+    }
+  ]
+}

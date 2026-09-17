@@ -442,9 +442,12 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - [x] 最小 episode 落盘：`records/episodes/`（0.4.1，复用 improve 环 episode 契约）；原计划的
   store/检索仍不做，待落盘密度观察；相关条目：feedback-analyst 与
   bug-investigator 的输入开始分化。
-- [ ] 方法级改动的度量切片：挑一个真实业务仓库（如 aiwork）的代表性任务集做
-  instrumented 评测，让 reviewer 清单一类改动能产出 better/neutral/worse（0.3.6 的
-  `measurement: none` 标注是过渡态，不是终点）。
+- [x] 方法级改动的度量切片（0.6.0 仪器就绪）：`evals/business/` 三用例（种子缺陷文档审查 /
+  内部矛盾 / 跨文档一致性）+ `tools/lab/seed_grader.py` 确定性评分 + adapter/runner 业务面
+  （`--business-root`、`--seed-patch`）+ validate 接线；有匹配业务用例（当前只有 aiwork
+  文档审查类）的方法级改动可产出 better/neutral/worse（smoke 级）。尚未产出任何对照数字：
+  首轮 smoke 实跑挂 U-01/U-02/U-03（可信端点、权限档实测、快照位置），无匹配用例的仍按
+  `measurement: none` 过渡态处理。
 - [ ] Trace → sanitized Episode 转换、脱敏/同意/保留期限；本地 Episode Store + SQLite
   FTS5 检索（原 P1 内容，依赖上一条的落盘）。
 - [ ] `records/` 路径越界的宿主强制（当前矩阵 + 校验器 + supervisor diff 兜底）；
@@ -514,3 +517,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - AF-002 单用例在本机约 24 分钟、约 $4；完整 10 用例 suite 预计需要数小时和可观费用，
   运行前需确认预算，并把 per-call 超时提高到 ≥1800–2400 秒（adapter 是 all-or-nothing，
   单次超时会丢掉整次 run）。
+- `tools/lab/host_adapter.py` 的 `run_codex` 曾在解析宿主输出时对 `tempfile.NamedTemporaryFile`
+  对象调用 `read_text()`（那是 `pathlib.Path` 的方法，文件对象没有），任何 codex 侧真跑都会在
+  这一步抛 `AttributeError` 失败。**已修**：改为按 `Path(output.name)` 读取，读取失败包成
+  `ValueError` 交 `main` 统一处理；由两条 stub 回归测试（`tests/test_lab_contracts.py` 的
+  `HostAdapterCodexResultTests`）钉住，CHANGELOG 0.6.0 与 `docs/iteration-log.md` §0.6.0 同记。
+  **真实 codex CLI 真跑仍未验证**——现有证据只到 stub 层。

@@ -5,7 +5,7 @@ Every row below was observed directly on this machine unless its evidence is mar
 names its evidence and its scope. Do not generalize a fact beyond its scope row. Re-verify by
 re-running the named check, not by editing this file.
 
-Last verified: 2026-09-14. Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZCode (desktop).
+Last verified: 2026-09-17 (row C8; all other rows 2026-09-14). Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZCode (desktop).
 
 ## ZCode (desktop)
 
@@ -29,6 +29,7 @@ Last verified: 2026-09-14. Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZC
 | C5 | A single case can take minutes to tens of minutes and spawn subagents. | AF-001: 137–212 s per invocation. AF-002: ~23.8 min, 40 turns, 4 subagents, ~$4.05. | This machine's gateway (`api.360.cn` ccmax), `fable`/opus-class routing; not a Claude Code property | Per-invocation timeouts must cover the slowest multi-agent case (900 s was insufficient); the adapter aborts a whole run on one timeout (all-or-nothing). |
 | C6 | Model labels cannot be trusted through a custom gateway: assistant events reported `model: gpt-5.5` while CLI `modelUsage` recorded `anthropic-ccmax/claude-opus-4-6` for the same run. | AF-002 stream analysis (157 assistant events vs. final `modelUsage`). | This machine's gateway only | Treat model labels as unverified; record the observed context; do not claim comparable baseline/candidate results from this environment. |
 | C7 | Agent-frontmatter tool allowlists (`tools`, `disallowedTools`) are tool-level only; the format has no path scoping. | Frontmatter format in `agents/*.md`; no path syntax exists in the declaration. | Plugin agent format | Path boundaries (e.g. "only `records/bugs/`") cannot be host-enforced per agent; they remain role-matrix + supervisor diff checks. |
+| C8 | In `--print` mode the host limits tool file access to the invocation's working directory: `Read` of a path outside the cwd is denied with `permission not granted` and `Bash` is blocked with `only files under <cwd> are permitted`, while `permission_denials` stays empty. | Observed: 2026-09-17 business smoke, single-invocation diagnostic — all four snapshot target documents denied, e.g. `Read tool denied for snapshot/docs/features/feature-A/spec/be/spec-backend.md (permission not granted)`; `Bash nl/cat` blocked with `only files under <cwd> are permitted`; host self-report `num_turns: 3`, `permission_denials: []`, `tool_failures: 9`, `accepted: false`, "intentionally not written because zero target-document bytes were readable". `claude --help` on 2.1.268 lists `--add-dir <directories...>` as "Additional directories to allow tool access to". | `claude --print` + `--permission-mode acceptEdits` on this machine, Claude Code `2.1.268` | An invocation whose task reads outside its cwd must be given `--add-dir <root>`; the empty `permission_denials` means the approval layer cannot see this failure mode — check the tool results, not the approval counters. `host_adapter.run_claude` adds the flag only for requests carrying `business_root`. |
 
 ## Codex CLI
 
@@ -41,6 +42,7 @@ Last verified: 2026-09-14. Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZC
 
 - C1/C4: re-run the adapter smoke (`tools/lab/host_adapter.py --host claude` with a one-case request).
 - C2/C3/C5/C6: re-run one case with `--output-format stream-json` and inspect the `init` event, tool results, and final `modelUsage`.
+- C8: run `claude --print --permission-mode acceptEdits` with a prompt that Reads one file outside the cwd, once with `--add-dir <its directory>` and once without; compare the tool results and `permission_denials` (the flag's effect is visible in the tool result, not in the approval counters).
 - X1: `codex exec --help`; X2: attempt a `source_kind=candidate` request against the codex adapter.
 - Z1/Z4/Z5: `python3 tools/lab/validate.py installed` (fails while the snapshot lags the source); inspect the subagent registry to re-check the `tools` allowlist.
 - Z6: run a role with a deliberately large task and observe whether the host stops it at `maxTurns`.

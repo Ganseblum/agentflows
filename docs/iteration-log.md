@@ -28,6 +28,7 @@
 | 0.5.0 | 2026-09-17 | 用户对比 aiwork Markdown 计划与 JSON 契约后选方案 A：人读性 + 机器校验融合 | plan 契约重设计为 Markdown 融合形态（看板式任务表 + 机器断言保留并扩展） | CHANGELOG 0.5.0；本文件 §0.5.0 |
 | 0.5.1 | 2026-09-17 | 用户问 spec/design/proposal 是否吸取、如何方便后续使用 | 文档评审模式（按文档类型分档清单）进 reviewer；不重建模板体系 | CHANGELOG 0.5.1；本文件 §0.5.1 |
 | 0.5.2 | 2026-09-17 | 用户要求自审 0.5.x 有无遗漏 | 一处静默门缺口（反例从未被拾取）+ 死代码 + 五处旧措辞 + 两处失效文档面 | CHANGELOG 0.5.2；本文件 §0.5.2 |
+| 0.6.0 | 2026-09-17 | 用户要求消灭方法级改动的 `measurement: none`（做业务任务度量切片）；批内独立评审抓出四个运行时缺陷 | 业务评测仪器（种子缺陷确定性评分 + 业务面 runner/adapter + 门登记）、判断词可判定定义、CI、两处诊断/读取缺陷修复 | CHANGELOG 0.6.0；本文件 §0.6.0；`records/plans/PLAN-BUSINESS-EVAL-001.md` |
 
 ---
 
@@ -380,3 +381,26 @@
 - **解决了什么**：门从"看起来在跑"回到"确实在跑"——这正是 BUG-20260917 系列的同一失败族
   （声明与执行不符），由自审 + 负向实验逐条抓出。
 - **未决**：宿主快照重装；其余同前。
+
+## 0.6.0 — 业务任务度量切片（2026-09-17，当前源码，宿主快照待重装）
+
+- **触发**：方法级改动长期只能以 `measurement: none (method-level change, no instrumented
+  business task)` 发布（0.3.6 起的诚实标注，用户要求把这个过渡态消灭）。
+- **改了什么**：`evals/business/` 三用例（种子缺陷提交、内部矛盾、跨文档一致性）+
+  种子缺陷确定性评分 `tools/lab/seed_grader.py`（进保护门）；runner/adapter 业务面
+  （`--business-root` / `--seed-patch`、workspace-write 档、调用后快照文件集合 + `git diff`
+  摘要复检、评分覆盖 `accepted`/`escaped_defects`）；`isolation.py` 第四位置；
+  `validate.py` 接线 `validate_business_evals`；判断词可判定定义（小改动 / risky work /
+  相同原因）进 SKILL 与中文镜像；episode `provenance` 收紧；GitHub Actions 校验 workflow；
+  `run_codex` 结果文件读取与 `claude_failure_detail` 两处缺陷修复（各带回归测试）；业务跑对
+  claude 追加 `--add-dir <快照根>`（`--print` 模式把工具文件访问限制在 cwd，首轮 smoke 因此
+  读不到快照），含两条 argv 回归测试与 host-platform-facts C8 行。
+- **批内独立评审**：一轮 `changes_requested`（fail-open 评分覆盖、业务身份绕过口、计划文件
+  脱敏泄漏、锚点跨字段拼接）→ 修复轮 A/B → 终审 `approved`；修复轮后追加 delta 评审。
+- **解决了什么**：一类方法级改动第一次具备可跑的对照仪器（工具与契约层面）；上述运行时与
+  诊断缺陷关闭。
+- **未决/未验证**：smoke 实跑（S02）处于进行中——状态与三次尝试的原始留痕见
+  `records/plans/PLAN-BUSINESS-EVAL-001.md` 的 S01/S02 行（当时证据为本地 progress JSONL，
+  不入仓）；数字只能定级为 smoke / 噪声底，不构成权威 baseline；U-01（可信端点）未决，
+  U-02 已实测、U-03 已决（见同计划）；ZCode 未做 host adapter；`measurement: none` 在真实
+  对照产出前不得宣称消灭。

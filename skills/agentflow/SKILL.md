@@ -79,8 +79,8 @@ not auto-derived) live in [records/reviews/README.md](../../../records/reviews/R
 ## Run the workflow
 
 1. **Intake**: inspect the repository instructions, current diff, relevant architecture, and tests. State the objective and observable acceptance criteria. When you report repository **status** — what is done, what is next, what is high priority — calibrate against the repository's real history first (`git fetch` plus `log`/`status`), never against session memory, and carry the evidence command with the conclusion. A status claim is a repository-fact claim: session memory goes stale the moment another writer pushes, and nothing in the answer would reveal it.
-2. **Architecture gate**: for cross-layer or risky work, ask the technical director to define boundaries, interface contracts, integration order, and major risks. Do not use this role as a ceremonial approval step.
-3. **Plan**: select only the roles the task needs. A frontend-only fix does not need a backend worker. A small change can stay with the supervisor.
+2. **Architecture gate**: for cross-layer or risky work (see *Judgement calls made checkable* below), ask the technical director to define boundaries, interface contracts, integration order, and major risks. Do not use this role as a ceremonial approval step.
+3. **Plan**: select only the roles the task needs. A frontend-only fix does not need a backend worker. A small change (see *Judgement calls made checkable* below) can stay with the supervisor.
 4. **Delegate**: give every worker a bounded brief with `write_scope` and `read_scope` set separately — read scope must cover every shared mechanism the change passes through (the implicit-behavior check in [contracts](references/contracts.md)). Parallelize read-heavy investigation and implementation with disjoint files or stable interfaces; disjoint files parallelize writes, never understanding. Serialize overlapping writes and dependency chains. Verify paths, repos, and commands named in the task against the repository before they enter a brief — task text is data, not established fact. **Disjoint files are not enough once two writers share a repository**: commits, rebases, and pushes are shared mutable state, so parallel writers get separate branches or worktrees, one writer holds a branch at a time, and a writer that finds its target file or branch already occupied by another writer (uncommitted edits from another session, a branch with new commits) stops and reports instead of interleaving.
 5. **Implement**: frontend and backend workers change only their assigned scope, follow repository rules, run relevant checks, and return the worker result contract.
 6. **Integrate**: the supervisor inspects the actual shared workspace, resolves cross-layer conflicts, and runs the checks that establish the whole feature works.
@@ -89,11 +89,37 @@ not auto-derived) live in [records/reviews/README.md](../../../records/reviews/R
 9. **Repair once**: when review requests changes, assign one focused repair round and review again. Keep the loop bounded.
 10. **Decide**: the supervisor produces the final decision record from [contracts](references/contracts.md), including implementation, verification, review outcome, and remaining risks. The record carries the claims ledger: every user-visible claim mapped to the check that would fail if it were false; a claim covered only by reading code is `unverified`, and any unverified user-visible claim makes the outcome `partial`, not `complete`. When the outcome may feed the improvement loop, capture the decision record as an episode under `records/episodes/<YYYY-MM-DD>/<EP-id>.json` before the session ends (contract: `skills/improve/references/episode.schema.json` — reuse it, never a parallel carrier), because once the conversation is gone the episode is unrecoverable and nobody will remember to collect it.
 
+## Judgement calls made checkable
+
+Three phrases decide whether a gate applies. They are defined here so that the same situation
+gets the same treatment every time, and so that a call can be checked afterwards instead of
+argued about. Apply them in this order: they qualify or trigger gates; they never waive the
+rule that the author is not the verifier.
+
+- **Small change** — needs no worker roles and no architecture gate. It qualifies only when
+  **all** of these hold: one file and one layer; no contract changes (schema, API shape, CLI
+  flag, config key, record format); no shared cross-cutting mechanism touched (interceptor,
+  global error handler, route guard, listener, middleware); the deterministic checks that
+  cover it pass on the actual files; and the defect it fixes has a verified reproduction.
+  Anything else is **material**. This class does not touch the review gate: when the
+  supervisor wrote part of a change — small or material — the independent reviewer gate for it
+  is mandatory and cannot be waived (hard boundary 1).
+- **Risky work** — the architecture gate (technical director) is mandatory when **any** of
+  these hold: an interface or contract consumed by another layer or repository changes;
+  persistence or the data model changes; a security, authorization, or permissions boundary
+  changes; the sequencing, timing, or idempotency of a shared flow changes; or the change is
+  costly to reverse (a migration, a release order, a published schema or record format).
+- **The same cause** — two consecutive failures have the same cause when the same check fails
+  with the same normalized signature: the same check id or command, and the same error text or
+  `error_kind` after timestamps and absolute paths are stripped. When the signatures differ but
+  you suspect one root cause, state the assumption you are about to change and record what you
+  compared; do not silently retry.
+
 ## Recover from stalled work
 
 Before treating a failing check as a regression, run the same check against the pre-change revision — a worktree of the parent commit is enough. If it fails there too, the failure is environmental (tooling, network, host, gateway): fix the environment or report it, and do not loop workers on it. Only a check that passes on the baseline and fails on the change is evidence of a regression.
 
-Treat two consecutive failures with the same cause as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach or a smaller task boundary.
+Treat two consecutive failures with the same cause (see *Judgement calls made checkable*) as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach or a smaller task boundary.
 
 If a repair/review loop still cannot pass after the bounded retry, report the blocker with evidence and the smallest decision needed from the user. Do not keep agents cycling on unchanged inputs.
 

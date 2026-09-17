@@ -20,7 +20,7 @@ It does not invoke or require the standalone `agentflow` CLI.
 
 ## Current maturity
 
-Version `0.5.2` provides:
+Version `0.6.0` provides:
 
 - a shared development Skill;
 - frontend, backend, technical-director, reviewer, bug-investigator, bug-fixer,
@@ -28,6 +28,8 @@ Version `0.5.2` provides:
 - a feedback-analysis, candidate, evaluation, and release-governance workflow;
 - machine-readable bug, plan, episode, candidate, evaluation-case, evaluation-result,
   and release-record schemas;
+- a business-task measurement slice (`evals/business/`) scored deterministically against
+  seed defects;
 - Codex, Claude Code, ZCode, and portable Agent Plugin manifests.
 
 Implementation roles declare an explicit tool allowlist (`Read, Glob, Grep, Write, Edit, Bash`), so
@@ -73,13 +75,45 @@ isolation checks, a fail-closed Codex/Claude host-adapter wrapper, and a determi
 evaluator. Real model dogfood, private holdout service, and installation/release switch
 are still intentionally pending.
 
+## Business evaluation slice
+
+`evals/business/` is the measurement surface for method-level changes — the ones that alter how
+roles behave inside business repositories and have no regression signal in `evals/public/`. Three
+cases ship now: `BT-001` seed-defect document review, `BT-002` internal contradiction, `BT-003`
+cross-document consistency; `evals/business/README.md` documents the layout. A case points at a
+pinned, read-only snapshot of a business repository, asks the agent to review a set of documents,
+and expects one findings artifact per repetition at
+`findings/<case_id>/rep-<n>/findings.json` in the workspace.
+
+Scoring is deterministic and offline. Each case ships an abstracted seed list whose entries carry
+the document, a category, and one or more literal anchors; a seed counts as a hit when a finding
+names that document and its text contains an anchor. The grader reports `hits`, `missed`, and
+`unmatched`; `accepted` becomes "hit rate at or above the case threshold" and `escaped_defects`
+becomes the missed-seed count. Unmatched findings — real defects outside the seed list — are
+recorded, not penalized. An unknown match strategy, or a missing or unparsable findings artifact,
+fails closed instead of scoring zero.
+
+Two parameters carry the snapshot contract. `eval_runner.py --business-root` names the fourth
+isolation position (the pinned snapshot root); the adapter rejects a business request whose roots
+are missing or nested. `host_adapter.py --seed-patch` names the patch the snapshot was built from:
+a real business run requires it, checks the snapshot HEAD against the case `target_pin`, requires
+the patch to be cleanly reversible, and re-checks the snapshot file set and the `git diff` digest after every host call.
+Business requests must use a `workspace-write` permission profile because the findings artifact is
+written into the workspace; the snapshot itself is made read-only when seeded, and only the
+sanitized briefs and abstracted seed lists are public.
+
+The slice is instrument-ready, not measured: no baseline/candidate comparison has been produced
+yet. The smoke run is blocked on the trusted endpoint, the measured permission profile, and the
+snapshot placement decisions, so a method-level change without a matching business case still
+releases as `measurement: none`.
+
 See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/agent-roles.md`](docs/agent-roles.md),
 [`docs/self-improvement-design.md`](docs/self-improvement-design.md), and
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) for observed host constraints, and
 [`docs/iteration-log.md`](docs/iteration-log.md) for why each version changed.
 
-The source checkout currently declares version `0.5.2`. This is not by itself proof that a host is
+The source checkout currently declares version `0.6.0`. This is not by itself proof that a host is
 running that version: ZCode loads installed snapshots and Codex may load a separate plugin cache.
 Before dogfood, compare the actual host snapshot with `python3 tools/lab/validate.py installed
 --path <installed-plugin-root>` (or the host-specific default) and record the result. Do not switch

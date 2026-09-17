@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "case_id": "BT-001",
+  "seeds": [
+    {
+      "seed_id": "BT-001-S1",
+      "doc_ref": "docs/features/feature-A/design/be/tech-design-backend.md",
+      "category": "terminology-ambiguity",
+      "description": "后端技术方案在描述失败恢复处理时，在一个文中已有说法前面加了一个限定词，造出一个只有作者知道含义的内部叫法；全文没有给出它的定义，也没有说明它与原有说法的行为差别。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["静默重投"],
+        "mode": "any"
+      }
+    },
+    {
+      "seed_id": "BT-001-S2",
+      "doc_ref": "docs/features/feature-A/spec/be/spec-backend.md",
+      "category": "cross-document-value-mismatch",
+      "description": "同一批量文件上限（一次开始转换允许提交的文件数）在多份文档里被复述；本文件里的取值被改成与其余载体不同的较小值，且没有任何说明谁作准。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["≤30"],
+        "mode": "any"
+      }
+    },
+    {
+      "seed_id": "BT-001-S3",
+      "doc_ref": "docs/features/feature-A/spec/qa/spec-acceptance.md",
+      "category": "table-cell-not-self-contained",
+      "description": "验收文档的表格里，一个本来写具体取值的单元格被换成对某个章节的回指；该章节号在同一份文档里并不存在，读者既不能就地读懂单元格，也跳不到出处。",
+      "strategy": {
+        "type": "path_and_anchor",
+        "anchors": ["§12.4"],
+        "mode": "any"
+      }
+    }
+  ]
+}

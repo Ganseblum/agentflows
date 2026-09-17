@@ -35,6 +35,7 @@ SCHEMA_PATHS = [
     ROOT / "skills" / "improve" / "references",
 ]
 IMPROVEMENT_SCHEMA_NAMES = {
+    "business-case.schema.json",
     "candidate.schema.json",
     "episode.schema.json",
     "eval-case.schema.json",
@@ -64,9 +65,20 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/host_adapter.py",
     "tools/lab/isolation.py",
     "tools/lab/policy.py",
+    "tools/lab/seed_grader.py",
     "tools/lab/validate.py",
     "protected-paths.txt",
 }
+
+# The business evaluation slice (evals/business): real document review against a read-only
+# enterprise snapshot. The snapshot repository is deliberately absent from this checkout, so
+# target_id, target_pin, and target_docs are checked structurally only — requiring them to
+# resolve would drag an enterprise path into the public validation surface. input_ref and
+# seeds_ref do point into this repository and must resolve.
+BUSINESS_EVALS_DIR = ROOT / "evals" / "business"
+BUSINESS_CASE_SCHEMA = ROOT / "skills" / "improve" / "references" / "business-case.schema.json"
+BUSINESS_CASE_COUNT_RANGE = (3, 10)
+BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 
 # Declared contents of `tests/`. The directory is not a protected prefix — generated
 # `__pycache__` entries there would otherwise block every candidate that ran the checks — so the
@@ -417,6 +429,8 @@ def schema_for(relative_path: Path) -> Path | None:
     parts = relative_path.parts
     if len(parts) >= 2 and parts[0] == "evals" and parts[1] == "public":
         return ROOT / "skills" / "improve" / "references" / "eval-case.schema.json"
+    if len(parts) >= 2 and parts[0] == "evals" and parts[1] == "business":
+        return BUSINESS_CASE_SCHEMA
     if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "evaluation-results":
         return ROOT / "schemas" / "evaluation-result.schema.json"
     return None
@@ -1082,6 +1096,174 @@ def validate_evals() -> list[ValidationError]:
     return errors
 
 
+def relative_to_root(path: Path) -> Path | None:
+    """The repository-relative form of `path`, or None when it lies outside the repository."""
+    try:
+        return path.relative_to(ROOT)
+    except ValueError:
+        return None
+
+
+def validate_document_with_schema(path: Path, schema_path: Path) -> list[ValidationError]:
+    """Validate one JSON document against an explicit schema file.
+
+    `validate_document` derives the schema from a repository-relative path; this variant
+    serves documents outside the repository, such as the temporary fixture directories the
+    negative tests use.
+    """
+    document, errors = load_json(path)
+    if errors:
+        return errors
+    try:
+        validator = SchemaValidator(schema_path)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")]
+    return validator.validate(document)
+
+
+def validate_business_seeds(case: dict[str, Any], case_path: Path) -> list[ValidationError]:
+    """Check one business case's seed list: location, parseability, declared structure.
+
+    Structure only — the seed doc_refs name paths inside the enterprise snapshot and are not
+    resolved here. What is enforced: the seed file is a repository-local file, its case_id
+    matches the case, every seed's doc_ref is one of the case's target_docs, every
+    strategy.type is one the seed grader implements (an unknown type is fail-closed there, so
+    it must not pass validation here), and seed_id values are unique. An empty seed list is an
+    answer key with no answers and is rejected.
+    """
+    errors: list[ValidationError] = []
+    case_id = case.get("case_id")
+    seeds_ref = case.get("seeds_ref")
+    if not isinstance(seeds_ref, str):
+        return errors  # the schema check already reported the missing or invalid field
+    source = path_inside_root(seeds_ref)
+    if source is None or not source.is_file():
+        return [ValidationError(str(case_path), f"seeds_ref does not resolve to a file: {seeds_ref!r}")]
+    seed_document, load_errors = load_json(source)
+    if load_errors:
+        return [
+            ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: {error.message}")
+            for error in load_errors
+        ]
+    if not isinstance(seed_document, dict):
+        return [ValidationError(str(case_path), f"seeds_ref {seeds_ref!r} must be a JSON object")]
+    if seed_document.get("case_id") != case_id:
+        errors.append(
+            ValidationError(
+                str(case_path),
+                f"seeds_ref {seeds_ref!r} declares case_id {seed_document.get('case_id')!r}, not {case_id!r}",
+            )
+        )
+    seeds = seed_document.get("seeds")
+    if not isinstance(seeds, list) or not seeds:
+        errors.append(
+            ValidationError(str(case_path), f"seeds_ref {seeds_ref!r} must declare a non-empty seeds array")
+        )
+        return errors
+    target_docs = case.get("target_docs") or []
+    seen_seed_ids: set[str] = set()
+    for index, seed in enumerate(seeds):
+        if not isinstance(seed, dict):
+            errors.append(
+                ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: seeds[{index}] must be an object")
+            )
+            continue
+        seed_id = seed.get("seed_id")
+        if not isinstance(seed_id, str) or not seed_id:
+            errors.append(
+                ValidationError(
+                    str(case_path), f"seeds_ref {seeds_ref!r}: seeds[{index}] must declare a non-empty seed_id"
+                )
+            )
+        elif seed_id in seen_seed_ids:
+            errors.append(
+                ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: duplicate seed_id {seed_id!r}")
+            )
+        else:
+            seen_seed_ids.add(seed_id)
+        doc_ref = seed.get("doc_ref")
+        if not isinstance(doc_ref, str) or not doc_ref:
+            errors.append(
+                ValidationError(
+                    str(case_path), f"seeds_ref {seeds_ref!r}: seed {seed_id!r} must declare a non-empty doc_ref"
+                )
+            )
+        elif doc_ref not in target_docs:
+            errors.append(
+                ValidationError(
+                    str(case_path),
+                    f"seeds_ref {seeds_ref!r}: seed {seed_id!r} doc_ref {doc_ref!r} is not one of "
+                    "the case target_docs",
+                )
+            )
+        strategy = seed.get("strategy")
+        strategy_type = strategy.get("type") if isinstance(strategy, dict) else None
+        if strategy_type not in BUSINESS_SEED_STRATEGY_TYPES:
+            errors.append(
+                ValidationError(
+                    str(case_path),
+                    f"seeds_ref {seeds_ref!r}: seed {seed_id!r} declares unknown strategy.type "
+                    f"{strategy_type!r}; known types: {', '.join(BUSINESS_SEED_STRATEGY_TYPES)}",
+                )
+            )
+    return errors
+
+
+def validate_business_evals(directory: Path | None = None) -> list[ValidationError]:
+    """Validate the business evaluation slice: case count, case contract, and seed lists.
+
+    The optional `directory` (default evals/business) exists so negative tests and the pinned
+    contract tests can validate a fixture copy; a directory outside the repository is still
+    validated against the business schema.
+
+    Acceptance mirrors `evals/public`: the filename stem equals the case_id and case_ids are
+    unique across the suite. `target_id`/`target_pin`/`target_docs` stay structural — the
+    enterprise snapshot is not part of this repository, and the public checks must pass
+    without it. `input_ref` and `seeds_ref` resolve inside this repository and are enforced.
+    """
+    errors: list[ValidationError] = []
+    directory = BUSINESS_EVALS_DIR if directory is None else directory
+    relative = relative_to_root(directory)
+    label = relative.as_posix() if relative is not None else str(directory)
+    paths = sorted(directory.glob("BT-*.json"))
+    if not paths:
+        return [ValidationError(label, "no business evaluation cases found")]
+    minimum, maximum = BUSINESS_CASE_COUNT_RANGE
+    if len(paths) < minimum or len(paths) > maximum:
+        errors.append(ValidationError(label, f"expected {minimum}-{maximum} business cases, found {len(paths)}"))
+    case_ids: set[str] = set()
+    for path in paths:
+        if relative_to_root(path) is not None:
+            case_errors = validate_document(path)
+        else:
+            case_errors = validate_document_with_schema(path, BUSINESS_CASE_SCHEMA)
+        if case_errors:
+            errors.extend(case_errors)
+            continue
+        document, load_errors = load_json(path)
+        errors.extend(load_errors)
+        if not isinstance(document, dict):
+            continue
+        case_id = document.get("case_id")
+        if case_id in case_ids:
+            errors.append(ValidationError(str(path), f"duplicate case_id {case_id!r}"))
+        case_ids.add(case_id)
+        if path.stem != case_id:
+            errors.append(ValidationError(str(path), "filename stem must match case_id"))
+        input_ref = document.get("input_ref")
+        if isinstance(input_ref, str):
+            resolved = path_inside_root(input_ref)
+            if resolved is None or not resolved.is_file():
+                errors.append(ValidationError(str(path), f"input_ref does not resolve to a file: {input_ref!r}"))
+        errors.extend(validate_business_seeds(document, path))
+    return errors
+
+
+def validate_evals_suite() -> list[ValidationError]:
+    """Public cases plus the business slice, reported under the single `evals` row."""
+    return validate_evals() + validate_business_evals()
+
+
 def validate_workspace_artifacts() -> list[ValidationError]:
     """Validate record instances under records/ (Markdown bug records, JSON plans)."""
     errors: list[ValidationError] = []
@@ -1727,7 +1909,6 @@ def main(argv: list[str] | None = None) -> int:
             "all",
             "report",
             "recurrence",
-            "docs",
         ],
         help="contract set to validate, or 'report'/'recurrence' for retrospective tables",
     )
@@ -1763,7 +1944,7 @@ def main(argv: list[str] | None = None) -> int:
     checks = {
         "schemas": [("schemas", validate_schemas)],
         "examples": [("examples", validate_examples)],
-        "evals": [("evals", validate_evals)],
+        "evals": [("evals", validate_evals_suite)],
         "artifacts": [("artifacts", validate_workspace_artifacts)],
         "protected": [("protected", validate_protected_paths)],
         "manifests": [("manifests", validate_manifests)],
@@ -1772,7 +1953,7 @@ def main(argv: list[str] | None = None) -> int:
         "all": [
             ("schemas", validate_schemas),
             ("examples", validate_examples),
-            ("evals", validate_evals),
+            ("evals", validate_evals_suite),
             ("artifacts", validate_workspace_artifacts),
             ("protected", validate_protected_paths),
             ("manifests", validate_manifests),

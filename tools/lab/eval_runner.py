@@ -34,6 +34,15 @@ from isolation import layout_errors  # noqa: E402
 
 
 RESULT_SCHEMA = ROOT / "schemas" / "evaluation-result.schema.json"
+BUSINESS_CASE_SCHEMA = ROOT / "skills" / "improve" / "references" / "business-case.schema.json"
+BUSINESS_CASE_FIELDS = (
+    "target_id",
+    "target_pin",
+    "target_docs",
+    "seeds_ref",
+    "findings_contract",
+    "grading",
+)
 METRIC_NAMES = (
     "acceptance_rate",
     "first_pass_review_rate",
@@ -48,6 +57,25 @@ METRIC_NAMES = (
 
 def now_utc() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def is_public_suite(suite_dir: Path) -> bool:
+    """Only the repository's own evals/public directory uses the public suite contract."""
+    return suite_dir.resolve() == (ROOT / "evals" / "public").resolve()
+
+
+def validate_document_against(schema_path: Path, document: Any, path: Path) -> list[ValidationError]:
+    """Validate one document against an explicit schema path.
+
+    Business cases carry their own contract (``business-case.schema.json``); the repository
+    schema map used by ``validate_document`` does not cover ``evals/business``, so the
+    suite passes the schema path explicitly instead.
+    """
+    try:
+        errors = SchemaValidator(schema_path).validate(document)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(schema_path), f"validator setup failed: {exc}")]
+    return errors
 
 
 def validate_result(document: Any) -> list[ValidationError]:
@@ -71,12 +99,17 @@ def load_suite(suite_dir: Path) -> list[dict[str, Any]]:
         print(f"suite directory does not exist: {suite_dir}", file=sys.stderr)
         raise SystemExit(1)
     cases: list[dict[str, Any]] = []
-    for path in sorted(suite_dir.glob("AF-*.json")):
+    public_suite = is_public_suite(suite_dir)
+    pattern = "AF-*.json" if public_suite else "BT-*.json"
+    for path in sorted(suite_dir.glob(pattern)):
         document, load_errors = load_json(path)
         if load_errors or not isinstance(document, dict):
             print_errors(load_errors)
             raise SystemExit(1)
-        contract_errors = validate_document(path)
+        if public_suite:
+            contract_errors = validate_document(path)
+        else:
+            contract_errors = validate_document_against(BUSINESS_CASE_SCHEMA, document, path)
         if contract_errors:
             print(f"invalid evaluation case: {path}", file=sys.stderr)
             print_errors(contract_errors)
@@ -86,9 +119,9 @@ def load_suite(suite_dir: Path) -> list[dict[str, Any]]:
             raise SystemExit(1)
         cases.append(document)
     if not cases:
-        print(f"suite contains no AF-*.json cases: {suite_dir}", file=sys.stderr)
+        print(f"suite contains no {pattern} cases: {suite_dir}", file=sys.stderr)
         raise SystemExit(1)
-    if suite_dir == (ROOT / "evals" / "public").resolve():
+    if public_suite:
         errors = validate_evals()
         if errors:
             print("public evaluation suite is invalid", file=sys.stderr)
@@ -116,8 +149,17 @@ def summarize(case_results: list[dict[str, Any]]) -> dict[str, int | float]:
     }
 
 
-def build_request(args: argparse.Namespace, cases: list[dict[str, Any]]) -> dict[str, Any]:
-    return {
+def build_request(
+    args: argparse.Namespace,
+    cases: list[dict[str, Any]],
+    business: bool | None = None,
+) -> dict[str, Any]:
+    if business is None:
+        business = any("target_id" in case for case in cases)
+    business_root = getattr(args, "business_root", None)
+    if business and not business_root:
+        raise ValueError("a business suite requires --business-root")
+    request: dict[str, Any] = {
         "protocol_version": 1,
         "source_kind": args.source_kind,
         "source_revision": args.source_revision,
@@ -133,20 +175,27 @@ def build_request(args: argparse.Namespace, cases: list[dict[str, Any]]) -> dict
         "repository_root": str(Path(args.repository).resolve()),
         "workspace_root": str(Path(args.workspace).resolve()),
         "holdout_root": str(Path(args.holdout_root).resolve()),
-        "cases": [
-            {
-                "case_id": case["case_id"],
-                "slice": case["slice"],
-                "objective": case["objective"],
-                "input_ref": case["input_ref"],
-                "acceptance_criteria": case["acceptance_criteria"],
-                "protected_guardrails": case["protected_guardrails"],
-                "holdout": case["holdout"],
-                "repeat_count": args.repeat_count,
-            }
-            for case in cases
-        ],
     }
+    if business:
+        request["business_root"] = str(Path(business_root).resolve())
+    request_cases: list[dict[str, Any]] = []
+    for case in cases:
+        entry = {
+            "case_id": case["case_id"],
+            "slice": case["slice"],
+            "objective": case["objective"],
+            "input_ref": case["input_ref"],
+            "acceptance_criteria": case["acceptance_criteria"],
+            "protected_guardrails": case["protected_guardrails"],
+            "holdout": case["holdout"],
+            "repeat_count": args.repeat_count,
+        }
+        if business:
+            for field in BUSINESS_CASE_FIELDS:
+                entry[field] = case[field]
+        request_cases.append(entry)
+    request["cases"] = request_cases
+    return request
 
 
 def validate_adapter_response(
@@ -235,11 +284,20 @@ def validate_adapter_response(
 
 def run_adapter(args: argparse.Namespace) -> int:
     suite_dir = (ROOT / args.suite).resolve()
+    public_suite = is_public_suite(suite_dir)
     cases = load_suite(suite_dir)
     repository = Path(args.repository).resolve()
     workspace = Path(args.workspace).resolve()
     holdout_root = Path(args.holdout_root).resolve()
-    isolation_errors = layout_errors(repository, workspace, holdout_root)
+    business_root_value = getattr(args, "business_root", None)
+    if not public_suite and not business_root_value:
+        print(f"--business-root is required for the suite: {suite_dir}", file=sys.stderr)
+        return 1
+    business_root = Path(business_root_value).resolve() if business_root_value else None
+    if public_suite:
+        isolation_errors = layout_errors(repository, workspace, holdout_root)
+    else:
+        isolation_errors = layout_errors(repository, workspace, holdout_root, business_root)
     if repository == workspace:
         isolation_errors.append("adapter workspace must be separate from the public repository")
     if isolation_errors:
@@ -247,7 +305,7 @@ def run_adapter(args: argparse.Namespace) -> int:
         for error in isolation_errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
-    request = build_request(args, cases)
+    request = build_request(args, cases, business=not public_suite)
     command = shlex.split(args.adapter)
     if not command:
         print("adapter command must not be empty", file=sys.stderr)
@@ -399,6 +457,12 @@ def add_context_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--repository", required=True)
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--holdout-root", required=True)
+    parser.add_argument(
+        "--business-root",
+        default=None,
+        help="business task snapshot root (fourth isolation position); required for a "
+        "business suite such as evals/business and unused by evals/public",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

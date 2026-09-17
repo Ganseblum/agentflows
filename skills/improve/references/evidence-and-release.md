@@ -25,7 +25,7 @@ An episode should record this logical shape:
   "feedback_summary": "sanitized factual summary",
   "agentflow_version": "0.2.0",
   "host": "codex | claude-code | other",
-  "provenance": {},
+  "provenance": {"carrier": "<session carrier>", "sanitized": true},
   "redactions": []
 }
 ```

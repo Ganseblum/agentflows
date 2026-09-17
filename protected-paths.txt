@@ -52,6 +52,7 @@ tools/lab/eval_runner.py
 tools/lab/host_adapter.py
 tools/lab/isolation.py
 tools/lab/policy.py
+tools/lab/seed_grader.py
 tools/lab/validate.py
 
 protected-paths.txt

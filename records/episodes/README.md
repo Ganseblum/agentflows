@@ -26,6 +26,8 @@ evidence_ref）、`feedback_summary`、`agentflow_version`、`host`、`provenanc
 - **何时写**：结果可能喂给改进环的任务都写；outcome 用 worker result 同一语义——预算耗尽
   是 `partial`，永不 `complete`。
 - **脱敏**：`redactions` 声明已脱敏的内容；凭证与私人对话内容不进 episode。
+- **provenance**：`carrier`（会话载体）与 `sanitized`（是否已脱敏）两键必填，schema 强制
+  `additionalProperties: false`——多余键会被拒。
 - **校验**：`python3 tools/lab/validate.py artifacts` 强制 schema、文件名 = episode_id、
   id 全局唯一。
 

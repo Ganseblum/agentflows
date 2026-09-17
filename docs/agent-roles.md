@@ -37,6 +37,14 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | 已有验证复现的小 Bug | Fixer + Supervisor 侧检查；要沉淀时再记录 |
 | 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
+## 判断词的可判定定义
+
+三个词决定「门要不要上」。定义写在这里，为的是同一情形每次得到同样处理，且事后可核对而不是靠争论；它们只决定门的触发与豁免，不改变「作者不验证自己」这条硬规则。
+
+- **小改动**（免角色编排与架构门，但**不影响评审门**）——须**同时**满足：单文件单层；不改契约（schema、接口形状、CLI 参数、配置键、记录格式）；不触碰共享横切机制（拦截器、全局错误处理与跳转、路由守卫、全局监听、中间件）；覆盖它的确定性检查在实际文件上通过；所修缺陷有已验证的复现。任一条不满足即属**重要改动**。本类不改变评审门：**supervisor 自己写下的改动——不论小还是重要——独立评审门强制且不可豁免**（硬边界 1）。
+- **risky work**（架构门必上）——满足**任一**即触发：改动被其它层或其它仓库消费的接口或契约；改持久化或数据模型；改安全、授权或权限边界；改共享流程的时序或幂等语义；难以回退（迁移、发布顺序、已公开的 schema 或记录格式）。
+- **相同原因**（连续两次失败即停止重复尝试）——同一条检查以同一规范化签名失败：检查 id 或命令相同，且剥掉时间戳与绝对路径后的错误文本或 `error_kind` 相同。签名不同但怀疑同根因时，写明你准备改掉的假设并记录你比较了什么，不得静默重试。
+
 ## Bug 标准完整流程
 
 三个 Bug 角色保留为独立能力边界，但不是每个问题都必须启动三个独立 Agent。完整流程
@@ -267,6 +275,35 @@ git：提交/rebase/push 是共享可变状态——并行执行者各自分支�
 
 完整工作流与归因表见 `records/reviews/README.md`。
 
+## 业务评测切片（evals/business/）
+
+公开套件 `evals/public/` 测的是 Agentflow 自己的契约用例；改变角色在业务仓库里行为的
+方法级改动在那里没有回归信号。业务切片补的就是这个测量面：让被测 agent 对一份只读快照
+做文档审查，再拿事先埋好的种子缺陷做确定性评分。
+
+| 位置 | 承担什么 | 进公开仓还是只留本地 |
+| --- | --- | --- |
+| `evals/business/BT-00x.json` | 用例契约：切片、目标仓代号与提交全 sha、目标文档、种子清单引用、findings 产出契约、命中阈值 | 进公开仓 |
+| `evals/business/inputs/BT-00x.md` | 给被测 agent 的脱敏任务简报，只描述任务与产出契约 | 进公开仓 |
+| `evals/business/seeds/BT-00x.seeds.json` | 抽象化种子清单（评分答案键）：每条种子声明目标文档、类别与字面锚点 | 进公开仓，真实路径逐条人工审查 |
+| 企业文档快照 | 打种后的只读评审对象，HEAD 钉死在用例的 `target_pin` | 只留本地 |
+
+评分语义（`tools/lab/seed_grader.py`，纯离线确定性）：一条种子命中，当且仅当存在一条
+finding 指向该种子文档且文本包含该种子的锚点；输出 `hits` / `missed` / `unmatched`，
+命中率达到用例阈值才算 `accepted`，漏检数记 `escaped_defects`；命中不了任何种子的
+finding 记 `unmatched`，只记录、不扣分。未知匹配策略、findings 工件缺失或不可解析一律
+fail-closed（退出码 2），不默认 0 分。
+
+运行面：`tools/lab/eval_runner.py --business-root <快照根绝对路径>` 声明第四隔离位置；
+adapter 的业务请求要求 `workspace-write` 权限档（findings 要写进 workspace），真跑另需
+`tools/lab/host_adapter.py --seed-patch <打种补丁路径>`——宿主调用前校验快照 HEAD 等于
+`target_pin` 且补丁可干净重放，每次调用后再查快照的文件集合没有越出补丁范围。
+
+当前状态：切片只到「仪器就绪」，还没有产出任何 baseline/candidate 对照数字。首轮 smoke
+实跑挂三个 P0 未决项（可信端点、权限档实测、快照位置），因此方法级改动的
+`measurement: none` 过渡态还没有被消灭——有匹配业务用例的方法级改动可以在这个切片里
+产出对照，没有匹配用例的仍按 `measurement: none` 处理。
+
 ## 与自迭代的关系
 
 Bug 记录是 Episode 的一种来源，不是生产 Memory。只有经过归因、独立评测和发布门的
@@ -309,10 +346,11 @@ Supervisor 未授予的 MCP 工具。「委派不扩大权限」因此既是纪�
 改进环有两个显式声明的能力边界（`skills/improve/SKILL.md`）：
 
 - **度量范围**：公开套件 `evals/` 只度量 Agentflow 自身契约用例。改变角色在业务仓库
-  内行为的候选（reviewer 清单、简报纪律、验收步骤）在那里没有回归度量——不先给业务
-  任务装上度量，`better/neutral/worse` 标准对方法级改动产不出来。此类候选按未度量
-  处理：发布记录必须写明 `measurement: none (method-level change, no instrumented
-  business task)`，不得表述为已验证的改进；结构性修复（业务任务度量切片）是 P1 项。
+  内行为的候选（reviewer 清单、简报纪律、验收步骤）在那里没有回归度量——有匹配业务
+  用例（当前只有 aiwork 文档审查类）的走 `evals/business/` 产出对照；无匹配用例的仍按
+  未度量处理：发布记录必须写明 `measurement: none (method-level change, no instrumented
+  business task)`，不得表述为已验证的改进。首切片结果只到 smoke 级，权威数字挂三个
+  P0 未决项，见「业务评测切片（evals/business/）」一节。
 - **预算字段**：`maxTurns` 在部分宿主（含 ZCode）声明但未验证。各角色提示词里的预算
   纪律（最后一轮留给结果、目标未成返回 `partial`）才是生效约束；frontmatter 数字按
   意图元数据对待，不当作保证的截断。

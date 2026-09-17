@@ -39,7 +39,9 @@ def is_within(child: Path, parent: Path) -> bool:
         return False
 
 
-def layout_errors(repository: Path, candidate: Path, holdout: Path) -> list[str]:
+def layout_errors(
+    repository: Path, candidate: Path, holdout: Path, business_root: Path | None = None
+) -> list[str]:
     errors: list[str] = []
     if repository == candidate:
         errors.append("candidate worktree must differ from the repository")
@@ -53,6 +55,23 @@ def layout_errors(repository: Path, candidate: Path, holdout: Path) -> list[str]
         errors.append("private holdout must not be nested in or contain the repository")
     if is_within(holdout, candidate) or is_within(candidate, holdout):
         errors.append("private holdout must not be nested in or contain the candidate worktree")
+    if business_root is not None:
+        if business_root == repository:
+            errors.append("business snapshot root must differ from the repository")
+        if business_root == candidate:
+            errors.append("business snapshot root must differ from the candidate worktree")
+        if business_root == holdout:
+            errors.append("business snapshot root must differ from the private holdout")
+        if is_within(business_root, repository) or is_within(repository, business_root):
+            errors.append("business snapshot root must not be nested in or contain the repository")
+        if is_within(business_root, candidate) or is_within(candidate, business_root):
+            errors.append(
+                "business snapshot root must not be nested in or contain the candidate worktree"
+            )
+        if is_within(business_root, holdout) or is_within(holdout, business_root):
+            errors.append(
+                "business snapshot root must not be nested in or contain the private holdout"
+            )
     return errors
 
 
@@ -60,19 +79,25 @@ def validate_layout(args: argparse.Namespace) -> int:
     repository = resolved(args.repository)
     candidate = resolved(args.candidate)
     holdout = resolved(args.holdout)
-    errors = layout_errors(repository, candidate, holdout)
+    business_root = resolved(args.business_root) if getattr(args, "business_root", None) else None
+    errors = layout_errors(repository, candidate, holdout, business_root)
     if not repository.is_dir():
         errors.append(f"repository is not a directory: {repository}")
     if not candidate.exists():
         errors.append(f"candidate path does not exist: {candidate}")
     if not holdout.exists():
         errors.append(f"holdout path does not exist: {holdout}")
+    if business_root is not None and not business_root.exists():
+        errors.append(f"business snapshot root does not exist: {business_root}")
     if errors:
         print("FAIL isolation layout", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
-    print(json.dumps({"repository": str(repository), "candidate": str(candidate), "holdout": str(holdout)}, indent=2))
+    layout = {"repository": str(repository), "candidate": str(candidate), "holdout": str(holdout)}
+    if business_root is not None:
+        layout["business_root"] = str(business_root)
+    print(json.dumps(layout, indent=2))
     return 0
 
 
@@ -158,6 +183,12 @@ def main(argv: list[str] | None = None) -> int:
     layout_parser.add_argument("--repository", required=True)
     layout_parser.add_argument("--candidate", required=True)
     layout_parser.add_argument("--holdout", required=True)
+    layout_parser.add_argument(
+        "--business-root",
+        default=None,
+        help="optional business task snapshot root: a fourth isolation position that must not "
+        "overlap or nest with the repository, the candidate worktree, or the private holdout",
+    )
     layout_parser.set_defaults(handler=validate_layout)
 
     create_parser = subparsers.add_parser("create-worktree")
