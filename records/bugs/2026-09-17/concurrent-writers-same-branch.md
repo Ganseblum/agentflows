@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260917-02
 title: 同一分支被两个执行者并发写入——写入隔离约束没有延伸到 git 层
-status: open
+status: fixed-pending-review
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -15,9 +15,11 @@ affected_slices:
   - branch-isolation
   - delegation-briefs
 recorded_at: 2026-09-17T00:00:00Z
-updated_at: 2026-09-17T00:00:00Z
+updated_at: 2026-09-17T02:53:40Z
 source_revision: 8665ca3
 agentflow_version: 0.4.0
+regression_status: not-run
+fix_revision: agentflow 0.4.2
 ---
 
 ## 现象
@@ -61,3 +63,4 @@ Agentflow 已经规定「并行写入必须落在互不重叠的文件上」（`
 
 - 2026-09-17 00:00 · 建档（open）· 依据双写提交序列、冲突文件清单，以及本仓
   `skills/agentflow/references/contracts.md` 被并发占用的现状。
+- 2026-09-17 · 修复落地 · 规则改动已实施（SKILL/contracts 三处补丁，版本 0.4.2）；待独立评审（规则文本变更，无自动化检测面可跑；validate.py all 仅验证记录结构完整。转 verified 前需评审人指定能证明约束生效的检查。）

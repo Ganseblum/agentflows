@@ -7,7 +7,7 @@
       "name": "agentflow",
       "source": "./",
       "description": "Host-native multi-agent development and evidence-driven improvement workflows with specialized implementation, evaluation, and release roles.",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "author": {
         "name": "Ganseblum"
       },

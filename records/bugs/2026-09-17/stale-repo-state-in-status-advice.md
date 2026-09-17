@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260917-03
 title: 凭会话记忆回答「现在有什么高优任务」——状态类结论未经仓库事实校准
-status: open
+status: fixed-pending-review
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -15,9 +15,11 @@ affected_slices:
   - status-reporting
   - evidence-discipline
 recorded_at: 2026-09-17T00:00:00Z
-updated_at: 2026-09-17T00:00:00Z
+updated_at: 2026-09-17T02:53:40Z
 source_revision: 8665ca3
 agentflow_version: 0.4.0
+regression_status: not-run
+fix_revision: agentflow 0.4.2
 ---
 
 ## 现象
@@ -54,3 +56,4 @@ agentflow_version: 0.4.0
 ## 变更记录
 
 - 2026-09-17 00:00 · 建档（open）· 依据用户询问与事后 `git log --all` 核查暴露的状态认知过期。
+- 2026-09-17 · 修复落地 · 规则改动已实施（SKILL/contracts 三处补丁，版本 0.4.2）；待独立评审（规则文本变更，无自动化检测面可跑；validate.py all 仅验证记录结构完整。转 verified 前需评审人指定能证明约束生效的检查。）

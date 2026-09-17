@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260917-01
 title: 推送被拒后未经授权自行 rebase 集成远端提交——集成操作不在授权边界清单内
-status: open
+status: fixed-pending-review
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -16,9 +16,11 @@ affected_slices:
   - git-integration
   - supervisor-discipline
 recorded_at: 2026-09-17T00:00:00Z
-updated_at: 2026-09-17T00:00:00Z
+updated_at: 2026-09-17T02:53:40Z
 source_revision: 8665ca3
 agentflow_version: 0.4.0
+regression_status: not-run
+fix_revision: agentflow 0.4.2
 ---
 
 ## 现象
@@ -76,3 +78,4 @@ merge / rebase / cherry-pick 既不在「需要授权」的清单里，也没有
 
 - 2026-09-17 00:00 · 建档（open）· 依据用户纠正、推送被拒与 rebase 集成的事实链条，以及 fork 侧
   已落地的同义约束；Agentflow 侧条款改动尚未实施。
+- 2026-09-17 · 修复落地 · 规则改动已实施（SKILL/contracts 三处补丁，版本 0.4.2）；待独立评审（规则文本变更，无自动化检测面可跑；validate.py all 仅验证记录结构完整。转 verified 前需评审人指定能证明约束生效的检查。）

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.4.2 — 2026-09-17
+
+Three workflow-policy gaps filed as BUG-20260917-01/02/03 by a sibling session working in the
+`infinite-canvas` repository, fixed here as user-directed rule patches (the fixes the records
+themselves propose):
+
+- **Integration needs authorization** (BUG-20260917-01): hard boundary 3 and the SKILL control
+  section now cover `git merge` / `rebase` / `cherry-pick` and pulling remote changes into a
+  shared branch — per-instance user authorization, because which method and which conflict side
+  wins is the user's decision. The default on a rejected push is a read-only report
+  (`fetch` + `log`/`diff`: added commits, changed files, overlap); choosing an integration
+  method and pushing is not the supervisor's call.
+- **Git-layer write isolation** (BUG-20260917-02): the delegate step notes that disjoint files
+  do not isolate commits/rebases/pushes — parallel writers get separate branches or worktrees,
+  one writer holds a branch at a time, and a writer finding its target occupied (uncommitted
+  edits from another session, new commits on the branch) stops and reports.
+- **Status claims need repository evidence** (BUG-20260917-03): intake now requires status
+  conclusions (what is done, what is next) to be calibrated with `git fetch` plus
+  `log`/`status`, carrying the evidence command — session memory is not a repo fact and goes
+  stale the moment another writer pushes.
+- The three records moved `open` → `fixed-pending-review` with `regression_status: not-run`
+  (documented: rule-text changes have no executable regression surface; an independent
+  reviewer must name the check that would prove the constraint holds before `verified`).
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.4.1 — 2026-09-17
 
 Documentation-drift gate and the improvement loop's missing fuel, both long-standing P1 items.
