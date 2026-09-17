@@ -66,7 +66,7 @@ Use when a diagnosed bug's evidence should persist — recurring classes, proces
 
 ## Plan architect
 
-Use for planning tasks: it converts specialist outputs and technical-director decisions into one versioned plan under the assigned `records/plans/` path, with dependencies, parallel lanes, acceptance criteria, shared mechanisms, review gates, and rollback points. It writes the plan only — the supervisor decides approval, assigns execution, and owns the stop/rollback call. The plan file is also the resume point when an orchestration session dies mid-run.
+Use for planning tasks: it converts specialist outputs and technical-director decisions into one versioned plan under the assigned `records/plans/` path — a Markdown board (progress overview, per-task table with status + evidence write-back, interfaces and shared mechanisms at their registration points, review gates, release order × rollback points), machine-checked for unique task IDs, acyclic dependencies, the fixed status enum, and closed blocking decisions before approval. It writes the plan only — the supervisor decides approval, assigns execution, and owns the stop/rollback call. The plan file is also the resume point when an orchestration session dies mid-run.
 
 ## Improvement roles
 

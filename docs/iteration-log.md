@@ -27,6 +27,7 @@
 | 0.4.2 | 2026-09-17 | 兄弟会话在 infinite-canvas 立案的三条 workflow_policy 缺口（集成授权/git 层隔离/状态结论证据） | 硬边界 3 扩写 + SKILL 三处补丁（Intake/Delegate/Control）——首批由**外部会话记录驱动**的条款修复 | CHANGELOG 0.4.2；本文件 §0.4.2 |
 | 0.5.0 | 2026-09-17 | 用户对比 aiwork Markdown 计划与 JSON 契约后选方案 A：人读性 + 机器校验融合 | plan 契约重设计为 Markdown 融合形态（看板式任务表 + 机器断言保留并扩展） | CHANGELOG 0.5.0；本文件 §0.5.0 |
 | 0.5.1 | 2026-09-17 | 用户问 spec/design/proposal 是否吸取、如何方便后续使用 | 文档评审模式（按文档类型分档清单）进 reviewer；不重建模板体系 | CHANGELOG 0.5.1；本文件 §0.5.1 |
+| 0.5.2 | 2026-09-17 | 用户要求自审 0.5.x 有无遗漏 | 一处静默门缺口（反例从未被拾取）+ 死代码 + 五处旧措辞 + 两处失效文档面 | CHANGELOG 0.5.2；本文件 §0.5.2 |
 
 ---
 
@@ -358,3 +359,24 @@
 - **解决了什么**：二次评审从通用检查升级为按文档类型逐项引用原文——吸收的是 aiwork 各
   模板的强制项与判据（含 PRD 不合规登记、统一判定口径、验收不另造），不是它的目录形式。
 - **未决**：真实评审一单 spec/design 后复盘清单是否够用、是否需增补轻量骨架。
+
+## 0.5.2 — 0.5.x 自审修复（2026-09-17，当前源码，宿主快照待重装）
+
+- **触发**：用户要求仔细检查 0.5.0/0.5.1 是否还有遗漏。
+- **自审发现（按严重度）**：
+  - **静默门缺口**：反例 `PLAN-INVALID-002.md` 从未被 examples 检查拾取——glob 只匹配小写
+    `plan-` 前缀，而"必须含反例"的断言又被 bug-record 反例单独满足，门看着在跑、实际
+    没测计划反例。修复：大小写不敏感匹配 + "有合法计划例必须有非法计划例"独立断言；
+    /tmp 实验双验证（把反例改合法 → expected invalid 被拒；删掉反例 → both required 报错）；
+    新增钉住回归测试（19 例）。
+  - **死代码**：`schema_for` 仍把 `examples/invalid/plan-*` 映射到 plan schema（计划校验
+    已改走 Markdown 路径），删除。
+  - **旧措辞五处**（parallel lanes 时代残留）：plan-architect description、SKILL 计划段、
+    roles.md 计划画像、中文镜像的 `shared_mechanisms[]` 句（改为「接口与共享机制」表 +
+    注册点）、plans README 结构块（补评审门）。
+  - **失效文档面两处**：records/README 的计划查询还是 `jq … plans/*.json`（已改
+    grep frontmatter）；tools/lab/README 未记 `docs`/`report`/`recurrence` 三个目标、
+    artifacts 描述未覆盖五种记录类型（已补）。
+- **解决了什么**：门从"看起来在跑"回到"确实在跑"——这正是 BUG-20260917 系列的同一失败族
+  （声明与执行不符），由自审 + 负向实验逐条抓出。
+- **未决**：宿主快照重装；其余同前。

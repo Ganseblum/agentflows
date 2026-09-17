@@ -415,9 +415,6 @@ def iter_schema_paths() -> Iterable[Path]:
 
 def schema_for(relative_path: Path) -> Path | None:
     parts = relative_path.parts
-    if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "invalid":
-        if relative_path.name.startswith("plan-"):
-            return ROOT / "schemas" / "plan.schema.json"
     if len(parts) >= 2 and parts[0] == "evals" and parts[1] == "public":
         return ROOT / "skills" / "improve" / "references" / "eval-case.schema.json"
     if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "evaluation-results":
@@ -1025,13 +1022,18 @@ def validate_examples() -> list[ValidationError]:
     result_paths = sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
     valid_paths = plan_paths + result_paths
     invalid_plan = sorted(
-        p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.startswith("plan-")
+        p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.lower().startswith("plan-")
     )
     invalid_md = sorted(
         p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.startswith("bug-record")
     )
     if not bug_paths or not valid_paths or not (invalid_plan + invalid_md):
         errors.append(ValidationError("examples", "valid and invalid example sets are all required"))
+    if not plan_paths or not invalid_plan:
+        # A naming mismatch here once silently excluded the invalid plan example from this check.
+        errors.append(
+            ValidationError("examples", "a valid plan example and an invalid plan example are both required")
+        )
     for path in bug_paths:
         document_errors = validate_bug_markdown(path)
         if document_errors:

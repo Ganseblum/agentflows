@@ -277,6 +277,12 @@ class ValidatorRegressionTests(unittest.TestCase):
             errors = validate.validate_episode_document(path)
             self.assertTrue(any("must equal episode_id" in error.message for error in errors))
 
+    def test_examples_contract_includes_the_invalid_plan(self) -> None:
+        # Regression for a silent gap: a case-sensitive glob once excluded the uppercase-named
+        # invalid plan example, so the negative example never exercised the plan gate.
+        errors = validate.validate_examples()
+        self.assertEqual([error.message for error in errors], [])
+
     def test_doc_consistency_passes_on_the_current_tree(self) -> None:
         errors = validate.validate_doc_consistency()
         self.assertEqual(errors, [])

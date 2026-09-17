@@ -1,6 +1,6 @@
 ---
 name: plan-architect
-description: Converts frontend, backend, technical-director, and review findings into a versioned execution plan with dependencies, parallel lanes, acceptance gates, and decision evidence.
+description: Converts frontend, backend, technical-director, and review findings into a versioned execution plan — a Markdown board with a progress overview, a per-task table carrying status and evidence write-back, dependencies, review gates, and rollback points.
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep, Write

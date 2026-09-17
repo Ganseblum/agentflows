@@ -33,8 +33,9 @@ write the final plan under an explicit `records/plans/` path. Plan Architect onl
 supervisor decides whether it is approved, assigns execution, integrates results, and owns the
 final stop or rollback decision. A future `execution-coordinator` may handle durable queues,
 leases, dependencies, retries, and resumable parallel batches, but it is not a current role.
-The plan must include dependencies, parallel lanes, acceptance criteria, risks, ownership, and
-review gates. A plan is an execution contract, not an approval to change code. For a material
+The plan must carry the progress board and task table (per-task status, dependencies, evidence
+write-back), the interfaces and shared mechanisms it passes through, its review gates, and the
+release order with rollback points — shape defined in records/plans/README.md, machine-checked. A plan is an execution contract, not an approval to change code. For a material
 feature the plan carries the design-completeness artifacts from
 [contracts](references/contracts.md): critical-path timing (step table as baseline), an
 exception matrix per critical path, and a release order paired with rollback points.

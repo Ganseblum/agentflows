@@ -13,8 +13,9 @@ python3 tools/lab/validate.py all
 It validates the Draft 2020-12 vocabulary used by this repository, then checks record status
 rules, plan dependency graphs and public fixture references. A failing check returns exit code 1.
 
-`validate.py artifacts` additionally validates plan and bug-record instances actually written
-under `records/` (recursive) against the same schemas and invariants; `all` includes it.
+`validate.py artifacts` additionally validates the record instances actually written under
+`records/` (recursive) — bug records, recurrence ledgers, review records, episodes, and
+plans — against the same schemas and body assertions; `all` includes it.
 This is the compile step for supervisor artifact acceptance: run it against the real files
 before accepting a worker's record, and treat failures as compile errors.
 
@@ -40,6 +41,17 @@ whose module replaces a pinned test method makes a broken assertion pass and the
 starts from the repository root; the entry check rejects it regardless.) Running lab tools inside a
 candidate worktree still leaves `__pycache__` entries in `check-diff`'s changed paths, because that
 check includes ignored files; they are listed, not blocked.
+
+`validate.py docs` asserts the hand-synced role/document surface: every agent file's
+frontmatter name equals its filename, every `agentflow:<role>` referenced by a SKILL
+resolves to an agent file, every `schemas/*.schema.json` path named in the docs/records/
+skills/agents surface exists, and the Chinese mirror's schema-reference set matches
+`contracts.md`'s. `all` includes it.
+
+Two read-only retrospective tables print and exit without validating: `validate.py report
+[--project X] [--status Y] [--provenance Z]` (the bug-record table, provenance as the last
+column) and `validate.py recurrence` (per-class consolidation state and the derived tier —
+`single` / `recurred` / `escalated`).
 
 `validate.py installed` compares the runtime components of the source checkout (`agents/`,
 `skills/`, the manifests) against an installed plugin snapshot, defaulting to the ZCode cache for

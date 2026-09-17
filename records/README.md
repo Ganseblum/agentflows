@@ -114,5 +114,5 @@ grep -rl "tools/lab/host_adapter.py" records/bugs --include="*.md"
 Plans by state (`draft`, `proposed`, `approved`, `superseded`):
 
 ```sh
-jq -r '[.recorded_at, .plan_id, .status, .plan_version] | @tsv' records/plans/*.json | sort
+grep -H -E "^(plan_id|plan_version|status):" records/plans/*.md
 ```

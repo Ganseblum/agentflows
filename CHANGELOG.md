@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.2 — 2026-09-17
+
+Self-audit of the 0.5.0/0.5.1 surface: one silent gate gap, one dead code path, five stale
+wording sites, and two stale documentation surfaces fixed.
+
+- Silent gap (the important one): the invalid plan example was **never exercised** — the
+  examples checker matched a lowercase `plan-` prefix while the file is `PLAN-INVALID-002.md`,
+  and the combined "invalid sets required" assertion was satisfied by the bug-record negative
+  alone. The match is now case-insensitive, and a missing valid or invalid plan example fails
+  the check outright. Verified on a throwaway copy: making the negative example valid yields
+  "expected invalid example to be rejected", deleting it yields "a valid plan example and an
+  invalid plan example are both required". Pinned regression test added (19 total).
+- Dead code: `schema_for` still mapped `examples/invalid/plan-*` to the plan schema after plan
+  validation moved to the Markdown path; removed.
+- Stale wording swept (the `parallel lanes` era): plan-architect's description, the SKILL
+  planning paragraph, the roles-reference plan profile, the Chinese mirror's
+  `shared_mechanisms[]` sentence (now the 接口与共享机制 table with registration points), and
+  the plans README structure block — which now also names review gates (评审门) inside
+  `## 接口与共享机制`.
+- Stale surfaces: records/README's plan query used `jq … records/plans/*.json` (JSON era) and
+  now greps the Markdown frontmatter; tools/lab/README documents that `artifacts` covers all
+  five record kinds and describes the `docs`, `report`, and `recurrence` targets.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.5.1 — 2026-09-17
 
 Document review modes: absorb the *quality criteria* of the proposal/spec/design pipeline, not
