@@ -259,6 +259,33 @@ class ValidatorRegressionTests(unittest.TestCase):
                 any("duplicate review_id" in error.message for error in errors)
             )
 
+    def test_episode_record_validates_and_pins_filename_to_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "EP-20260101-001.json"
+            record = {
+                "schema_version": 1,
+                "episode_id": "EP-20260101-001",
+                "source_type": "acceptance",
+                "objective": "o",
+                "outcome": "partial",
+                "signals": [{"kind": "tests", "value": "ok"}],
+                "feedback_summary": "f",
+                "agentflow_version": "0.4.0",
+                "host": "other",
+                "provenance": {"carrier": "session"},
+                "redactions": [],
+            }
+            path.write_text(json.dumps(record), encoding="utf-8")
+            errors = validate.validate_episode_document(path)
+            self.assertEqual(errors, [])
+            path.write_text(json.dumps(dict(record, episode_id="EP-20260101-002")), encoding="utf-8")
+            errors = validate.validate_episode_document(path)
+            self.assertTrue(any("must equal episode_id" in error.message for error in errors))
+
+    def test_doc_consistency_passes_on_the_current_tree(self) -> None:
+        errors = validate.validate_doc_consistency()
+        self.assertEqual(errors, [])
+
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:
         subprocess.run(

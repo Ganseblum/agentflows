@@ -23,6 +23,7 @@
 | 0.3.8 | 2026-09-16 | 再犯类无机器可查的落点；severity 档位不够直观 | P0–P3 优先级 + 类台账（未归纳/已归纳 + 归纳版本）+ 推导档位单次/再犯/归纳后再犯 | CHANGELOG 0.3.8；本文件 §0.3.8 |
 | 0.3.9 | 2026-09-16 | 分不清问题是不是 Agentflow 产生的（自己写的计划/分析 vs 方法条款） | 必填 `provenance` + 归因铁律（schema 强制）+ 改进环过滤规则 | CHANGELOG 0.3.9；本文件 §0.3.9 |
 | 0.4.0 | 2026-09-16 | 系统复盘 `aiwork-workflow-ai`：设计模板的工程血肉、issue 记录优点、双仓评审桥 | 设计完备性三纪律 + closure_criteria/fix_revision/变更记录 + `records/reviews/` 二次评审桥 | CHANGELOG 0.4.0；本文件 §0.4.0 |
+| 0.4.1 | 2026-09-17 | 文档手工同步面漂移无机器检查（P1）；improve 环没有任务级燃料（P1） | `validate.py docs` 一致性门（首跑即抓到真实漂移）+ episode 最小落盘（复用既有契约）+ report 过滤参数 | CHANGELOG 0.4.1；本文件 §0.4.1 |
 
 ---
 
@@ -238,6 +239,31 @@
   不存在 bug_id 被拒、快照缺失被拒；对真实运行无对照评测（同前）。
 - **未决**：跨仓再犯类 escalated 档位不能自动推导（consolidated_in 绑本仓 semver），
   先用 report 聚类；宿主快照重装；含 schemas/validator/钉住测试门变更，属人工实施。
+
+## 0.4.1 — 文档一致性门与 episode 落盘（2026-09-17，当前源码，宿主快照待重装）
+
+- **触发**：0.4.0 自审暴露"声明与实现不同步"缺陷家族后，P1 待办两条性价比最高项：
+  ①角色-文档手工同步面无机器检查（manifest 漏 bump 的同类漂移风险）；②improve 环
+  缺任务级证据（episode 只有会话级纪律，没有落盘形态）。
+- **改了什么**：
+  - `validate.py docs`（进 `all`，八项）：角色文件 frontmatter name = 文件名、SKILL 引用
+    的 `agentflow:*` 必须有对应 agents 文件、文档提到的 `schemas/*.schema.json` 必须存在、
+    中文镜像与 contracts.md 的 schema 引用面一致。**首跑抓到真实漂移**：硬边界 6 未点名
+    新增的四份记录契约——已重写边界 6 逐一致引用；
+  - episode 最小落盘：`records/episodes/<日期>/<EP-id>.json`，supervisor 会话收口时写；
+    契约**复用** improve 环的 `skills/improve/references/episode.schema.json`（第一次
+    起草了平行载体，被本仓"扩展契约先 grep 已有载体"纪律自拦，删除重来）——校验器
+    编译 episode（schema、文件名=id、id 全局唯一）；SKILL 步骤 10 指明精确落点；已回填
+    首条真实 episode（0.4.0 吸收会话）；
+  - `validate.py report --project/--status/--provenance` 过滤参数，替代记忆列号拼 awk。
+- **解决了什么**：漂移面从"人记得对照"变成机器断言（docs 门首跑即证明有效）；improve
+  环有了 bug 记录之外的第二种证据形态，feedback-analyst 与 bug-investigator 的输入开始
+  分化。
+- **效果状态**：钉住单测 17 例（+2）；/tmp 负向实验三组（假角色名、假 schema 引用、
+  episode 文件名不符）全按预期拒；negB 首次尝试还自查出一处测试目标选错（文件里本无
+  该字符串）——重选目标后确认拦截有效。
+- **未决**：episode 的实际写入密度（多少任务会真的落盘）待观察；宿主快照重装；方法
+  有效性对照 smoke 仍待用户拍板端点与预算。
 - **发布前用户修订两处（0.4.0 未提交时并入）**：
   - **评审目录改为 feature 锚**：用户指出按日期分目录在「同一 feature 反复评审」场景下
     是错的——今天/明天/修完再评会散落在互不相干的日期目录里。改为

@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BUG_RECORD_SCHEMA = ROOT / "schemas" / "bug-record.schema.json"
 RECURRENCE_SCHEMA = ROOT / "schemas" / "recurrence.schema.json"
 REVIEW_SCHEMA = ROOT / "schemas" / "review.schema.json"
+EPISODE_SCHEMA = ROOT / "skills" / "improve" / "references" / "episode.schema.json"
 PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
 SCHEMA_PATHS = [
     ROOT / "schemas",
@@ -552,6 +553,26 @@ def validate_body_references(body: str, path: Path) -> list[ValidationError]:
     return errors
 
 
+def validate_episode_document(path: Path) -> list[ValidationError]:
+    """Validate one episode record: improve-loop episode schema, timestamp, filename=id."""
+    document, load_errors = load_json(path)
+    if load_errors or not isinstance(document, dict):
+        return load_errors or [ValidationError(str(path), "episode record is not a JSON object")]
+    try:
+        validator = SchemaValidator(EPISODE_SCHEMA)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")]
+    errors = validator.validate(document)
+    if errors:
+        return errors
+    expected_id = document.get("episode_id")
+    if isinstance(expected_id, str) and path.stem != expected_id:
+        errors.append(
+            ValidationError(str(path), f"filename stem must equal episode_id {expected_id!r}")
+        )
+    return errors
+
+
 def validate_external_excerpts(
     frontmatter: dict[str, Any], body: str, path: Path
 ) -> list[ValidationError]:
@@ -965,6 +986,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
         return errors
     seen_bug_ids: dict[str, Path] = {}
     seen_review_ids: dict[str, Path] = {}
+    seen_episode_ids: dict[str, Path] = {}
     record_versions: dict[str, str] = {}
     ledgers: dict[str, dict[str, Any]] = {}
     class_records: list[tuple[str, Any, str, Path]] = []
@@ -1043,6 +1065,25 @@ def validate_workspace_artifacts() -> list[ValidationError]:
             class_id = frontmatter.get("class_id")
             if isinstance(class_id, str):
                 class_records.append((class_id, frontmatter.get("occurrence"), str(bug_id or ""), path))
+        elif parts[0:2] == ("records", "episodes"):
+            if path.name == "README.md":
+                continue
+            if path.suffix != ".json":
+                errors.append(ValidationError(str(path), "episode records are JSON files; unexpected non-json file"))
+                continue
+            episode_errors = validate_episode_document(path)
+            errors.extend(episode_errors)
+            if episode_errors:
+                continue
+            document, _ = load_json(path)
+            episode_id = document.get("episode_id") if isinstance(document, dict) else None
+            if isinstance(episode_id, str):
+                if episode_id in seen_episode_ids:
+                    errors.append(
+                        ValidationError(str(path), f"duplicate episode_id {episode_id!r} already declared in {seen_episode_ids[episode_id]}")
+                    )
+                else:
+                    seen_episode_ids[episode_id] = path
         elif parts[0:2] == ("records", "reviews"):
             if len(parts) != 4 or not re.fullmatch(
                 r"review-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name
@@ -1129,6 +1170,77 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(
                     ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
+    return errors
+
+
+ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.M)
+SKILL_ROLE_PATTERN = re.compile(r"agentflow:([a-z0-9-]+)")
+
+
+def validate_doc_consistency() -> list[ValidationError]:
+    """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
+
+    The role/doc surface is synced by hand across twelve agent files, two SKILLs, the roles
+    reference, and the records READMEs — the same failure class as the missed manifest bump.
+    Four assertion groups: every agent file's frontmatter name equals its filename; every
+    `agentflow:<role>` referenced by a SKILL resolves to an agent file; every
+    `schemas/*.schema.json` path named anywhere in the docs/records/skills/agents surface
+    exists; the Chinese mirror keeps section parity with its English contract documents.
+    """
+    errors: list[ValidationError] = []
+    agents_dir = ROOT / "agents"
+    agent_files = {p.stem: p for p in sorted(agents_dir.glob("*.md"))}
+    for name, path in agent_files.items():
+        text = path.read_text(encoding="utf-8")
+        m = ROLE_NAME_PATTERN.search(text)
+        if not m:
+            errors.append(ValidationError(str(path), "agent file frontmatter lacks a name field"))
+        elif m.group(1) != name:
+            errors.append(
+                ValidationError(str(path), f"frontmatter name {m.group(1)!r} does not match filename {name!r}")
+            )
+
+    for skill in sorted((ROOT / "skills").glob("*/SKILL.md")):
+        text = skill.read_text(encoding="utf-8")
+        for role in sorted(set(SKILL_ROLE_PATTERN.findall(text))):
+            if role not in agent_files:
+                errors.append(
+                    ValidationError(str(skill), f"references agentflow:{role!r} but agents/{role}.md does not exist")
+                )
+
+    reference_surface = [
+        ROOT / "docs",
+        ROOT / "records",
+        ROOT / "skills",
+        ROOT / "agents",
+        ROOT / "README.md",
+    ]
+    schema_ref_pattern = re.compile(r"schemas/([a-z0-9-]+\.schema\.json)")
+    schema_dir = ROOT / "schemas"
+    for base in reference_surface:
+        files = base.rglob("*.md") if base.is_dir() else [base]
+        for doc in sorted(files):
+            for schema in schema_ref_pattern.findall(doc.read_text(encoding="utf-8")):
+                if not (schema_dir / schema).is_file():
+                    errors.append(
+                        ValidationError(str(doc), f"references schemas/{schema!r} which does not exist")
+                    )
+
+    zh = ROOT / "docs" / "agent-roles.md"
+    zh_text = zh.read_text(encoding="utf-8")
+    contracts = ROOT / "skills" / "agentflow" / "references" / "contracts.md"
+    contracts_text = contracts.read_text(encoding="utf-8")
+    zh_schemas = set(schema_ref_pattern.findall(zh_text))
+    contracts_schemas = set(schema_ref_pattern.findall(contracts_text))
+    if zh_schemas != contracts_schemas:
+        only_zh = zh_schemas - contracts_schemas
+        only_en = contracts_schemas - zh_schemas
+        errors.append(
+            ValidationError(
+                str(zh),
+                f"schema references diverge from {contracts.name}: zh-only={sorted(only_zh)}, en-only={sorted(only_en)}",
+            )
+        )
     return errors
 
 
@@ -1399,8 +1511,14 @@ def validate_installed(path_value: str | None) -> tuple[str, list[ValidationErro
     return ("fail" if errors else "pass"), errors
 
 
-def bug_report() -> list[ValidationError]:
-    """Print a retrospective table of all bug records, then exit."""
+def bug_report(
+    project: str | None = None, status: str | None = None, provenance: str | None = None
+) -> list[ValidationError]:
+    """Print a retrospective table of all bug records, then exit.
+
+    Optional filters narrow the table to one project, one status, or one provenance —
+    the equivalent of piping through `awk -F'\\t'`, without remembering column numbers.
+    """
     rows: list[tuple[str, str, str, str, str, str, str]] = []
     bugs_root = ROOT / "records" / "bugs"
     if bugs_root.is_dir():
@@ -1409,6 +1527,12 @@ def bug_report() -> list[ValidationError]:
                 continue
             frontmatter, _, errors = load_bug_markdown(path)
             if errors or not frontmatter:
+                continue
+            if project and frontmatter.get("project") != project:
+                continue
+            if status and frontmatter.get("status") != status:
+                continue
+            if provenance and frontmatter.get("provenance") != provenance:
                 continue
             rows.append(
                 (
@@ -1422,8 +1546,8 @@ def bug_report() -> list[ValidationError]:
                 )
             )
     rows.sort()
-    for recorded, bug_id, status, severity, error_kind, title, provenance in rows:
-        print(f"{recorded}\t{bug_id}\t{status}\t{severity}\t{error_kind}\t{title}\t{provenance}")
+    for recorded, bug_id, row_status, severity, error_kind, title, row_provenance in rows:
+        print(f"{recorded}\t{bug_id}\t{row_status}\t{severity}\t{error_kind}\t{title}\t{row_provenance}")
     return []
 
 
@@ -1505,11 +1629,13 @@ def main(argv: list[str] | None = None) -> int:
             "artifacts",
             "protected",
             "manifests",
+            "docs",
             "tests",
             "installed",
             "all",
             "report",
             "recurrence",
+            "docs",
         ],
         help="contract set to validate, or 'report'/'recurrence' for retrospective tables",
     )
@@ -1518,10 +1644,17 @@ def main(argv: list[str] | None = None) -> int:
         dest="installed_path",
         help="for 'installed', compare against this plugin copy instead of the ZCode cache",
     )
+    parser.add_argument("--project", dest="report_project", help="for 'report', only records of this project")
+    parser.add_argument("--status", dest="report_status", help="for 'report', only records with this status")
+    parser.add_argument(
+        "--provenance", dest="report_provenance", help="for 'report', only records with this provenance"
+    )
     args = parser.parse_args(argv)
 
     if args.target == "report":
-        errors = bug_report()
+        errors = bug_report(
+            project=args.report_project, status=args.report_status, provenance=args.report_provenance
+        )
         return 1 if errors else 0
 
     if args.target == "recurrence":
@@ -1542,6 +1675,7 @@ def main(argv: list[str] | None = None) -> int:
         "artifacts": [("artifacts", validate_workspace_artifacts)],
         "protected": [("protected", validate_protected_paths)],
         "manifests": [("manifests", validate_manifests)],
+        "docs": [("docs", validate_doc_consistency)],
         "tests": [("tests", validate_unit_tests)],
         "all": [
             ("schemas", validate_schemas),
@@ -1550,6 +1684,7 @@ def main(argv: list[str] | None = None) -> int:
             ("artifacts", validate_workspace_artifacts),
             ("protected", validate_protected_paths),
             ("manifests", validate_manifests),
+            ("docs", validate_doc_consistency),
             ("tests", validate_unit_tests),
         ],
     }[args.target]

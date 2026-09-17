@@ -9,6 +9,7 @@ subtree it may touch.
 | [`bugs/YYYY-MM-DD/*.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Bug archive: symptom, problem code, root cause, fix, priority grade, error kind, provenance, files |
 | [`bugs/recurrence/<class_id>.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Recurrence ledger: one file per failure class that recurred or was consolidated — consolidation state, version, occurrence list |
 | [`reviews/YYYY-MM-DD/<project>-<slug>/`](reviews/README.md) | supervisor | Markdown + frontmatter + archived copies | Second-pass reviews of documents authored under another system's rules: review record, verbatim snapshot, findings linkage |
+| [`episodes/YYYY-MM-DD/<EP-id>.json`](episodes/README.md) | supervisor | JSON | Durable capture of one task's final decision record — the improvement loop's task-level evidence, written before the session ends |
 | [`plans/<plan_id>.json`](plans/README.md) | plan-architect | JSON | Versioned execution plans: work packages, lanes, gates, rollback points |
 | [`bugs/archive/`](bugs/README.md) | — | same | Retired `rejected` records, moved out of the active tree |
 

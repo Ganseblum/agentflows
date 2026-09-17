@@ -261,9 +261,11 @@ Bug 记录是 Episode 的一种来源，不是生产 Memory。只有经过归因
 发现“遗漏接口、并行冲突、审核过晚”等系统性问题。
 
 Episode 目前不会自动产生：final decision record 默认是会话级产物，宿主对话历史一旦
-消失它就不可恢复。因此当结果可能喂给改进环时，Supervisor 在会话结束前把决策记录
-（目标、结论、claims 台账、review 决策、可得时的成本）落成持久形式——「没有投诉不
-等于成功」的前提是证据先活下来。
+消失它就不可恢复。因此当结果可能喂给改进环时，Supervisor 在会话结束前把它落成
+`records/episodes/<日期>/<EP-id>.json`（复用 improve 环的 episode.schema.json，文件名 =
+episode_id，`validate.py artifacts` 强制）——「没有投诉不等于成功」的前提是证据先活
+下来。bug 记录承载缺陷证据，episode 承载任务级证据，两者共同构成 feedback-analyst
+的输入。
 
 `bug-recorder`、`plan-architect` 和其他角色的写入边界以角色文件内的「产物所有权矩阵」
 为准；`records/`（`bugs/`、`plans/` 及后续同类产物）下的记录已纳入确定性校验
@@ -286,6 +288,10 @@ Supervisor 未授予的 MCP 工具。「委派不扩大权限」因此既是纪�
 `validate.py protected`（`all` 已包含）在清单不再覆盖必需条目时失败。清单、必需条目
 集合与发布策略的修改属于门变更，必须经人工审查——候选不能靠改门来让自己通过。因为
 `schemas/` 与回归测试都在门内，契约变更与门工具修复属于人工实施的改动，候选只能提方案。
+
+记录契约（编译目标，均在门内）：bug 记录 `schemas/bug-record.schema.json`、类台账
+`schemas/recurrence.schema.json`、评审记录 `schemas/review.schema.json`、episode
+`skills/improve/references/episode.schema.json`（复用 improve 环既有契约，不另设平行载体）。
 
 改进环有两个显式声明的能力边界（`skills/improve/SKILL.md`）：
 

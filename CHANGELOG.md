@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.1 — 2026-09-17
+
+Documentation-drift gate and the improvement loop's missing fuel, both long-standing P1 items.
+
+- New `validate.py docs` target (in `all`, now eight checks): asserts that every agent file's
+  frontmatter name equals its filename; every `agentflow:<role>` referenced by a SKILL resolves
+  to an agent file; every `schemas/*.schema.json` path named anywhere in
+  docs/records/skills/agents/README exists; the Chinese mirror's schema-reference set matches
+  `contracts.md`'s. It caught a real drift on its first run (hard boundary 6 did not name the
+  new record schemas; fixed by rewriting boundary 6 to cite all four record-contract paths).
+  Pinned test asserts the current tree passes; throwaway-copy experiments verified all three
+  rejection paths.
+- Minimal episode persistence (P1's first item, closing the "improvement loop has no fuel"
+  gap): `records/episodes/<YYYY-MM-DD>/<EP-id>.json` — the supervisor captures a task's final
+  decision record (objective, outcome, claims, review decision, cost) before the session ends.
+  The contract is **reused** from the improvement loop's protected
+  `skills/improve/references/episode.schema.json` rather than introducing a parallel carrier
+  (an "extension inventory" catch on my own first draft). The validator compiles episodes
+  (schema, filename = episode_id, ids globally unique); SKILL step 10 now names the exact
+  destination; a first real episode records the 0.4.0 aiwork-absorption session.
+- `validate.py report --project/--status/--provenance`: filters without remembering column
+  numbers.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.4.0 — 2026-09-16
 
 Absorbed from a systematic review of `aiwork-workflow-ai` (its design templates, issue records,

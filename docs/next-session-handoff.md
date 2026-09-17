@@ -18,6 +18,17 @@
 
 ## 已完成
 
+- 2026-09-17 第十五批：0.4.1 文档一致性门 + episode 落盘（P1 两条，含**门变更**）：
+  - `validate.py docs`（进 `all`，八项）：frontmatter name=文件名、SKILL 角色引用、
+    schema 路径存在性、中文镜像引用面与 contracts.md 对齐——**首跑抓到真实漂移**
+    （硬边界 6 未点名四份记录契约，已重写逐一致引用）；
+  - episode 最小落盘：`records/episodes/<日期>/<EP-id>.json`，契约复用 improve 环
+    episode.schema.json（首次起草平行载体被"扩展契约先 grep 载体"纪律自拦），校验器
+    编译 + id 全局唯一；SKILL 步骤 10 指明落点；回填首条真实 episode（0.4.0 会话）；
+  - `report --project/--status/--provenance` 过滤参数；
+  - 钉住测试 17 例；/tmp 负向实验三组（假角色/假 schema/文件名不符）全按预期拒；
+  - 待办清单 P1 两条相应关闭。
+
 - 2026-09-16 第十四批：0.4.0 吸收 aiwork 仓库优点（用户指示，含**门变更**）：
   - 起因：用户要求系统评估 `aiwork-workflow-ai`（模板/issue/双仓用法），合理吸收。
   - 批 1：设计完备性三纪律（关键链路时序·步骤表基准 / 异常矩阵·四强制行 / 发布顺序×
@@ -386,9 +397,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 ### P1 — 改进环的燃料与度量（证据管道）
 
-- [ ] 最小 episode 落盘：让 final decision record（含 claims 台账）可落 `records/`，先
-  不做角色、不做 store——supervisor 写文件即可；没有它 feedback-analyst 与
-  bug-investigator 实际重合，improve 环没有输入（0.3.6 只落了「会话结束前捕获」纪律）。
+- [x] 最小 episode 落盘：`records/episodes/`（0.4.1，复用 improve 环 episode 契约）；原计划的
+  store/检索仍不做，待落盘密度观察；相关条目：feedback-analyst 与
+  bug-investigator 的输入开始分化。
 - [ ] 方法级改动的度量切片：挑一个真实业务仓库（如 aiwork）的代表性任务集做
   instrumented 评测，让 reviewer 清单一类改动能产出 better/neutral/worse（0.3.6 的
   `measurement: none` 标注是过渡态，不是终点）。
@@ -396,8 +407,8 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
   FTS5 检索（原 P1 内容，依赖上一条的落盘）。
 - [ ] `records/` 路径越界的宿主强制（当前矩阵 + 校验器 + supervisor diff 兜底）；
   `execution-coordinator`（断点恢复的持久化版本）待跨会话恢复需求真实出现再做。
-- [ ] 角色-文档一致性检查（agents ↔ roles.md ↔ 中文镜像 ↔ SKILL 手工同步面）：
-  最低成本形态是一个断言清单，防 0.3.3 manifest 漏 bump 同类的漂移。
+- [x] 角色-文档一致性检查：`validate.py docs`（0.4.1，进 `all`）——frontmatter name、
+  SKILL 角色引用、schema 路径、中英镜像引用面四组断言。
 
 ### P2 — 数据充分后的自动化
 
