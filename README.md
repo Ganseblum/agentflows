@@ -20,7 +20,7 @@ It does not invoke or require the standalone `agentflow` CLI.
 
 ## Current maturity
 
-Version `0.5.0` provides:
+Version `0.5.1` provides:
 
 - a shared development Skill;
 - frontend, backend, technical-director, reviewer, bug-investigator, bug-fixer,
@@ -79,7 +79,7 @@ See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) for observed host constraints, and
 [`docs/iteration-log.md`](docs/iteration-log.md) for why each version changed.
 
-The source checkout currently declares version `0.5.0`. This is not by itself proof that a host is
+The source checkout currently declares version `0.5.1`. This is not by itself proof that a host is
 running that version: ZCode loads installed snapshots and Codex may load a separate plugin cache.
 Before dogfood, compare the actual host snapshot with `python3 tools/lab/validate.py installed
 --path <installed-plugin-root>` (or the host-specific default) and record the result. Do not switch

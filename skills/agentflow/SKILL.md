@@ -53,8 +53,10 @@ the independent reviewer role against those documents and land the evidence here
    same-named documents never collide — and record the target repository's current commit as
    `source_revision`: later edits there must not retroactively change what was reviewed. A
    re-review focuses on the delta since the previous round's review_id.
-2. The reviewer applies this repo's review contract to the snapshot (the reviewer profile's
-   check protocol and, where relevant, the design-completeness artifacts above).
+2. The reviewer applies this repo's review contract to the snapshot: the reviewer profile's
+   check protocol, the **document mode** matching each reviewed document's type (proposal/PRD,
+   spec, design — every item needs a citation to the original text), and, where relevant, the
+   design-completeness artifacts above.
 3. File every finding as a bug record under `records/bugs/` with `project` set to the target
    repository. Attribution separates the two upgrade loops: `provenance: external` +
    `attribution: product_code` marks a template/rule gap in the target system — the evidence

@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.5.1 — 2026-09-17
+
+Document review modes: absorb the *quality criteria* of the proposal/spec/design pipeline, not
+its template system (user question: should spec/design/proposal be absorbed — and how to make
+it convenient in later use). The bridge already reviews externally authored documents; what was
+missing was a fixed, per-document-type checklist.
+
+- `agents/reviewer.md` gains **Document review modes** for external documents, each grounded in
+  the reviewed system's own template requirements plus this repo's disciplines:
+  - *Proposal / PRD*: in/out scope written and checkable (an unfalsifiable out-of-scope claim
+    is a defect), decidable success criterion, concrete scenario split, explicit not-doing
+    list, explicit link to existing capability.
+  - *Spec*: frozen field semantics / boundary rules / exception branches; stated adjudication
+    rules (which result wins, what forces recomputation, what history may not be used to infer
+    eligibility); defaults and degradation; boundary scenarios (just-succeeded / just-expired /
+    empty / invalid enum / dirty history); upstream gaps registered and blocking entries closed
+    before the spec counts as frozen.
+  - *Design*: the design-completeness artifacts (timing step table, exception matrix with the
+    retry four-part rule, release order × rollback, impact grading), contract compatibility +
+    idempotency/concurrency/transaction boundaries, observability, and acceptance criteria
+    pointing at the spec/QA source instead of a second invented set.
+  - *Plan*: this repo's own contract — no external mode.
+  Every item passes only with a citation to the original sentence or `path:line`; a "missing"
+    item is itself a finding when the checklist requires it.
+- The bridge workflow (`records/reviews/README.md`, SKILL step 2, roles reference) now names
+  the mode selection: the brief names the document type, the reviewer applies the matching
+  checklist. The demo review mock shows the applied mode line.
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.5.0 — 2026-09-17
 
 Plan contract redesign: the execution plan becomes a **Markdown hybrid** (user chose option A

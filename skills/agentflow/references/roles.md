@@ -48,7 +48,7 @@ Use after material implementation or when the user explicitly asks for independe
 
 The reviewer is independent from the implementer. It checks acceptance criteria, correctness, regression risk, security boundaries, failure handling, and meaningful verification. It reports evidence using the review result contract and does not edit the implementation during the review pass.
 
-Specialist audits — security, test depth, documentation accuracy — run through the same reviewer role with a brief scoped to the matching specialist checklist in the reviewer profile; they do not need separate roles.
+Specialist audits — security, test depth, documentation accuracy — run through the same reviewer role with a brief scoped to the matching specialist checklist in the reviewer profile; they do not need separate roles. When the artifacts under review are external documents (the second-pass review bridge), the brief names the document type and the reviewer applies the matching document mode — proposal/PRD, spec, or design — whose checklist lives in the reviewer profile; every item passes only with a citation to the original text.
 
 ## Bug investigator
 

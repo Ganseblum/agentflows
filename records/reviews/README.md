@@ -38,7 +38,9 @@ records/reviews/
 agentflow（评审层）
    1. supervisor 定位/新建 records/reviews/<project>-<feature>/，本轮快照进
       archive/<日期>-<序号>/，review-<日期>-<NNN>.md 写评审记录（源 revision 记入 source_revision）
-   2. reviewer 按本仓契约评审快照（同 feature 的上一轮记录先读，聚焦 delta）
+   2. reviewer 按本仓契约评审快照（同 feature 的上一轮记录先读，聚焦 delta）；按被评审文档的
+      类型选择检查档（proposal/PRD、spec、design——清单在 `agents/reviewer.md` 的 document
+      review modes），每条检查项须引用原文句或 `path:line`，无法引用即未过
    3. 发现的问题一条一条写进 records/bugs/（frontmatter 见下）
    4. python3 tools/lab/validate.py artifacts 全绿后才算收口
    ▼

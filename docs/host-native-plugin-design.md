@@ -1,6 +1,6 @@
 # Agentflow 宿主原生 Plugin 设计与 `my-agent` 参考评估
 
-> 状态：`v0.5.0` 已形成 Codex + Claude Code + ZCode 共用的开发 Skill、自迭代 Skill 和双宿主 Plugin；不依赖 Agentflow CLI 或 MCP。
+> 状态：`v0.5.1` 已形成 Codex + Claude Code + ZCode 共用的开发 Skill、自迭代 Skill 和双宿主 Plugin；不依赖 Agentflow CLI 或 MCP。
 
 > 仓库边界已经重新评审：Plugin 应作为主产品拆到独立仓库，旧 Go CLI 保留为历史
 > runtime 和控制面研究实现。详细决策及迁移步骤见

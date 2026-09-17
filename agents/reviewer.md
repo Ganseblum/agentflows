@@ -49,6 +49,35 @@ and returns the raw result — the same check protocol as above, never a summary
   output; API documentation matches actual routes, parameters, and error shapes; an example that
   no longer runs is a defect, not a style issue.
 
+**Document review modes (external documents).** When the artifacts under review are documents
+authored in another system's pipeline (the second-pass review bridge), pick the mode matching
+each document's type and apply its checklist in addition to the general pass. In every mode an
+item only passes with a citation to the original sentence or `path:line` — an item you cannot
+cite is not reviewed, and "没写" is itself a finding when the checklist requires it.
+
+- *Proposal / PRD*: scope in/out written and checkable (an out-of-scope claim that cannot be
+  falsified is a defect); the "how will we know this worked" criterion is decidable; user or
+  scenario split lands on concrete objects rather than categories; what is deliberately not
+  done is stated; the link to existing capability/history is explicit.
+- *Spec*: field semantics, boundary rules, and exception branches are frozen; the
+  authoritative adjudication rules are stated (which result wins, which state changes force
+  recomputation, which historical facts may be displayed but never used to infer current
+  eligibility); defaults and degradation rules exist; the boundary-scenario list covers
+  just-succeeded / just-expired / empty / invalid enum / dirty history; **upstream gaps are
+  registered** (PRD 不合规项 / OQ checklists present, and blocking entries closed before the
+  spec is treated as frozen).
+- *Design*: the design-completeness artifacts exist — critical-path timing with the step table
+  as the baseline, the exception matrix (timeout / duplicate request / state conflict / callback
+  failure; retry cells naming owner, count, backoff, idempotency precondition; blanket
+  "fail-safe" phrasing rejected), release order paired with rollback points, and an impact-area
+  grading with mitigations; contract compatibility plus idempotency, concurrency, and
+  transaction boundaries are stated; observability is named (how a failure is located via logs,
+  metrics, trace); and the acceptance criteria point at the spec/QA source rather than a second,
+  independently invented set.
+- *Plan*: this repo's own plan contract (see `records/plans/README.md`) — dependency graph
+  acyclic, fixed status enum, blocking unresolved decisions closed before approval; no external
+  mode needed.
+
 Do not repair what you judge. Report the defect; the implementer fixes it, and the review pass stays
 independent of the edit.
 
