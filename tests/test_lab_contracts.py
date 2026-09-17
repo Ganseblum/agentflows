@@ -33,11 +33,6 @@ class ValidatorRegressionTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("RFC 3339 date-time", errors[0].message)
 
-    def test_plan_schema_rejects_boolean_schema_version(self) -> None:
-        schema = ROOT / "schemas" / "plan.schema.json"
-        errors = validate.SchemaValidator(schema).validate({"schema_version": True})
-        self.assertTrue(any("must equal 1" in error.message for error in errors))
-
     def test_enum_uses_json_schema_number_and_boolean_equality(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             schema = Path(temporary) / "enum.schema.json"
@@ -285,6 +280,51 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_doc_consistency_passes_on_the_current_tree(self) -> None:
         errors = validate.validate_doc_consistency()
         self.assertEqual(errors, [])
+
+    def test_plan_schema_rejects_unknown_status_and_requires_superseded_by(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "plan.schema.json")
+        base = {
+            "plan_id": "PLAN-TEST-001",
+            "plan_version": "0.1.0",
+            "status": "approved",
+            "objective": "o",
+            "recorded_at": "2026-09-17T00:00:00Z",
+        }
+        self.assertEqual(validator.validate(dict(base)), [])
+        errors = validator.validate(dict(base, status="unknown"))
+        self.assertTrue(any("status" in error.path for error in errors))
+        errors = validator.validate(dict(base, status="superseded"))
+        self.assertTrue(any("superseded_by" in f"{e.path} {e.message}" for e in errors))
+        self.assertFalse(validator.validate(dict(base, status="superseded", superseded_by="PLAN-TEST-002")))
+
+    def test_plan_markdown_rejects_cycle_duplicate_and_open_blocking_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "PLAN-TEST-002.md"
+            path.write_text(
+                "---\n"
+                "plan_id: PLAN-TEST-002\n"
+                "plan_version: 0.1.0\n"
+                "status: approved\n"
+                "objective: o\n"
+                "recorded_at: 2026-09-17T00:00:00Z\n"
+                "---\n\n## 进展概览\n\n概述\n\n## 任务清单\n\n"
+                "| ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据回写 |\n"
+                "| --- | --- | --- | --- | --- | --- | --- |\n"
+                "| `T01` | 甲 | P0 | a.ts | `T02` | ☑ 已完成 | x |\n"
+                "| `T02` | 乙 | P0 | b.ts | `T01` | ☐ 未开始 | |\n"
+                "| `T02` | 重复 | P0 | c.ts | — | ☐ 未开始 | |\n"
+                "\n### 未决项\n\n"
+                "| 编号 | 问题 | 是否阻塞 | 状态 |\n"
+                "| --- | --- | --- | --- |\n"
+                "| U-01 | 某问题 | 阻塞 | 尚未关闭 |\n"
+                "\n## 验证命令\n\n```sh\necho x\n```\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_plan_markdown(path, Path("records/plans/PLAN-TEST-002.md"))
+        messages = [error.message for error in errors]
+        self.assertTrue(any("duplicate task id" in m for m in messages))
+        self.assertTrue(any("dependency cycle" in m for m in messages))
+        self.assertTrue(any("blocking unresolved decision" in m for m in messages))
 
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:

@@ -10,7 +10,7 @@ subtree it may touch.
 | [`bugs/recurrence/<class_id>.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Recurrence ledger: one file per failure class that recurred or was consolidated — consolidation state, version, occurrence list |
 | [`reviews/YYYY-MM-DD/<project>-<slug>/`](reviews/README.md) | supervisor | Markdown + frontmatter + archived copies | Second-pass reviews of documents authored under another system's rules: review record, verbatim snapshot, findings linkage |
 | [`episodes/YYYY-MM-DD/<EP-id>.json`](episodes/README.md) | supervisor | JSON | Durable capture of one task's final decision record — the improvement loop's task-level evidence, written before the session ends |
-| [`plans/<plan_id>.json`](plans/README.md) | plan-architect | JSON | Versioned execution plans: work packages, lanes, gates, rollback points |
+| [`plans/<plan_id>.md`](plans/README.md) | plan-architect | Markdown + frontmatter | Versioned execution plans (hybrid): progress overview, task board with status + evidence write-back, contracts, gates, rollback points |
 | [`bugs/archive/`](bugs/README.md) | — | same | Retired `rejected` records, moved out of the active tree |
 
 Planned (not implemented): evaluation results and release records join the same root when the
@@ -29,8 +29,12 @@ structured execution contracts consumed by tooling.
   is assigned once and never changes; status transitions edit the file in place and refresh
   `updated_at`. `rejected` records move to `records/bugs/archive/<date-dir>/`; `verified`
   records stay in place as reference.
-- **Plans**: one file per plan, named exactly `<plan_id>.json`, carrying `recorded_at` and
-  `updated_at`.
+- **Plans**: one Markdown file per plan, named exactly `<plan_id>.md` — frontmatter envelope
+  (`plan_id`/`plan_version`/`status`/`objective`/timestamps) plus the body board (进展概览 /
+  任务清单 with per-task status and evidence write-back / 验证命令). The checker asserts:
+  task IDs unique, dependencies resolve and are acyclic, task statuses are the fixed enum,
+  and a blocking 未决项 that is not closed blocks `status: approved`. Progress write-back is
+  minimal-diff (状态 + 证据 columns only).
 - **Reviews**: a second-pass review of documents authored under another system's rules lives at
   `records/reviews/<project>-<feature-slug>/` — one directory per reviewed feature, anchored on
   the feature rather than the date, because the same feature may be reviewed repeatedly. Each

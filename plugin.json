@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "agentflow",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Host-native multi-agent development and evidence-driven improvement workflows for coding agents."
 }

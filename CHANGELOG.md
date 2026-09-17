@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.5.0 — 2026-09-17
+
+Plan contract redesign: the execution plan becomes a **Markdown hybrid** (user chose option A
+after comparing the aiwork-workflow-ai Markdown plans with the agentflow JSON contract — the
+former reads better for humans, the latter validates better; the hybrid keeps both). No
+migration was needed: `records/plans/` held no real plans.
+
+- New plan shape `records/plans/<plan_id>.md`: frontmatter envelope (`plan_id` / `plan_version`
+  / `status` draft→proposed→approved→superseded / `objective` / timestamps / `superseded_by`)
+  plus a body board absorbed from aiwork's plan discipline — `## 进展概览` (one progress line
+  + a three-audience overview table: 业务侧解读 / 技术侧解读 / 交付效果 + 我们在哪/下一步/
+  阻塞), `## 任务清单` (task table with ID/任务/优先级/代码落点/依赖/状态/证据回写 and
+  `### 未决项`), optional `## 接口与共享机制` (contracts + exception matrix + release order
+  × rollback points), `## 验证命令`.
+- Machine assertions kept and extended (`validate_plan_markdown`): filename = plan_id; task IDs
+  unique; 依赖 references resolve and are acyclic; task statuses are the fixed enum
+  ☐ 未开始 / ◐ 进行中 / ☑ 已完成 / ⚠ 阻塞 / — 本期不做 (free text rejected); **a blocking
+  未决项 that is not closed blocks `status: approved`** (aiwork's gap-registration gate,
+  absorbed); required sections exist. The old JSON invariants (work-package cycles, lane
+  coverage) are replaced by the task-table equivalents; the old `validate_plan_invariants`
+  removed.
+- Progress write-back discipline (aiwork's board model): the plan is the progress surface —
+  after a task completes only its 状态 and 证据回写 columns change (minimal diff); completed
+  rows are never rewritten. The session-death resume protocol now reads this board.
+- Examples replaced: a realistic positive plan (`PLAN-DEMO-SHARE-001`, modelled on the real
+  对话分享 plan density) and a multi-defect negative (`PLAN-INVALID-002`: cycle, duplicate ID,
+  illegal status, open blocking decision). Pinned tests 18 (two new: envelope enum/superseded,
+  task-table rejections). `plan-architect` rewritten for the hybrid; plans README, records
+  index, SKILL resume note, and the Chinese mirror updated.
+- Gate change, human-directed: plan schema rewritten, plan validation rewritten, examples
+  replaced. Verified by unit tests and a throwaway-copy experiment (cycle + illegal status +
+  open blocking decision each rejected in isolation).
+- Development release: no baseline/candidate evaluation evidence. The installed host snapshot
+  lags the source until the marketplace is refreshed and the plugin is reinstalled.
+
 ## 0.4.2 — 2026-09-17
 
 Three workflow-policy gaps filed as BUG-20260917-01/02/03 by a sibling session working in the

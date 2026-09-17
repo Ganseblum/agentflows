@@ -94,7 +94,7 @@ Treat two consecutive failures with the same cause as a signal to stop repeating
 
 If a repair/review loop still cannot pass after the bounded retry, report the blocker with evidence and the smallest decision needed from the user. Do not keep agents cycling on unchanged inputs.
 
-A session that dies mid-orchestration resumes from the versioned plan under `records/plans/`, not from memory: re-derive each work package's state from the workspace (diff against the delegation baseline, checks, review decisions) before re-briefing, and treat a package without observed evidence as not started. Durable queues, leases, and resumable parallel batches are the future `execution-coordinator` role; today the plan file plus the repository state is the only checkpoint.
+A session that dies mid-orchestration resumes from the versioned plan under `records/plans/` (a Markdown board: each task row carries its status and evidence, so the state is re-derivable), not from memory: re-derive each work package's state from the workspace (diff against the delegation baseline, checks, review decisions) before re-briefing, and treat a package without observed evidence as not started. Durable queues, leases, and resumable parallel batches are the future `execution-coordinator` role; today the plan file plus the repository state is the only checkpoint.
 
 ## Preserve control and traceability
 

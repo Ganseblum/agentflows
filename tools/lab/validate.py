@@ -415,10 +415,6 @@ def iter_schema_paths() -> Iterable[Path]:
 
 def schema_for(relative_path: Path) -> Path | None:
     parts = relative_path.parts
-    if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "plans":
-        return ROOT / "schemas" / "plan.schema.json"
-    if len(parts) >= 2 and parts[0] == "records" and parts[1] == "plans":
-        return ROOT / "schemas" / "plan.schema.json"
     if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "invalid":
         if relative_path.name.startswith("plan-"):
             return ROOT / "schemas" / "plan.schema.json"
@@ -466,6 +462,180 @@ BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
 BUG_ARCHIVE_DIR = "archive"
 RECURRENCE_DIR = "recurrence"
 BUG_SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+PLAN_REQUIRED_HEADINGS = (
+    "## 进展概览",
+    "## 任务清单",
+    "## 验证命令",
+)
+PLAN_TASK_ID_PATTERN = re.compile(r"^`?([A-Z][A-Z0-9._-]*)`?$")
+PLAN_TASK_STATUSES = ("未开始", "进行中", "已完成", "阻塞", "本期不做")
+PLAN_TASK_STATUS_MARKS = {"☐": "未开始", "◐": "进行中", "☑": "已完成", "⚠": "阻塞", "—": "本期不做"}
+
+
+def is_separator_row(line: str) -> bool:
+    """True for a Markdown table separator row (---|:---:|...)."""
+    stripped = line.strip()
+    if not (stripped.startswith("|") and stripped.endswith("|")):
+        return False
+    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+    return bool(cells) and all(set(cell) <= {"-", ":", " "} and cell for cell in cells)
+
+
+def parse_plan_task_row(line: str) -> dict[str, str] | None:
+    """Parse one Markdown table row of the plan task table into its cells."""
+    stripped = line.strip()
+    if not (stripped.startswith("|") and stripped.endswith("|")):
+        return None
+    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+    if len(cells) < 3:
+        return None
+    if all(set(cell) <= {"-", ":", " "} for cell in cells):
+        return None  # separator row
+    return {"cells": cells}
+
+
+def validate_plan_markdown(path: Path, relative: Path) -> list[ValidationError]:
+    """Validate a Markdown execution plan: frontmatter envelope plus body assertions.
+
+    Body assertions (the hybrid contract's machine half): required sections exist; the task
+    table's ID column is unique; every `依赖` reference resolves to a listed task and the
+    dependency graph is acyclic; task statuses come from the fixed enum (checkbox mark or
+    the literal status word); blocking `未决项` rows are closed before `status: approved`;
+    the plan file is named after plan_id.
+    """
+    frontmatter, body, errors = load_bug_markdown(path)
+    if errors or frontmatter is None:
+        return errors
+    try:
+        validator = SchemaValidator(ROOT / "schemas" / "plan.schema.json")
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")]
+    errors.extend(validator.validate(frontmatter))
+    if errors:
+        return errors
+    errors.extend(validate_timestamp_order(frontmatter, path))
+    if path.stem != frontmatter.get("plan_id"):
+        errors.append(ValidationError(str(path), "plan filename must equal its plan_id"))
+
+    for heading in PLAN_REQUIRED_HEADINGS:
+        if not heading_present(body, heading):
+            errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
+
+    task_ids: list[str] = []
+    task_deps: dict[str, list[str]] = {}
+    task_rows: dict[str, int] = {}
+    in_task_section = False
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        lineno = index + 1
+        if line.startswith("## "):
+            in_task_section = line.strip() == "## 任务清单"
+            continue
+        if not in_task_section:
+            continue
+        if line.strip().startswith(">"):
+            continue
+        row = parse_plan_task_row(line)
+        if row is None:
+            continue
+        # A header row is the table row immediately followed by a separator row.
+        if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            continue
+        cells = row["cells"]
+        if len(cells) < 5:  # task tables carry ID/任务/优先级/代码落点/依赖/状态/证据 — narrower tables (e.g. the overview) are not task rows
+            continue
+        first = PLAN_TASK_ID_PATTERN.match(cells[0])
+        if not first:
+            continue
+        task_id = first.group(1)
+        if task_id in task_rows:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: duplicate task id {task_id!r} (first seen at line {task_rows[task_id]})",
+                )
+            )
+            continue
+        task_rows[task_id] = lineno
+        task_ids.append(task_id)
+        deps: list[str] = []
+        for dep in cells[4].replace("`", "").replace("、", ",").replace("，", ",").replace("；", ",").split(","):
+            dep = dep.strip().rstrip("；;、").strip()
+            if dep in ("", "—", "-", "无"):
+                continue
+            deps.append(dep)
+        task_deps[task_id] = deps
+        if len(cells) >= 6:
+            status_cell = cells[5].strip()
+            mark = status_cell[:1]
+            status_word = PLAN_TASK_STATUS_MARKS.get(mark, status_cell)
+            if status_word not in PLAN_TASK_STATUSES:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"line {lineno}: task {task_id} status {status_cell!r} must be one of {PLAN_TASK_STATUSES}",
+                    )
+                )
+
+    known = set(task_ids)
+    graph: dict[str, list[str]] = task_deps
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(node: str) -> None:
+        if node in visiting:
+            errors.append(ValidationError(str(path), f"task dependency cycle includes {node!r}"))
+            return
+        if node in visited:
+            return
+        visiting.add(node)
+        for dep in graph.get(node, []):
+            visit(dep)
+        visiting.remove(node)
+        visited.add(node)
+
+    for task_id in task_ids:
+        for dep in task_deps.get(task_id, []):
+            if dep not in known:
+                errors.append(
+                    ValidationError(str(path), f"task {task_id!r} references unknown dependency {dep!r}")
+                )
+        visit(task_id)
+
+    if frontmatter.get("status") == "approved":
+        # Scan the 未决项 table: a row whose 是否阻塞 column says 阻塞 and whose 状态 column
+        # is not closed marks an open blocking decision — approval is then invalid.
+        in_unresolved = False
+        for line in body.splitlines():
+            if line.startswith("## ") or line.startswith("### "):
+                in_unresolved = "未决项" in line
+                continue
+            if not in_unresolved:
+                continue
+            if is_separator_row(line):
+                continue
+            row = parse_plan_task_row(line)
+            if row is None or len(row["cells"]) < 4:
+                continue
+            cells = row["cells"]
+            joined = "".join(cells)
+            if "未决" in joined or "编号" in cells[0]:
+                continue  # header or intro row
+            is_blocking = any(
+                "阻塞" in cell and "不阻塞" not in cell for cell in cells[:-1]
+            )
+            # Open unless a closure marker appears in the row; "尚未关闭"/"未关闭"/"待定" are all open.
+            closed = any(marker in cell for cell in cells for marker in ("已关闭", "已解决", "已定"))
+            if is_blocking and not closed:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"status is approved but blocking unresolved decision {cells[0]!r} is still open; "
+                        "close it or downgrade the status",
+                    )
+                )
+    return errors
 
 
 def version_tuple(value: str) -> tuple[int, int, int]:
@@ -752,75 +922,6 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
     return errors
 
 
-def validate_plan_invariants(document: dict[str, Any], path: Path) -> list[ValidationError]:
-    errors: list[ValidationError] = []
-    errors.extend(validate_timestamp_order(document, path))
-    packages = document.get("work_packages", [])
-    package_ids = [package.get("package_id") for package in packages]
-    known = set(package_ids)
-    if len(package_ids) != len(known):
-        errors.append(ValidationError(str(path), "work_package package_id values must be unique"))
-
-    graph: dict[str, list[str]] = {package_id: [] for package_id in known}
-    for package in packages:
-        package_id = package.get("package_id")
-        for dependency in package.get("depends_on", []):
-            if dependency not in known:
-                errors.append(
-                    ValidationError(
-                        f"{path}:$.work_packages[{package_id}]",
-                        f"unknown work-package dependency {dependency!r}",
-                    )
-                )
-            else:
-                graph[package_id].append(dependency)
-
-    visiting: set[str] = set()
-    visited: set[str] = set()
-
-    def visit(node: str) -> None:
-        if node in visiting:
-            errors.append(ValidationError(str(path), f"work-package dependency cycle includes {node!r}"))
-            return
-        if node in visited:
-            return
-        visiting.add(node)
-        for dependency in graph.get(node, []):
-            visit(dependency)
-        visiting.remove(node)
-        visited.add(node)
-
-    for package_id in known:
-        visit(package_id)
-
-    lanes = document.get("parallel_lanes", [])
-    lane_ids = [lane.get("lane_id") for lane in lanes]
-    if len(lane_ids) != len(set(lane_ids)):
-        errors.append(ValidationError(str(path), "parallel lane IDs must be unique"))
-    assigned: list[str] = []
-    for lane in lanes:
-        assigned.extend(lane.get("work_package_ids", []))
-        for package_id in lane.get("work_package_ids", []):
-            if package_id not in known:
-                errors.append(ValidationError(str(path), f"parallel lane references unknown package {package_id!r}"))
-    if len(assigned) != len(set(assigned)):
-        errors.append(ValidationError(str(path), "each work package may appear in only one parallel lane"))
-    if set(assigned) != known:
-        errors.append(ValidationError(str(path), "parallel lanes must cover every work package exactly once"))
-
-    for field in ("acceptance_criteria", "verification", "review_gates", "rollback_points"):
-        items = document.get(field, [])
-        id_field = {
-            "acceptance_criteria": "criterion_id",
-            "verification": "check_id",
-            "review_gates": "gate_id",
-            "rollback_points": "point_id",
-        }[field]
-        ids = [item.get(id_field) for item in items]
-        if len(ids) != len(set(ids)):
-            errors.append(ValidationError(str(path), f"{field} identifiers must be unique"))
-    return errors
-
 
 def validate_eval_invariants(document: dict[str, Any], path: Path) -> list[ValidationError]:
     errors: list[ValidationError] = []
@@ -875,11 +976,7 @@ def validate_document(path: Path) -> list[ValidationError]:
     if not errors and isinstance(document, dict):
         relative = path.relative_to(ROOT)
         record_parts = relative.parts[0:2]
-        if record_parts == ("examples", "plans") or record_parts == ("records", "plans") or (
-            relative.parts[0:2] == ("examples", "invalid") and path.name.startswith("plan-")
-        ):
-            errors.extend(validate_plan_invariants(document, path))
-        elif relative.parts[0:2] == ("evals", "public"):
+        if relative.parts[0:2] == ("evals", "public"):
             errors.extend(validate_eval_invariants(document, path))
         elif relative.parts[0:2] == ("examples", "evaluation-results"):
             errors.extend(validate_evaluation_result_invariants(document, path))
@@ -924,26 +1021,31 @@ def check_schema_refs(value: Any, schema_path: Path, location: str = "$") -> lis
 def validate_examples() -> list[ValidationError]:
     errors: list[ValidationError] = []
     bug_paths = sorted((ROOT / "examples" / "bug-records").glob("*.md"))
-    valid_paths = sorted((ROOT / "examples" / "plans").glob("*.json"))
-    valid_paths += sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
-    invalid_json = sorted(
-        p for p in (ROOT / "examples" / "invalid").glob("*.json") if p.name.startswith("plan-")
+    plan_paths = sorted((ROOT / "examples" / "plans").glob("*.md"))
+    result_paths = sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
+    valid_paths = plan_paths + result_paths
+    invalid_plan = sorted(
+        p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.startswith("plan-")
     )
     invalid_md = sorted(
         p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.startswith("bug-record")
     )
-    if not bug_paths or not valid_paths or not (invalid_json + invalid_md):
+    if not bug_paths or not valid_paths or not (invalid_plan + invalid_md):
         errors.append(ValidationError("examples", "valid and invalid example sets are all required"))
     for path in bug_paths:
         document_errors = validate_bug_markdown(path)
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
-    for path in valid_paths:
+    for path in plan_paths:
+        document_errors = validate_plan_markdown(path, path.relative_to(ROOT))
+        if document_errors:
+            errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
+    for path in result_paths:
         document_errors = validate_document(path)
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
-    for path in invalid_json:
-        document_errors = validate_document(path)
+    for path in invalid_plan:
+        document_errors = validate_plan_markdown(path, path.relative_to(ROOT))
         if not document_errors:
             errors.append(ValidationError(str(path), "expected invalid example to be rejected"))
     for path in invalid_md:
@@ -1101,22 +1203,10 @@ def validate_workspace_artifacts() -> list[ValidationError]:
         elif parts[0:2] == ("records", "plans"):
             if path.name == "README.md":
                 continue
-            if path.suffix != ".json":
-                errors.append(ValidationError(str(path), "plans are JSON files; unexpected non-json file"))
+            if path.suffix != ".md":
+                errors.append(ValidationError(str(path), "plans are Markdown files; unexpected non-md file"))
                 continue
-            document_errors = validate_document(path)
-            if document_errors:
-                errors.extend(document_errors)
-                continue
-            document, load_errors = load_json(path)
-            if load_errors or not isinstance(document, dict):
-                errors.extend(load_errors)
-                continue
-            expected_id = document.get("plan_id")
-            if isinstance(expected_id, str) and path.stem != expected_id:
-                errors.append(
-                    ValidationError(str(path), f"filename stem must equal the record id {expected_id!r}")
-                )
+            errors.extend(validate_plan_markdown(path, relative))
 
     # Cross-check recurrence ledgers against the records they claim.
     for class_id, entry in ledgers.items():
