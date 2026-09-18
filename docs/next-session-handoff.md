@@ -2,12 +2,12 @@
 
 更新时间：2026-09-18
 
-> 当前机器路径以本文件所在仓库为准；不要复制历史机器的绝对路径作为当前事实。阶段四、五已补齐 episode 可验证字段、SQLite FTS5 记录读侧和 measurement 语义；根目录对话记录/历史报告未删除，按 allowlist 打包时排除。
+> 当前机器路径以本文件所在仓库为准；不要复制历史机器的绝对路径作为当前事实。阶段四、五已补齐 episode 可验证字段、SQLite FTS5 记录读侧和 measurement 语义。根目录的对话记录与历史报告**没有**任何打包排除机制：local-directory marketplace 以 `"source": "./"` 整目录快照，2026-09-18 实测 `~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.7.5/` 内就含有审计对话记录（233KB）、三份 REVIEW/ANALYSIS 报告和 mock/tests/tools/records 全部内容（证据见 docs/host-platform-facts.md）；宿主实际加载的只有 agents/、skills/ 与 manifest，其余是随包死重。要真正排除，需要换发布来源（P2 独立版本/安装），当前只如实声明。
 
 ## 当前工作区
 
 - Agent 项目目录（当前机器）：`/Users/hang/Documents/myProject/agentflow`
-- 当前配置的 Git remote 为 `https://github.com/Ganseblum/agentflows.git`；`main` 与
+- 当前配置的 Git remote 为 `https://github.com/Ganseblum/my-agents.git`；`main` 与
   `origin/main` 一致。远程是否已同步以实际 `git remote -v` 和 fetch 结果为准，不把历史机器的
   仓库名当成事实。
 - 本机 ZCode 已有可被 `validate.py installed` 默认发现的安装源：local-directory marketplace
@@ -19,6 +19,19 @@
 - 旧 CLI 仓库继续保留为历史 runtime 和研究实现，不再是 Plugin 的运行依赖。
 
 ## 已完成
+
+- 2026-09-19 第二十批：0.8.0 第二轮审计整改（用户授权「全部开始处理修复」，含 gate 批）：
+  B1 seeds 防泄漏 fail-closed + B3 claude 观测通道 `observed_permission_denials`；
+  P0 前置 `--allowed-tools` / `--isolate-host-config`（写进 observed_context）；B5 rollback
+  结构化如实声明 + release-governor 回滚/台账回写职责；审计②§6 残余（解码错误、引用
+  containment、dot 条目、未知指标、浮点容差、空 protected_slices、repeat_count 继承、
+  digest umask）；E8 `validate.py mock` 合并编译门；E2 版本去散文化 + docs 守卫；E3 remote/
+  「当前源码」失真清理（注：台账称 :485 remote 错误，实测 :485 与实际 remote 一致，仅 :10 陈旧）；
+  E5 假横幅换实测事实（快照整目录打包，Z10）；G2 roundtrips required + 存量回填；G3 负向
+  episode 约定；D2 边界 7 如实声明。`all` 9×PASS、149 单测 OK、/tmp 故障注入双实验观察恢复。
+  **未决**：G4 首次真实业务评测仍挂可信端点与预算决策；stream-json×`--json-schema` 组合、
+  codex 读范围待 live 验证；D1 角色收敛保持产品决策搁置。细节见 CHANGELOG 0.8.0 与
+  iteration-log §0.8.0。
 
 - 2026-09-17 第十九批：0.5.2 自审修复（用户要求检查遗漏）：
   - **静默门缺口**：计划反例 `PLAN-INVALID-002.md` 从未被 examples 检查拾取（glob 小写
@@ -429,11 +442,10 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 - [ ] 在可信宿主端点跑一次小规模（2–3 用例）完整 baseline/candidate 对照 smoke，让
   「方法有效性」第一次有数字；这是解开「继续加条款还是先验证」的前提（原 P0 遗留：
   完整 baseline 仍被网关/权限/超时阻塞）。
-- [ ] 处理评测权限 profile：`read-write-workspace`（Claude acceptEdits）在 print 模式下
-  拦截 sensitive write 与 Bash 审批，直接改变 AF-002 一类用例结果；需显式
-  `--allowed-tools` 或独立权限模式。
-- [ ] 评测环境隔离：显式 `--strict-mcp-config` + 空配置（或独立 `CLAUDE_CONFIG_DIR`），
-  并写入 `observed_context`；否则 baseline 不可复现且成本偏高。
+- [x] 处理评测权限 profile（0.8.0）：请求级 `--allowed-tools` 显式预批，acceptEdits 不再是
+  唯一语义；权威运行必须携带，见 evals/business/README。
+- [x] 评测环境隔离（0.8.0）：`--isolate-host-config` = `--strict-mcp-config` + 一次性
+  `CLAUDE_CONFIG_DIR`，写入 `observed_context`（`mcp_isolated`）；codex 未实现，传了即拒。
 - [ ] 独立任务判定器：当前 `accepted`/`first_pass_review` 等指标来自模型自报；至少给
   核心用例配确定性或人工判定。
 - [ ] `maxTurns` 在 ZCode 实一次（事实 Z6 只确认了 `tools` 白名单生效）；在此之前预算

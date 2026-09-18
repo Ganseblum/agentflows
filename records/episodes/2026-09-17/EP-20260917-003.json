@@ -34,6 +34,10 @@
       "kind": "measurement",
       "value": "none (method-level change, no instrumented business task)",
       "evidence_ref": "方法级改动，evals/ 无登录流测量切片；后续可为测试能力本身种缺陷快照建业务切片"
+    },
+    {
+      "kind": "review_roundtrips_backfill",
+      "value": "pre-0.7.2 episode: per-round review records were not captured by the bridge contract at recording time; review_roundtrips=[] means not captured, not that no review ran (0.8.0 required-field backfill)"
     }
   ],
   "feedback_summary": "用户在 0.6.0 基线上提出自动化测试能力诉求（浏览器 MCP/Playwright、账号注入、边界用例、执行报告、bug 回流、流程合理性判断、e2e/冒烟分级）。方案经两轮对话确认后一次性落地 0.7.0：test-planner/test-executor 两个角色 + plan-architect/reviewer/SKILL 三处增补 + records/tests/ 记录类（TP/TR id、TC 注册表、固定结果枚举、summary 计数对账、findings 指向现存 bug 记录、凭据纪律）。机器可查契约：用例数对账、结果枚举、失败/阻塞行必须带证据、钉当前版本时全用例对账、计划同目录解析。遗留：宿主浏览器路线的可重复性依赖被测项目配 Playwright；测试能力本身的回归测量需后续业务切片。",
@@ -46,5 +50,6 @@
   "redactions": [
     "用户举例中的账号/密码类表述（仅有形式示例，未提供真实凭据）"
   ],
-  "occurred_at": "2026-09-17T16:30:00Z"
+  "occurred_at": "2026-09-17T16:30:00Z",
+  "review_roundtrips": []
 }

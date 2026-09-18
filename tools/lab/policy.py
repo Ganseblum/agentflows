@@ -34,6 +34,11 @@ LOWER_IS_BETTER = {
 }
 KNOWN_METRICS = HIGHER_IS_BETTER | LOWER_IS_BETTER
 
+# Fixed floor below any policy tolerance: acceptance rates and latency are quotients, so
+# last-bit float noise on an otherwise identical run must never read as a regression or
+# an improvement. Real metric movements on these scales are orders of magnitude larger.
+TOLERANCE_FLOOR = 1e-9
+
 
 def load_candidate(path_value: str) -> tuple[dict[str, Any] | None, list[ValidationError]]:
     path = Path(path_value).resolve()
@@ -80,6 +85,32 @@ def compare_direction(metric: str, baseline: float, candidate: float) -> str:
     return "unchanged"
 
 
+def regressed_within_tolerance(
+    metric: str, baseline: float, candidate: float, tolerance: float
+) -> bool:
+    """True only when the candidate is worse than the baseline by more than the tolerance.
+
+    Decision-level regression checks use this instead of the strict ``compare_direction``
+    label: acceptance rates and latency are quotients, so a last-bit float difference on
+    an otherwise identical run must not read as a regression (the same tolerance rule the
+    guardrails already had, now applied to primary metrics and protected slices too).
+    """
+    tolerance = max(tolerance, TOLERANCE_FLOOR)
+    if metric in HIGHER_IS_BETTER:
+        return candidate < baseline - tolerance
+    return candidate > baseline + tolerance
+
+
+def improved_within_tolerance(
+    metric: str, baseline: float, candidate: float, tolerance: float
+) -> bool:
+    """True only when the candidate is better than the baseline by more than the tolerance."""
+    tolerance = max(tolerance, TOLERANCE_FLOOR)
+    if metric in HIGHER_IS_BETTER:
+        return candidate > baseline + tolerance
+    return candidate < baseline - tolerance
+
+
 def decide(
     candidate_record: dict[str, Any],
     baseline: dict[str, Any],
@@ -106,6 +137,9 @@ def decide(
         invalid = True
     if candidate.get("agentflow_version") != candidate_record.get("candidate_version"):
         reasons.append("candidate result agentflow_version does not match candidate version")
+        invalid = True
+    if candidate_record.get("parent_version") == candidate_record.get("candidate_version"):
+        reasons.append("candidate version must differ from its parent version; a rollback to the parent would restore the candidate itself")
         invalid = True
     if baseline.get("agentflow_version") != candidate_record.get("parent_version"):
         reasons.append("baseline result agentflow_version does not match candidate parent version")
@@ -136,7 +170,9 @@ def decide(
         invalid = True
 
     metric_results: dict[str, dict[str, Any]] = {}
-    for metric in sorted(set(primary_metrics + guardrails)):
+    # Unknown metric names were already flagged invalid above; computing directions for
+    # them would only add noise rows for metrics the summaries cannot carry.
+    for metric in sorted(set(primary_metrics + guardrails) - set(unknown_metrics)):
         baseline_value = baseline["summary"].get(metric)
         candidate_value = candidate["summary"].get(metric)
         if not isinstance(baseline_value, (int, float)) or not isinstance(candidate_value, (int, float)):
@@ -157,21 +193,44 @@ def decide(
             continue
         result = metric_results[metric]
         tolerance = tolerances.get(metric, 0)
-        if metric in HIGHER_IS_BETTER:
-            regressed = result["candidate"] < result["baseline"] - tolerance
-        else:
-            regressed = result["candidate"] > result["baseline"] + tolerance
-        if regressed:
+        if regressed_within_tolerance(metric, result["baseline"], result["candidate"], tolerance):
             guardrail_failures.append(metric)
     if guardrail_failures:
         reasons.append(f"guardrails regressed: {', '.join(guardrail_failures)}")
 
-    primary_directions = [metric_results[metric]["direction"] for metric in primary_metrics if metric in metric_results]
-    primary_improved = bool(primary_directions) and any(direction == "improved" for direction in primary_directions)
-    primary_regressed = any(direction == "regressed" for direction in primary_directions)
+    primary_improved = any(
+        improved_within_tolerance(
+            metric, metric_results[metric]["baseline"], metric_results[metric]["candidate"], tolerances.get(metric, 0)
+        )
+        for metric in primary_metrics
+        if metric in metric_results
+    )
+    primary_regressed = any(
+        regressed_within_tolerance(
+            metric, metric_results[metric]["baseline"], metric_results[metric]["candidate"], tolerances.get(metric, 0)
+        )
+        for metric in primary_metrics
+        if metric in metric_results
+    )
 
     available_slices = {item["slice"] for item in baseline.get("case_results", [])}
-    protected_slices = candidate_record.get("protected_slices") or sorted(available_slices)
+    declared_slices = candidate_record.get("protected_slices")
+    if declared_slices is None:
+        protected_slices = sorted(available_slices)
+    elif isinstance(declared_slices, list) and all(isinstance(name, str) for name in declared_slices):
+        # The candidate does not choose its own protection scope: an explicitly empty list
+        # still protects every observed slice, with the deviation recorded in the reasons.
+        if declared_slices:
+            protected_slices = sorted(set(declared_slices))
+        else:
+            protected_slices = sorted(available_slices)
+            reasons.append(
+                "candidate declared an empty protected_slices list; all observed slices stay protected"
+            )
+    else:
+        reasons.append("protected_slices must be a list of slice names when present")
+        invalid = True
+        protected_slices = []
     slice_metrics: dict[str, dict[str, dict[str, Any]]] = {}
     slice_failures: list[str] = []
     for slice_name in protected_slices:
@@ -184,7 +243,7 @@ def decide(
         baseline_slice = summarize(baseline_cases)
         candidate_slice = summarize(candidate_cases)
         slice_metrics[slice_name] = {}
-        for metric in sorted(set(primary_metrics + guardrails)):
+        for metric in sorted(set(primary_metrics + guardrails) - set(unknown_metrics)):
             direction = compare_direction(metric, baseline_slice[metric], candidate_slice[metric])
             slice_metrics[slice_name][metric] = {
                 "baseline": baseline_slice[metric],
@@ -193,14 +252,7 @@ def decide(
                 "direction": direction,
             }
             tolerance = tolerances.get(metric, 0)
-            if metric in guardrails:
-                if metric in HIGHER_IS_BETTER:
-                    regressed = candidate_slice[metric] < baseline_slice[metric] - tolerance
-                else:
-                    regressed = candidate_slice[metric] > baseline_slice[metric] + tolerance
-            else:
-                regressed = direction == "regressed"
-            if regressed:
+            if regressed_within_tolerance(metric, baseline_slice[metric], candidate_slice[metric], tolerance):
                 slice_failures.append(f"{slice_name}:{metric}")
     if slice_failures:
         reasons.append(f"protected slice regressions: {', '.join(slice_failures)}")
@@ -220,17 +272,35 @@ def decide(
         decision = "revise"
         reasons.append("no declared primary metric improved")
 
+    parent_version = candidate_record.get("parent_version")
+    rollback_matches_baseline = baseline.get("agentflow_version") == parent_version
     return {
         "schema_version": 1,
         "candidate_version": candidate_record["candidate_version"],
-        "parent_version": candidate_record["parent_version"],
+        "parent_version": parent_version,
         "evaluation_result": evaluation_result,
         "decision": decision,
         "metrics": metric_results,
         "protected_slice_metrics": slice_metrics,
         "reasons": reasons,
         "required_human_approval": True,
-        "rollback_target": candidate_record.get("parent_version"),
+        "rollback_target": parent_version,
+        "rollback": {
+            "target": parent_version,
+            "target_is_the_measured_baseline_version": rollback_matches_baseline,
+            "verified": [
+                "the rollback target equals the agentflow_version of the frozen baseline "
+                "result, so rolling back restores the version the baseline numbers describe"
+            ]
+            if rollback_matches_baseline
+            else [],
+            "installability": (
+                "not verified here: policy.py cannot observe host install state. The "
+                "release governor must confirm the target version still exists and "
+                "installs (manifests agree, snapshot or source present) before any "
+                "rollback is executed."
+            ),
+        },
     }
 
 

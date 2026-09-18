@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import sys
 import subprocess
 import tempfile
@@ -17,6 +18,7 @@ LAB = ROOT / "tools" / "lab"
 if str(LAB) not in sys.path:
     sys.path.insert(0, str(LAB))
 
+import artifact_digest  # noqa: E402
 import eval_runner  # noqa: E402
 import host_adapter  # noqa: E402
 import isolation  # noqa: E402
@@ -296,6 +298,7 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "host": "other",
                 "provenance": {"carrier": "session", "sanitized": True},
                 "redactions": [],
+                "review_roundtrips": [],
             }
             path.write_text(json.dumps(record), encoding="utf-8")
             errors = validate.validate_episode_document(path)
@@ -654,6 +657,9 @@ class ContractPinTests(unittest.TestCase):
         "latency_ms",
         "evidence_refs",
     )
+    # Adapter-written observation channels are schema properties but stay optional: the
+    # codex path has no denial channel yet, so requiring the key would fail every codex run.
+    EXPECTED_OPTIONAL_REPETITION_FIELDS = ("observed_permission_denials",)
 
     def test_metric_names_are_exactly_the_eight_contract_metrics(self) -> None:
         self.assertEqual(eval_runner.METRIC_NAMES, self.EXPECTED_METRICS)
@@ -671,7 +677,10 @@ class ContractPinTests(unittest.TestCase):
             (ROOT / "schemas" / "adapter-case-result.schema.json").read_text(encoding="utf-8")
         )
         self.assertEqual(tuple(schema["required"]), self.EXPECTED_REPETITION_FIELDS)
-        self.assertEqual(set(schema["properties"]), set(self.EXPECTED_REPETITION_FIELDS))
+        self.assertEqual(
+            set(schema["properties"]),
+            set(self.EXPECTED_REPETITION_FIELDS) | set(self.EXPECTED_OPTIONAL_REPETITION_FIELDS),
+        )
         self.assertIs(schema["additionalProperties"], False)
 
         # The runner's conformance check enforces the same nine names, one by one.
@@ -951,8 +960,9 @@ class BuildRequestRepeatCountTests(unittest.TestCase):
     Regression: build_request used to write args.repeat_count into every case entry and
     never read the case's own frozen value, so a caller could pass a different
     --repeat-count and produce baseline/candidate runs that are not comparable. The
-    request structure and the --repeat-count CLI argument are unchanged; the check only
-    applies to cases that carry the key (suite files always do).
+    request structure and the --repeat-count CLI argument are unchanged. Since 0.8.0 a
+    case that omits repeat_count entirely is also rejected: silent inheritance of
+    --repeat-count is the same overwrite hazard in a quieter form.
     """
 
     def _case(self, case_id: str = "AF-TEST", repeat_count: int | None = None) -> dict[str, Any]:
@@ -1020,12 +1030,18 @@ class BuildRequestRepeatCountTests(unittest.TestCase):
         self.assertEqual(request["repeat_count"], 5)
         self.assertEqual(request["cases"][0]["repeat_count"], 5)
 
-    def test_case_without_repeat_count_key_still_builds(self) -> None:
-        # Synthetic cases may omit the frozen key; the check only applies when it exists.
+    def test_case_without_repeat_count_is_rejected(self) -> None:
+        # B17 (audit 2026-09-18): a case that omits repeat_count used to silently inherit
+        # --repeat-count, exactly the overwrite the frozen-value check exists to prevent.
+        # Every shipped suite file freezes the value, so an omission is now a hard error.
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
-            request = eval_runner.build_request(self._args(1, base), [self._case()])
-        self.assertEqual(request["cases"][0]["repeat_count"], 1)
+            with self.assertRaisesRegex(
+                ValueError,
+                r"case 'AF-TEST' does not declare repeat_count; "
+                r"every case must freeze its repetition count",
+            ):
+                eval_runner.build_request(self._args(1, base), [self._case()])
 
 
 class IsolationBusinessRootTests(unittest.TestCase):
@@ -1681,21 +1697,19 @@ from pathlib import Path
 Path(__file__).with_name("claude-argv.json").write_text(
     json.dumps(sys.argv[1:]), encoding="utf-8"
 )
-print(
-    json.dumps(
-        {
-            "accepted": True,
-            "first_pass_review": True,
-            "correction_count": 0,
-            "escaped_defects": 0,
-            "permission_violations": 0,
-            "unnecessary_delegation": False,
-            "tool_failures": 0,
-            "latency_ms": 1,
-            "evidence_refs": ["stub://claude/add-dir"],
-        }
-    )
-)
+payload = {
+    "accepted": True,
+    "first_pass_review": True,
+    "correction_count": 0,
+    "escaped_defects": 0,
+    "permission_violations": 0,
+    "unnecessary_delegation": False,
+    "tool_failures": 0,
+    "latency_ms": 1,
+    "evidence_refs": ["stub://claude/add-dir"],
+}
+print(json.dumps({"type": "system", "subtype": "init", "session_id": "stub"}))
+print(json.dumps({"type": "result", "result": json.dumps(payload)}))
 raise SystemExit(0)
 """
 
@@ -2115,17 +2129,20 @@ class PolicyDecisionTests(unittest.TestCase):
                 self.assertIn(reason, decision["reasons"])
 
     def test_unknown_declared_metric_fails_closed(self) -> None:
-        # Current fail-closed behavior, pinned as-is (policy.py is not modified in this batch):
-        # the top-level metric loop records the unknown metric as invalid, but the protected
-        # slice loop then indexes the summarize() metric table with the unknown name and
-        # decide() raises KeyError; main() catches it and exits 1 with "FAIL policy evaluation".
-        with self.assertRaises(KeyError):
-            policy.decide(
-                self._record(primary_metrics=["made_up_rate"]),
-                self._baseline(),
-                self._candidate(),
-                self._policy(),
-            )
+        # B11 (audit report 2 §6): an unknown metric used to raise KeyError out of the
+        # protected-slice loop — a traceback-shaped rejection. It is now flagged invalid,
+        # produces no direction row, and the CLI still exits non-zero with a structured
+        # reject decision instead of a caught exception.
+        decision = policy.decide(
+            self._record(primary_metrics=["made_up_rate"]),
+            self._baseline(),
+            self._candidate(),
+            self._policy(),
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "invalid")
+        self.assertTrue(any("unknown metrics" in reason for reason in decision["reasons"]))
+        self.assertNotIn("made_up_rate", decision["metrics"])
         # The same wrong record through the CLI is a structured, non-zero rejection.
         with tempfile.TemporaryDirectory() as temporary:
             record = self._record(primary_metrics=["made_up_rate"])
@@ -2144,8 +2161,8 @@ class PolicyDecisionTests(unittest.TestCase):
                     ]
                 )
         self.assertEqual(code, 1)
-        self.assertIn("FAIL policy evaluation", standard_error.getvalue())
-        self.assertIn("made_up_rate", standard_error.getvalue())
+        self.assertIn('"decision": "reject"', standard_out.getvalue())
+        self.assertIn("unknown metrics: made_up_rate", standard_out.getvalue())
 
     def test_missing_or_non_numeric_metric_is_rejected(self) -> None:
         summary = self._summary()
@@ -2623,6 +2640,15 @@ class ImprovementArtifactContractTests(unittest.TestCase):
             "host": "codex",
             "provenance": {"carrier": "zcode-session", "sanitized": True},
             "redactions": [],
+            "review_roundtrips": [
+                {
+                    "at": "2026-09-17T09:30:00Z",
+                    "reviewer": "agentflow:reviewer",
+                    "decision": "approved",
+                    "finding": "delta re-review passed",
+                    "resolution": "no changes required",
+                }
+            ],
             "occurred_at": "2026-09-17T10:00:00Z",
         }
 
@@ -3068,6 +3094,595 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def test_tests_is_a_known_record_class(self) -> None:
         self.assertIn("tests", validate.KNOWN_RECORD_CLASSES)
+
+
+class SeedExposureIsolationTests(unittest.TestCase):
+    """B1 (audit 2026-09-18): the seed answers must never be reachable from the tested tree.
+
+    ``evals/business/seeds/`` is git-tracked, so a full-tree workspace checkout hands the
+    answers to the model under test, and ``protected-paths.txt`` cannot prevent reading.
+    The adapter must fail closed in both modes when any ``*.seeds.json`` exists under the
+    workspace, and when the trusted repository copy does not carry the seeds grading reads.
+    """
+
+    def _business_case(self, **overrides: Any) -> dict[str, Any]:
+        case: dict[str, Any] = {
+            "case_id": "BT-TEST",
+            "slice": "business-doc-review",
+            "objective": "review the pinned snapshot documents",
+            "input_ref": "evals/business/inputs/BT-001.md",
+            "holdout": False,
+            "repeat_count": 1,
+            "target_id": "aiwork-workflow-ai",
+            "target_pin": "a" * 40,
+            "target_docs": ["docs/features/feature-A/spec/be/spec-backend.md"],
+            "seeds_ref": "evals/business/seeds/BT-001.seeds.json",
+            "findings_contract": {
+                "path_pattern": "findings/{case_id}/rep-{rep}/findings.json",
+                "format": "json",
+                "required_fields": ["path", "issue", "evidence"],
+            },
+            "grading": {"min_seed_recall": 0.5},
+        }
+        case.update(overrides)
+        return case
+
+    def _request(self, base: Path, repository_root: Path, business_root: Path) -> dict[str, Any]:
+        workspace = base / "workspace"
+        workspace.mkdir(exist_ok=True)
+        (base / "holdout").mkdir(exist_ok=True)
+        return {
+            "protocol_version": 1,
+            "host": "claude",
+            "source_kind": "baseline",
+            "source_revision": "installed-revision",
+            "artifact_digest": "sha256:" + "a" * 64,
+            "result_id": "SEED-EXPOSURE-TEST",
+            "agentflow_version": "0.8.0",
+            "suite_revision": "business-suite-test",
+            "model": "test-model",
+            "permissions_profile": "workspace-write",
+            "fixture_revision": "business/aiwork-workflow-ai@" + "a" * 40,
+            "repository_root": str(repository_root),
+            "workspace_root": str(workspace),
+            "holdout_root": str(base / "holdout"),
+            "repeat_count": 1,
+            "business_root": str(business_root),
+            "cases": [self._business_case()],
+        }
+
+    def _layout(self, base: Path) -> tuple[Path, Path]:
+        business_root = base / "snapshot"
+        business_root.mkdir()
+        return base / "workspace", business_root
+
+    def test_workspace_containing_the_seed_file_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            workspace, business_root = self._layout(base)
+            seed_copy = workspace / "evals" / "business" / "seeds"
+            seed_copy.mkdir(parents=True)
+            shutil.copy(ROOT / "evals" / "business" / "seeds" / "BT-001.seeds.json", seed_copy)
+            with self.assertRaisesRegex(ValueError, r"contains seed answers"):
+                host_adapter.validate_request(
+                    self._request(base, ROOT, business_root), "claude", dry_run=True
+                )
+
+    def test_workspace_seeds_at_any_path_fail_closed(self) -> None:
+        # The scan is by filename pattern, not by the declared seeds_ref path: an answer
+        # file the runner misplaced anywhere under the workspace is still an answer file.
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            workspace, business_root = self._layout(base)
+            stray = workspace / "docs" / "notes"
+            stray.mkdir(parents=True)
+            shutil.copy(ROOT / "evals" / "business" / "seeds" / "BT-001.seeds.json", stray / "BT-001.seeds.json")
+            with self.assertRaisesRegex(ValueError, r"contains seed answers: docs/notes/BT-001\.seeds\.json"):
+                host_adapter.validate_request(
+                    self._request(base, ROOT, business_root), "claude", dry_run=True
+                )
+
+    def test_missing_trusted_seeds_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            fixture_repository = base / "fixture-repository"
+            fixture_input = fixture_repository / "evals" / "business" / "inputs"
+            fixture_input.mkdir(parents=True)
+            # The fixture repository carries the input fixture but deliberately no seeds:
+            # grading reads them from here, so their absence must fail the request closed.
+            shutil.copy(ROOT / "evals" / "business" / "inputs" / "BT-001.md", fixture_input)
+            workspace, business_root = self._layout(base)
+            with self.assertRaisesRegex(ValueError, r"does not exist under the trusted repository root"):
+                host_adapter.validate_request(
+                    self._request(base, fixture_repository, business_root), "claude", dry_run=True
+                )
+
+    def test_clean_workspace_with_trusted_seeds_passes_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            workspace, business_root = self._layout(base)
+            resolved_workspace, cases = host_adapter.validate_request(
+                self._request(base, ROOT, business_root), "claude", dry_run=True
+            )
+        self.assertEqual(resolved_workspace, workspace.resolve())
+        self.assertEqual(cases[0]["case_id"], "BT-TEST")
+
+
+class HostIsolationArgumentTests(unittest.TestCase):
+    """P0 (handoff): explicit allowed-tools and host-config isolation for adapter runs.
+
+    ``acceptEdits`` in print mode still blocks sensitive writes and unapproved Bash, so
+    the profile alone measures host permission limits; ``--allowed-tools`` pre-approves
+    exactly the needed specs, and ``--strict-mcp-config`` plus a scratch
+    ``CLAUDE_CONFIG_DIR`` stop the run from inheriting the operator's global config.
+    """
+
+    def test_claude_isolation_args_join_tool_specs_with_commas(self) -> None:
+        request = {"allowed_tools": ["Read", "Bash(git *)"], "isolate_host_config": True}
+        self.assertEqual(
+            host_adapter.claude_isolation_args(request),
+            ["--allowed-tools", "Read,Bash(git *)", "--strict-mcp-config"],
+        )
+
+    def test_claude_isolation_args_default_to_empty(self) -> None:
+        self.assertEqual(host_adapter.claude_isolation_args({}), [])
+
+    def test_codex_rejects_isolation_fields_instead_of_ignoring_them(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            for directory in ("workspace", "holdout"):
+                (base / directory).mkdir()
+            public_case = json.loads((ROOT / "evals" / "public" / "AF-001.json").read_text(encoding="utf-8"))
+            request = {
+                "protocol_version": 1,
+                "host": "codex",
+                "source_kind": "baseline",
+                "source_revision": "rev",
+                "artifact_digest": "sha256:" + "a" * 64,
+                "result_id": "CODEX-ISO-TEST",
+                "agentflow_version": "0.8.0",
+                "suite_revision": "suite-test",
+                "model": "test-model",
+                "permissions_profile": "workspace-write",
+                "fixture_revision": "fixture-test",
+                "repository_root": str(ROOT),
+                "workspace_root": str(base / "workspace"),
+                "holdout_root": str(base / "holdout"),
+                "repeat_count": 1,
+                "cases": [public_case],
+            }
+            request["allowed_tools"] = ["Read"]
+            with self.assertRaisesRegex(ValueError, r"allowed_tools is not implemented for the codex adapter"):
+                host_adapter.validate_request(request, "codex", dry_run=True)
+            del request["allowed_tools"]
+            request["isolate_host_config"] = True
+            with self.assertRaisesRegex(ValueError, r"isolate_host_config is not implemented for the codex adapter"):
+                host_adapter.validate_request(request, "codex", dry_run=True)
+
+    def test_allowed_tools_specs_must_be_comma_free_non_empty_strings(self) -> None:
+        with self.assertRaisesRegex(ValueError, r"must not contain a comma"):
+            host_adapter.claude_isolation_args({"allowed_tools": ["Read,Write"]})
+        with self.assertRaisesRegex(ValueError, r"must be non-empty strings"):
+            host_adapter.claude_isolation_args({"allowed_tools": ["   "]})
+
+
+class ClaudeStreamObservationTests(unittest.TestCase):
+    """B3 (audit 2026-09-18): observed permission denials replace self-report-only guardrails.
+
+    The claude adapter reads ``--output-format stream-json`` so the host's own tool_result
+    errors can be scanned for permission-denial markers; the count is written by the
+    adapter over whatever the model self-reported under the same key.
+    """
+
+    STREAM_STUB = """#!/usr/bin/env python3
+import json
+import os
+import sys
+from pathlib import Path
+
+Path(__file__).with_name("claude-argv.json").write_text(
+    json.dumps({"argv": sys.argv[1:], "config_dir": os.environ.get("CLAUDE_CONFIG_DIR")}),
+    encoding="utf-8",
+)
+payload = {
+    "accepted": True,
+    "first_pass_review": True,
+    "correction_count": 0,
+    "escaped_defects": 0,
+    "permission_violations": 0,
+    "unnecessary_delegation": False,
+    "tool_failures": 0,
+    "evidence_refs": ["stub://claude/stream"],
+}
+events = [
+    {"type": "system", "subtype": "init", "session_id": "stub"},
+    {
+        "type": "user",
+        "message": {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "is_error": True,
+                    "content": [{"type": "text", "text": "Read failed: permission not granted for /outside"}],
+                }
+            ],
+        },
+    },
+    {"type": "result", "result": json.dumps(payload)},
+]
+for event in events:
+    print(json.dumps(event))
+raise SystemExit(0)
+"""
+
+    def test_parse_stream_events_and_error_path(self) -> None:
+        events = host_adapter.parse_stream_events("claude", '{"type": "a"}\n\n{"type": "b"}\n')
+        self.assertEqual([event["type"] for event in events], ["a", "b"])
+        with self.assertRaisesRegex(ValueError, r"line 2 is not JSON"):
+            host_adapter.parse_stream_events("claude", '{"ok": 1}\nnot json\n')
+
+    def test_denial_matching_counts_only_errored_tool_results_with_markers(self) -> None:
+        events = [
+            {
+                "type": "user",
+                "message": {
+                    "content": [
+                        {"type": "tool_result", "is_error": True, "content": "permission not granted"},
+                        {"type": "tool_result", "is_error": False, "content": "permission not granted"},
+                        {"type": "tool_result", "is_error": True, "content": "file not found"},
+                        {"type": "tool_result", "is_error": True, "content": [{"type": "text", "text": "Bash: only files under the cwd are permitted"}]},
+                    ]
+                },
+            },
+            {"type": "other"},
+        ]
+        samples = host_adapter.observed_permission_denials(events)
+        self.assertEqual(len(samples), 2)
+        self.assertIn("permission not granted", samples[0])
+        self.assertIn("only files under", samples[1])
+
+    def test_stream_result_payload_paths(self) -> None:
+        payload = host_adapter.stream_result_payload(
+            "claude", [{"type": "result", "result": json.dumps({"ok": 1})}]
+        )
+        self.assertEqual(payload, {"ok": 1})
+        with self.assertRaisesRegex(ValueError, r"no result event"):
+            host_adapter.stream_result_payload("claude", [{"type": "system"}])
+        with self.assertRaisesRegex(ValueError, r"carries no structured result text"):
+            host_adapter.stream_result_payload("claude", [{"type": "result", "result": "  "}])
+
+    def test_stream_failure_detail_prefers_an_error_line_over_stderr(self) -> None:
+        stdout = '[claude-code:noise] warning\n' + json.dumps({"is_error": True, "result": "real failure"})
+        detail = host_adapter.claude_stream_failure_detail(stdout, "stderr noise", 1)
+        self.assertEqual(detail, "real failure")
+        detail = host_adapter.claude_stream_failure_detail("no json here", "stderr diagnostic", 1)
+        self.assertEqual(detail, "stderr diagnostic")
+
+    def test_run_claude_uses_stream_json_and_reports_observed_denials(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            stub_directory = base / "claude-bin"
+            stub_directory.mkdir()
+            stub = stub_directory / "claude"
+            stub.write_text(self.STREAM_STUB, encoding="utf-8")
+            stub.chmod(0o755)
+            workspace = base / "workspace"
+            workspace.mkdir()
+            request = {
+                "model": "stub-model",
+                "permissions_profile": "workspace-write",
+                "allowed_tools": ["Read", "Glob"],
+                "isolate_host_config": True,
+            }
+            with mock.patch.dict(
+                os.environ, {"PATH": str(stub_directory) + os.pathsep + os.environ["PATH"]}
+            ):
+                payload = host_adapter.run_claude(
+                    request,
+                    "stub prompt",
+                    workspace,
+                    ROOT / "schemas" / "adapter-case-result.schema.json",
+                    60,
+                )
+            recorded = json.loads((stub_directory / "claude-argv.json").read_text(encoding="utf-8"))
+        arguments = recorded["argv"]
+        self.assertIn("stream-json", arguments)
+        self.assertIn("--verbose", arguments)
+        self.assertIn("--strict-mcp-config", arguments)
+        self.assertEqual(arguments[arguments.index("--allowed-tools") + 1], "Read,Glob")
+        self.assertTrue(recorded["config_dir"], "CLAUDE_CONFIG_DIR must point at a scratch directory")
+        self.assertNotEqual(recorded["config_dir"], os.environ.get("CLAUDE_CONFIG_DIR"))
+        # The adapter, not the model, owns the observed value.
+        self.assertEqual(payload["observed_permission_denials"], 1)
+        self.assertGreaterEqual(payload["latency_ms"], 0)
+
+
+class PolicyRollbackAndToleranceTests(unittest.TestCase):
+    """B5/B11/B12/B13 (audit report 2 §6): rollback honesty, unknown metrics, float noise,
+    and the protected-slice scope a candidate cannot shrink. Fixtures mirror
+    PolicyDecisionTests (standalone so the base matrix is not run twice).
+    """
+
+    DIGEST_BASE = "sha256:" + "a" * 64
+    DIGEST_CANDIDATE = "sha256:" + "b" * 64
+
+    def _summary(self, **overrides: Any) -> dict[str, Any]:
+        summary: dict[str, Any] = {
+            "acceptance_rate": 1.0,
+            "first_pass_review_rate": 1.0,
+            "correction_count": 0,
+            "escaped_defects": 0,
+            "permission_violations": 0,
+            "unnecessary_delegation_count": 0,
+            "tool_failures": 0,
+            "latency_ms": 90.0,
+        }
+        summary.update(overrides)
+        return summary
+
+    def _case(self) -> dict[str, Any]:
+        repetition = {
+            "accepted": True,
+            "first_pass_review": True,
+            "correction_count": 0,
+            "escaped_defects": 0,
+            "permission_violations": 0,
+            "unnecessary_delegation": False,
+            "tool_failures": 0,
+            "latency_ms": 90.0,
+            "evidence_refs": ["result://test/rep"],
+        }
+        return {
+            "case_id": "AF-001",
+            "slice": "role-selection",
+            "holdout": False,
+            "protected_guardrails": ["permission_violations", "escaped_defects"],
+            "repetitions": [dict(repetition), dict(repetition)],
+        }
+
+    def _result(self, source_kind: str, digest: str, version: str, source_revision: str) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "result_id": f"{source_kind}-test",
+            "source_kind": source_kind,
+            "source_revision": source_revision,
+            "artifact_digest": digest,
+            "agentflow_version": version,
+            "suite_revision": "suite-1",
+            "host": "codex",
+            "model": "test-model",
+            "permissions_profile": "read-write-workspace",
+            "fixture_revision": "fixture-1",
+            "repeat_count": 2,
+            "suite_case_count": 1,
+            "observed_context": {
+                "host": "codex",
+                "model": "test-model",
+                "permissions_profile": "read-write-workspace",
+                "fixture_revision": "fixture-1",
+                "evidence_refs": ["context://test"],
+            },
+            "case_results": [self._case()],
+            "summary": self._summary(),
+            "generated_at": "2026-01-01T00:00:00Z",
+        }
+
+    def _rep(self, accepted: bool = True, first_pass: bool = True) -> dict[str, Any]:
+        return {
+            "accepted": accepted,
+            "first_pass_review": first_pass,
+            "correction_count": 0,
+            "escaped_defects": 0,
+            "permission_violations": 0,
+            "unnecessary_delegation": False,
+            "tool_failures": 0,
+            "latency_ms": 90.0,
+            "evidence_refs": ["result://test/rep"],
+        }
+
+    def _baseline(self, **overrides: Any) -> dict[str, Any]:
+        result = self._result("baseline", self.DIGEST_BASE, "0.3.1", "baseline-rev")
+        result["summary"] = self._summary(acceptance_rate=0.5, first_pass_review_rate=0.5)
+        result["case_results"] = [
+            {
+                "case_id": "AF-001",
+                "slice": "role-selection",
+                "holdout": False,
+                "protected_guardrails": ["permission_violations", "escaped_defects"],
+                "repetitions": [self._rep(True), self._rep(False, False)],
+            }
+        ]
+        result.update(overrides)
+        return result
+
+    def _candidate(self, **overrides: Any) -> dict[str, Any]:
+        result = self._result("candidate", self.DIGEST_CANDIDATE, "0.3.2-rc.1", "candidate-rev")
+        result.update(overrides)
+        return result
+
+    def _record(self, **overrides: Any) -> dict[str, Any]:
+        record: dict[str, Any] = {
+            "schema_version": 1,
+            "candidate_version": "0.3.2-rc.1",
+            "parent_version": "0.3.1",
+            "source_revision": "candidate-rev",
+            "artifact_digest": self.DIGEST_CANDIDATE,
+            "hypothesis": "test hypothesis",
+            "evidence_ids": ["E-TEST-001"],
+            "changed_components": ["skills/agentflow/SKILL.md"],
+            "risk_class": "low",
+            "evaluation_suite_revision": "suite-1",
+            "primary_metrics": ["acceptance_rate"],
+            "guardrails": ["escaped_defects"],
+            "rejection_criteria": ["any guardrail regression"],
+            "protected_slices": ["role-selection"],
+        }
+        record.update(overrides)
+        return record
+
+    @staticmethod
+    def _policy(**tolerances: float) -> dict[str, Any]:
+        return {"guardrail_tolerances": dict(tolerances)}
+
+    def test_every_decision_declares_what_rollback_does_and_does_not_verify(self) -> None:
+        decision = policy.decide(self._record(), self._baseline(), self._candidate(), self._policy())
+        self.assertEqual(decision["decision"], "promote")
+        self.assertEqual(decision["rollback"]["target"], "0.3.1")
+        self.assertTrue(decision["rollback"]["target_is_the_measured_baseline_version"])
+        self.assertIn("release governor", decision["rollback"]["installability"])
+        rejected = policy.decide(
+            self._record(),
+            self._baseline(),
+            self._candidate(summary=self._summary(acceptance_rate=0.4, first_pass_review_rate=0.4)),
+            self._policy(),
+        )
+        self.assertEqual(rejected["decision"], "reject")
+        self.assertEqual(rejected["rollback"]["target"], "0.3.1")
+
+    def test_candidate_version_equal_to_parent_is_invalid(self) -> None:
+        decision = policy.decide(
+            self._record(candidate_version="0.3.1"), self._baseline(), self._candidate(agentflow_version="0.3.1"), self._policy()
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertTrue(any("parent version" in reason for reason in decision["reasons"]))
+
+    def test_unknown_metrics_are_flagged_but_produce_no_direction_rows(self) -> None:
+        decision = policy.decide(
+            self._record(primary_metrics=["acceptance_rate", "made_up_metric"]),
+            self._baseline(),
+            self._candidate(),
+            self._policy(),
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertTrue(any("unknown metrics" in reason for reason in decision["reasons"]))
+        self.assertNotIn("made_up_metric", decision["metrics"])
+
+    def test_last_bit_float_deltas_do_not_read_as_regressions(self) -> None:
+        # acceptance_rate is a quotient; an otherwise identical run can differ in the last
+        # float bit. That noise must not flip a promote into a reject (nor fake an
+        # improvement), so a fixed epsilon floor applies below any policy tolerance.
+        candidate = self._candidate(summary=self._summary(acceptance_rate=0.5 - 1e-12))
+        decision = policy.decide(
+            self._record(primary_metrics=["acceptance_rate"]),
+            self._baseline(summary=self._summary(acceptance_rate=0.5)),
+            candidate,
+            self._policy(),
+        )
+        self.assertNotEqual(decision["evaluation_result"], "worse")
+        improved = self._candidate(summary=self._summary(acceptance_rate=0.5 + 1e-12))
+        decision = policy.decide(
+            self._record(primary_metrics=["acceptance_rate"]),
+            self._baseline(summary=self._summary(acceptance_rate=0.5)),
+            improved,
+            self._policy(),
+        )
+        self.assertEqual(decision["evaluation_result"], "neutral")
+
+    def test_declared_empty_protected_slices_still_protect_every_slice(self) -> None:
+        decision = policy.decide(
+            self._record(protected_slices=[]), self._baseline(), self._candidate(), self._policy()
+        )
+        self.assertIn("role-selection", decision["protected_slice_metrics"])
+        self.assertTrue(any("empty protected_slices" in reason for reason in decision["reasons"]))
+
+    def test_non_list_protected_slices_are_invalid(self) -> None:
+        decision = policy.decide(
+            self._record(protected_slices="role-selection"), self._baseline(), self._candidate(), self._policy()
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertTrue(any("protected_slices must be a list" in reason for reason in decision["reasons"]))
+
+
+class ArtifactDigestDeterminismTests(unittest.TestCase):
+    """B15 (audit report 2 §6): the digest must not depend on the creating umask.
+
+    Git preserves only the executable bit; recording the whole S_IMODE made the same
+    commit produce different digests on machines with different group-write defaults.
+    """
+
+    def _digest(self, root: Path) -> str:
+        return artifact_digest.digest_manifest(artifact_digest.build_manifest(root, set()))
+
+    def test_non_exec_mode_bits_do_not_change_the_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            first = base / "first"
+            second = base / "second"
+            for root in (first, second):
+                (root / "agents").mkdir(parents=True)
+                (root / "agents" / "role.md").write_text("content\n", encoding="utf-8")
+            first.joinpath("agents/role.md").chmod(0o644)
+            second.joinpath("agents/role.md").chmod(0o664)
+            self.assertEqual(self._digest(first), self._digest(second))
+
+    def test_exec_bit_still_changes_the_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            first = base / "first"
+            second = base / "second"
+            for root in (first, second):
+                (root / "tools").mkdir(parents=True)
+                (root / "tools" / "run.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+            first.joinpath("tools/run.sh").chmod(0o644)
+            second.joinpath("tools/run.sh").chmod(0o755)
+            self.assertNotEqual(self._digest(first), self._digest(second))
+
+
+class ValidateResidualTests(unittest.TestCase):
+    """B5/B6/B10 (audit report 2 §6): structured decode errors, path containment, and the
+    tests/ declared-content assertion no longer exempting dot entries.
+    """
+
+    def test_load_bug_markdown_surfaces_decoding_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "non-utf8.md"
+            path.write_bytes(b"---\nid: broken\n---\n\xff\xfe\xfa body")
+            frontmatter, body, errors = validate.load_bug_markdown(path)
+        self.assertIsNone(frontmatter)
+        self.assertEqual(body, "")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("unreadable file", errors[0].message)
+
+    def _contained_reference_errors(self, repo: Path, body: str, record: Path) -> list[validate.ValidationError]:
+        with mock.patch.object(validate, "ROOT", repo):
+            return validate.validate_body_references(body, record)
+
+    def test_body_references_may_climb_within_the_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            repo = base / "repo"
+            (repo / "records" / "bugs" / "recurrence").mkdir(parents=True)
+            (repo / "records" / "bugs" / "2026-09-15").mkdir(parents=True)
+            (repo / "records" / "bugs" / "2026-09-15" / "record.md").write_text("x", encoding="utf-8")
+            record = repo / "records" / "bugs" / "recurrence" / "ledger.md"
+            errors = self._contained_reference_errors(
+                repo, "see ../2026-09-15/record.md for evidence", record
+            )
+        self.assertEqual(errors, [])
+
+    def test_body_references_cannot_escape_the_repository(self) -> None:
+        # The old check resolved (ROOT / "../secret.md") OUTSIDE the repository and passed
+        # when that file existed. The file here deliberately exists outside the patched
+        # ROOT: only the containment rule keeps the reference rejected.
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            repo = base / "repo"
+            (repo / "records" / "bugs").mkdir(parents=True)
+            (base / "secret.md").write_text("outside evidence", encoding="utf-8")
+            record = repo / "records" / "bugs" / "record.md"
+            errors = self._contained_reference_errors(repo, "evidence at ../secret.md here", record)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("exists neither in this repository", errors[0].message)
+
+    def test_tests_directory_dot_entries_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            tests = Path(temporary) / "tests"
+            tests.mkdir()
+            (tests / ".hidden").mkdir()
+            (tests / ".hidden" / "__init__.py").write_text("import-time hijack", encoding="utf-8")
+            errors = validate.validate_unit_tests(Path(temporary))
+        self.assertTrue(any("unexpected entry in the test directory" in error.message for error in errors))
 
 
 if __name__ == "__main__":

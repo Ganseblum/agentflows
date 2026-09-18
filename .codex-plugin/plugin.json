@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "Run host-native multi-agent development and governed evidence-driven improvement workflows.",
   "author": {
     "name": "Ganseblum"

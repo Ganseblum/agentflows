@@ -19,6 +19,12 @@ plans — against the same schemas and body assertions; `all` includes it.
 This is the compile step for supervisor artifact acceptance: run it against the real files
 before accepting a worker's record, and treat failures as compile errors.
 
+`validate.py mock` (in `all` since 0.8.0) compiles the demo fixtures under `mock/records/` the
+same way: it copies the repository tree into a temporary directory, overlays `mock/records/`
+onto the copy's `records/`, and runs the full artifacts check there — so a fixture that drifts
+from a contract, or an id that collides with a real record, fails the gate instead of waiting
+for someone to redo the manual merge experiment. The real `records/` tree is never mutated.
+
 `validate.py protected` checks that [`protected-paths.txt`](../../protected-paths.txt) still covers
 every required gate path — the evaluator and governor roles, the evaluation suite, the measurement
 path, the release rules, the record schemas, and the regression tests for the gate tools. `all`

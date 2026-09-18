@@ -49,6 +49,30 @@ cannot change the declared host, model, permissions profile, fixture revision, s
 revision, or repeat count. Baseline and Candidate results are comparable only when these
 fields match exactly.
 
+### Isolation and observed channels (0.8.0)
+
+Two optional request fields change the claude invocation; both are rejected loudly on
+codex instead of being ignored:
+
+- `allowed_tools` (array of tool specs, comma-free): pre-approves exactly the needed
+  tools via `--allowed-tools`, instead of relying on `acceptEdits`, which print mode
+  overrides with permission denials that then masquerade as workflow behavior.
+- `isolate_host_config` (boolean): `--strict-mcp-config` plus a scratch
+  `CLAUDE_CONFIG_DIR` for the invocation, so the operator's global MCP/slash config does
+  not leak into the run. Authoritative baseline/candidate runs must set both; the
+  `observed_context` records `allowed_tools` and `mcp_isolated`.
+
+Every claude invocation runs with `--output-format stream-json`; the adapter scans
+errored tool results for permission-denial markers and writes the count to
+`observed_permission_denials` (per repetition, overwriting anything the model
+self-reported under that key). It is a heuristic observation channel, not a host
+contract; codex has no channel, so an absent key means "not observed", never 0.
+
+Business requests additionally fail closed when any `*.seeds.json` file exists under the
+tested workspace (the model's cwd): build the tested copy with `evals/business/seeds/`
+excluded. Grading reads the seeds from the trusted `repository_root` fixture copy, which
+must still carry them.
+
 The runner also sends `holdout: false` and the exact per-case repeat count. Holdout cases
 are rejected before they reach an adapter. The Adapter response must cover every frozen
 case exactly once, preserve its slice/guardrail metadata, provide every repetition, and

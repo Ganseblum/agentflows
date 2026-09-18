@@ -21,6 +21,11 @@
     "correction_count": { "type": "integer", "minimum": 0 },
     "escaped_defects": { "type": "integer", "minimum": 0 },
     "permission_violations": { "type": "integer", "minimum": 0 },
+    "observed_permission_denials": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Host-observed permission refusals, written by the adapter (never by the model): errored tool results in the claude stream-json output whose text matches a known denial marker. Absent when the channel is not implemented for the selected host."
+    },
     "unnecessary_delegation": { "type": "boolean" },
     "tool_failures": { "type": "integer", "minimum": 0 },
     "latency_ms": { "type": "number", "minimum": 0 },

@@ -15,7 +15,8 @@
     "agentflow_version",
     "host",
     "provenance",
-    "redactions"
+    "redactions",
+    "review_roundtrips"
   ],
   "properties": {
     "schema_version": {

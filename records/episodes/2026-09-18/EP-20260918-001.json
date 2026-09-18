@@ -29,6 +29,10 @@
       "kind": "measurement",
       "value": "none (method-level change, no instrumented business task)",
       "evidence_ref": "同 0.7.0：方法级改动，evals/ 无匹配测量切片"
+    },
+    {
+      "kind": "review_roundtrips_backfill",
+      "value": "pre-0.7.2 episode: per-round review records were not captured by the bridge contract at recording time; review_roundtrips=[] means not captured, not that no review ran (0.8.0 required-field backfill)"
     }
   ],
   "feedback_summary": "用户在看完业务侧准入标准与 web-ai-auto 框架文档后，要求评估并落地吸收。评估确认两类吸收：流程吸收 9 条（collect-only 先行、连跑编排、失败三分流、能力边界声明、登记先行与三处同名铁律、证据顺序、变更分工→修复落点、交付前自检、降级出口）与格式吸收 1 条（对齐关系表：前端 testid↔注册表↔用例库↔引擎 case↔flow↔suite↔config，含变更分工与失败路由）。核心收益：失败拦截前移到成本最低位置（需求→收集→冒烟→分流），变更只改一处，bug 库免于噪音，责任可派工。",
@@ -42,5 +46,6 @@
     "业务仓内部路径细节（仅保留结构描述）",
     "示例账号/邮箱等演示数据"
   ],
-  "occurred_at": "2026-09-18T03:15:00Z"
+  "occurred_at": "2026-09-18T03:15:00Z",
+  "review_roundtrips": []
 }

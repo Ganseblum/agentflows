@@ -1,7 +1,10 @@
 # mock/ —— 仓库内受校验的记录样板（非生产证据）
 
-这些文件演示**每种记录类型和关键状态**的最终形态。它们是仓库内受 `validate.py` 校验的 demo fixture，必须随契约同步；它们不是生产证据，也不会被复制成真实记录。不要再表述为“不会进仓库”。
-按下方映射复制进 `records/` 对应位置即可作为真实记录使用（复制后跑
+这些文件演示**每种记录类型和关键状态**的最终形态。它们是仓库内受 `validate.py mock` 编译的
+demo fixture（该检查把本目录的 records/ 覆盖合并进临时仓库副本后跑完整 artifacts 编译，fixture
+不再随契约失同步而静默失效；0.8.0 起纳入 `all`）；它们不是生产证据，任何记录在成为真实证据前
+都必须有独立来源。文件本身随仓库进快照，但内容永远不要被当作真实记录引用。
+按下方映射**复制成新文件**并改写内容，即可作为真实记录的模板使用（写好后跑
 `python3 tools/lab/validate.py all` 验证）。
 
 ## 映射表（mock 文件 → 将来写入 records/ 的位置 → 演示的情况）
@@ -27,12 +30,16 @@
 3. **再犯类档位**：台账 + 两条 occurrence 的组合是否把"改了又出现"讲清楚。
 4. **评审桥**：feature 锚目录 + 轮次文件 + 快照是否是你预期的双仓用法。
 
-## 验证方式（已实测）
+## 验证方式（由门自动执行，无需手工重跑）
 
-把 `mock/records/*` 合并进真实 `records/`（在 /tmp 副本上做过全量验证）：
+0.8.0 起 `python3 tools/lab/validate.py mock`（已进 `all`）自动把本目录合并进临时仓库副本
+编译；fixture 随契约失同步会直接 FAIL。正式树上的 `report`/`recurrence` 查询**看不见**
+mock 记录（它们只在合并副本里被编译，不会被当成真实证据统计）；在合并副本上手工观察
+report/recurrence 行为的旧做法仍有意义，命令不变：
 
 ```sh
-python3 tools/lab/validate.py all        # 八项全绿
+python3 tools/lab/validate.py mock       # 合并编译（all 的一部分）
+# 在临时合并副本上：
 python3 tools/lab/validate.py report     # 样板记录出现在回溯表
 python3 tools/lab/validate.py recurrence # demo-recurrence-class 输出 escalated
 ```

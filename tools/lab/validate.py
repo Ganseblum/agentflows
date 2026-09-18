@@ -14,8 +14,10 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -217,7 +219,10 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str, list[str]]:
 def load_bug_markdown(path: Path) -> tuple[dict[str, Any] | None, str, list[ValidationError]]:
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
+        # UnicodeDecodeError is a ValueError, not an OSError: a non-UTF-8 record must
+        # surface as a structured ValidationError (mirrors read_document_text), not an
+        # uncaught traceback escaping the check.
         return None, "", [ValidationError(str(path), f"unreadable file: {exc}")]
     frontmatter, body, parse_errors = parse_frontmatter(text)
     if parse_errors:
@@ -746,7 +751,18 @@ def validate_body_references(body: str, path: Path) -> list[ValidationError]:
     cleaned = URL_PATTERN.sub(" ", prose)
     cleaned = QUALIFIED_REF_PATTERN.sub(" ", cleaned)
     for token in BODY_PATH_PATTERN.findall(cleaned):
-        if (ROOT / token).is_file() or (path.parent / token).is_file():
+        # Containment, not just existence: the pattern admits "../" prefixes, and the old
+        # bare is_file() check resolved `(ROOT / "../secret.md")` OUTSIDE the repository —
+        # an escape that passed as if it were portable evidence. Both anchors are
+        # repository-inside directories, so a reference is accepted only when the resolved
+        # path stays inside the repository (relative climbs between record directories
+        # stay legal) and the file exists.
+        repo_candidate = (ROOT / token).resolve()
+        local_candidate = (path.parent / token).resolve()
+        repo_root = ROOT.resolve()
+        if repo_candidate.is_file() and repo_candidate.is_relative_to(repo_root):
+            continue
+        if local_candidate.is_file() and local_candidate.is_relative_to(repo_root):
             continue
         errors.append(
             ValidationError(
@@ -2265,6 +2281,18 @@ def validate_agents_md_plan_contract(agents_md: Path) -> list[ValidationError]:
     return errors
 
 
+# Files whose prose states the plugin's current maturity. Version literals there drift on
+# every bump (the 0.6.0 → 0.7.4 → 0.7.5 hand-sync family); the version lives in the five
+# manifests and CHANGELOG, and these files must point at it instead of restating it.
+VERSION_PROSE_FILES = (
+    "README.md",
+    "docs/host-native-plugin-design.md",
+    "docs/self-improvement-design.md",
+    "docs/agent-product-boundary.md",
+)
+VERSION_LITERAL_PATTERN = re.compile(r"\bv?\d+\.\d+\.\d+\b")
+
+
 def validate_doc_consistency() -> list[ValidationError]:
     """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
 
@@ -2328,6 +2356,25 @@ def validate_doc_consistency() -> list[ValidationError]:
 
     errors.extend(validate_agents_md_plan_contract(ROOT / "AGENTS.md"))
 
+    # Version-in-prose guard: the current-version claims in these files were hand-synced
+    # at every bump and drifted more than once (0.6.0 was still being declared after
+    # 0.7.4 shipped). The manifests own the version; these files must reference it.
+    for name in VERSION_PROSE_FILES:
+        path = ROOT / name
+        text, read_errors = read_document_text(path)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
+        for match in VERSION_LITERAL_PATTERN.finditer(text):
+            context = text[max(0, match.start() - 40) : match.end() + 40].replace("\n", " ")
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"version literal {match.group(0)!r} in prose ({context.strip()!r}); state "
+                    "the version only in the manifests and CHANGELOG and reference them here",
+                )
+            )
+
     zh = ROOT / "docs" / "agent-roles.md"
     zh_text, zh_errors = read_document_text(zh)
     errors.extend(zh_errors)
@@ -2347,6 +2394,65 @@ def validate_doc_consistency() -> list[ValidationError]:
                 f"schema references diverge from {contracts.name}: zh-only={sorted(only_zh)}, en-only={sorted(only_en)}",
             )
         )
+    return errors
+
+
+def validate_mock_fixtures() -> list[ValidationError]:
+    """Compile mock/ demo records by merging them into a throwaway repository copy.
+
+    mock/README.md declares the fixtures as validated demo material that must stay in
+    sync with the record contracts. Until 0.8.0 nothing enforced that: no check walked
+    mock/, so a contract change could silently invalidate every fixture. This check
+    performs exactly the merge the README describes — the repository tree is copied to a
+    temporary directory (never mutated in place), mock/records is overlaid onto the
+    copy's records/, and the full artifacts compile runs against the copy, where ROOT
+    resolves to the copy. A fixture that no longer compiles, an id that collides with a
+    real record, or a cross-reference the demo ledger declares but cannot satisfy now
+    fails the gate instead of surviving until someone re-runs the manual experiment.
+    """
+    errors: list[ValidationError] = []
+    mock_root = ROOT / "mock"
+    mock_records = mock_root / "records"
+    if not mock_records.is_dir():
+        return [ValidationError(str(mock_records), "mock records directory is missing")]
+    errors.extend(
+        ValidationError(
+            f"mock/{entry.name}",
+            "unexpected entry under mock/; declared contents are records/ and README.md",
+        )
+        for entry in sorted(mock_root.iterdir())
+        if entry.name not in {"records", "README.md"}
+    )
+    try:
+        with tempfile.TemporaryDirectory(prefix="agentflow-mock-") as tmp:
+            copy_root = Path(tmp) / "repo"
+            shutil.copytree(
+                ROOT,
+                copy_root,
+                # .git can be orders of magnitude larger than the tree itself; caches and
+                # the disposable record-store database are regenerated artifacts.
+                ignore=shutil.ignore_patterns(".git", "__pycache__", ".agentflow-records.sqlite3*"),
+            )
+            shutil.copytree(mock_records, copy_root / "records", dirs_exist_ok=True)
+            completed = subprocess.run(
+                [sys.executable, str(copy_root / "tools" / "lab" / "validate.py"), "artifacts"],
+                cwd=str(copy_root),
+                text=True,
+                capture_output=True,
+                timeout=600,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+            if completed.returncode != 0:
+                output = (completed.stderr.strip() or completed.stdout.strip())[:2000]
+                errors.append(
+                    ValidationError(
+                        "mock",
+                        "mock fixtures failed the merged-record compile: "
+                        + (output or f"exit {completed.returncode}"),
+                    )
+                )
+    except (OSError, subprocess.SubprocessError) as exc:
+        errors.append(ValidationError("mock", f"cannot compile merged mock records: {exc}"))
     return errors
 
 
@@ -2486,7 +2592,10 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
         return [ValidationError("tests", "the test directory is missing")]
     allowed = set(EXPECTED_TEST_FILES) | {"__pycache__"}
     for entry in sorted(tests_dir.iterdir()):
-        if entry.name.startswith(".") or entry.name in allowed:
+        # No dotfile exemption: discover() walks the start directory's entries directly,
+        # so a dot-named package is another import-time hijack vector, and a stray
+        # .DS_Store here is noise that must be removed rather than silently allowed.
+        if entry.name in allowed:
             continue
         errors.append(
             ValidationError(
@@ -2775,6 +2884,7 @@ def main(argv: list[str] | None = None) -> int:
             "examples",
             "evals",
             "artifacts",
+            "mock",
             "protected",
             "manifests",
             "docs",
@@ -2820,6 +2930,7 @@ def main(argv: list[str] | None = None) -> int:
         "examples": [("examples", validate_examples)],
         "evals": [("evals", validate_evals_suite)],
         "artifacts": [("artifacts", validate_workspace_artifacts)],
+        "mock": [("mock", validate_mock_fixtures)],
         "protected": [("protected", validate_protected_paths)],
         "manifests": [("manifests", validate_manifests)],
         "docs": [("docs", validate_doc_consistency)],
@@ -2829,6 +2940,7 @@ def main(argv: list[str] | None = None) -> int:
             ("examples", validate_examples),
             ("evals", validate_evals_suite),
             ("artifacts", validate_workspace_artifacts),
+            ("mock", validate_mock_fixtures),
             ("protected", validate_protected_paths),
             ("manifests", validate_manifests),
             ("docs", validate_doc_consistency),

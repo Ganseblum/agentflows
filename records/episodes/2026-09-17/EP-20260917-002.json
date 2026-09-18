@@ -39,6 +39,10 @@
       "kind": "cost",
       "value": "not measured",
       "evidence_ref": "host did not report"
+    },
+    {
+      "kind": "review_roundtrips_backfill",
+      "value": "pre-0.7.2 episode: per-round review records were not captured by the bridge contract at recording time; review_roundtrips=[] means not captured, not that no review ran (0.8.0 required-field backfill)"
     }
   ],
   "feedback_summary": "P0 六项全部落地并通过独立评审。执行形态：两 worker 并行（agentflow:bug-recorder 修三条记录 / agentflow:backend-engineer 修门工具+AGENTS.md+钉住测试，写范围互斥）+ supervisor 直改四处措辞；基线 3862083 write-scope 对照零越界；validate.py all 与 64 项测试全绿。评审两轮收敛：首轮仅缺运行时证据，补齐后 approved。三条记录仍为 fixed-pending-review——转 verified 需评审人为 0.4.2 规则文本变更指定行为性检查，属下一步记录状态流转，不阻塞本批。遗留：P1 清单（工具链静默漏报族、policy/check_diff/门完整性三个零测试面、improve 四交接物落盘契约）与 0.6.1 版本裁剪待用户决定；skills/agents 源改动需刷新 marketplace 并重装插件后才对宿主生效（validate.py installed 可查漂移）。",
@@ -49,5 +53,6 @@
     "sanitized": true
   },
   "redactions": [],
-  "occurred_at": "2026-09-17T14:59:06Z"
+  "occurred_at": "2026-09-17T14:59:06Z",
+  "review_roundtrips": []
 }

@@ -129,6 +129,29 @@ findings/<case_id>/rep-<重复序号>/findings.json
 
 简报只描述任务与产出契约，不抄企业文档原文，不含内部主机名与内部链接。
 
+## 运行隔离与答案防泄漏（0.8.0）
+
+### 被测 workspace 必须剥离种子文件（B1，adapter 强制）
+
+`seeds/*.seeds.json` 是评分答案键，且被 git 跟踪——整树 checkout 出的候选 workspace 天然带着答案，而被测模型的 cwd 就是这个 workspace（`protected-paths.txt` 防改不防读）。0.8.0 起：
+
+- **构建被测 workspace 副本时必须排除 `evals/business/seeds/`**（baseline 与 candidate 同规则）。评分器从请求的 `repository_root`（可信 fixture 侧）读种子，不从 workspace 读。
+- adapter 在 dry-run 与实跑两种模式下都会扫描 workspace：发现任何 `*.seeds.json` 即 fail-closed，报错点名泄漏路径。此检查无需快照访问，不改变 dry-run 语义。
+- 残余边界（如实声明）：codex 沙箱的读范围未被实测约束过——若其文件读取不限于 cwd，仍可能从 fixture 侧读到答案；codex 的 candidate 路径本就 fail-closed，但**权威 baseline 的 codex 实跑**在确认其读范围前不得采信。claude 侧实测过 print 模式文件访问按 cwd + `--add-dir` 划界（见 host-platform-facts），剥离后答案不可达。
+
+### 观测通道：permission denials（B3，claude 实装）
+
+`permission_violations` 仍是模型自报；0.8.0 起 claude 通道新增**宿主观测值** `observed_permission_denials`（每重复一项，adapter 写入，模型写入的同名键会被覆盖）：adapter 以 `--output-format stream-json` 读取事件流，对 `is_error` 的 tool_result 文本按已观测拒绝措辞（permission / not granted / denied / requires approval / only files under）做启发式匹配。这是启发式通道而非宿主契约（Claude Code 没有文档化的结构化拒绝事件）；`--json-schema` 与 stream-json 组合的实跑行为待首次 live run 验证后记入 host-platform-facts。codex 侧无观测通道，该键缺席即表示"无观测值"，不得解读为 0。
+
+### 权威运行的两个必选项（P0 前置）
+
+复现与成本问题（继承操作者全局 MCP 配置、acceptEdits 拦截 sensitive write）由两个请求级参数解决，`eval_runner.py run` 新增：
+
+- `--allowed-tools "Read,Glob,Grep,Write,Edit,Bash"`：显式预批准确需工具，替代 acceptEdits 的隐式行为——print 模式下 acceptEdits 会拦截 sensitive write 与未批准 Bash，直接改变 AF-002 一类用例的结果；
+- `--isolate-host-config`：claude 加 `--strict-mcp-config` 并把 `CLAUDE_CONFIG_DIR` 指向一次性临时目录，隔离操作者全局配置。codex 未实现，传了即 fail-closed。
+
+两个参数会写进结果的 `observed_context`（`allowed_tools`、`mcp_isolated`）；**权威 baseline/candidate 对照必须同时携带两者**，缺省的运行只能当 smoke，不得进对照结论。
+
 ## 怎么校验
 
 本套件的结构校验挂在仓库的确定性检查里：

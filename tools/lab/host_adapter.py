@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -216,6 +217,30 @@ def validate_request(
         raise ValueError(
             "Codex CLI cannot bind an uninstalled candidate Plugin source; use a reviewed host installation adapter"
         )
+    if selected_host == "codex":
+        # No codex equivalent is implemented for either isolation knob; refusing loudly
+        # beats silently running with the isolation the request declared.
+        if request.get("allowed_tools"):
+            raise ValueError(
+                "allowed_tools is not implemented for the codex adapter; drop the field or use host=claude"
+            )
+        if request.get("isolate_host_config"):
+            raise ValueError(
+                "isolate_host_config is not implemented for the codex adapter; drop the field or use host=claude"
+            )
+    allowed_tools = request.get("allowed_tools")
+    if allowed_tools is not None:
+        if not isinstance(allowed_tools, list) or not allowed_tools:
+            raise ValueError("allowed_tools must be a non-empty array of tool specs")
+        for tool in allowed_tools:
+            if not isinstance(tool, str) or not tool.strip():
+                raise ValueError("allowed_tools entries must be non-empty strings")
+            if "," in tool:
+                raise ValueError(
+                    f"allowed_tools entry {tool!r} must not contain a comma; the list is comma-joined"
+                )
+    if not isinstance(request.get("isolate_host_config", False), bool):
+        raise ValueError("isolate_host_config must be a boolean")
     repeat_count = request.get("repeat_count")
     if not isinstance(repeat_count, int) or isinstance(repeat_count, bool) or repeat_count < 1:
         raise ValueError("repeat_count must be a positive integer")
@@ -268,7 +293,9 @@ def validate_request(
         if not input_path.is_file():
             raise ValueError(f"input_ref does not exist: {case['input_ref']!r}")
     if business_root is not None:
-        validate_business_request(request, business_root, cases, seed_patch, dry_run)
+        validate_business_request(
+            request, business_root, cases, seed_patch, dry_run, workspace
+        )
     return workspace, cases
 
 
@@ -291,12 +318,53 @@ def validate_findings_contract(case_id: str, contract: Any) -> None:
         )
 
 
+def seed_exposure_errors(repository: Path, workspace: Path, cases: list[dict[str, Any]]) -> list[str]:
+    """The seed answers must exist on the trusted side and be absent from the tested tree.
+
+    ``seeds_ref`` files are git-tracked in this repository, so any full-tree workspace
+    checkout contains the answers the grader scores against, and the model under test —
+    which runs with the workspace as its working directory — could simply read them.
+    ``protected-paths.txt`` prevents a candidate from *editing* the suite; it cannot
+    prevent *reading* it. The runner therefore builds the tested workspace copy with the
+    seed files excluded, and the adapter fails closed in both modes when any
+    ``*.seeds.json`` is reachable inside the workspace. Grading reads the seeds from the
+    trusted ``repository_root`` fixture copy, which must still carry them.
+    """
+    errors: list[str] = []
+    for case in cases:
+        seeds_ref = case["seeds_ref"]
+        trusted = (repository / seeds_ref).resolve()
+        try:
+            trusted.relative_to(repository)
+        except ValueError as exc:
+            errors.append(f"seeds_ref escapes repository: {seeds_ref!r}")
+            continue
+        if not trusted.is_file():
+            errors.append(
+                f"seeds_ref does not exist under the trusted repository root: {seeds_ref!r}; "
+                "grading reads the seeds from there, not from the workspace"
+            )
+    leaked = sorted(
+        str(path.relative_to(workspace).as_posix()) for path in workspace.rglob("*.seeds.json")
+    )
+    if leaked:
+        errors.append(
+            "the tested workspace contains seed answers: "
+            + ", ".join(leaked)
+            + "; build the workspace copy from the source tree with evals/business/seeds/ "
+            "excluded — a readable answer inside the tested workspace invalidates the "
+            "measurement (the model under test runs with the workspace as its cwd)"
+        )
+    return errors
+
+
 def validate_business_request(
     request: dict[str, Any],
     business_root: Path,
     cases: list[dict[str, Any]],
     seed_patch: Path | None,
     dry_run: bool,
+    workspace: Path,
 ) -> None:
     """Business branch of :func:`validate_request`; every deviation raises ``ValueError``.
 
@@ -367,6 +435,13 @@ def validate_business_request(
     if len(pins) != 1:
         raise ValueError("all business cases must share the same target_pin")
     target_pin = pins.pop()
+    # Runs in both modes: the workspace seed scan touches no snapshot state, so a dry run
+    # keeps its "no snapshot access" semantics while still refusing a leaking layout.
+    exposure_errors = seed_exposure_errors(
+        Path(request["repository_root"]).resolve(), workspace, cases
+    )
+    if exposure_errors:
+        raise ValueError("; ".join(exposure_errors))
     if dry_run:
         return
     if seed_patch is None:
@@ -377,6 +452,36 @@ def validate_business_request(
     if head != target_pin:
         raise ValueError(f"business snapshot HEAD {head} does not match target_pin {target_pin}")
     require_seed_patch_reversible(business_root, seed_patch)
+
+
+def claude_isolation_args(request: dict[str, Any]) -> list[str]:
+    """Isolation flags for a claude invocation, from the request's optional fields.
+
+    ``allowed_tools`` pre-approves exactly the tool specs the case needs, instead of
+    relying on ``acceptEdits``, which (print mode, observed) still blocks sensitive
+    writes and unapproved Bash and thereby measures host permission limits as if they
+    were workflow behavior. ``isolate_host_config`` adds ``--strict-mcp-config``, so the
+    run loads no MCP servers from the operator's global configuration, and
+    :func:`run_claude` points ``CLAUDE_CONFIG_DIR`` at a fresh scratch directory for the
+    invocation — inherited global config made baseline runs noisy, slower, and
+    irreproducible. The flags' existence and CLI syntax are documented by
+    ``claude --help``; their combined runtime behavior is pending first live
+    verification (docs/host-platform-facts.md).
+    """
+    args: list[str] = []
+    allowed_tools = request.get("allowed_tools")
+    if allowed_tools:
+        for tool in allowed_tools:
+            if not isinstance(tool, str) or not tool.strip():
+                raise ValueError(f"allowed_tools entries must be non-empty strings: {tool!r}")
+            if "," in tool:
+                raise ValueError(
+                    f"allowed_tools entry {tool!r} must not contain a comma; the list is comma-joined"
+                )
+        args += ["--allowed-tools", ",".join(allowed_tools)]
+    if request.get("isolate_host_config") is True:
+        args.append("--strict-mcp-config")
+    return args
 
 
 def permission_args(host: str, profile: str) -> list[str]:
@@ -585,14 +690,123 @@ def claude_add_dir_args(request: dict[str, Any]) -> list[str]:
     return []
 
 
+# Substrings that mark a host-side permission refusal in tool-result error text. They are
+# the phrasings observed in this repository's own print-mode diagnosis (Read "permission
+# not granted", Bash "only files under <cwd> are permitted", Write "sensitive and not
+# created"); Claude Code documents no structured denial event, so the observed channel is
+# a keyword match over errored tool results — strictly more than the model's self-report,
+# and deliberately labeled a heuristic until a live run pins the exact event shapes.
+DENIAL_MARKERS = (
+    "permission",
+    "not granted",
+    "denied",
+    "requires approval",
+    "only files under",
+)
+
+
+def parse_stream_events(host: str, stdout: str) -> list[dict[str, Any]]:
+    """Parse a ``--output-format stream-json`` payload into its JSONL events."""
+    events: list[dict[str, Any]] = []
+    for number, line in enumerate(stdout.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{host} stream-json line {number} is not JSON: {exc}") from exc
+        if not isinstance(event, dict):
+            raise ValueError(f"{host} stream-json line {number} is not a JSON object")
+        events.append(event)
+    return events
+
+
+def observed_permission_denials(events: list[dict[str, Any]]) -> list[str]:
+    """Errored tool results whose text matches a permission-denial marker.
+
+    Tool results ride in user-role messages of the stream. Only ``is_error`` results are
+    scanned, so ordinary tool output never counts, and the returned strings are truncated
+    samples for the progress log, not evidence replacements.
+    """
+    samples: list[str] = []
+    for event in events:
+        message = event.get("message")
+        if not isinstance(message, dict):
+            continue
+        content = message.get("content")
+        if not isinstance(content, list):
+            continue
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+            if item.get("type") != "tool_result" or item.get("is_error") is not True:
+                continue
+            text = item.get("content")
+            if isinstance(text, list):
+                text = " ".join(
+                    part.get("text", "") for part in text if isinstance(part, dict)
+                )
+            if not isinstance(text, str):
+                continue
+            lowered = text.lower()
+            if any(marker in lowered for marker in DENIAL_MARKERS):
+                samples.append(text[:200])
+    return samples
+
+
+def stream_result_payload(host: str, events: list[dict[str, Any]]) -> dict[str, Any]:
+    """The final ``result`` event of a stream-json run, carrying the structured output."""
+    for event in reversed(events):
+        if event.get("type") == "result":
+            raw = event.get("result")
+            if not isinstance(raw, str) or not raw.strip():
+                raise ValueError(
+                    f"{host} stream-json result event carries no structured result text"
+                )
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{host} result field is not structured JSON: {exc}") from exc
+            if not isinstance(payload, dict):
+                raise ValueError(f"{host} structured result must be a JSON object")
+            return payload
+    raise ValueError(f"{host} stream-json output has no result event")
+
+
+def claude_stream_failure_detail(stdout: str, stderr: str, returncode: int) -> str:
+    """Error text for a failed stream-json invocation.
+
+    Each JSONL line is inspected last-first: only a line that parses as a dict declaring
+    itself an error (``is_error`` true or an ``error`` field) contributes text, so a
+    non-JSON noise line on stdout cannot shadow a real error the way a bare fallback
+    would. stderr and the raw stdout text remain the final fallbacks.
+    """
+    for line in reversed(stdout.splitlines()):
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and (payload.get("is_error") is True or "error" in payload):
+            detail = claude_failure_detail(line, "", returncode)
+            if detail and detail != f"claude exited with {returncode}":
+                return detail
+    return claude_failure_detail("", stderr, returncode)
+
+
 def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Path, timeout: int) -> dict[str, Any]:
     schema_text = host_output_schema(schema)
+    # stream-json rather than the single-JSON format: the stream carries the tool_result
+    # events the observed permission-denial channel scans, and its final result event
+    # holds the same structured payload the JSON format would return.
     command = [
         "claude",
         "--print",
         "--no-session-persistence",
+        "--verbose",
         "--output-format",
-        "json",
+        "stream-json",
         "--json-schema",
         schema_text,
         "--model",
@@ -600,34 +814,46 @@ def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Pa
         "--plugin-dir",
         str(workspace),
         *claude_add_dir_args(request),
+        *claude_isolation_args(request),
         *permission_args("claude", request["permissions_profile"]),
         prompt,
     ]
-    started = time.monotonic()
-    try:
-        completed = subprocess.run(command, cwd=workspace, text=True, capture_output=True, timeout=timeout, check=False)
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"claude timed out after {timeout} seconds") from exc
+    env = None
+    with tempfile.TemporaryDirectory(prefix="agentflow-claude-config-") as config_dir:
+        if request.get("isolate_host_config") is True:
+            env = {**os.environ, "CLAUDE_CONFIG_DIR": config_dir}
+        started = time.monotonic()
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=workspace,
+                text=True,
+                capture_output=True,
+                timeout=timeout,
+                check=False,
+                env=env,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"claude timed out after {timeout} seconds") from exc
     elapsed = (time.monotonic() - started) * 1000
     if completed.returncode != 0:
         raise RuntimeError(
-            claude_failure_detail(completed.stdout, completed.stderr, completed.returncode)
+            claude_stream_failure_detail(completed.stdout, completed.stderr, completed.returncode)
         )
-    try:
-        raw_payload = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"claude output is not JSON: {exc}") from exc
-    if not isinstance(raw_payload, dict):
-        raise ValueError("claude output must be a JSON object")
-    payload: Any = raw_payload
-    if isinstance(raw_payload.get("result"), str):
-        try:
-            payload = json.loads(raw_payload["result"])
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"Claude result field is not structured JSON: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ValueError("Claude structured result must be a JSON object")
+    events = parse_stream_events("claude", completed.stdout)
+    denials = observed_permission_denials(events)
+    payload = stream_result_payload("claude", events)
+    # Grader-observed value: overwrites anything the model self-reported under this key,
+    # exactly like latency_ms — the host output schema allows the key, so the adapter
+    # must be the one that writes it.
     payload["latency_ms"] = elapsed
+    payload["observed_permission_denials"] = len(denials)
+    if denials:
+        print(
+            f"host adapter: claude reported {len(denials)} permission-denial observation(s); "
+            f"first: {denials[0][:160]}",
+            file=sys.stderr,
+        )
     return parse_structured_output("claude", json.dumps(payload))
 
 
@@ -655,6 +881,9 @@ def dry_run_document(
         "workspace_root": str(workspace),
         "plugin_dir": str(workspace) if host == "claude" else None,
         "permission_args": permission_args(host, request["permissions_profile"]),
+        "isolation_args": claude_isolation_args(request) if host == "claude" else [],
+        "allowed_tools": list(request.get("allowed_tools") or []),
+        "isolate_host_config": request.get("isolate_host_config") is True,
         "invocation_count": len(cases) * request["repeat_count"],
         "cases": [
             {
@@ -941,6 +1170,8 @@ def main(argv: list[str] | None = None) -> int:
                         "model": request["model"],
                         "permissions_profile": request["permissions_profile"],
                         "fixture_revision": request["fixture_revision"],
+                        "allowed_tools": list(request.get("allowed_tools") or []),
+                        "mcp_isolated": request.get("isolate_host_config") is True,
                         "evidence_refs": [f"adapter://{args.host}/{request['result_id']}"],
                     },
                     "case_results": results,

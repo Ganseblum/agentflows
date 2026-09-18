@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.8.0 — 2026-09-19
+
+Second audit-remediation round (per `docs/audit-2026-09-18-followups.md`): measurement-validity
+S0 closures (B1/B3), the eval isolation preconditions from the P0 list, the honest-documentation
+batch (E2/E3/E5/E8), memory-layer contract closure (F3/G2/G3), and the remaining deterministic
+residuals from the audit report §6. Contains **gate changes (protected paths), applied under
+explicit human instruction on 2026-09-19**: `host_adapter.py`, `eval_runner.py`, `policy.py`,
+`validate.py`, `artifact_digest.py`, `schemas/`, `skills/improve/references/`,
+`agents/release-governor.md`, `tests/`. Method-level change, no instrumented business task has
+run yet; `measurement: none`.
+
+- **B1 — seed answers are no longer readable from the tested tree.** Business requests fail
+  closed (dry run included) when any `*.seeds.json` exists under the tested workspace, and when
+  the trusted `repository_root` fixture copy lacks the seeds grading reads; the runner-side
+  contract (strip `evals/business/seeds/` from the tested copy) is documented in
+  `evals/business/README.md`. Residual stated honestly: codex read scope is unverified, so an
+  authoritative codex baseline is not trusted until confirmed.
+- **B3 — one guardrail is now host-observed instead of self-reported.** The claude adapter runs
+  `--output-format stream-json --verbose`, scans errored tool results for the denial phrasings
+  observed in this repo's own print-mode diagnosis, and writes `observed_permission_denials`
+  (per repetition, adapter-owned, overwriting the model's value; optional in both result
+  schemas). The channel is a labeled heuristic pending first live verification; codex has no
+  channel, and an absent key means "not observed", never 0.
+- **P0 isolation preconditions.** Request-level `allowed_tools` (comma-joined `--allowed-tools`)
+  and `isolate_host_config` (`--strict-mcp-config` + scratch `CLAUDE_CONFIG_DIR`) replace
+  profile-only semantics for claude and are refused loudly on codex; recorded in
+  `observed_context` as `allowed_tools`/`mcp_isolated`; runner CLI `--allowed-tools`
+  /`--isolate-host-config`; authoritative runs must carry both.
+- **B5 — rollback is stated, not echoed.** `policy.py` decisions carry a `rollback` block that
+  verifies the target equals the measured baseline version (a candidate version equal to its
+  parent is now invalid) and declares explicitly that install-state verification belongs to the
+  release governor, whose role file now requires it; promotion next-actions must include the
+  recurrence-ledger `consolidated_in` write-back (F3).
+- **B8 — audit §6 residuals fixed.** `validate.py`: `load_bug_markdown` surfaces
+  `UnicodeDecodeError` as a structured error; body-reference paths are containment-checked
+  inside the repository (a `ROOT/../` escape no longer passes); the `tests/` declared-content
+  assertion no longer exempts dot entries. `policy.py`: unknown metrics are flagged without a
+  crash-shaped `KeyError` and without direction rows; a tolerance floor (`1e-9`) plus the policy
+  table apply to primary metrics and protected slices, so last-bit float noise cannot read as a
+  regression or fake an improvement; an explicitly empty `protected_slices` list protects every
+  observed slice. `eval_runner.py`: a case that omits `repeat_count` is rejected instead of
+  silently inheriting `--repeat-count`. `artifact_digest.py`: mode bits are normalized to the
+  executable bit only, so the digest no longer depends on the creating umask (digests from
+  older versions are not comparable across the algorithm change).
+- **E8 — mock/ is now compiled by the gate.** `validate.py mock` (in `all`) copies the tree to
+  a temp directory, overlays `mock/records` onto the copy's `records/`, and runs the full
+  artifacts compile there; a fixture that drifts from a contract, or an id collision with a real
+  record, now fails instead of waiting for a manual `/tmp` experiment. `mock/README.md` states
+  the mechanism truthfully.
+- **E2/E3/E5 — active misdirection removed.** Version literals are gone from the four
+  current-maturity prose surfaces (README + three design docs; `validate.py docs` now fails if
+  they reappear); `iteration-log.md`'s twelve "当前源码" headers are time-scoped as history;
+  the handoff remote string matches the actual remote; the false "excluded by packaging
+  allowlist" banner is replaced by the observed fact that the local-directory marketplace
+  snapshots the whole directory (host-platform-facts Z10).
+- **G2/G3 — memory-layer contract closure.** `review_roundtrips` is required in the episode
+  schema; five pre-0.7.2 episodes are backfilled with `[]` plus an explicit
+  `review_roundtrips_backfill` signal (not captured ≠ no review); negative outcomes
+  (`rejected`/`partial`/`failed`) are declared first-class episode evidence against survivorship
+  bias. D2: boundary 7 now states that evaluator/governor separation is role separation, not
+  environment isolation. D1 (role convergence) remains a deliberate product decision, deferred.
+- **Verification**: `python3 tools/lab/validate.py all` 9×PASS; 149 unit tests OK; fault
+  injection on a `/tmp` copy confirmed `mock` and the version-prose guard fail closed and
+  recover observed.
+
 ## 0.7.5 — 2026-09-18
 
 Audit-driven hardening: gate, evaluation identity, scoring, role/loop contracts, episode/release

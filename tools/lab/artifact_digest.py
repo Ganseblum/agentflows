@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import stat
 import sys
 from pathlib import Path
 
@@ -35,7 +34,10 @@ def build_manifest(root: Path, excludes: set[str]) -> list[dict[str, object]]:
         if not path.is_file():
             continue
         data = path.read_bytes()
-        mode = stat.S_IMODE(path.stat().st_mode)
+        # Git preserves only the executable bit, not the full mode: recording the whole
+        # S_IMODE made the "deterministic" digest depend on the creating umask (0644 vs
+        # 0664 for the same commit on two machines). Normalize to exec-bit / no-exec-bit.
+        mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
         entries.append(
             {
                 "path": relative.as_posix(),

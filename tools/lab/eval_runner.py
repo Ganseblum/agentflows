@@ -181,6 +181,11 @@ def build_request(
         "workspace_root": str(Path(args.workspace).resolve()),
         "holdout_root": str(Path(args.holdout_root).resolve()),
     }
+    allowed_tools = getattr(args, "allowed_tools", None)
+    if allowed_tools:
+        request["allowed_tools"] = [tool.strip() for tool in allowed_tools.split(",") if tool.strip()]
+    if getattr(args, "isolate_host_config", False):
+        request["isolate_host_config"] = True
     if business:
         request["business_root"] = str(Path(business_root).resolve())
     # A case's repeat_count is frozen in the suite file: --repeat-count must agree with
@@ -188,7 +193,14 @@ def build_request(
     # baseline/candidate runs stop being comparable.
     frozen_mismatches: list[str] = []
     for case in cases:
-        if "repeat_count" in case and case["repeat_count"] != args.repeat_count:
+        if "repeat_count" not in case:
+            # A case that omits repeat_count would silently inherit --repeat-count below,
+            # which is exactly the overwrite the frozen-value check exists to prevent.
+            frozen_mismatches.append(
+                f"case {case['case_id']!r} does not declare repeat_count; "
+                "every case must freeze its repetition count in the suite file"
+            )
+        elif case["repeat_count"] != args.repeat_count:
             frozen_mismatches.append(
                 f"case {case['case_id']!r} declares repeat_count {case['repeat_count']!r} but "
                 f"--repeat-count is {args.repeat_count!r}"
@@ -479,6 +491,19 @@ def add_context_arguments(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="business task snapshot root (fourth isolation position); required for a "
         "business suite such as evals/business and unused by evals/public",
+    )
+    parser.add_argument(
+        "--allowed-tools",
+        default=None,
+        help="comma-separated host tool specs pre-approved for the run (--allowed-tools); "
+        "authoritative runs should scope this explicitly instead of relying on the profile, "
+        "which print mode may override with permission denials",
+    )
+    parser.add_argument(
+        "--isolate-host-config",
+        action="store_true",
+        help="run the host with no operator MCP configuration (--strict-mcp-config) and a "
+        "scratch CLAUDE_CONFIG_DIR; required for reproducible authoritative runs",
     )
 
 

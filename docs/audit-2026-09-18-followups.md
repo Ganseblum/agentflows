@@ -128,3 +128,84 @@
 ---
 
 *创建：2026-09-18，依据当日审计与 0.7.5 整改批核实结果。维护规则：追加式，不打勾。*
+
+---
+
+## 四、第二轮整改（2026-09-19，用户授权「全部开始处理修复」）
+
+> 追加式记录。每项注明证据；完成判据按本台账第三节执行（回归用例 + `validate.py all` 全绿 +
+> CHANGELOG 带 measurement 状态条目）。发布版本 0.8.0，`measurement: none`（方法级改动，无
+> instrumented business task）。
+
+### 第一批（B 域度量效度，🔒 gate 批，已人工授权）
+
+1. **B1 已关闭**（残余如实声明）。`host_adapter.validate_business_request` 在 dry-run 与实跑
+   两模式都拒绝被测 workspace 内任何 `*.seeds.json`，并要求可信 `repository_root` 侧存在种子
+   （评分读它）；runner 侧契约（构建 workspace 副本剥离 `evals/business/seeds/`）写入
+   `evals/business/README.md` 与 `adapter-protocol.md`。回归：`SeedExposureIsolationTests`
+   4 例（含任意路径泄漏、可信侧缺失、干净布局通过）。**残余**：codex 读范围未实测，权威
+   codex baseline 在确认前不采信（README 与 host-platform-facts 已声明）。
+2. **B3 已关闭（claude 通道；标注启发式）**。claude 改 `--output-format stream-json
+   --verbose`；`observed_permission_denials` 由 adapter 从 errored tool_result 文本按已观测
+   拒绝措辞提取并覆盖写入（模型同键自报无效）；两结果 schema 增可选字段；
+   `ClaudeStreamObservationTests` 5 例 + stub 实测 argv/env。**待 live**：`--json-schema`×
+   stream-json 组合与事件形状在首次真实运行核实（host-platform-facts C9）。codex 无通道，
+   缺席键=「无观测值」≠0（README/协议文档已写明）。
+
+### 第二批（E 域活跃失真，普通改动）
+
+3. **E5 已关闭**：假横幅替换为实测事实——2026-09-18 `ls` 安装快照 0.7.5 目录证实整目录打包
+   （含 233KB 审计记录），无 allowlist 机制；事实入 host-platform-facts Z10（带复验方法）。
+   真正的排除留给 P2 独立发布来源。
+4. **E3 已关闭**：handoff `:10` remote 修正为实测 `my-agents.git`；**勘误**：台账称 `:485`
+   也错——实测 `:485` 与真实 remote 一致，台账该句本身失真，以本条为准。iteration-log 12 处
+   「当前源码」改为「该批发布时的源码（历史状态，非当前事实）」。
+5. **E2 已关闭（机制化）**：README 与三份设计文档的当前版本字面量清零；`validate.py docs`
+   新增守卫——四份文件再出现版本字面量即 FAIL（/tmp 注入 `9.9.9` 实测 FAIL、恢复观察 PASS）。
+   历史性版本引用（iteration-log/handoff）不在守卫范围，属历史记录。
+6. **E8 已关闭**：`validate.py mock`（进 `all`）= /tmp 整树副本 + mock/records 覆盖合并 +
+   完整 artifacts 编译；fixture 失同步、id 与真实记录冲突即 FAIL（/tmp 注入 `bogus_field`
+   实测 FAIL、恢复 PASS）；`mock/README.md` 声明与机制对齐（「受校验」不再是口号）。
+
+### 第四批合同面（记忆层与流程闭环）
+
+7. **G2 已关闭**：`review_roundtrips` 进 episode schema required；存量 5 条 0.7.2 前 episode
+   以 `[]` + `review_roundtrips_backfill` signal 回填（含 mock fixture 一条）——「未捕获」
+   与「没有评审」不混淆，不虚构。
+8. **G3 已落地（约定）**：负向 outcome（rejected/partial/failed）为一等 episode 证据、
+   supervisor 收口自检问题写入 `records/episodes/README.md`。真实负向样本仍为零，等下一次
+   失败任务收录。
+9. **F3 部分关闭**：`consolidated_in` 回写责任方落定——release-governor 的 promote 决策必须
+   把台账回写列入 next action，supervisor 执行（governor 只读）。**残余**：自动归类继续等
+   评测数据（本台账第四批定位不变）；`escalated` 在人工标类前不可触发的语义已由 0.3.8 设计
+   注记，不另改。
+
+### 第五批（可离线完成的确定性项）
+
+10. **B5 已关闭**：policy 决策携带结构化 `rollback` 块（target=实测 baseline 版本已验证；
+    可安装性明确声明为 policy 观察不到、由 release-governor 执行前确认）；candidate 版本等于
+    parent 判 invalid。回归：`PolicyRollbackAndToleranceTests`。
+11. **B8 已关闭**：审计②§6 中 0.7.5 未修的确定性项全部处理——B5(报告)/B6/B10/B11/B12/B13/
+    B14/B15/B17；**接受不修并说明理由**：B16（`__pycache__` 全深度排除）修复会引入 digest
+    非确定性，且注入向量惰性、`check-diff --ignored` 可见；B18（compare 与 policy 的覆盖键
+    差异）policy 侧更严格属冗余非矛盾。B7/B8(报告)/B9 已由 0.7.5 修复，本批核实。
+12. **D2 已关闭（声明路径）**：边界 7 补如实声明——evaluator/governor 是角色分离（只读
+    frontmatter + 独立简报 + 保护门），不是环境隔离（同模型/同会话族/同工作区）；真实隔离
+    （不同模型/上下文）列为产品决策，与 D1 一并搁置。
+13. **D1 未动**（按台账定位属产品决策）：bug-investigator / feedback-analyst /
+    technical-director 与 reviewer 的收敛问题保持搁置，待用户裁决。
+
+### P0 前置（handoff 待办，与本轮相关部分）
+
+14. 评测权限 profile 与环境隔离两项已关闭（0.8.0 `--allowed-tools` / `--isolate-host-config`，
+    写入 observed_context，codex 传了即拒）；**可信端点与预算决策仍开放**——G4 的唯一阻塞，
+    等用户指定端点后先跑 2–3 用例 smoke。
+
+### 本轮验证记录
+
+- `python3 tools/lab/validate.py all`（0.8.0，九项含 mock）：全 PASS。
+- `python3 -m unittest discover -s tests`：`Ran 149 tests ... OK`（新增 25 例回归）。
+- /tmp 故障注入×2（mock fixture 注入、README 版本字面量回插）均 FAIL，恢复后复跑 PASS
+  （恢复已观察）。
+- 附带修复记录：containment 首版实现误杀了合法的「记录目录内相对爬升」引用——`validate.py
+  mock` 首跑即抓到（机制价值实证），已改为双锚点 containment 于仓库根。
