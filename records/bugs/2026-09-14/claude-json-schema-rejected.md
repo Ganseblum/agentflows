@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260914-001
 title: Claude Code 的 --json-schema 拒绝携带 Draft 2020-12 元声明的 schema
-status: fixed-pending-review
+status: verified
 severity: P1
 error_kind: host-compat
 attribution: tool_or_host
@@ -14,10 +14,14 @@ affected_slices:
   - host-adapter
   - evaluation-harness
 recorded_at: 2026-09-14T12:04:08Z
-updated_at: 2026-09-16T12:03:24Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: f2ea05c
 agentflow_version: 0.3.1
 regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 评审人指定检查符合预期：`python3 tools/lab/validate.py all` 退出码 0（8/8 PASS）；`host_adapter.host_output_schema` 投影检查退出码 0，输出不含 `$schema`/`$id` 且逐键等于原文档剥键结果；`run_claude` 传投影文本、`run_codex` 传原文件；宿主级接受度由 `docs/host-platform-facts.md` C1 行已录 smoke 承担。
+fix_revision: agentflow 0.3.2
 ---
 
 ## 现象
@@ -89,3 +93,31 @@ schema 主体保持不变，仍完整约束结构化输出；Codex 路径继续�
 记录创建时的“修复尚未提交”是当时的时间点证据。后续修复已在提交 `77e1577` 落地，
 并已由当前工作树保留；`source_revision: f2ea05c` 仍表示问题发现时的源版本，不表示修复
 仍未提交。状态继续保持 `fixed-pending-review`，直到独立 Reviewer 批准。
+
+## 审查
+
+评审人 `agentflow:reviewer`（独立评审角色）于 2026-09-17 对本批 8 条 `fixed-pending-review`
+记录做批量评审。本条指定检查 C0（全量确定性检查）与 C1（schema 投影检查），由 supervisor
+执行并回传原始输出；结论 `approved`，本记录转 `verified`，`fix_revision` 据实回填为
+agentflow 0.3.2。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— `python3 tools/lab/validate.py all`：
+
+```
+8/8 PASS, exit 0
+```
+
+C1 —— 投影检查（`python3` 调 `host_adapter.host_output_schema`，入参
+`schemas/adapter-case-result.schema.json`）输出，退出码 0：
+
+```
+OK host_output_schema: only $schema/$id stripped, body intact
+```
+
+宿主级接受度按评审人提案由 `docs/host-platform-facts.md` C1 行已录 smoke 承担。
+
+## 变更记录
+
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。

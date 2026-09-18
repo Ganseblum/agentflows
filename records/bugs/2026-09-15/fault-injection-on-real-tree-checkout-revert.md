@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260915-002
 title: 故障注入在真实仓库执行；git checkout「恢复」把 protected-paths.txt 静默重置回提交版
-status: fixed-pending-review
+status: verified
 severity: P2
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -15,10 +15,14 @@ affected_slices:
   - gate-maintenance
   - lab-tooling
 recorded_at: 2026-09-15T03:23:11Z
-updated_at: 2026-09-16T12:03:24Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: 33962ee
 agentflow_version: 0.3.3
 regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 评审人指定检查符合预期：一次性副本（/tmp/af-protected-demo.*）上从 protected-paths.txt 删除自保护行后，`python3 tools/lab/validate.py protected` FAIL（1 error）并报 `required gate path 'protected-paths.txt' is no longer covered by any declared prefix`，退出码 1——检测路径实证；真实工作区演示前后 `python3 tools/lab/validate.py all` 均退出码 0。
+fix_revision: agentflow 0.3.4
 ---
 
 ## 现象
@@ -82,3 +86,30 @@ checkout 语义），缺的是强制这些动作的流程约束。
 
 - 状态 `fixed-pending-review`：规则修复尚无独立 Reviewer 判定。
 - 完整事故叙述与教训另见 `docs/next-session-handoff.md` 第六批。
+
+## 审查
+
+评审人 `agentflow:reviewer` 于 2026-09-17 批量评审本批 8 条 `fixed-pending-review` 记录。
+本条指定检查 C0（真实工作区全量确定性检查）与 C3（一次性副本上的门检测路径注入），由
+supervisor 执行并回传原始输出；结论 `approved`，本记录转 `verified`，`fix_revision` 据实
+回填为 agentflow 0.3.4。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— 真实工作区 `python3 tools/lab/validate.py all`，演示前后各一次，均：
+
+```
+8/8 PASS, exit 0
+```
+
+C3 —— 一次性副本（/tmp/af-protected-demo.*）上从 protected-paths.txt 删除自保护行后，
+`python3 tools/lab/validate.py protected`：退出码 1，门检测路径报警命中：
+
+```
+FAIL protected (1 error(s))
+  - required gate path 'protected-paths.txt' is no longer covered by any declared prefix
+```
+
+## 变更记录
+
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。

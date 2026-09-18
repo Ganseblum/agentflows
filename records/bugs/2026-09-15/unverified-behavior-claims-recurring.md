@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260915-003
 title: 反复出现的一类——以推演代替最小实验的行为断言，在随后每轮复审中均被证伪
-status: fixed-pending-review
+status: verified
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -18,10 +18,14 @@ affected_slices:
   - supervisor-discipline
   - gate-maintenance
 recorded_at: 2026-09-15T03:23:11Z
-updated_at: 2026-09-16T12:03:24Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: 33962ee
 agentflow_version: 0.3.3
 regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 评审人指定检查符合预期：`python3 tools/lab/validate.py recurrence` 输出 unverified-behavior-claims consolidated 0.3.4 1 0 single（制表符分隔六列）且退出码 0——归纳后再犯自动翻 escalated 即持续报警面；`skills/agentflow/references/contracts.md:22` 硬边界 12 条款原文命中。
+fix_revision: agentflow 0.3.4
 ---
 
 ## 现象
@@ -71,3 +75,36 @@ regression_status: pass
   断言索要实验证据"变成可回归断言）；本轮不加，理由：三次实例均发生在门维护的元工作里
   而非任务简报执行中，当前回归面是每轮的实验化审计本身。
 - 状态 `fixed-pending-review`：条款修复尚无独立 Reviewer 判定。
+
+## 审查
+
+评审人 `agentflow:reviewer` 于 2026-09-17 批量评审本批 8 条 `fixed-pending-review` 记录。
+本条指定检查 C0（全量确定性检查）、C4（recurrence 台账输出）与 C7（硬边界 12 条款原文
+命中），由 supervisor 执行并回传原始输出；结论 `approved`，本记录转 `verified`，
+`fix_revision` 据实回填为 agentflow 0.3.4。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— `python3 tools/lab/validate.py all`：
+
+```
+8/8 PASS, exit 0
+```
+
+C4 —— `python3 tools/lab/validate.py recurrence`（退出码 0，六列以制表符分隔）：
+
+```
+unverified-behavior-claims	consolidated	0.3.4	1	0	single
+```
+
+归纳状态与版本落在台账上；归纳之后再犯由校验器自动翻 `escalated`，即持续报警面。
+
+C7 —— `skills/agentflow/references/contracts.md:22`（硬边界 12 原文命中）：
+
+```
+12. A claim about how a tool, framework, or host behaves is a hypothesis until a minimal experiment reproduces it — exit codes and verbatim output are the evidence; reasoning about the implementation is not. State unverified behavior as unverified. (Boundary 4 for the supervisor's own inferences: it already binds worker summaries.)
+```
+
+## 变更记录
+
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。

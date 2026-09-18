@@ -20,6 +20,7 @@ if str(LAB) not in sys.path:
 import eval_runner  # noqa: E402
 import host_adapter  # noqa: E402
 import isolation  # noqa: E402
+import policy  # noqa: E402
 import seed_grader  # noqa: E402
 import validate  # noqa: E402
 
@@ -302,6 +303,30 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_doc_consistency_passes_on_the_current_tree(self) -> None:
         errors = validate.validate_doc_consistency()
         self.assertEqual(errors, [])
+
+    def test_agents_md_plan_contract_tripwire_rejects_pre_050_wording(self) -> None:
+        # The tripwire must fire on either stale marker of the pre-0.5.0 JSON plan
+        # contract. The helper is pure, so it is pointed at a temporary file instead of
+        # the real AGENTS.md, which stays untouched. The current-tree test above proves
+        # the happy path only; the wiring into validate_doc_consistency is evidenced by
+        # a runtime throwaway-copy flip, not by that test.
+        for marker in ("plans are JSON", "<plan_id>.json"):
+            with self.subTest(marker=marker):
+                with tempfile.TemporaryDirectory() as temporary:
+                    path = Path(temporary) / "AGENTS.md"
+                    path.write_text(f"stale contract residue: {marker}\n", encoding="utf-8")
+                    errors = validate.validate_agents_md_plan_contract(path)
+                self.assertTrue(
+                    any("pre-0.5.0 JSON plan contract" in error.message for error in errors),
+                    [error.message for error in errors],
+                )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "AGENTS.md"
+            path.write_text(
+                "plans are Markdown hybrids named <plan_id>.md; see records/plans/README.md\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(validate.validate_agents_md_plan_contract(path), [])
 
     def test_plan_schema_rejects_unknown_status_and_requires_superseded_by(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "plan.schema.json")
@@ -854,6 +879,89 @@ class BusinessSuiteLoadingTests(unittest.TestCase):
         self.assertIn("--business-root is required for the suite", standard_error.getvalue())
 
 
+class BuildRequestRepeatCountTests(unittest.TestCase):
+    """build_request refuses to overwrite a case's frozen repeat_count with --repeat-count.
+
+    Regression: build_request used to write args.repeat_count into every case entry and
+    never read the case's own frozen value, so a caller could pass a different
+    --repeat-count and produce baseline/candidate runs that are not comparable. The
+    request structure and the --repeat-count CLI argument are unchanged; the check only
+    applies to cases that carry the key (suite files always do).
+    """
+
+    def _case(self, case_id: str = "AF-TEST", repeat_count: int | None = None) -> dict[str, Any]:
+        case: dict[str, Any] = {
+            "case_id": case_id,
+            "slice": "public-slice",
+            "objective": "o",
+            "input_ref": "evals/public/inputs/AF-001.md",
+            "acceptance_criteria": ["c"],
+            "protected_guardrails": ["g"],
+            "holdout": False,
+        }
+        if repeat_count is not None:
+            case["repeat_count"] = repeat_count
+        return case
+
+    def _args(self, repeat_count: int, base: Path) -> argparse.Namespace:
+        for directory in ("repo", "workspace", "holdout"):
+            (base / directory).mkdir(exist_ok=True)
+        return argparse.Namespace(
+            source_kind="baseline",
+            source_revision="rev-test",
+            artifact_digest="sha256:" + "a" * 64,
+            result_id="TEST-RUN",
+            agentflow_version="0.5.2",
+            suite_revision="suite-test",
+            host="claude",
+            model="test-model",
+            permissions_profile="workspace-write",
+            fixture_revision="fixture-test",
+            repeat_count=repeat_count,
+            repository=str(base / "repo"),
+            workspace=str(base / "workspace"),
+            holdout_root=str(base / "holdout"),
+        )
+
+    def test_mismatched_frozen_repeat_count_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            with self.assertRaisesRegex(
+                ValueError, r"case 'AF-TEST' declares repeat_count 5 but --repeat-count is 1"
+            ):
+                eval_runner.build_request(self._args(1, base), [self._case(repeat_count=5)])
+
+    def test_all_mismatched_cases_are_named_in_one_message(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            with self.assertRaises(ValueError) as caught:
+                eval_runner.build_request(
+                    self._args(1, base),
+                    [
+                        self._case("AF-TEST", repeat_count=5),
+                        self._case("AF-TEST-2", repeat_count=3),
+                    ],
+                )
+        message = str(caught.exception)
+        self.assertIn("case 'AF-TEST' declares repeat_count 5", message)
+        self.assertIn("case 'AF-TEST-2' declares repeat_count 3", message)
+        self.assertIn("a run must use the frozen case value", message)
+
+    def test_matching_repeat_count_builds_the_request_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            request = eval_runner.build_request(self._args(5, base), [self._case(repeat_count=5)])
+        self.assertEqual(request["repeat_count"], 5)
+        self.assertEqual(request["cases"][0]["repeat_count"], 5)
+
+    def test_case_without_repeat_count_key_still_builds(self) -> None:
+        # Synthetic cases may omit the frozen key; the check only applies when it exists.
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            request = eval_runner.build_request(self._args(1, base), [self._case()])
+        self.assertEqual(request["cases"][0]["repeat_count"], 1)
+
+
 class IsolationBusinessRootTests(unittest.TestCase):
     """layout_errors keeps its three-argument behavior and adds an optional fourth position."""
 
@@ -1041,6 +1149,40 @@ class AdapterBusinessRequestTests(unittest.TestCase):
                     "claude",
                     dry_run=True,
                 )
+
+    def test_target_docs_must_be_snapshot_relative_posix_paths(self) -> None:
+        # Path-safety regression: an absolute target_docs entry ("/etc/passwd") and a
+        # ".." segment entry ("../../outside.md") used to pass the business branch
+        # untouched. The check is lexical, so a dry run rejects both without any snapshot
+        # access, and a plain snapshot-relative path still passes.
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            _, _, snapshot = self._layout(base)
+            for label, target_docs, message in (
+                ("absolute path", ["/etc/passwd"], "not an absolute path"),
+                (".. segment", ["../../outside.md"], "without '..' segments"),
+            ):
+                with self.subTest(label=label):
+                    with self.assertRaisesRegex(ValueError, message):
+                        host_adapter.validate_request(
+                            self._request(
+                                base,
+                                business_root=snapshot.resolve(),
+                                cases=[self._business_case(target_docs=target_docs)],
+                            ),
+                            "claude",
+                            dry_run=True,
+                        )
+            valid = self._request(
+                base,
+                business_root=snapshot.resolve(),
+                cases=[
+                    self._business_case(
+                        target_docs=["docs/features/feature-A/spec/be/spec-backend.md"]
+                    )
+                ],
+            )
+            host_adapter.validate_request(valid, "claude", dry_run=True)
 
     def test_real_business_run_pins_the_snapshot_head_and_replays_the_seed_patch(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1638,6 +1780,1226 @@ class ClaudeFailureDetailMatrixTests(unittest.TestCase):
         detail = host_adapter.claude_failure_detail("", "e" * 2500, 1)
         self.assertEqual(len(detail), 2000)
         self.assertEqual(detail, "e" * 2000)
+
+
+class StructuredReadFailureTests(unittest.TestCase):
+    """load_json / read_document_text map OS and encoding failures to ValidationError.
+
+    UnicodeDecodeError is a ValueError, not an OSError: before this was covered, a non-UTF-8
+    JSON file (or a missing AGENTS.md) escaped the gate as a bare traceback instead of a
+    structured ValidationError naming the path.
+    """
+
+    def test_load_json_reports_unreadable_files_as_validation_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            _, missing_errors = validate.load_json(base / "missing.json")
+            bad_encoding = base / "bad-encoding.json"
+            bad_encoding.write_bytes(b'{ "case_id": "\xff\xfe" }')
+            document, bad_errors = validate.load_json(bad_encoding)
+        self.assertIsNone(document)
+        self.assertTrue(missing_errors, "a missing file must produce a structured error")
+        self.assertIn("invalid JSON", missing_errors[0].message)
+        self.assertTrue(bad_errors, "a bad-encoding file must produce a structured error")
+        self.assertIn("invalid JSON", bad_errors[0].message)
+        self.assertIn("utf-8", bad_errors[0].message)
+
+    def test_read_document_text_reports_missing_and_bad_encoding_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            _, missing_errors = validate.read_document_text(base / "AGENTS.md")
+            bad = base / "latin1.md"
+            bad.write_bytes(b"caf\xe9 latin-1 text")  # a lone \xe9 byte is invalid UTF-8
+            _, bad_errors = validate.read_document_text(bad)
+        self.assertEqual(len(missing_errors), 1)
+        self.assertIn("cannot read document", missing_errors[0].message)
+        self.assertIn("AGENTS.md", missing_errors[0].path)
+        self.assertEqual(len(bad_errors), 1)
+        self.assertIn("cannot read document", bad_errors[0].message)
+
+    def test_missing_agents_md_is_a_structured_error_not_a_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            errors = validate.validate_agents_md_plan_contract(Path(temporary) / "AGENTS.md")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("cannot read document", errors[0].message)
+
+
+class NegativeExampleDeclarationTests(unittest.TestCase):
+    """examples/invalid is declarative now: every file must be a declared INVALID_EXAMPLES key.
+
+    The directory used to be classified by filename prefix (case-sensitive for bug records,
+    case-insensitive for plans), so a misspelled negative example was silently skipped and never
+    exercised its gate. The consistency assertion fires when a file appears in the directory
+    without being declared (or a declared entry goes missing), and validate_examples() reports
+    the undeclared path and runs each declared negative through its validator.
+    """
+
+    def test_the_declared_list_matches_the_directory_exactly(self) -> None:
+        present = {
+            path.name
+            for path in (ROOT / "examples" / "invalid").iterdir()
+            if not path.name.startswith(".")
+        }
+        self.assertEqual(set(validate.INVALID_EXAMPLES), present)
+
+    def test_every_declared_negative_is_rejected_by_its_validator(self) -> None:
+        for name, (kind, check) in validate.INVALID_EXAMPLES.items():
+            with self.subTest(example=name):
+                errors = check(ROOT / "examples" / "invalid" / name)
+                self.assertTrue(errors, f"{name} ({kind}) must be rejected by its validator")
+
+
+class PolicyDecisionTests(unittest.TestCase):
+    """policy.decide's full matrix: every decision path, both metric directions, tolerances,
+    guardrail and slice regressions, the invalid class, bad candidate records, and exit codes.
+
+    The fixtures are plain dicts built in-process; the end-to-end main() cases use the shipped
+    example documents (schema-valid by construction). policy.py itself is unchanged.
+    """
+
+    DIGEST_BASE = "sha256:" + "a" * 64
+    DIGEST_CANDIDATE = "sha256:" + "b" * 64
+    DIGEST_OTHER = "sha256:" + "c" * 64
+
+    def _rep(
+        self,
+        accepted: bool = True,
+        first_pass: bool = True,
+        corrections: int = 0,
+        escaped: int = 0,
+    ) -> dict[str, Any]:
+        return {
+            "accepted": accepted,
+            "first_pass_review": first_pass,
+            "correction_count": corrections,
+            "escaped_defects": escaped,
+            "permission_violations": 0,
+            "unnecessary_delegation": False,
+            "tool_failures": 0,
+            "latency_ms": 90.0,
+            "evidence_refs": ["result://test/rep"],
+        }
+
+    def _summary(self, **overrides: Any) -> dict[str, Any]:
+        summary: dict[str, Any] = {
+            "acceptance_rate": 1.0,
+            "first_pass_review_rate": 1.0,
+            "correction_count": 0,
+            "escaped_defects": 0,
+            "permission_violations": 0,
+            "unnecessary_delegation_count": 0,
+            "tool_failures": 0,
+            "latency_ms": 90.0,
+        }
+        summary.update(overrides)
+        return summary
+
+    def _case(
+        self,
+        case_id: str = "AF-001",
+        slice_name: str = "role-selection",
+        reps: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "case_id": case_id,
+            "slice": slice_name,
+            "holdout": False,
+            "protected_guardrails": ["permission_violations", "escaped_defects"],
+            "repetitions": reps if reps is not None else [self._rep(), self._rep()],
+        }
+
+    def _result(self, source_kind: str, digest: str, version: str, source_revision: str) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "result_id": f"{source_kind}-test",
+            "source_kind": source_kind,
+            "source_revision": source_revision,
+            "artifact_digest": digest,
+            "agentflow_version": version,
+            "suite_revision": "suite-1",
+            "host": "codex",
+            "model": "test-model",
+            "permissions_profile": "read-write-workspace",
+            "fixture_revision": "fixture-1",
+            "repeat_count": 2,
+            "suite_case_count": 1,
+            "observed_context": {
+                "host": "codex",
+                "model": "test-model",
+                "permissions_profile": "read-write-workspace",
+                "fixture_revision": "fixture-1",
+                "evidence_refs": ["context://test"],
+            },
+            "case_results": [self._case()],
+            "summary": self._summary(),
+            "generated_at": "2026-01-01T00:00:00Z",
+        }
+
+    def _baseline(self, **overrides: Any) -> dict[str, Any]:
+        result = self._result("baseline", self.DIGEST_BASE, "0.3.1", "baseline-rev")
+        result["case_results"] = [
+            self._case(reps=[self._rep(), self._rep(accepted=False, first_pass=False, corrections=2)])
+        ]
+        result["summary"] = self._summary(acceptance_rate=0.5, first_pass_review_rate=0.5, correction_count=2)
+        result.update(overrides)
+        return result
+
+    def _candidate(self, **overrides: Any) -> dict[str, Any]:
+        result = self._result("candidate", self.DIGEST_CANDIDATE, "0.3.2-rc.1", "candidate-rev")
+        result.update(overrides)
+        return result
+
+    def _record(self, **overrides: Any) -> dict[str, Any]:
+        record: dict[str, Any] = {
+            "schema_version": 1,
+            "candidate_version": "0.3.2-rc.1",
+            "parent_version": "0.3.1",
+            "source_revision": "candidate-rev",
+            "artifact_digest": self.DIGEST_CANDIDATE,
+            "hypothesis": "test hypothesis",
+            "evidence_ids": ["E-TEST-001"],
+            "changed_components": ["skills/agentflow/SKILL.md"],
+            "risk_class": "low",
+            "evaluation_suite_revision": "suite-1",
+            "primary_metrics": ["acceptance_rate"],
+            "guardrails": ["escaped_defects"],
+            "rejection_criteria": ["any guardrail regression"],
+            "protected_slices": ["role-selection"],
+        }
+        record.update(overrides)
+        return record
+
+    @staticmethod
+    def _policy(**tolerances: float) -> dict[str, Any]:
+        return {"guardrail_tolerances": dict(tolerances)}
+
+    def test_promote_when_a_primary_metric_improves_and_guardrails_hold(self) -> None:
+        decision = policy.decide(self._record(), self._baseline(), self._candidate(), self._policy())
+        self.assertEqual(decision["decision"], "promote")
+        self.assertEqual(decision["evaluation_result"], "better")
+        self.assertTrue(decision["required_human_approval"])
+        self.assertEqual(decision["rollback_target"], "0.3.1")
+        self.assertIn(
+            "all declared primary metrics are non-regressing and at least one improved",
+            decision["reasons"],
+        )
+        self.assertEqual(decision["metrics"]["acceptance_rate"]["direction"], "improved")
+        self.assertEqual(decision["metrics"]["escaped_defects"]["direction"], "unchanged")
+        self.assertEqual(
+            decision["protected_slice_metrics"]["role-selection"]["acceptance_rate"]["direction"],
+            "improved",
+        )
+
+    def test_revise_when_no_primary_metric_improves(self) -> None:
+        flat_reps = [self._rep(), self._rep(accepted=False, first_pass=False, corrections=2)]
+        candidate = self._candidate(
+            summary=self._summary(acceptance_rate=0.5, first_pass_review_rate=0.5, correction_count=2),
+            case_results=[self._case(reps=flat_reps)],
+        )
+        decision = policy.decide(self._record(), self._baseline(), candidate, self._policy())
+        self.assertEqual(decision["decision"], "revise")
+        self.assertEqual(decision["evaluation_result"], "neutral")
+        self.assertIn("no declared primary metric improved", decision["reasons"])
+
+    def test_reject_when_a_primary_metric_regresses(self) -> None:
+        candidate = self._candidate(
+            summary=self._summary(acceptance_rate=0.0, first_pass_review_rate=0.0),
+            case_results=[
+                self._case(
+                    reps=[
+                        self._rep(accepted=False, first_pass=False),
+                        self._rep(accepted=False, first_pass=False),
+                    ]
+                )
+            ],
+        )
+        decision = policy.decide(self._record(), self._baseline(), candidate, self._policy())
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "worse")
+
+    def test_compare_direction_covers_both_metric_directions(self) -> None:
+        self.assertEqual(policy.compare_direction("acceptance_rate", 0.5, 0.75), "improved")
+        self.assertEqual(policy.compare_direction("acceptance_rate", 0.5, 0.25), "regressed")
+        self.assertEqual(policy.compare_direction("acceptance_rate", 0.5, 0.5), "unchanged")
+        self.assertEqual(policy.compare_direction("escaped_defects", 2, 1), "improved")
+        self.assertEqual(policy.compare_direction("escaped_defects", 2, 3), "regressed")
+        self.assertEqual(policy.compare_direction("escaped_defects", 2, 2), "unchanged")
+
+    def test_invalid_identity_mismatches_reject_with_named_reasons(self) -> None:
+        cases = (
+            ("baseline source_kind", lambda b, c, r: b.update(source_kind="candidate"), "baseline result must have source_kind=baseline"),
+            ("candidate source_kind", lambda b, c, r: c.update(source_kind="baseline"), "candidate result must have source_kind=candidate"),
+            ("candidate source_revision", lambda b, c, r: c.update(source_revision="other-rev"), "candidate result source_revision does not match candidate record"),
+            ("candidate artifact_digest", lambda b, c, r: c.update(artifact_digest=self.DIGEST_OTHER), "candidate result artifact_digest does not match candidate record"),
+            ("identical artifact digests", lambda b, c, r: b.update(artifact_digest=self.DIGEST_CANDIDATE), "candidate artifact_digest must differ from the baseline artifact"),
+            ("candidate version", lambda b, c, r: c.update(agentflow_version="9.9.9"), "candidate result agentflow_version does not match candidate version"),
+            ("baseline parent version", lambda b, c, r: b.update(agentflow_version="9.9.9"), "baseline result agentflow_version does not match candidate parent version"),
+            ("suite revision", lambda b, c, r: c.update(suite_revision="suite-2"), "candidate result suite_revision does not match candidate record"),
+            ("host mismatch", lambda b, c, r: b.update(host="claude"), "baseline and candidate host must match"),
+            ("observed_context model mismatch", lambda b, c, r: b["observed_context"].update(model="other-model"), "baseline and candidate observed_context.model must match"),
+            ("case coverage mismatch", lambda b, c, r: c["case_results"][0].update(case_id="AF-009"), "baseline and candidate case/slice coverage must match"),
+        )
+        for label, mutate, reason in cases:
+            with self.subTest(case=label):
+                baseline, candidate, record = self._baseline(), self._candidate(), self._record()
+                mutate(baseline, candidate, record)
+                decision = policy.decide(record, baseline, candidate, self._policy())
+                self.assertEqual(decision["decision"], "reject", decision["reasons"])
+                self.assertEqual(decision["evaluation_result"], "invalid")
+                self.assertIn(reason, decision["reasons"])
+
+    def test_unknown_declared_metric_fails_closed(self) -> None:
+        # Current fail-closed behavior, pinned as-is (policy.py is not modified in this batch):
+        # the top-level metric loop records the unknown metric as invalid, but the protected
+        # slice loop then indexes the summarize() metric table with the unknown name and
+        # decide() raises KeyError; main() catches it and exits 1 with "FAIL policy evaluation".
+        with self.assertRaises(KeyError):
+            policy.decide(
+                self._record(primary_metrics=["made_up_rate"]),
+                self._baseline(),
+                self._candidate(),
+                self._policy(),
+            )
+        # The same wrong record through the CLI is a structured, non-zero rejection.
+        with tempfile.TemporaryDirectory() as temporary:
+            record = self._record(primary_metrics=["made_up_rate"])
+            record_path = Path(temporary) / "record.json"
+            record_path.write_text(json.dumps(record), encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = policy.main(
+                    [
+                        "--candidate-record",
+                        str(record_path),
+                        "--baseline-result",
+                        str(ROOT / "examples" / "evaluation-results" / "baseline.json"),
+                        "--candidate-result",
+                        str(ROOT / "examples" / "evaluation-results" / "candidate.json"),
+                    ]
+                )
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL policy evaluation", standard_error.getvalue())
+        self.assertIn("made_up_rate", standard_error.getvalue())
+
+    def test_missing_or_non_numeric_metric_is_rejected(self) -> None:
+        summary = self._summary()
+        del summary["acceptance_rate"]
+        decision = policy.decide(
+            self._record(), self._baseline(), self._candidate(summary=summary), self._policy()
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "invalid")
+        self.assertIn("metric 'acceptance_rate' is missing or non-numeric", decision["reasons"])
+
+    def test_lower_is_better_guardrail_tolerance_boundary(self) -> None:
+        record = self._record(guardrails=["escaped_defects"])
+        # Exactly at the tolerance (candidate > baseline + tolerance must be false): no failure.
+        at_tolerance = self._candidate(
+            summary=self._summary(escaped_defects=1),
+            case_results=[self._case(reps=[self._rep(escaped=1), self._rep()])],
+        )
+        decision = policy.decide(record, self._baseline(), at_tolerance, self._policy(escaped_defects=1))
+        self.assertEqual(decision["decision"], "promote")
+        # Beyond the tolerance: guardrail failure rejects with the metric named.
+        beyond = self._candidate(
+            summary=self._summary(escaped_defects=2),
+            case_results=[self._case(reps=[self._rep(escaped=2), self._rep()])],
+        )
+        decision = policy.decide(record, self._baseline(), beyond, self._policy(escaped_defects=1))
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "worse")
+        self.assertIn("guardrails regressed: escaped_defects", decision["reasons"])
+        # Default zero tolerance fails closed on any regression.
+        decision = policy.decide(record, self._baseline(), at_tolerance, self._policy())
+        self.assertEqual(decision["decision"], "reject")
+        self.assertIn("guardrails regressed: escaped_defects", decision["reasons"])
+
+    def test_higher_is_better_guardrail_tolerance_boundary(self) -> None:
+        record = self._record(primary_metrics=["correction_count"], guardrails=["first_pass_review_rate"])
+        baseline = self._baseline(
+            repeat_count=4,
+            case_results=[
+                self._case(
+                    reps=[
+                        self._rep(corrections=4),
+                        self._rep(),
+                        self._rep(accepted=False, first_pass=False),
+                        self._rep(accepted=False, first_pass=False),
+                    ]
+                )
+            ],
+            summary=self._summary(acceptance_rate=0.5, first_pass_review_rate=0.5, correction_count=4),
+        )
+        # 0.25 < 0.5 - 0.25 must be false: the boundary itself does not regress.
+        at_tolerance = self._candidate(
+            repeat_count=4,
+            case_results=[
+                self._case(
+                    reps=[
+                        self._rep(),
+                        self._rep(accepted=False, first_pass=False),
+                        self._rep(accepted=False, first_pass=False),
+                        self._rep(accepted=False, first_pass=False),
+                    ]
+                )
+            ],
+            summary=self._summary(acceptance_rate=0.25, first_pass_review_rate=0.25, correction_count=0),
+        )
+        decision = policy.decide(record, baseline, at_tolerance, self._policy(first_pass_review_rate=0.25))
+        self.assertEqual(decision["decision"], "promote")
+        decision = policy.decide(record, baseline, at_tolerance, self._policy())
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "worse")
+        self.assertIn("guardrails regressed: first_pass_review_rate", decision["reasons"])
+
+    def test_protected_slice_regression_is_named_per_slice(self) -> None:
+        candidate = self._candidate(
+            summary=self._summary(escaped_defects=1),
+            case_results=[self._case(reps=[self._rep(escaped=1), self._rep()])],
+        )
+        decision = policy.decide(self._record(), self._baseline(), candidate, self._policy())
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "worse")
+        self.assertIn("guardrails regressed: escaped_defects", decision["reasons"])
+        self.assertIn("protected slice regressions: role-selection:escaped_defects", decision["reasons"])
+
+    def test_protected_slices_default_to_every_declared_slice(self) -> None:
+        decision = policy.decide(
+            self._record(protected_slices=[]), self._baseline(), self._candidate(), self._policy()
+        )
+        self.assertEqual(decision["decision"], "promote")
+        self.assertIn("role-selection", decision["protected_slice_metrics"])
+
+    def test_missing_protected_slice_is_invalid(self) -> None:
+        decision = policy.decide(
+            self._record(protected_slices=["ghost-slice"]), self._baseline(), self._candidate(), self._policy()
+        )
+        self.assertEqual(decision["decision"], "reject")
+        self.assertEqual(decision["evaluation_result"], "invalid")
+        self.assertIn(
+            "protected slice 'ghost-slice' is missing from baseline or candidate", decision["reasons"]
+        )
+
+    def test_load_policy_defaults_to_zero_tolerances_for_every_known_metric(self) -> None:
+        loaded = policy.load_policy(None)
+        self.assertEqual(set(loaded["guardrail_tolerances"]), set(policy.KNOWN_METRICS))
+        self.assertTrue(all(value == 0 for value in loaded["guardrail_tolerances"].values()))
+
+    def test_load_policy_reads_tolerances_and_validates_the_document(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "policy.json"
+            path.write_text(json.dumps({"guardrail_tolerances": {"escaped_defects": 2}}), encoding="utf-8")
+            loaded = policy.load_policy(str(path))
+            self.assertEqual(loaded["guardrail_tolerances"]["escaped_defects"], 2)
+            self.assertEqual(loaded["guardrail_tolerances"]["tool_failures"], 0)
+
+            path.write_text(json.dumps({"guardrail_tolerances": {"made_up_metric": 1}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid guardrail tolerance"):
+                policy.load_policy(str(path))
+            path.write_text(json.dumps({"guardrail_tolerances": {"escaped_defects": -1}}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid guardrail tolerance"):
+                policy.load_policy(str(path))
+            path.write_text(json.dumps([]), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "policy must be a JSON object"):
+                policy.load_policy(str(path))
+            path.write_text(json.dumps({"guardrail_tolerances": []}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "guardrail_tolerances must be an object"):
+                policy.load_policy(str(path))
+            broken = Path(temporary) / "broken.json"
+            broken.write_text("{not json", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                policy.load_policy(str(broken))
+
+    def test_load_candidate_rejects_missing_malformed_and_schema_invalid_records(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            document, errors = policy.load_candidate(str(base / "missing.json"))
+            self.assertIsNone(document)
+            self.assertTrue(errors and "invalid JSON" in errors[0].message)
+
+            array_path = base / "array.json"
+            array_path.write_text("[]", encoding="utf-8")
+            document, errors = policy.load_candidate(str(array_path))
+            self.assertIsNone(document)
+            self.assertIn("candidate must be a JSON object", errors[0].message)
+
+            record = json.loads(
+                (ROOT / "examples" / "policy" / "candidate-record.json").read_text(encoding="utf-8")
+            )
+            record.pop("candidate_version")
+            invalid_path = base / "schema-invalid.json"
+            invalid_path.write_text(json.dumps(record), encoding="utf-8")
+            document, errors = policy.load_candidate(str(invalid_path))
+            # load_candidate returns the parsed document alongside the schema errors; the
+            # errors themselves are what make main() fail.
+            self.assertIsNotNone(document)
+            self.assertTrue(
+                any("candidate_version" in f"{error.path} {error.message}" for error in errors),
+                [str(error) for error in errors],
+            )
+
+        document, errors = policy.load_candidate(str(ROOT / "examples" / "policy" / "candidate-record.json"))
+        self.assertIsNotNone(document)
+        self.assertEqual(errors, [])
+
+    def _main_arguments(self, **overrides: str) -> list[str]:
+        arguments = {
+            "candidate_record": str(ROOT / "examples" / "policy" / "candidate-record.json"),
+            "baseline_result": str(ROOT / "examples" / "evaluation-results" / "baseline.json"),
+            "candidate_result": str(ROOT / "examples" / "evaluation-results" / "candidate.json"),
+        }
+        arguments.update(overrides)
+        flat: list[str] = []
+        for flag, value in arguments.items():
+            flat += [f"--{flag.replace('_', '-')}", value]
+        return flat
+
+    def test_main_promotes_the_shipped_example_trio_and_writes_the_output_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "decision.json"
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = policy.main([*self._main_arguments(output=str(output))])
+            self.assertEqual(code, 0, standard_error.getvalue())
+            self.assertTrue(output.is_file())
+            decision = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(decision["decision"], "promote")
+        self.assertTrue(decision["required_human_approval"])
+        self.assertIn("WROTE", standard_out.getvalue())
+
+    def test_main_prints_the_decision_and_exits_zero_without_output_path(self) -> None:
+        standard_out, standard_error = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+            code = policy.main(self._main_arguments())
+        self.assertEqual(code, 0, standard_error.getvalue())
+        self.assertEqual(json.loads(standard_out.getvalue())["decision"], "promote")
+
+    def test_main_reports_broken_inputs_with_exit_one(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            broken = Path(temporary) / "candidate.json"
+            broken.write_text("{not json", encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = policy.main(self._main_arguments(candidate_record=str(broken)))
+        self.assertEqual(code, 1)
+        self.assertEqual(standard_out.getvalue(), "")
+        self.assertIn("FAIL policy inputs", standard_error.getvalue())
+
+    def test_main_reports_a_bad_policy_with_exit_one(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bad_policy = Path(temporary) / "policy.json"
+            bad_policy.write_text(json.dumps({"guardrail_tolerances": {"made_up_metric": 1}}), encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = policy.main(self._main_arguments(policy=str(bad_policy)))
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL policy evaluation", standard_error.getvalue())
+
+
+class CheckDiffGateTests(unittest.TestCase):
+    """check_diff's protected-prefix block: the enforcement end of the candidate gate.
+
+    check_diff reads protected-paths.txt from the real repository root (isolation.py hardwires
+    that path), so the fixture candidate touches a path under a declared prefix
+    (`tools/lab/validate.py`) inside a throwaway git repository. The real tree is never written to.
+    """
+
+    def _candidate_repo(self, base: Path) -> tuple[Path, str]:
+        candidate = base / "candidate"
+        candidate.mkdir()
+        self._git(candidate, "init", "-q")
+        self._git(candidate, "config", "user.email", "test@example.com")
+        self._git(candidate, "config", "user.name", "Agentflow Tests")
+        (candidate / "tools" / "lab").mkdir(parents=True)
+        (candidate / "tools" / "lab" / "validate.py").write_text("base\n", encoding="utf-8")
+        (candidate / "docs").mkdir()
+        (candidate / "docs" / "notes.txt").write_text("base\n", encoding="utf-8")
+        self._git(candidate, "add", ".")
+        self._git(candidate, "commit", "-q", "-m", "base")
+        head = subprocess.run(
+            ["git", "-C", str(candidate), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        return candidate, head
+
+    def test_touching_a_protected_path_is_blocked_and_named(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate, head = self._candidate_repo(Path(temporary))
+            (candidate / "tools" / "lab" / "validate.py").write_text("candidate edit\n", encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = isolation.check_diff(argparse.Namespace(candidate=str(candidate), base=head))
+            result = json.loads(standard_out.getvalue())
+        self.assertEqual(code, 1)
+        self.assertIn("tools/lab/validate.py", result["blocked"])
+        self.assertIn("candidate changed a forbidden path", standard_error.getvalue())
+
+    def test_untracked_new_file_under_a_protected_prefix_is_blocked_too(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate, head = self._candidate_repo(Path(temporary))
+            # `schemas/` is a protected directory prefix; a brand-new untracked file under it
+            # must be blocked exactly like a modification of an enumerated protected file.
+            (candidate / "schemas").mkdir()
+            (candidate / "schemas" / "evil.json").write_text("{}\n", encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = isolation.check_diff(argparse.Namespace(candidate=str(candidate), base=head))
+            result = json.loads(standard_out.getvalue())
+        self.assertEqual(code, 1)
+        self.assertEqual(result["blocked"], ["schemas/evil.json"])
+        self.assertIn("candidate changed a forbidden path", standard_error.getvalue())
+
+    def test_only_unprotected_changes_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate, head = self._candidate_repo(Path(temporary))
+            (candidate / "docs" / "notes.txt").write_text("changed\n", encoding="utf-8")
+            (candidate / "docs" / "extra.txt").write_text("new\n", encoding="utf-8")
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = isolation.check_diff(argparse.Namespace(candidate=str(candidate), base=head))
+            result = json.loads(standard_out.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(result["blocked"], [])
+        self.assertEqual(result["changed_paths"], ["docs/extra.txt", "docs/notes.txt"])
+
+    @staticmethod
+    def _git(repository: Path, *arguments: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(repository), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+
+class GateIntegrityNegativeTests(unittest.TestCase):
+    """The gate-integrity checks must fail on mutated fixtures, not only pass on this tree.
+
+    validate_manifests, validate_protected_paths, and validate_unit_tests take an optional
+    root/list-path (default = the previous hardwired behavior, so callers are unaffected), so
+    the negative paths run in-process against throwaway trees. Nothing here mutates the real
+    checkout; the two-parameter functions stay pinned by the full `validate all` run.
+    """
+
+    def _write_manifests(self, root: Path, name: str = "agentflow", version: str = "9.9.9") -> None:
+        for relative, pointer in validate.MANIFEST_POINTERS:
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            document = (
+                {"plugins": [{"name": name, "version": version}]}
+                if pointer
+                else {"name": name, "version": version}
+            )
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+    def test_manifest_version_divergence_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_manifests(root)
+            self.assertEqual(validate.validate_manifests(root), [])
+            (root / ".codex-plugin" / "plugin.json").write_text(
+                json.dumps({"name": "agentflow", "version": "9.9.8"}), encoding="utf-8"
+            )
+            errors = validate.validate_manifests(root)
+        self.assertEqual(len(errors), 1, [str(error) for error in errors])
+        self.assertEqual(errors[0].path, ".codex-plugin/plugin.json")
+        self.assertIn("disagrees with plugin.json", errors[0].message)
+
+    def test_protected_list_shrinkage_and_missing_list_are_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            entries = [
+                line
+                for line in validate.PROTECTED_PATHS_FILE.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            ]
+            self.assertIn("tools/lab/validate.py", entries)
+            complete = base / "complete.txt"
+            complete.write_text("\n".join(entries) + "\n", encoding="utf-8")
+            self.assertEqual(validate.validate_protected_paths(complete), [])
+            shrunken = base / "shrunken.txt"
+            shrunken.write_text(
+                "\n".join(entry for entry in entries if entry != "tools/lab/validate.py") + "\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_protected_paths(shrunken)
+            missing = validate.validate_protected_paths(base / "absent.txt")
+        self.assertTrue(
+            any(
+                "tools/lab/validate.py" in error.message and "no longer covered" in error.message
+                for error in errors
+            ),
+            [str(error) for error in errors],
+        )
+        self.assertTrue(any("missing" in error.message for error in missing))
+
+    def test_undeclared_and_missing_test_entries_are_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            errors_without_tests = validate.validate_unit_tests(root)
+            tests_dir = root / "tests"
+            tests_dir.mkdir()
+            (tests_dir / "test_lab_contracts.py").write_text("", encoding="utf-8")
+            (tests_dir / "smuggled_test.py").write_text("", encoding="utf-8")
+            undeclared_errors = validate.validate_unit_tests(root)
+            for name in ("smuggled_test.py", "test_lab_contracts.py"):
+                (tests_dir / name).unlink()
+            missing_declared_errors = validate.validate_unit_tests(root)
+        self.assertTrue(
+            any("the test directory is missing" in error.message for error in errors_without_tests)
+        )
+        self.assertEqual(
+            [f"{error.path} {error.message}" for error in undeclared_errors],
+            [
+                "tests/smuggled_test.py unexpected entry in the test directory; "
+                "declare it here and in protected-paths.txt"
+            ],
+        )
+        self.assertTrue(
+            any(
+                "tests/test_lab_contracts.py" in error.path and "declared test file is missing" in error.message
+                for error in missing_declared_errors
+            ),
+            [str(error) for error in missing_declared_errors],
+        )
+
+    def test_empty_and_trivial_suites_fail_the_count_floor(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tests_dir = root / "tests"
+            tests_dir.mkdir()
+            module = tests_dir / "test_lab_contracts.py"
+            module.write_text("# no tests here\n", encoding="utf-8")
+            empty_errors = validate.validate_unit_tests(root)
+            module.write_text(
+                "import unittest\n\n\nclass T(unittest.TestCase):\n"
+                "    def test_placeholder(self) -> None:\n        pass\n",
+                encoding="utf-8",
+            )
+            trivial_errors = validate.validate_unit_tests(root)
+        self.assertEqual(
+            [error.message for error in empty_errors],
+            ["unit tests ran 0 tests; the regression suite is empty"],
+        )
+        self.assertEqual(len(trivial_errors), 1, [str(error) for error in trivial_errors])
+        self.assertIn(
+            f"ran 1 tests, below the required floor of {validate.MIN_UNIT_TEST_COUNT}",
+            trivial_errors[0].message,
+        )
+        self.assertIn("gate change that requires explicit review", trivial_errors[0].message)
+
+
+class ImprovementArtifactContractTests(unittest.TestCase):
+    """records/improvement/: a legal four-artifact set compiles clean and every
+    cross-document rule rejects its negative (the improvement loop's handoff plane)."""
+
+    BASELINE_ID = "imp-eval-baseline-001"
+    CANDIDATE_ID = "imp-eval-candidate-001"
+    CANDIDATE_VERSION = "0.3.2-rc.1"
+    METRICS = (
+        "acceptance_rate",
+        "first_pass_review_rate",
+        "correction_count",
+        "escaped_defects",
+        "permission_violations",
+        "unnecessary_delegation_count",
+        "tool_failures",
+        "latency_ms",
+    )
+
+    # ------------------------------------------------------------------ fixtures
+
+    @staticmethod
+    def _example_result(source_kind: str, result_id: str) -> dict[str, Any]:
+        """A shipped, invariant-clean example result re-keyed for the improvement tree."""
+        document = json.loads(
+            (ROOT / "examples" / "evaluation-results" / f"{source_kind}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        document["result_id"] = result_id
+        return document
+
+    def _candidate_record(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "candidate_version": self.CANDIDATE_VERSION,
+            "parent_version": "0.3.1",
+            "source_revision": "candidate-revision-001",
+            "artifact_digest": "sha256:" + "b" * 64,
+            "hypothesis": "one falsifiable improvement claim",
+            "evidence_ids": ["EP-20260917-001"],
+            "changed_components": ["skills/agentflow/SKILL.md"],
+            "risk_class": "low",
+            "evaluation_suite_revision": "public-suite-001",
+            "primary_metrics": ["acceptance_rate"],
+            "guardrails": ["permission_violations"],
+            "rejection_criteria": ["acceptance_rate decreases"],
+            "protected_slices": ["evals/public"],
+        }
+
+    def _episode_record(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "episode_id": "EP-20260917-001",
+            "source_type": "review",
+            "objective": "capture the improvement task decision",
+            "outcome": "accepted",
+            "signals": [
+                {"kind": "review", "value": "approved", "evidence_ref": "result://imp/x"}
+            ],
+            "feedback_summary": "sanitized factual summary",
+            "agentflow_version": "0.3.1",
+            "host": "codex",
+            "provenance": {"carrier": "zcode-session", "sanitized": True},
+            "redactions": [],
+            "occurred_at": "2026-09-17T10:00:00Z",
+        }
+
+    def _comparison(self, baseline: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "baseline_result_id": baseline["result_id"],
+            "candidate_result_id": candidate["result_id"],
+            "context": {field: baseline[field] for field in validate.COMPARISON_CONTEXT_FIELDS},
+            "deltas": {
+                metric: candidate["summary"][metric] - baseline["summary"][metric]
+                for metric in self.METRICS
+            },
+            "baseline_summary": baseline["summary"],
+            "candidate_summary": candidate["summary"],
+        }
+
+    def _release_record(
+        self,
+        candidate_record: dict[str, Any],
+        baseline: dict[str, Any],
+        candidate: dict[str, Any],
+    ) -> dict[str, Any]:
+        def result_set(document: dict[str, Any]) -> dict[str, Any]:
+            fields = (
+                "result_id",
+                "source_kind",
+                "source_revision",
+                "artifact_digest",
+                "suite_revision",
+                "host",
+                "model",
+                "permissions_profile",
+                "fixture_revision",
+                "repeat_count",
+                "suite_case_count",
+                "summary",
+            )
+            entry = {field: document[field] for field in fields}
+            entry["uncertainty"] = "single example run"
+            entry["evidence_refs"] = ["result://imp/" + document["result_id"]]
+            return entry
+
+        return {
+            "schema_version": 1,
+            "candidate": candidate_record,
+            "baseline_results": result_set(baseline),
+            "candidate_results": result_set(candidate),
+            "evaluation_result": "better",
+            "decision": "promote",
+            "approvals": [{"actor": "release-governor", "decision": "approved"}],
+            "rollout": {"mode": "human-gated"},
+            "rollback_to": "0.3.1",
+        }
+
+    def _write_improvement_tree(self, root: Path) -> dict[str, Any]:
+        """Write one legal four-artifact set (plus its evidence episode) under root/records."""
+        improvement = root / "records" / "improvement"
+        for subtree in ("candidates", "evaluations", "comparisons", "releases"):
+            (improvement / subtree).mkdir(parents=True)
+        (root / "records" / "episodes" / "2026-09-17").mkdir(parents=True)
+
+        baseline = self._example_result("baseline", self.BASELINE_ID)
+        candidate = self._example_result("candidate", self.CANDIDATE_ID)
+        candidate_record = self._candidate_record()
+        comparison = self._comparison(baseline, candidate)
+        release = self._release_record(candidate_record, baseline, candidate)
+
+        self._write_json(
+            root / "records" / "episodes" / "2026-09-17" / "EP-20260917-001.json",
+            self._episode_record(),
+        )
+        self._write_json(improvement / "evaluations" / f"{self.BASELINE_ID}.json", baseline)
+        self._write_json(improvement / "evaluations" / f"{self.CANDIDATE_ID}.json", candidate)
+        self._write_json(
+            improvement / "candidates" / f"{self.CANDIDATE_VERSION}.json", candidate_record
+        )
+        self._write_json(improvement / "comparisons" / "imp-cmp-001.json", comparison)
+        self._write_json(improvement / "releases" / "imp-release-001.json", release)
+        return {
+            "baseline": baseline,
+            "candidate": candidate,
+            "candidate_record": candidate_record,
+            "comparison": comparison,
+            "release": release,
+        }
+
+    @staticmethod
+    def _write_json(path: Path, document: dict[str, Any]) -> None:
+        path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+
+    # ------------------------------------------------------------------- helpers
+
+    @staticmethod
+    def _run_artifacts(root: Path) -> list[validate.ValidationError]:
+        with mock.patch.object(validate, "ROOT", root):
+            return validate.validate_workspace_artifacts()
+
+    def _errors_with(
+        self, mutate: Any, fixture: dict[str, Any] | None = None
+    ) -> list[validate.ValidationError]:
+        """Build the legal tree, apply mutate(root, fixture), run the artifacts check."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            written = self._write_improvement_tree(root)
+            mutate(root, fixture if fixture is not None else written)
+            return self._run_artifacts(root)
+
+    @staticmethod
+    def _messages(errors: list[validate.ValidationError]) -> str:
+        return " | ".join(f"{error.path}: {error.message}" for error in errors)
+
+    # -------------------------------------------------------------------- tests
+
+    def test_legal_four_artifact_set_compiles_clean(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_improvement_tree(root)
+            self.assertEqual(self._run_artifacts(root), [])
+
+    def test_comparison_with_a_missing_result_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "records" / "improvement" / "evaluations" / f"{self.CANDIDATE_ID}.json").unlink()
+
+        errors = self._errors_with(mutate)
+        self.assertTrue(
+            any("candidate_result_id" in message and "does not resolve" in message for message in self._messages(errors).split(" | ")),
+            self._messages(errors),
+        )
+
+    def test_evaluation_stem_not_equal_to_result_id_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            evaluations = root / "records" / "improvement" / "evaluations"
+            (evaluations / f"{self.CANDIDATE_ID}.json").rename(evaluations / "wrong-stem.json")
+
+        errors = self._errors_with(mutate)
+        self.assertIn("filename stem must equal result_id", self._messages(errors))
+
+    def test_candidate_stem_not_equal_to_candidate_version_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            candidates = root / "records" / "improvement" / "candidates"
+            (
+                candidates / f"{self.CANDIDATE_VERSION}.json"
+            ).rename(candidates / "9.9.9.json")
+
+        errors = self._errors_with(mutate)
+        self.assertIn("filename stem must equal candidate_version", self._messages(errors))
+
+    def test_comparison_referencing_swapped_source_kind_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            path = root / "records" / "improvement" / "evaluations" / f"{self.BASELINE_ID}.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["source_kind"] = "candidate"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("source_kind is 'candidate', not 'baseline'", self._messages(errors))
+
+    def test_comparison_context_diverging_from_result_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            path = root / "records" / "improvement" / "comparisons" / "imp-cmp-001.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["context"]["model"] = "other-model"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("context.model does not match", self._messages(errors))
+
+    def test_release_embedding_a_candidate_that_differs_from_the_record_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["candidate"]["hypothesis"] = "quietly changed claim"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("not JSON-equal to candidate record", self._messages(errors))
+
+    def test_duplicate_comparison_result_pair_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            comparisons = root / "records" / "improvement" / "comparisons"
+            self._write_json(comparisons / "imp-cmp-002.json", fixture["comparison"])
+
+        errors = self._errors_with(mutate)
+        self.assertIn("duplicate comparison result pair", self._messages(errors))
+
+    def test_release_result_pair_without_a_matching_comparison_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            other = self._example_result("baseline", "imp-eval-baseline-002")
+            evaluations = root / "records" / "improvement" / "evaluations"
+            self._write_json(evaluations / "imp-eval-baseline-002.json", other)
+            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["baseline_results"]["result_id"] = "imp-eval-baseline-002"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("no comparison under records/improvement/comparisons/ matches", self._messages(errors))
+
+    def test_release_referencing_a_missing_result_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["candidate_results"]["result_id"] = "imp-eval-missing-999"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("imp-eval-missing-999", self._messages(errors))
+        self.assertIn("does not resolve to an evaluation result", self._messages(errors))
+
+    def test_release_embedding_an_unknown_candidate_version_is_rejected(self) -> None:
+        def mutate(root: Path, fixture: dict[str, Any]) -> None:
+            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["candidate"]["candidate_version"] = "9.9.9"
+            self._write_json(path, document)
+
+        errors = self._errors_with(mutate)
+        self.assertIn("embedded candidate_version '9.9.9' does not resolve", self._messages(errors))
+
+    def test_candidate_evidence_ids_resolve_against_existing_records(self) -> None:
+        def episode_negative(root: Path, fixture: dict[str, Any]) -> None:
+            path = (
+                root / "records" / "improvement" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
+            )
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["evidence_ids"] = ["EP-99999999-999"]
+            self._write_json(path, document)
+
+        errors = self._errors_with(episode_negative)
+        self.assertIn("does not resolve to an existing record under records/episodes/", self._messages(errors))
+
+        def bug_negative(root: Path, fixture: dict[str, Any]) -> None:
+            path = (
+                root / "records" / "improvement" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
+            )
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["evidence_ids"] = ["BUG-20260917-001"]
+            self._write_json(path, document)
+
+        errors = self._errors_with(bug_negative)
+        self.assertIn("does not resolve to an existing record under records/bugs/", self._messages(errors))
+
+    def test_unknown_entries_in_the_improvement_subtree_are_rejected(self) -> None:
+        def stray_file(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "records" / "improvement" / "notes.txt").write_text("stray\n", encoding="utf-8")
+
+        errors = self._errors_with(stray_file)
+        self.assertIn("unexpected entry under records/improvement/", self._messages(errors))
+
+        def nested_file(root: Path, fixture: dict[str, Any]) -> None:
+            nested = root / "records" / "improvement" / "candidates" / "nested"
+            nested.mkdir()
+            self._write_json(nested / f"{self.CANDIDATE_VERSION}.json", fixture["candidate_record"])
+
+        errors = self._errors_with(nested_file)
+        self.assertIn("unexpected entry under records/improvement/", self._messages(errors))
+
+        def wrong_suffix(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "records" / "improvement" / "evaluations" / "imp-eval-001.md").write_text(
+                "{}\n", encoding="utf-8"
+            )
+
+        errors = self._errors_with(wrong_suffix)
+        self.assertIn("evaluations artifacts are JSON files; unexpected non-json file", self._messages(errors))
+
+
+class TestRecordContractTests(unittest.TestCase):
+    """Test records under records/tests/ (0.7.0): plan registry contract and run invariants."""
+
+    PLAN_MD = """---
+test_plan_id: TP-20260917-001
+title: 登录用例
+project: demo-webapp
+feature: feature-login
+target_revision: 9f2c1a7
+credentials: session-injected env
+case_count: "{case_count}"
+test_version: "1"
+status: active
+recorded_at: "2026-09-17T15:00:00Z"
+---
+
+## 用例
+
+| 用例 ID | 级别 | 优先级 | 标题 |
+| --- | --- | --- | --- |
+| TC-LOGIN-001 | smoke | P0 | 登录成功 |
+| TC-LOGIN-002 | e2e | P0 | 空密码拦截 |
+
+### TC-LOGIN-001 登录成功
+
+步骤表（略）。
+
+### TC-LOGIN-002 空密码拦截
+
+步骤表（略）。
+
+## 边界覆盖
+
+| 边界类 | 覆盖用例 | 说明 |
+| --- | --- | --- |
+| 空输入 | TC-LOGIN-002 | 必填校验 |
+
+## 流程疑点
+
+- Q1：密码长度上限未声明，待产品确认。
+"""
+
+    RUN_MD = """---
+test_run_id: TR-20260917-001
+title: 首轮执行
+project: demo-webapp
+test_plan_id: TP-20260917-001
+test_plan_version: "1"
+target_revision: 9f2c1a7
+environment: staging
+credentials: session-injected env
+summary_pass: "{p}"
+summary_fail: "{f}"
+summary_blocked: "0"
+summary_not_run: "0"
+decision: {decision}
+recorded_at: "2026-09-17T16:00:00Z"
+---
+
+## 结果
+
+| 用例 ID | 状态 | 证据 | 说明 |
+| --- | --- | --- | --- |
+| TC-LOGIN-001 | pass | — | ok |
+{row2}
+
+## 证据
+
+无
+
+## 结论
+
+结论。
+"""
+
+    @staticmethod
+    def _write(path: Path, text: str) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    @staticmethod
+    def _messages(errors: list[Any]) -> list[str]:
+        return [error.message for error in errors]
+
+    def _plan_entry(self, root: str, **overrides: str) -> dict[str, Any]:
+        path = self._write(
+            Path(root) / "records/tests/demo-webapp-feature-login/plan-2026-09-17-001.md",
+            self.PLAN_MD.format(**{"case_count": "2", **overrides}),
+        )
+        errors, entry = validate.validate_test_plan_markdown(path, path.relative_to(root), {})
+        self.assertEqual([], errors)
+        assert entry is not None
+        return entry
+
+    def _run_errors(self, root: str, plans: dict[str, Any], **overrides: str) -> list[Any]:
+        fields = {
+            "row2": "| TC-LOGIN-002 | pass | — | ok |",
+            "p": "2",
+            "f": "0",
+            "decision": "pass",
+            **overrides,
+        }
+        path = self._write(
+            Path(root) / "records/tests/demo-webapp-feature-login/run-2026-09-17-001.md",
+            self.RUN_MD.format(**fields),
+        )
+        errors, _, _ = validate.validate_test_run_markdown(path, path.relative_to(root), {}, plans)
+        return errors
+
+    def test_valid_plan_and_run_examples_pass(self) -> None:
+        plan_path = ROOT / "examples" / "test-records" / "plan-2026-09-17-001.md"
+        errors, entry = validate.validate_test_plan_markdown(plan_path, plan_path.relative_to(ROOT), {})
+        self.assertEqual([], errors)
+        self.assertIsNotNone(entry)
+        run_path = ROOT / "examples" / "test-records" / "run-2026-09-17-001.md"
+        errors, _, _ = validate.validate_test_run_markdown(
+            run_path, run_path.relative_to(ROOT), {}, validate.example_test_plans()
+        )
+        self.assertEqual([], errors)
+
+    def test_negative_run_example_with_unknown_status_is_rejected(self) -> None:
+        errors = validate.validate_invalid_test_run_example(
+            ROOT / "examples" / "invalid" / "test-run-bad-status.md"
+        )
+        self.assertTrue(any("must be one of" in message for message in self._messages(errors)))
+
+    def test_case_count_mismatch_is_rejected_and_blocks_the_plan_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = self._write(
+                Path(temporary) / "records/tests/demo-webapp-feature-login/plan-2026-09-17-001.md",
+                self.PLAN_MD.format(case_count="5"),
+            )
+            errors, entry = validate.validate_test_plan_markdown(path, path.relative_to(temporary), {})
+            self.assertTrue(any("case_count" in message for message in self._messages(errors)))
+            self.assertIsNone(entry)
+
+    def test_run_with_summary_mismatch_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            errors = self._run_errors(temporary, plans, p="3")
+            self.assertTrue(any("summary_pass" in message for message in self._messages(errors)))
+
+    def test_run_referencing_unknown_plan_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            errors = self._run_errors(temporary, {})
+            self.assertTrue(any("does not resolve" in message for message in self._messages(errors)))
+
+    def test_fail_row_requires_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            errors = self._run_errors(
+                temporary, plans, row2="| TC-LOGIN-002 | fail | — | 提示缺失 |", p="1", f="1", decision="partial"
+            )
+            self.assertTrue(any("must carry evidence" in message for message in self._messages(errors)))
+
+    def test_result_row_outside_the_plan_registry_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            errors = self._run_errors(temporary, plans, row2="| TC-OTHER-009 | pass | — | ok |")
+            self.assertTrue(any("not in plan" in message for message in self._messages(errors)))
+
+    def test_current_version_run_must_account_for_every_case(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            errors = self._run_errors(temporary, plans, row2="", p="1")
+            self.assertTrue(any("does not account for cases" in message for message in self._messages(errors)))
+
+    def test_decision_pass_with_failures_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            errors = self._run_errors(
+                temporary, plans, row2="| TC-LOGIN-002 | fail | 见证据块 1 | 提示缺失 |", p="1", f="1"
+            )
+            self.assertTrue(any("zero fail and zero blocked" in message for message in self._messages(errors)))
+
+    def test_tests_is_a_known_record_class(self) -> None:
+        self.assertIn("tests", validate.KNOWN_RECORD_CLASSES)
 
 
 if __name__ == "__main__":

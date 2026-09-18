@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260914-002
 title: 单次调用超时即中断整个评测运行，且无诊断信息
-status: fixed-pending-review
+status: verified
 severity: P2
 error_kind: missing-constraint
 attribution: product_code
@@ -13,10 +13,14 @@ affected_slices:
   - host-adapter
   - evaluation-harness
 recorded_at: 2026-09-14T12:04:08Z
-updated_at: 2026-09-16T12:03:24Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: f2ea05c
 agentflow_version: 0.3.1
 regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 评审人指定检查符合预期：`python3 tools/lab/host_adapter.py --host claude --progress <jsonl>` 输入含不支持 permissions_profile 的 public 请求时退出码 1；progress.jsonl 恰两行（`start` 与 `failed`，case_id 均 `PROGRESS-CHECK`，`failed` 行含 `elapsed_ms` 与 `error`）；stderr 出现 host adapter 前缀的逐调用失败行（PROGRESS-CHECK repetition 1 failed）；全程无宿主进程。
+fix_revision: agentflow 0.3.2
 ---
 
 ## 现象
@@ -80,3 +84,37 @@ write_progress(progress_path, {"event": "completed", ..., "accepted": result.get
 
 - 超时的 run 仍会丢弃内存中结果，只有诊断存活；部分结果持久化/断点续跑未实现（已知边界）。
 - AF-002 本身仍超默认 900 秒上限，相关权限问题另见 BUG-20260914-003。
+
+## 审查
+
+评审人 `agentflow:reviewer` 于 2026-09-17 批量评审本批 8 条 `fixed-pending-review` 记录。
+本条指定检查 C0（全量确定性检查）与 C2（progress 诊断路径注入），由 supervisor 执行并
+回传原始输出；结论 `approved`，本记录转 `verified`，`fix_revision` 据实回填为
+agentflow 0.3.2。C2 首次执行因 supervisor 转录漏一行而失败，属执行者差错，更正后重跑
+通过——如实记录，以下为重跑的逐字输出。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— `python3 tools/lab/validate.py all`：
+
+```
+8/8 PASS, exit 0
+```
+
+C2 —— `python3 tools/lab/host_adapter.py --host claude --progress <jsonl>`，输入为含不支持
+permissions_profile 的 public 请求：退出码 1，全程无宿主进程。progress.jsonl 恰两行：
+
+```
+{"event": "start", "case_id": "PROGRESS-CHECK", "repetition": 1}
+{"event": "failed", "case_id": "PROGRESS-CHECK", "repetition": 1, "elapsed_ms": 1, "error": "unsupported claude permissions_profile: 'definitely-unsupported-profile'"}
+```
+
+stderr 含逐调用失败行：
+
+```
+host adapter: PROGRESS-CHECK repetition 1 failed: ...
+```
+
+## 变更记录
+
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。

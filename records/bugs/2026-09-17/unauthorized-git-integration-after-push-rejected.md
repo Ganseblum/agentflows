@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260917-01
 title: 推送被拒后未经授权自行 rebase 集成远端提交——集成操作不在授权边界清单内
-status: fixed-pending-review
+status: verified
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -16,10 +16,13 @@ affected_slices:
   - git-integration
   - supervisor-discipline
 recorded_at: 2026-09-17T00:00:00Z
-updated_at: 2026-09-17T02:53:40Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: 8665ca3
 agentflow_version: 0.4.0
-regression_status: not-run
+regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 指定检查已运行且符合预期（pass 口径：指定检查运行且输出符合预期；行为服从无自动化回归面）：`python3 tools/lab/validate.py all` 退出码 0（C0）；`skills/agentflow/references/contracts.md:13` 集成授权条款原文命中（C7）；`.zcode/skills/agentflow/` 活路径与源树 SKILL.md、contracts.md 两两 diff 无差异，退出码 0（C6）；已知残余——`python3 tools/lab/validate.py installed` FAIL(3)（差异文件 agents/bug-recorder.md、agents/plan-architect.md、skills/agentflow/SKILL.md，系本日更晚的 P0 措辞批次所致，0.4.2 规则文本在已安装快照内 grep 各命中 1，非 0.4.2 规则缺失，刷新 marketplace 并重装后消除）；失效检测器为再犯加 recurrence/improve 环。
 fix_revision: agentflow 0.4.2
 ---
 
@@ -55,13 +58,15 @@ merge / rebase / cherry-pick 既不在「需要授权」的清单里，也没有
 
 ## 修复
 
-待落地（属 improve 环范围，规则改动**尚未实施**，本记录因此保持 `open`，不写 `fix_revision`）：
+已落地于 agentflow 0.4.2（用户授权的规则补丁）：
 
-- `skills/agentflow/references/contracts.md`：Hard boundaries 第 3 条扩写，覆盖合并 / 变基 /
-  跨分支摘取提交（merge / rebase / cherry-pick）——凡集成他人改动或改写历史的操作都需要用户
-  当次授权。
-- `skills/agentflow/SKILL.md`：「Preserve control and traceability」增加一条：推送被拒或需要集成
-  远端改动时，先只读汇报重叠面，由用户选择集成方式，不得自行合成。
+- `skills/agentflow/references/contracts.md:13`：Hard boundaries 第 3 条扩写，覆盖合并 / 变基 /
+  跨分支摘取提交（`git merge` / `rebase` / `cherry-pick`）与把远端改动合入共享分支——集成他人
+  改动或改写历史与推送 / 部署同属一类动作，需要用户**当次授权**；选哪种集成方式、冲突采纳哪一
+  侧是用户的决定，不是「把被拒的推送补完」的一个步骤。
+- `skills/agentflow/SKILL.md:131`：「Preserve control and traceability」控制段同步扩写——推送
+  被拒时的默认动作是只读汇报：`git fetch` 加 `log` / `diff`，列出远端新增的提交、变更的文件与
+  重叠面；由用户选择集成方式，不得自行选 merge 或 rebase、解冲突后推送。
 
 对照证据（已获用户授权、已在 fork 侧落地同义约束），原文 `infinite-canvas@a14cfa1:AGENTS.md`：
 
@@ -74,8 +79,53 @@ merge / rebase / cherry-pick 既不在「需要授权」的清单里，也没有
 > 把「远程多了哪些提交、改了哪些文件、与本地的重叠在哪」讲清楚，再让用户选择 `merge` 还是 `rebase`；
 > 不要自行选一种方式直接把远程改动合成进来。
 
+规则文本变更，无自动化回归面可跑（与 `regression_status: not-run` 一致）；转 `verified` 前需
+独立评审人指定能证明约束生效的检查。
+
 ## 变更记录
 
 - 2026-09-17 00:00 · 建档（open）· 依据用户纠正、推送被拒与 rebase 集成的事实链条，以及 fork 侧
   已落地的同义约束；Agentflow 侧条款改动尚未实施。
 - 2026-09-17 · 修复落地 · 规则改动已实施（SKILL/contracts 三处补丁，版本 0.4.2）；待独立评审（规则文本变更，无自动化检测面可跑；validate.py all 仅验证记录结构完整。转 verified 前需评审人指定能证明约束生效的检查。）
+- 2026-09-17 · 记录更正 · 「## 修复」段由「待落地」改写为已落地事实（0.4.2 已实施），与 frontmatter 的 fixed-pending-review / fix_revision 对齐。
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。
+- 2026-09-17 · 措辞澄清（评审发现）· 0.4.2 批次三条记录合计命名落点为 4 处（contracts.md:13 + SKILL.md:81/:84/:131），既有「三处补丁」行按建档时口径保留不改写。
+
+## 审查
+
+评审人 `agentflow:reviewer` 于 2026-09-17 批量评审本批 8 条 `fixed-pending-review` 记录。
+本条指定检查 C0（全量确定性检查）、C7（0.4.2 条款原文命中）与 C6（活路径与源树一致性），
+由 supervisor 执行并回传原始输出；结论 `approved`，本记录转 `verified`。规则文本变更没有
+自动化行为回归面：`regression_status` 按评审口径由 `not-run` 改为 `pass`，pass 的含义是
+指定检查已运行且输出符合预期，不是行为服从的自动化证明——失效检测器为再犯加
+recurrence/improve 环。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— `python3 tools/lab/validate.py all`：
+
+```
+8/8 PASS, exit 0
+```
+
+C7 —— `skills/agentflow/references/contracts.md:13`（Hard boundaries 第 3 条，0.4.2 扩写后全文命中）：
+
+```
+3. No push, deploy, publish, remote deletion, or third-party messaging without authorization already present in the conversation. Integrating others' work or rewriting history is the same class of act and needs per-instance authorization — `git merge`, `rebase`, `cherry-pick`, or pulling remote changes into a shared branch is a user decision (which method, which side of a conflict), not a step to complete a rejected push. The default on a rejected push is a read-only report: `git fetch` plus `log`/`diff` showing the added commits, the changed files, and the overlap; the user then chooses the integration method.
+```
+
+C6 —— `.zcode/skills/agentflow/` 活路径与源树两两 diff（`diff .zcode/skills/agentflow/SKILL.md skills/agentflow/SKILL.md` 与 `diff .zcode/skills/agentflow/references/contracts.md skills/agentflow/references/contracts.md`）均无输出，退出码 0。
+
+C5 残余 —— `python3 tools/lab/validate.py installed` FAIL(3)，差异文件为
+`agents/bug-recorder.md`、`agents/plan-architect.md`、`skills/agentflow/SKILL.md`，系本日
+更晚的 P0 措辞批次（绑定清单与「交 supervisor 校验」措辞）导致，非 0.4.2 规则缺失。
+补充证据确认 0.4.2 规则文本在已安装快照（host 实际加载的 plugin cache）内存在：
+
+```
+$ grep -c "per-instance authorization" /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.6.0/skills/agentflow/references/contracts.md
+1
+$ grep -c "parallel writers get separate branches or worktrees" /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.6.0/skills/agentflow/SKILL.md
+1
+```
+
+刷新 marketplace 并重装后该残余消除；作为已知残余风险如实记录在案。

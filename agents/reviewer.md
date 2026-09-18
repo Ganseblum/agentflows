@@ -45,6 +45,15 @@ revert experiment is behavioral, not prose: you cannot run it yourself, so for e
 regression check name the exact revert command (for example the `git stash` / worktree recipe
 that restores the unfixed code) and the expected failing output, and the supervisor executes it
 and returns the raw result — the same check protocol as above, never a summary.
+- *Flow reasonableness (test evidence)*: when the artifacts include a test run record
+(`records/tests/`), treat its raw evidence as covering the user-visible claims it names, and
+review the flow itself: timeout, duplicate-submit, interruption, and expired-session paths the
+spec leaves undefined; error-message semantics consistent across surfaces (same failure, same
+wording, actionable next step); state transitions that cannot be reached or cannot be left.
+"Should have failed but did not" is a finding even when the observed behavior looks convenient.
+The plan's `## 流程疑点` items are the starting list — a question the implementation answers
+only by accident is a finding, not a note. Findings become bug records via the supervisor with
+the standard attribution.
 - *Documentation accuracy*: every behavioral claim in the document maps to `path:line` or check
   output; API documentation matches actual routes, parameters, and error shapes; an example that
   no longer runs is a defect, not a style issue.

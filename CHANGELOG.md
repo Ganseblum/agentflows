@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.7.0 — 2026-09-18
+
+Automated-testing capability slice — user-visible features can now be tested end to end by the
+method itself: a case library with executable steps and boundary coverage, execution with
+evidence, failures filed into the bug chain, and a flow-reasonableness review over the run.
+Triggered by explicit user feedback (EP-20260917-003): real browser automation (host browser
+MCP / Playwright), credentials injected at runtime, detailed boundary cases, run reports, and
+smoke/e2e grading.
+
+- New `test-planner` role (`agents/test-planner.md`): designs the case library at an explicit
+  `records/tests/<project>-<feature-slug>/plan-*.md` path — case registry with levels
+  smoke/e2e/api/boundary and priorities P0–P3, per-case step tables whose assertions are
+  observable by an operator who never read the code (element text, navigation, whether a
+  network request fires), a boundary-coverage matrix (empty input, invalid format, overlong
+  input, special characters, duplicate submit, expired session, absent data, network failure —
+  uncovered classes declared, never silent), and `## 流程疑点` registering behaviors the spec
+  does not define. Credentials appear only as an injection method, never a value.
+- New `test-executor` role (`agents/test-executor.md`): executes an approved plan — scripted
+  automation first (Playwright headless), API cases via commands, and host-browser UI steps
+  compiled into a step script the supervisor performs in the main conversation (browser
+  automation is main-conversation-only on Claude Code and ZCode), judging pass/fail only from
+  raw evidence returned. Writes one `run-*.md` per round with per-case results (fixed enum
+  `pass / fail / blocked / not-run`, evidence required on fail/blocked rows), flat summary
+  counts, a decision, and reproduction-ready findings. `Edit` is disallowed: run records are
+  append-only history. Smoke first; a broken build stops the full set.
+- New record class `records/tests/` (contract: `records/tests/README.md`): feature-anchored
+  directories holding the plan (revised in place, `test_version` bump) and per-round run
+  records pinning the plan id/version and the `target_revision` actually tested. Run
+  `findings` / `flow_findings` reference existing bug records; the run record's raw evidence
+  doubles as the review gate's end-to-end-path evidence.
+- New schemas `schemas/test-plan.schema.json` and `schemas/test-run.schema.json`. The
+  validator wires the class in: layout and filename↔id agreement, case-registry parsing
+  (unique `TC-*` ids, level/priority enums, `case_count` equality, one detail heading per
+  case), run result-table checks (enum, evidence on fail/blocked, ids resolve in the plan's
+  registry, summary counts equal the table, `decision: pass` requires zero fail/blocked),
+  plan resolution in the same feature directory, full-case accounting when the run pins the
+  current plan version, and findings resolving into the bug pool. Valid plan/run examples live
+  under `examples/test-records/`; the result-enum negative under `examples/invalid/`.
+- Role/method augmentations: `plan-architect` now requires a test-design task (assigned to
+  `test-planner`) in every plan with user-visible behavior and references the smoke set in
+  验证命令; the `reviewer` gains the *Flow reasonableness (test evidence)* specialist mode
+  (undefined timeout/duplicate-submit/interruption paths, cross-surface error-message
+  consistency, unreachable states — "should have failed but did not" is a finding); the
+  agentflow skill gains the *Automated testing* workflow section and the two host-binding role
+  lists now name both new agents; `roles.md` and the Chinese mirror (`docs/agent-roles.md`)
+  carry the routing rows and profiles.
+- Pinned regression tests grow to 118 (10 new): the shipped examples pass, the negative is
+  rejected, and the plan/run invariants are exercised per rule (case_count mismatch, summary
+  mismatch, unknown plan, evidence-less fail row, out-of-registry row, missing case coverage,
+  pass-decision-with-failures).
+- Gate change, human-directed: `schemas/` (two new record contracts), `tools/lab/validate.py`,
+  and `tests/test_lab_contracts.py` were edited to land this batch, with the user's explicit
+  approval in-session (0.6.0 precedent).
+- Independent evaluation and release decision: an independent evaluator verified all eight
+  acceptance criteria against the files (verdict `neutral` — real, internally consistent, and
+  gate-enforced exactly as claimed; unmeasured by policy), and the release governor returned
+  `promote` with conditions (measurement:none carried unchanged; reinstall gated on user
+  approval; follow-ups before the next method-level release). Post-review follow-ups landed in
+  this entry: the smoke-first ordering sentence in the agentflow skill's Automated testing
+  section, the case detail-heading scan narrowed to the `## 用例` section with an
+  empty-heading guard, and the executor's `scratch/` directory declared in the tests contract
+  table.
+- `measurement: none (method-level change, no instrumented business task)` — `evals/` has no
+  login-flow slice; the release must not be described as a verified improvement. A seeded
+  business slice (a snapshot with a planted validation defect) is the natural future
+  instrument for this capability.
+
 ## 0.6.0 — 2026-09-17
 
 First measurement surface for method-level changes — changes that alter how roles behave inside

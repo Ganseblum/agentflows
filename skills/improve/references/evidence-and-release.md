@@ -49,9 +49,9 @@ Classify each material failure before proposing a change:
 
 Only the first two normally justify changing Agentflow instructions. A context failure may justify a new intake check. Other classes need a fix at their own boundary.
 
-## Candidate record
+## Release record
 
-Every candidate should record:
+The completed release gate produces a record of this shape:
 
 ```json
 {
@@ -76,8 +76,10 @@ Every candidate should record:
 ```
 
 Use [candidate.schema.json](candidate.schema.json) for the predeclared candidate,
-[eval-case.schema.json](eval-case.schema.json) for frozen cases, and
-[release-record.schema.json](release-record.schema.json) for the completed gate.
+[eval-case.schema.json](eval-case.schema.json) for frozen cases,
+[release-record.schema.json](release-record.schema.json) for the completed gate, and
+[comparison.schema.json](../../../schemas/comparison.schema.json) for the runner's
+baseline/candidate comparison.
 
 Bind the record to exact source and evaluation revisions and an immutable artifact digest. Do not
 reuse results from another candidate. Protected slices are evaluated independently; aggregate

@@ -1,7 +1,7 @@
 ---
 bug_id: BUG-20260915-001
 title: 共享 axios 401 拦截器在合法未登录页面触发跳转，破坏忘记/重置密码流程
-status: fixed-pending-review
+status: verified
 severity: P1
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -14,15 +14,20 @@ files:
   - agents/bug-investigator.md
   - schemas/plan.schema.json
   - evals/public/AF-015.json
+  - agents/backend-engineer.md
 affected_slices:
   - delegation-briefs
   - frontend-implementation
   - independent-review
 recorded_at: 2026-09-15T02:30:00Z
-updated_at: 2026-09-16T12:03:24Z
+updated_at: 2026-09-17T16:00:00Z
 source_revision: 33962ee
 agentflow_version: 0.3.3
 regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: 前置更正（修复段更正小节，2026-09-17 追加）落地后生效：契约幸存载体为 `skills/agentflow/references/contracts.md:28-52`（简报拆分 write_scope/read_scope 与隐式行为检查）、`agents/frontend-engineer.md:22`、`agents/backend-engineer.md:22`、`agents/reviewer.md:30`、`agents/bug-investigator.md:20-24`、`agents/plan-architect.md:42`（可选「接口与共享机制」节加提示词纪律——每个机制引用注册点、空集显式声明）；机器面移除实证为 `grep -c shared_mechanisms schemas/plan.schema.json` 输出 0，且 `validate.py` 的 PLAN_REQUIRED_HEADINGS（`tools/lab/validate.py:496-500`）不含该节；`python3 tools/lab/validate.py all` 退出码 0；再犯检测器为 recurrence 环（同类再犯自动翻 escalated 持续报警）。
+fix_revision: agentflow 0.3.4
 ---
 
 ## 现象
@@ -69,6 +74,23 @@ regression_status: pass
   每个声明机制必须引用其注册点；未涉及时显式空数组），正反例计划同步。
 - `evals/public/AF-015.json`：本案例的回归用例。
 
+### 更正（2026-09-17 · 独立评审）：`shared_mechanisms[]` 机器强制面已随 0.5.0 移除
+
+本小节为评审要求的更正，追加于原文之后，上文不改写。上列修复中
+`schemas/plan.schema.json` 的必填 `shared_mechanisms[]` 是当时的机器强制面；该机器面已于
+agentflow 0.5.0 随计划契约改为 Markdown 混合体被整体移除（CHANGELOG 0.5.0 节自述
+"plan schema rewritten, plan validation rewritten"），现行替代为可选「## 接口与共享机制」
+正文节加 plan-architect 提示词纪律。CHANGELOG 0.5.0 节（`CHANGELOG.md`，:124-125）自述
+替代形态：
+
+> optional `## 接口与共享机制` (contracts + exception matrix + release order × rollback
+> points), `## 验证命令`.
+
+机器面现状（C8 实证）：`validate.py` 的 `PLAN_REQUIRED_HEADINGS`（现
+`tools/lab/validate.py:496-500`）恰含「进展概览 / 任务清单 / 验证命令」三节，不含
+「接口与共享机制」；`grep -c shared_mechanisms schemas/plan.schema.json` 输出 0（grep
+退出码 1）。契约纪律的幸存载体清单见 `closure_criteria` 与 `## 审查`。
+
 ## 回归检查
 
 - `python3 tools/lab/validate.py all` 全部 PASS（含新增 AF-015 与 plan schema 字段）。
@@ -84,3 +106,53 @@ regression_status: pass
   判定，按规则不得写 verified。
 - 本记录连同 `evals/` 与 `plan.schema.json` 的改动属于门/契约面变更，依据用户 2026-09-15
   明确请求执行，需用户以人工审查者身份最终确认。
+
+## 审查
+
+评审人 `agentflow:reviewer` 于 2026-09-17 批量评审本批 8 条 `fixed-pending-review` 记录。
+本条先执行评审指定的更正（「## 修复」段末追加的机器面移除更正小节），随后按更正后的
+事实翻转：指定检查 C0（全量确定性检查）、C7（幸存载体原文命中）与 C8（机器面移除实证）
+由 supervisor 执行并回传原始输出；结论 `approved`，本记录转 `verified`，`fix_revision`
+据实回填为 agentflow 0.3.4。
+
+决定性证据（supervisor 回传，逐字输出）：
+
+C0 —— `python3 tools/lab/validate.py all`：
+
+```
+8/8 PASS, exit 0
+```
+
+C7 —— 幸存载体原文命中（`skills/agentflow/references/contracts.md:28-52`，简报拆分与
+隐式行为检查）：
+
+```
+write_scope: files the worker may edit
+read_scope: files, call paths, and shared mechanisms the worker must read first
+```
+
+```
+**Implicit-behavior check.** Before implementing against any reused method, shared component, or shared layout, the brief must be answerable for three bounded dimensions:
+```
+
+C8 —— 机器面移除实证（`grep -c shared_mechanisms schemas/plan.schema.json`，grep 退出码 1）：
+
+```
+0
+```
+
+`tools/lab/validate.py:496-500` 的 `PLAN_REQUIRED_HEADINGS`：
+
+```python
+PLAN_REQUIRED_HEADINGS = (
+    "## 进展概览",
+    "## 任务清单",
+    "## 验证命令",
+)
+```
+
+恰三节，不含「接口与共享机制」。
+
+## 变更记录
+
+- 2026-09-17 · 独立评审通过 · agentflow:reviewer 批量评审指定检查（C0–C8），supervisor 执行并回传原始输出，转 verified。

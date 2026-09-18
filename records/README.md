@@ -8,18 +8,23 @@ subtree it may touch.
 | --- | --- | --- | --- |
 | [`bugs/YYYY-MM-DD/*.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Bug archive: symptom, problem code, root cause, fix, priority grade, error kind, provenance, files |
 | [`bugs/recurrence/<class_id>.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Recurrence ledger: one file per failure class that recurred or was consolidated — consolidation state, version, occurrence list |
-| [`reviews/YYYY-MM-DD/<project>-<slug>/`](reviews/README.md) | supervisor | Markdown + frontmatter + archived copies | Second-pass reviews of documents authored under another system's rules: review record, verbatim snapshot, findings linkage |
+| [`reviews/<project>-<feature-slug>/`](reviews/README.md) | supervisor | Markdown + frontmatter + archived copies | Second-pass reviews of documents authored under another system's rules: review record, verbatim snapshot, findings linkage |
 | [`episodes/YYYY-MM-DD/<EP-id>.json`](episodes/README.md) | supervisor | JSON | Durable capture of one task's final decision record — the improvement loop's task-level evidence, written before the session ends |
 | [`plans/<plan_id>.md`](plans/README.md) | plan-architect | Markdown + frontmatter | Versioned execution plans (hybrid): progress overview, task board with status + evidence write-back, contracts, gates, rollback points |
+| [`tests/<project>-<feature-slug>/`](tests/README.md) | test-planner + test-executor | Markdown + frontmatter | Automated-testing evidence: case library (plan) and per-round run records with per-case results, evidence, and findings that feed the bug chain |
+| [`improvement/{candidates,evaluations,comparisons,releases}/*.json`](improvement/README.md) | supervisor + eval_runner tooling | JSON | Improvement-loop artifacts: predeclared candidate, frozen runner evaluation result, baseline/candidate comparison, audited release decision — filename = identity, cross-validated |
 | [`bugs/archive/`](bugs/README.md) | — | same | Retired `rejected` records, moved out of the active tree |
 
-Planned (not implemented): evaluation results and release records join the same root when the
-improvement control plane lands.
+The improvement control plane's artifact handoff is implemented: candidate records, evaluation
+results, runner comparisons, and release records live under
+[`records/improvement/`](improvement/README.md) with their own schemas and cross-document
+checks — no longer planned, part of the validated tree.
 
 Bug records are Markdown so people can read the narrative and the problem code; the machine
 contract lives in the YAML frontmatter and is fully validated (schema, status rules, date
-directory, filename slug, id uniqueness, timestamp order). Plans stay JSON because they are
-structured execution contracts consumed by tooling.
+directory, filename slug, id uniqueness, timestamp order). Plans are Markdown too: the
+frontmatter envelope carries the machine contract and the body board is the human-readable
+progress surface (shape: [plans/README.md](plans/README.md)).
 
 ## Conventions
 
@@ -50,6 +55,12 @@ structured execution contracts consumed by tooling.
   nowhere — they dangle for anyone who receives the records without the other repository). For
   external references the record body embeds the decisive snippet or quoted sentence: the
   qualified path is the address, the embedded content is the evidence.
+- **Tests**: automated-testing evidence lives at `records/tests/<project>-<feature-slug>/` —
+  one directory per tested feature, holding the case library (`plan-*.md`, revised in place
+  with a `test_version` bump) and one `run-*.md` per execution round. A run pins the plan id
+  and version it executed plus the `target_revision` actually tested; failed cases carry
+  reproduction-ready findings that become bug records; `credentials` declares the injection
+  method and never a value. See [tests/README.md](tests/README.md).
 - **Recurrence**: a failure class that recurred or was consolidated into Agentflow gets one
   ledger at `records/bugs/recurrence/<class_id>.md`; its records carry `class_id` + `occurrence`.
   Consolidation state (`unconsolidated` / `consolidated` + `consolidated_in`) is set from the
@@ -58,6 +69,17 @@ structured execution contracts consumed by tooling.
   version newer than the consolidation) is the aggravated marker and triggers the improve-loop
   escalation. The ledger and its records are cross-validated: an occurrence must exist, be listed
   in the ledger, and use a unique occurrence number.
+- **Improvement artifacts**: the improve loop's handoff plane lives at
+  `records/improvement/{candidates,evaluations,comparisons,releases}/` — one JSON artifact per
+  file, filename = identity (a candidate record's stem is its `candidate_version`, an
+  evaluation result's stem is its `result_id`). Producer split: tool output is tool-written
+  (the frozen runner writes evaluation results and comparisons verbatim), human rulings are
+  supervisor-written (candidate records, release records). Every cross-document claim is
+  compiled — a comparison's results must exist with matching `source_kind` and context, a
+  release must embed a candidate JSON-equal (value equality, independent of key order and
+  whitespace) to the candidate record and point at a compared result pair, and
+  `evidence_ids` resolve into the episode/bug pools. See
+  [improvement/README.md](improvement/README.md) for the contracts and the schema split.
 - **Language**: the machine layer is English/ASCII — frontmatter keys and enum values, file
   slugs, ids, paths, and the `project` slug. The body headings are fixed literals too, in
   Chinese: `## 现象`, `## 根因`, `## 修复`, `## 问题代码`, `## 审查` — the validator matches

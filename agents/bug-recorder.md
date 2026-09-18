@@ -63,5 +63,5 @@ by hand.
 This role does not delegate further: the supervisor owns delegation.
 
 Budget discipline: keep your final turn free to return the record result. If the turn budget runs
-out before the record is written and validated, return `status: partial` naming what is missing —
-a truncated run is never reported as a complete record.
+out before the record is written and handed back for validation, return `status: partial` naming
+what is missing — a truncated run is never reported as a complete record.

@@ -25,7 +25,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -302,7 +302,9 @@ def validate_business_request(
 
     A dry run stops after structure and layout (no snapshot access at all); a real run
     additionally requires ``--seed-patch``, the snapshot HEAD at the shared ``target_pin``,
-    and a seed patch that is cleanly reversible on the snapshot.
+    and a seed patch that is cleanly reversible on the snapshot. ``target_docs`` entries
+    must be snapshot-relative POSIX paths: absolute paths and ``..`` segments are rejected
+    lexically in both modes, without touching the snapshot.
     """
     profile = request["permissions_profile"]
     if profile not in BUSINESS_PERMISSION_PROFILES:
@@ -334,6 +336,19 @@ def validate_business_request(
             raise ValueError(
                 f"business case {case_id!r} target_docs must be a non-empty array of non-empty strings"
             )
+        # Path safety is lexical and runs in both modes: PurePosixPath never touches the
+        # filesystem, so a dry run keeps its "no snapshot access" semantics.
+        for doc in target_docs:
+            if PurePosixPath(doc).is_absolute():
+                raise ValueError(
+                    f"business case {case_id!r} target_docs entry {doc!r} must be "
+                    "a snapshot-relative POSIX path, not an absolute path"
+                )
+            if any(part == ".." for part in PurePosixPath(doc).parts):
+                raise ValueError(
+                    f"business case {case_id!r} target_docs entry {doc!r} must be "
+                    "a snapshot-relative POSIX path without '..' segments"
+                )
         if not isinstance(case["seeds_ref"], str) or not case["seeds_ref"]:
             raise ValueError(f"business case {case_id!r} seeds_ref must be a non-empty string")
         validate_findings_contract(case_id, case["findings_contract"])

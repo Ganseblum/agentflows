@@ -178,6 +178,18 @@ def build_request(
     }
     if business:
         request["business_root"] = str(Path(business_root).resolve())
+    # A case's repeat_count is frozen in the suite file: --repeat-count must agree with
+    # every declared value, otherwise the run silently overwrites the frozen value and
+    # baseline/candidate runs stop being comparable.
+    frozen_mismatches: list[str] = []
+    for case in cases:
+        if "repeat_count" in case and case["repeat_count"] != args.repeat_count:
+            frozen_mismatches.append(
+                f"case {case['case_id']!r} declares repeat_count {case['repeat_count']!r} but "
+                f"--repeat-count is {args.repeat_count!r}"
+            )
+    if frozen_mismatches:
+        raise ValueError("; ".join(frozen_mismatches) + "; a run must use the frozen case value")
     request_cases: list[dict[str, Any]] = []
     for case in cases:
         entry = {

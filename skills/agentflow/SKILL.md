@@ -1,6 +1,6 @@
 ---
 name: agentflow
-description: Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, or work that benefits from an explicit review gate; skip trivial single-step work where delegation would add overhead. Applies the Agentflow method with the host's own agents: supervisor, frontend/backend engineers, technical director, and independent review.
+description: Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, automated testing of user-visible features, or work that benefits from an explicit review gate; skip trivial single-step work where delegation would add overhead. Applies the Agentflow method with the host's own agents: supervisor, frontend/backend engineers, technical director, independent review, and test design/execution roles.
 ---
 
 # Agentflow
@@ -12,8 +12,8 @@ Do not invoke or require the standalone `agentflow` CLI, its providers, its TUI,
 ## Bind to the host
 
 - In **Codex**, use native subagents. Give each subagent one role and one task brief. Use the main task as the supervisor.
-- In **Claude Code**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, and `agentflow:reviewer` when those roles fit the task. Use the main conversation as the supervisor.
-- In **ZCode**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, `agentflow:reviewer`, `agentflow:bug-investigator`, `agentflow:bug-fixer`, `agentflow:bug-recorder`, and `agentflow:plan-architect`. Use the main conversation as the supervisor. ZCode loads these from the installed plugin snapshot, so a role change in the source tree takes effect only after the plugin is reinstalled — run `python3 tools/lab/validate.py installed` to see whether the installed copy still matches the source.
+- In **Claude Code**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, `agentflow:reviewer`, `agentflow:bug-investigator`, `agentflow:bug-fixer`, `agentflow:bug-recorder`, `agentflow:plan-architect`, `agentflow:test-planner`, and `agentflow:test-executor` when those roles fit the task. Use the main conversation as the supervisor.
+- In **ZCode**, prefer the plugin agents `agentflow:frontend-engineer`, `agentflow:backend-engineer`, `agentflow:technical-director`, `agentflow:reviewer`, `agentflow:bug-investigator`, `agentflow:bug-fixer`, `agentflow:bug-recorder`, `agentflow:plan-architect`, `agentflow:test-planner`, and `agentflow:test-executor`. Use the main conversation as the supervisor. ZCode loads these from the installed plugin snapshot, so a role change in the source tree takes effect only after the plugin is reinstalled — run `python3 tools/lab/validate.py installed` to see whether the installed copy still matches the source.
 - In another Agent Skills compatible host, use its built-in delegation mechanism. If none exists, execute the same phases sequentially and state that independent execution was unavailable.
 
 Read [role profiles](references/roles.md) before assigning work and [contracts](references/contracts.md) before delegating implementation or review. The [hard boundaries](references/contracts.md#hard-boundaries) hold for every delegation in both workflows; check them before accepting any deliverable.
@@ -39,6 +39,28 @@ release order with rollback points — shape defined in records/plans/README.md,
 feature the plan carries the design-completeness artifacts from
 [contracts](references/contracts.md): critical-path timing (step table as baseline), an
 exception matrix per critical path, and a release order paired with rollback points.
+
+## Automated testing
+
+When the user asks for automated testing of a user-visible feature — or a plan carries a
+test-design task — run the testing chain. `test-planner` writes the case library at an explicit
+`records/tests/<project>-<feature-slug>/` path: levels smoke / e2e / api / boundary, step tables
+whose assertions are observable (element text, navigation, whether a network request fires),
+boundary coverage with uncovered classes declared, and `## 流程疑点` for behaviors the spec does
+not define (contract: `records/tests/README.md`). `test-executor` runs it: scripted automation
+first (Playwright or the project's own e2e suite, headless), API cases via commands, and
+host-browser UI steps performed by the supervisor in the main conversation from the executor's
+step script — browser automation is main-conversation-only on Claude Code and ZCode — returning
+raw evidence (screenshots, DOM text, network log) that the executor judges. Run the smoke set
+first and stop on a smoke failure instead of running the full set against a broken build. Each
+round lands as one `run-*.md` record with per-case results, evidence, and summary counts.
+Failed cases carry
+reproduction-ready findings and become bug records through the standard chain (attribution per
+the records rules); flow-reasonableness findings go to the reviewer as the *Flow reasonableness
+(test evidence)* specialist mode. The run record's raw evidence is the review gate's
+end-to-end-path evidence (step 8). Credentials are supplied per session and injected at runtime —
+never persisted into records, scripts, or logs. Prefer a project-level Playwright setup for
+repeatability; the supervisor-driven route is the fallback, not the goal.
 
 ## Second-pass review of external documents
 

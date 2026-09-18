@@ -14,6 +14,8 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | Bug Fixer | 在候选工作区实施单个 Bug 修复 | 是 | 候选工作区内指派的文件范围 |
 | Bug Recorder | 保存脱敏 Bug 记录和适用边界 | 只写记录 | Supervisor 显式指定的 `records/bugs/<日期>/` 单一 md 文件 |
 | Plan Architect | 汇总专业意见并生成可执行计划 | 只写计划 | Supervisor 显式指定的 `records/plans/` 单一路径 |
+| Test Planner | 设计测试用例库：级别分级、可执行步骤表、边界覆盖、流程疑点 | 否 | Supervisor 显式指定的 `records/tests/<项目>-<功能>/plan-*.md` 单一路径 |
+| Test Executor | 执行已批准的测试计划并产出带证据的执行报告 | 只写执行记录与脚本 | Supervisor 显式指定的 `records/tests/<项目>-<功能>/run-*.md` 单一路径及其同目录脚本 |
 | Feedback Analyst | 证据归一化、聚类与归因 | 否 | 无（只读） |
 | Candidate Engineer | 在候选源实施单个改进假设 | 是 | 指派的候选源码树 |
 | Evaluator | 独立对照评测 Baseline 与 Candidate | 否 | 无（只读，结果记录由隔离 runner 产出） |
@@ -33,6 +35,8 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | 有界范围的前端/后端实现 | 一名工程师 + 视改动量启用 Reviewer |
 | 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
 | 纯规划、暂不写码 | 专家并行 → Plan Architect |
+| 用户可见功能的自动化测试（用户点名，或计划带测试设计任务） | Test Planner → Test Executor（宿主浏览器步骤由 Supervisor 在主对话执行）→ Reviewer（流程合理性模式） |
+| 执行报告产出失败或覆盖缺口 | Executor 证据 → Bug 链路（Investigator → Fixer → Reviewer → Recorder） |
 | 重要、反复、跨层的 Bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | 已有验证复现的小 Bug | Fixer + Supervisor 侧检查；要沉淀时再记录 |
 | 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
@@ -274,6 +278,28 @@ git：提交/rebase/push 是共享可变状态——并行执行者各自分支�
   semver）；跨仓类先用 report 按 `project` + `error_kind` 聚类。
 
 完整工作流与归因表见 `records/reviews/README.md`。
+
+## 自动化测试链路（records/tests/）
+
+0.7.0 起新增：`Test Planner` 出用例库、`Test Executor` 执行并出报告。宿主浏览器的操作是
+主对话专属能力（子代理加载不了 browser-use/computer-use），因此 UI 步骤的分工是——Executor
+把用例编译成逐步操作脚本 + 断言清单，Supervisor 在主对话照单执行并回传原始证据（截图、
+DOM、网络面板），Executor 只依据原始证据判 pass/fail。落点：
+
+- **目录锚是 feature**：`records/tests/<project>-<feature-slug>/` 一个 feature 一个目录；
+  用例库 `plan-*.md` 就地修订（`test_version` 递增），执行报告每轮一个
+  `run-<YYYY-MM-DD>-<NNN>.md`（文件名 = `test_run_id`），并钉住所依据的 plan id/版本与
+  被测仓 `target_revision`；
+- **用例带级别与边界**：smoke（P0 主路径回归门）/ e2e / api / boundary；`## 边界覆盖`
+  矩阵把空输入、非法格式、超长、特殊字符、重复提交、过期登录态等默认边界类逐条映射到
+  用例，未覆盖的显式声明；`## 流程疑点` 登记 spec 未定义的行为，交 Reviewer 的
+  流程合理性模式终审——「该失败而没失败」也是 finding；
+- **失败即立案**：`findings` / `flow_findings` 引用 `records/bugs/` 的 bug_id（校验器
+  强制存在），失败行自带复现步骤，Supervisor 不必重新推导；执行报告的原始证据同时充当
+  评审门（SKILL 第 8 步）的端到端路径证据；
+- **凭据不落盘**：`credentials` 字段只声明注入方式（会话注入 / env / gitignored 文件），
+  任何记录、脚本、日志中不得出现真实密码或 token；trace/截图若捕获了敏感值须在结论中
+  声明，按敏感产物处理。
 
 ## 业务评测切片（evals/business/）
 

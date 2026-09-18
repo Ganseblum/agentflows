@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 private-evals/
 .zcode/
+.commandcode/
+command-code-session-*.html

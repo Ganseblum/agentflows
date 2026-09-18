@@ -13,6 +13,8 @@ hard cases; most tasks use one or two rows.
 | Frontend or backend implementation with a bounded scope | One engineer + Reviewer when material |
 | Cross-layer feature, contract change, migration | Technical Director → both engineers (parallel investigation) → Reviewer |
 | Planning request, no code yet | Specialists in parallel → Plan Architect |
+| Automated testing of a user-visible feature (user asked, or the plan carries a test-design task) | Test Planner → Test Executor (supervisor performs host-browser steps) → Reviewer in flow-reasonableness mode |
+| Test run produced failures or coverage gaps | Executor evidence → bug chain (Investigator → Fixer → Reviewer → Recorder) |
 | Material, uncertain, recurring, or cross-layer bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | Small bug with a verified reproduction | Fixer + Supervisor-side check; record when it should persist |
 | Review of documents authored under another system's rules | Supervisor (archive + review record) + Reviewer; findings become bug records with `provenance: external` |
@@ -67,6 +69,14 @@ Use when a diagnosed bug's evidence should persist — recurring classes, proces
 ## Plan architect
 
 Use for planning tasks: it converts specialist outputs and technical-director decisions into one versioned plan under the assigned `records/plans/` path — a Markdown board (progress overview, per-task table with status + evidence write-back, interfaces and shared mechanisms at their registration points, review gates, release order × rollback points), machine-checked for unique task IDs, acyclic dependencies, the fixed status enum, and closed blocking decisions before approval. It writes the plan only — the supervisor decides approval, assigns execution, and owns the stop/rollback call. The plan file is also the resume point when an orchestration session dies mid-run.
+
+## Test planner
+
+Use when a user-visible feature needs a case library: levels smoke / e2e / api / boundary, step tables whose assertions are observable by an operator who never read the code, boundary coverage with uncovered classes declared, and numbered 流程疑点 for behaviors the spec does not define. Writes only the assigned `records/tests/<project>-<feature-slug>/plan-*.md`; never changes the implementation and never handles credential values — the plan declares the injection method, not the secret.
+
+## Test executor
+
+Use to run an approved test plan. Prefers scripted automation (Playwright headless) and command-runnable API cases; compiles host-browser UI steps into a step script for the supervisor (browser automation is main-conversation-only) and judges pass/fail only from raw evidence returned. Writes the assigned `run-*.md` record with per-case results, evidence on every fail/blocked row, and reproduction-ready findings for the bug chain; smoke first, stop on a broken build; never repairs the product.
 
 ## Improvement roles
 

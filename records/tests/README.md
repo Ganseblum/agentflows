@@ -1,0 +1,56 @@
+# Test records
+
+Automated-testing evidence for user-visible features: the case library a `test-planner` writes
+and the run records a `test-executor` produces. The chain is user-initiated or plan-carried
+(see the agentflow skill's *Automated testing* section); records here feed the bug chain and the
+review gate's end-to-end-path evidence.
+
+| Artifact | Writer | Format | Purpose |
+| --- | --- | --- | --- |
+| `<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md` | test-planner | Markdown + frontmatter | Case library: registry with levels (smoke/e2e/api/boundary) and priorities, executable step tables, boundary coverage, 流程疑点 |
+| `<project>-<feature-slug>/run-<YYYY-MM-DD>-<NNN>.md` | test-executor | Markdown + frontmatter | One execution round: per-case results with evidence, summary counts, decision, reproduction-ready findings |
+| `<project>-<feature-slug>/evidence/` | test-executor | files | Screenshots, traces, response dumps — referenced by run records, never hand-edited |
+| `<project>-<feature-slug>/scratch/` | test-executor | files | Disposable automation scripts written during a run (e.g. Playwright specs); not records |
+
+## Contracts
+
+Schemas: `schemas/test-plan.schema.json` and `schemas/test-run.schema.json` (frontmatter
+envelopes; frontmatter values are flat strings — the parser deliberately does not nest).
+Cross-checks the validator enforces beyond the schemas:
+
+- **Layout**: both records live at `records/tests/<project>-<feature-slug>/`; the filename
+  matches the id (`TP-<YYYYMMDD>-<NNN>` → `plan-<YYYY-MM-DD>-<NNN>.md`,
+  `TR-<YYYYMMDD>-<NNN>` → `run-<YYYY-MM-DD>-<NNN>.md`), and the id date matches
+  `recorded_at`'s date. The directory is anchored on the tested feature, not the date: the same
+  feature accumulates plan revisions and run rounds in one place. Unexpected files directly in
+  the feature directory are rejected; `README.md` and `evidence/` are exempt.
+- **Plan body**: `## 用例` opens with the registry table (`| 用例 ID | 级别 | 优先级 | 标题 |`)
+  and carries one `### <case id>` detail heading per case; case ids (`TC-*`) are unique; levels
+  and priorities are fixed enums; `case_count` equals the registry row count. `## 边界覆盖` and
+  `## 流程疑点` are required sections. The plan is revised in place — bump `test_version`.
+- **Run body**: `## 结果` is the result table (`| 用例 ID | 状态 | 证据 | 说明 |`); statuses are
+  the fixed enum `pass / fail / blocked / not-run`; a `fail` or `blocked` row carries evidence;
+  result case ids must exist in the referenced plan's registry; the flat `summary_*` counts
+  equal the table; `decision: pass` requires zero fail and zero blocked. `## 证据` and
+  `## 结论` are required. Each round is one new file — corrections edit the record and refresh
+  `updated_at` (append-only history: past evidence is never rewritten to improve the story).
+- **Plan resolution**: a run's `test_plan_id` must resolve to a plan record in the same feature
+  directory, with a matching `project`. When the run pins the plan's current `test_version`,
+  every registry case is accounted for in the result table (a run against an older version
+  records its own coverage instead).
+- **Findings**: `findings` / `flow_findings` list `BUG-*` ids that must exist under
+  `records/bugs/`. Failed cases carry reproduction-ready findings (steps, expected vs actual,
+  evidence refs) so the supervisor can file the bug record without re-deriving it; attribution
+  follows the standard rules (`external` for target-project defects, `agentflow` for gaps in
+  Agentflow's own method).
+
+## Credentials
+
+Credentials are supplied per session and injected at runtime (env, session, gitignored file) —
+the `credentials` frontmatter field declares the **method in one line** and never a value.
+Passwords, tokens, and real account values are forbidden anywhere in these records; the
+executor enters them through masked inputs and flags any trace or screenshot that captured a
+secret so the supervisor can treat that artifact as sensitive.
+
+A record is accepted only after `python3 tools/lab/validate.py artifacts` passes against the
+actual file.

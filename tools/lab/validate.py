@@ -28,6 +28,8 @@ ROOT = Path(__file__).resolve().parents[2]
 BUG_RECORD_SCHEMA = ROOT / "schemas" / "bug-record.schema.json"
 RECURRENCE_SCHEMA = ROOT / "schemas" / "recurrence.schema.json"
 REVIEW_SCHEMA = ROOT / "schemas" / "review.schema.json"
+TEST_PLAN_SCHEMA = ROOT / "schemas" / "test-plan.schema.json"
+TEST_RUN_SCHEMA = ROOT / "schemas" / "test-run.schema.json"
 EPISODE_SCHEMA = ROOT / "skills" / "improve" / "references" / "episode.schema.json"
 PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
 SCHEMA_PATHS = [
@@ -54,6 +56,8 @@ REQUIRED_PROTECTED_PATHS = {
     "schemas/review.schema.json",
     "schemas/plan.schema.json",
     "schemas/evaluation-result.schema.json",
+    "schemas/test-plan.schema.json",
+    "schemas/test-run.schema.json",
     "skills/improve/references/evidence-and-release.md",
     "skills/improve/references/episode.schema.json",
     "skills/improve/references/eval-case.schema.json",
@@ -85,6 +89,12 @@ BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 # pinned test files are protected individually and this list asserts nothing else appears. A new
 # test file is a human-authored change to this list plus the protection entry above.
 EXPECTED_TEST_FILES = ("test_lab_contracts.py",)
+
+# Floor for the regression suite size, parsed from the unittest "Ran N tests" summary. The
+# suite currently runs 108 tests; the floor is set far below that steady state but far above a
+# trivial suite, so deleting or gutting the tests cannot yield a green gate — shrinking the
+# suite becomes a deliberate gate change that must be reviewed, not an accident that passes.
+MIN_UNIT_TEST_COUNT = 20
 
 # Every manifest that carries the plugin name and version. They are bumped by hand, so a missed
 # bump would otherwise surface only after a host reinstall. The pointer locates the value.
@@ -120,8 +130,21 @@ class ValidationError:
 def load_json(path: Path) -> tuple[Any | None, list[ValidationError]]:
     try:
         return json.loads(path.read_text(encoding="utf-8")), []
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return None, [ValidationError(str(path), f"invalid JSON: {exc}")]
+
+
+def read_document_text(path: Path) -> tuple[str | None, list[ValidationError]]:
+    """Read a Markdown/text document for a doc-surface check; read failures are structured.
+
+    Mirrors `load_json` for text: UnicodeDecodeError is a ValueError, not an OSError, so a
+    file saved in a non-UTF-8 encoding (or a missing document) must surface as a
+    ValidationError instead of an uncaught traceback escaping the check.
+    """
+    try:
+        return path.read_text(encoding="utf-8"), []
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, [ValidationError(str(path), f"cannot read document: {exc}")]
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, Any], str, list[str]]:
@@ -874,6 +897,363 @@ def validate_review_markdown(
     return errors
 
 
+TEST_CASE_ID_PATTERN = re.compile(r"^TC-[A-Z0-9][A-Z0-9-]*$")
+TEST_CASE_LEVELS = ("smoke", "e2e", "api", "boundary")
+TEST_CASE_PRIORITIES = ("P0", "P1", "P2", "P3")
+TEST_RESULT_STATUSES = ("pass", "fail", "blocked", "not-run")
+TEST_PLAN_REQUIRED_HEADINGS = ("## 用例", "## 边界覆盖", "## 流程疑点")
+TEST_RUN_REQUIRED_HEADINGS = ("## 结果", "## 证据", "## 结论")
+# Cells that count as "no evidence" in a run's 结果 table; fail/blocked rows may not use them.
+NO_EVIDENCE_CELLS = ("", "—", "-", "无")
+
+
+def parse_test_case_registry(
+    body: str, path: Path
+) -> tuple[list[dict[str, str]], list[ValidationError]]:
+    """Parse the 用例 registry table: rows whose first cell is a TC id carry ID/级别/优先级/标题."""
+    cases: list[dict[str, str]] = []
+    errors: list[ValidationError] = []
+    lines = body.splitlines()
+    seen: dict[str, int] = {}
+    for index, line in enumerate(lines):
+        lineno = index + 1
+        row = parse_plan_task_row(line)
+        if row is None:
+            continue
+        if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            continue  # header row
+        cells = row["cells"]
+        if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
+            continue
+        case_id, level, priority = cells[0], cells[1], cells[2]
+        if case_id in seen:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: duplicate case id {case_id!r} (first seen at line {seen[case_id]})",
+                )
+            )
+            continue
+        seen[case_id] = lineno
+        if level not in TEST_CASE_LEVELS:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} level {level!r} must be one of {TEST_CASE_LEVELS}",
+                )
+            )
+        if priority not in TEST_CASE_PRIORITIES:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} priority {priority!r} must be one of {TEST_CASE_PRIORITIES}",
+                )
+            )
+        cases.append({"case_id": case_id, "level": level, "priority": priority, "title": cells[3]})
+    return cases, errors
+
+
+def validate_test_plan_markdown(
+    path: Path, relative: Path, seen_plan_ids: dict[str, Path]
+) -> tuple[list[ValidationError], dict[str, Any] | None]:
+    """Validate one test plan and return (errors, plan entry) for run-record cross-checks.
+
+    Layout: records/tests/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md — feature-anchored
+    directory, filename matches test_plan_id, revised in place (test_version bump). Body
+    contract: the 用例 registry table (unique TC ids, level/priority enums, case_count equality,
+    one detail heading per case) plus the 边界覆盖 and 流程疑点 sections.
+    """
+    frontmatter, body, errors = load_bug_markdown(path)
+    if errors or frontmatter is None:
+        return errors, None
+    try:
+        validator = SchemaValidator(TEST_PLAN_SCHEMA)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")], None
+    errors.extend(validator.validate(frontmatter))
+    if errors:
+        return errors, None
+    errors.extend(validate_timestamp_order(frontmatter, path))
+    errors.extend(validate_body_references(body, path))
+    test_plan_id = frontmatter.get("test_plan_id")
+    match = None
+    if isinstance(test_plan_id, str):
+        if test_plan_id in seen_plan_ids:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"duplicate test_plan_id {test_plan_id!r} already declared in {seen_plan_ids[test_plan_id]}",
+                )
+            )
+        else:
+            seen_plan_ids[test_plan_id] = path
+        match = re.fullmatch(r"TP-(\d{4})(\d{2})(\d{2})-(\d{3})", test_plan_id)
+        if match:
+            expected_stem = f"plan-{match.group(1)}-{match.group(2)}-{match.group(3)}-{match.group(4)}"
+            if path.stem != expected_stem:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"filename must be {expected_stem}.md to match test_plan_id {test_plan_id!r}",
+                    )
+                )
+            recorded = frontmatter.get("recorded_at")
+            if isinstance(recorded, str):
+                try:
+                    recorded_date = dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()
+                except ValueError:
+                    recorded_date = None
+                if recorded_date is not None and recorded_date.strftime("%Y%m%d") != "".join(
+                    match.group(1, 2, 3)
+                ):
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"test_plan_id date must match recorded_at date {recorded_date.isoformat()}",
+                        )
+                    )
+        else:
+            errors.append(
+                ValidationError(str(path), "plan record filename must match its test_plan_id date and seq")
+            )
+    parts = relative.parts
+    if parts[0] == "records":
+        # Example instances live under examples/ and are not layout-checked.
+        if len(parts) != 4:
+            errors.append(
+                ValidationError(str(path), "test plans live in records/tests/<project>-<feature-slug>/")
+            )
+        elif "-" not in parts[2] or parts[2].startswith("-") or parts[2].endswith("-"):
+            errors.append(
+                ValidationError(str(path), "test directory must be named <project>-<feature-slug>")
+            )
+    for heading in TEST_PLAN_REQUIRED_HEADINGS:
+        if not heading_present(body, heading):
+            errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
+    cases, registry_errors = parse_test_case_registry(body, path)
+    errors.extend(registry_errors)
+    declared_count = frontmatter.get("case_count")
+    if isinstance(declared_count, str) and declared_count.isdigit() and int(declared_count) != len(cases):
+        errors.append(
+            ValidationError(
+                str(path),
+                f"case_count {declared_count} does not match the {len(cases)} cases in the 用例 registry",
+            )
+        )
+    detail_headings: set[str] = set()
+    in_case_section = False
+    for line in body.splitlines():
+        if line.startswith("## "):
+            in_case_section = line.strip() == "## 用例"
+            continue
+        if in_case_section and line.startswith("### "):
+            tokens = line.lstrip("#").split()
+            if tokens:
+                detail_headings.add(tokens[0])
+    for case in cases:
+        if case["case_id"] not in detail_headings:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"case {case['case_id']} has no detail heading (### <case id> ...) under ## 用例",
+                )
+            )
+    if errors:
+        return errors, None
+    entry = {
+        "path": path,
+        "frontmatter": frontmatter,
+        "cases": [case["case_id"] for case in cases],
+    }
+    return errors, entry
+
+
+def validate_test_run_markdown(
+    path: Path,
+    relative: Path,
+    seen_run_ids: dict[str, Path],
+    test_plans: dict[str, dict[str, Any]],
+) -> tuple[list[ValidationError], list[str], list[str]]:
+    """Validate one test run record; return (errors, findings, flow_findings) so the caller can
+    cross-check the bug-id pools after the whole records tree has been walked.
+
+    Body contract: the 结果 table (unique case ids from the referenced plan's registry, fixed
+    result enum, evidence required on fail/blocked rows), summary counts equal to the table,
+    decision pass requires zero fail/blocked, and — when the run pins the plan's current
+    test_version — every case in the registry is accounted for.
+    """
+    frontmatter, body, errors = load_bug_markdown(path)
+    if errors or frontmatter is None:
+        return errors, [], []
+    try:
+        validator = SchemaValidator(TEST_RUN_SCHEMA)
+    except (OSError, ValueError) as exc:
+        return [ValidationError(str(path), f"validator setup failed: {exc}")], [], []
+    errors.extend(validator.validate(frontmatter))
+    if errors:
+        return errors, [], []
+    errors.extend(validate_timestamp_order(frontmatter, path))
+    errors.extend(validate_body_references(body, path))
+    test_run_id = frontmatter.get("test_run_id")
+    if isinstance(test_run_id, str):
+        if test_run_id in seen_run_ids:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"duplicate test_run_id {test_run_id!r} already declared in {seen_run_ids[test_run_id]}",
+                )
+            )
+        else:
+            seen_run_ids[test_run_id] = path
+        match = re.fullmatch(r"TR-(\d{4})(\d{2})(\d{2})-(\d{3})", test_run_id)
+        if match:
+            expected_stem = f"run-{match.group(1)}-{match.group(2)}-{match.group(3)}-{match.group(4)}"
+            if path.stem != expected_stem:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"filename must be {expected_stem}.md to match test_run_id {test_run_id!r}",
+                    )
+                )
+            recorded = frontmatter.get("recorded_at")
+            if isinstance(recorded, str):
+                try:
+                    recorded_date = dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()
+                except ValueError:
+                    recorded_date = None
+                if recorded_date is not None and recorded_date.strftime("%Y%m%d") != "".join(
+                    match.group(1, 2, 3)
+                ):
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"test_run_id date must match recorded_at date {recorded_date.isoformat()}",
+                        )
+                    )
+        else:
+            errors.append(
+                ValidationError(str(path), "run record filename must match its test_run_id date and seq")
+            )
+    parts = relative.parts
+    if parts[0] == "records" and len(parts) != 4:
+        errors.append(
+            ValidationError(str(path), "test runs live in records/tests/<project>-<feature-slug>/")
+        )
+    for heading in TEST_RUN_REQUIRED_HEADINGS:
+        if not heading_present(body, heading):
+            errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
+
+    plan_id = frontmatter.get("test_plan_id")
+    plan = test_plans.get(plan_id) if isinstance(plan_id, str) else None
+    if isinstance(plan_id, str) and plan is None:
+        errors.append(
+            ValidationError(str(path), f"test_plan_id {plan_id!r} does not resolve to a test plan record")
+        )
+    elif plan is not None:
+        if plan["path"].parent != path.parent:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"referenced plan {plan_id!r} lives in {plan['path'].parent}, not next to this run",
+                )
+            )
+        if frontmatter.get("project") != plan["frontmatter"].get("project"):
+            errors.append(
+                ValidationError(str(path), "run project must match the referenced plan's project")
+            )
+
+    results: dict[str, tuple[int, str]] = {}
+    counts = {"pass": 0, "fail": 0, "blocked": 0, "not-run": 0}
+    in_results = False
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        lineno = index + 1
+        if line.startswith("## "):
+            in_results = line.strip() == "## 结果"
+            continue
+        if not in_results:
+            continue
+        row = parse_plan_task_row(line)
+        if row is None:
+            continue
+        if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            continue  # header row
+        cells = row["cells"]
+        if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
+            continue
+        case_id, status_cell, evidence = cells[0], cells[1].strip(), cells[2].strip()
+        if case_id in results:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: duplicate result row for case {case_id!r} "
+                    f"(first seen at line {results[case_id][0]})",
+                )
+            )
+            continue
+        if status_cell not in TEST_RESULT_STATUSES:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} result {status_cell!r} must be one of {TEST_RESULT_STATUSES}",
+                )
+            )
+            continue
+        results[case_id] = (lineno, status_cell)
+        counts[status_cell] += 1
+        if status_cell in ("fail", "blocked") and evidence in NO_EVIDENCE_CELLS:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: {status_cell} row for {case_id} must carry evidence "
+                    "(a path next to this record, or the recorded observation)",
+                )
+            )
+    for key, observed in (
+        ("pass", counts["pass"]),
+        ("fail", counts["fail"]),
+        ("blocked", counts["blocked"]),
+        ("not_run", counts["not-run"]),
+    ):
+        declared = frontmatter.get(f"summary_{key}")
+        if isinstance(declared, str) and declared.isdigit() and int(declared) != observed:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"summary_{key} {declared} does not match the 结果 table ({observed})",
+                )
+            )
+    if frontmatter.get("decision") == "pass" and (counts["fail"] or counts["blocked"]):
+        errors.append(
+            ValidationError(str(path), "decision 'pass' requires zero fail and zero blocked rows")
+        )
+    if plan is not None:
+        for case_id in results:
+            if case_id not in plan["cases"]:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"result row {case_id!r} is not in plan {plan_id!r}'s case registry",
+                    )
+                )
+        version = frontmatter.get("test_plan_version")
+        if (
+            version is not None
+            and version == (plan["frontmatter"] or {}).get("test_version")
+        ):
+            missing = [case_id for case_id in plan["cases"] if case_id not in results]
+            if missing:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"run pins the current plan version but does not account for cases {missing}",
+                    )
+                )
+    findings = [entry for entry in frontmatter.get("findings") or [] if isinstance(entry, str)]
+    flow_findings = [entry for entry in frontmatter.get("flow_findings") or [] if isinstance(entry, str)]
+    return errors, findings, flow_findings
+
+
 def validate_bug_markdown(path: Path) -> list[ValidationError]:
     """Validate one Markdown bug record: frontmatter schema, body sections, state rules."""
     frontmatter, body, errors = load_bug_markdown(path)
@@ -1029,25 +1409,99 @@ def check_schema_refs(value: Any, schema_path: Path, location: str = "$") -> lis
     return errors
 
 
+def validate_invalid_plan_example(path: Path) -> list[ValidationError]:
+    """Reject one negative plan example; `validate_plan_markdown` needs the relative path."""
+    return validate_plan_markdown(path, path.relative_to(ROOT))
+
+
+def example_test_plans() -> dict[str, dict[str, Any]]:
+    """Test plan entries parsed from examples/test-records for standalone run-example validation."""
+    plans: dict[str, dict[str, Any]] = {}
+    for plan_path in sorted((ROOT / "examples" / "test-records").glob("plan-*.md")):
+        frontmatter, body, load_errors = load_bug_markdown(plan_path)
+        if load_errors or frontmatter is None or not isinstance(frontmatter.get("test_plan_id"), str):
+            continue
+        cases, _ = parse_test_case_registry(body, plan_path)
+        plans[frontmatter["test_plan_id"]] = {
+            "path": plan_path,
+            "frontmatter": frontmatter,
+            "cases": [case["case_id"] for case in cases],
+        }
+    return plans
+
+
+def validate_invalid_test_run_example(path: Path) -> list[ValidationError]:
+    """Reject one negative test-run example; needs the example plan registry for resolution."""
+    errors, _, _ = validate_test_run_markdown(path, path.relative_to(ROOT), {}, example_test_plans())
+    return errors
+
+
+# Declared contents of `examples/invalid`. The directory used to be classified by filename
+# prefix (case-sensitive for bug records, insensitive for plans), so a misspelled negative
+# example was silently skipped and never exercised its gate. Now every non-hidden entry in the
+# directory must be declared here together with the validator that must reject it, and every
+# declared entry must exist and be rejected. Only bug-record and plan negatives exist today;
+# do not add other negative families here without extending the validators that cover them.
+INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
+    "bug-record-verified-without-review.md": ("bug-record", validate_bug_markdown),
+    "PLAN-INVALID-002.md": ("plan", validate_invalid_plan_example),
+    "test-run-bad-status.md": ("test-run", validate_invalid_test_run_example),
+}
+
+
 def validate_examples() -> list[ValidationError]:
     errors: list[ValidationError] = []
     bug_paths = sorted((ROOT / "examples" / "bug-records").glob("*.md"))
     plan_paths = sorted((ROOT / "examples" / "plans").glob("*.md"))
     result_paths = sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
+    test_paths = sorted((ROOT / "examples" / "test-records").glob("*.md"))
+    test_plan_paths = [path for path in test_paths if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
+    test_run_paths = [path for path in test_paths if re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
     valid_paths = plan_paths + result_paths
-    invalid_plan = sorted(
-        p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.lower().startswith("plan-")
-    )
-    invalid_md = sorted(
-        p for p in (ROOT / "examples" / "invalid").glob("*.md") if p.name.startswith("bug-record")
-    )
-    if not bug_paths or not valid_paths or not (invalid_plan + invalid_md):
+    invalid_dir = ROOT / "examples" / "invalid"
+    present = sorted(invalid_dir.iterdir()) if invalid_dir.is_dir() else []
+    declared: set[str] = set()
+    for path in present:
+        if path.name.startswith("."):
+            # Hidden entries (.DS_Store and friends) are host/OS artifacts, not examples.
+            continue
+        if path.name not in INVALID_EXAMPLES:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    "undeclared negative example; declare it in INVALID_EXAMPLES together with "
+                    "the validator that must reject it",
+                )
+            )
+        elif path.is_file():
+            declared.add(path.name)
+    if not bug_paths or not valid_paths or not declared:
         errors.append(ValidationError("examples", "valid and invalid example sets are all required"))
-    if not plan_paths or not invalid_plan:
+    if not test_plan_paths or not test_run_paths:
+        errors.append(
+            ValidationError(
+                "examples",
+                "a valid test plan example and a valid test run example are both required",
+            )
+        )
+    plan_negatives = {
+        name for name, (kind, _) in INVALID_EXAMPLES.items() if kind == "plan" and name in declared
+    }
+    if not plan_paths or not plan_negatives:
         # A naming mismatch here once silently excluded the invalid plan example from this check.
         errors.append(
             ValidationError("examples", "a valid plan example and an invalid plan example are both required")
         )
+    for name, (kind, check) in sorted(INVALID_EXAMPLES.items()):
+        path = invalid_dir / name
+        if not path.is_file():
+            errors.append(
+                ValidationError(str(path), f"declared {kind} negative example is missing from examples/invalid")
+            )
+            continue
+        document_errors = check(path)
+        if not document_errors:
+            errors.append(ValidationError(str(path), "expected invalid example to be rejected"))
     for path in bug_paths:
         document_errors = validate_bug_markdown(path)
         if document_errors:
@@ -1056,18 +1510,20 @@ def validate_examples() -> list[ValidationError]:
         document_errors = validate_plan_markdown(path, path.relative_to(ROOT))
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
+    for path in test_plan_paths:
+        document_errors, _ = validate_test_plan_markdown(path, path.relative_to(ROOT), {})
+        if document_errors:
+            errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
+    for path in test_run_paths:
+        document_errors, _, _ = validate_test_run_markdown(
+            path, path.relative_to(ROOT), {}, example_test_plans()
+        )
+        if document_errors:
+            errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
     for path in result_paths:
         document_errors = validate_document(path)
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
-    for path in invalid_plan:
-        document_errors = validate_plan_markdown(path, path.relative_to(ROOT))
-        if not document_errors:
-            errors.append(ValidationError(str(path), "expected invalid example to be rejected"))
-    for path in invalid_md:
-        document_errors = validate_bug_markdown(path)
-        if not document_errors:
-            errors.append(ValidationError(str(path), "expected invalid example to be rejected"))
     return errors
 
 
@@ -1264,6 +1720,203 @@ def validate_evals_suite() -> list[ValidationError]:
     return validate_evals() + validate_business_evals()
 
 
+# The improvement loop's JSON handoff plane (records/improvement/): each subtree has its own
+# schema and its own identity rule, compiled by validate_workspace_artifacts. The schema split
+# is deliberate — schemas/ holds the deterministic tool-output contracts (evaluation result,
+# comparison), skills/improve/references/ holds the improve-loop rulebook contracts (candidate,
+# release record) — see records/improvement/README.md.
+EVALUATION_RESULT_SCHEMA = ROOT / "schemas" / "evaluation-result.schema.json"
+COMPARISON_SCHEMA = ROOT / "schemas" / "comparison.schema.json"
+CANDIDATE_SCHEMA = ROOT / "skills" / "improve" / "references" / "candidate.schema.json"
+RELEASE_RECORD_SCHEMA = ROOT / "skills" / "improve" / "references" / "release-record.schema.json"
+IMPROVEMENT_SCHEMA_BY_SUBTREE = {
+    "candidates": CANDIDATE_SCHEMA,
+    "evaluations": EVALUATION_RESULT_SCHEMA,
+    "comparisons": COMPARISON_SCHEMA,
+    "releases": RELEASE_RECORD_SCHEMA,
+}
+# The seven execution-context fields the runner compares on (eval_runner.py compare) and that
+# every improvement cross-check treats as one unit.
+COMPARISON_CONTEXT_FIELDS = (
+    "suite_revision",
+    "host",
+    "model",
+    "permissions_profile",
+    "fixture_revision",
+    "repeat_count",
+    "suite_case_count",
+)
+
+# Every path under records/ is a stray file or an unknown subdirectory and must fail the
+# artifacts check explicitly instead of falling through the parts[0:2] dispatch silently.
+KNOWN_RECORD_CLASSES = ("bugs", "episodes", "reviews", "plans", "improvement", "tests")
+
+
+def validate_improvement_document(
+    path: Path, subtree: str
+) -> tuple[dict[str, Any] | None, list[ValidationError]]:
+    """Validate one JSON artifact under records/improvement/<subtree>/ against its own schema.
+
+    Improvement artifacts are exchanged between loop roles, so identity is the filename: a
+    candidate record's stem must equal its ``candidate_version`` and an evaluation result's
+    stem must equal its ``result_id`` (a release record's embedded candidate and a comparison
+    have no file identity of their own). Evaluation results additionally reuse the evaluation
+    invariants. Returns the parsed document so the caller can collect it for the
+    cross-document pass; ``None`` means the document could not be read or parsed at all.
+    """
+    document, load_errors = load_json(path)
+    if load_errors or not isinstance(document, dict):
+        return None, load_errors or [
+            ValidationError(str(path), f"{subtree} artifact is not a JSON object")
+        ]
+    try:
+        validator = SchemaValidator(IMPROVEMENT_SCHEMA_BY_SUBTREE[subtree])
+    except (OSError, ValueError) as exc:
+        return None, [ValidationError(str(path), f"validator setup failed: {exc}")]
+    errors = validator.validate(document)
+    if errors:
+        return document, errors
+    if subtree == "candidates":
+        expected = document.get("candidate_version")
+        if path.stem != expected:
+            errors.append(
+                ValidationError(str(path), f"filename stem must equal candidate_version {expected!r}")
+            )
+    elif subtree == "evaluations":
+        expected = document.get("result_id")
+        if path.stem != expected:
+            errors.append(
+                ValidationError(str(path), f"filename stem must equal result_id {expected!r}")
+            )
+        errors.extend(validate_evaluation_result_invariants(document, path))
+    return document, errors
+
+
+def validate_improvement_cross_references(
+    candidates: dict[str, tuple[Path, dict[str, Any]]],
+    results: dict[str, tuple[Path, dict[str, Any]]],
+    comparisons: list[tuple[Path, dict[str, Any]]],
+    releases: list[tuple[Path, dict[str, Any]]],
+    seen_episode_ids: dict[str, Path],
+    seen_bug_ids: dict[str, Path],
+) -> list[ValidationError]:
+    """Second pass over the collected improvement artifacts: every claim one record makes
+    about another must resolve.
+
+    Checked here, not per file, because the rglob pass is single-shot and sorted — a
+    comparison may reference a result collected later in the same pass. ``rollback_to`` is
+    deliberately unchecked: it names a release pointer, not a record in this tree.
+    """
+    errors: list[ValidationError] = []
+    comparison_pairs: set[tuple[str, str]] = set()
+    for path, comparison in comparisons:
+        pair = (comparison["baseline_result_id"], comparison["candidate_result_id"])
+        comparison_pairs.add(pair)
+        for role, result_id in (("baseline", pair[0]), ("candidate", pair[1])):
+            entry = results.get(result_id)
+            if entry is None:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"{role}_result_id {result_id!r} does not resolve to an evaluation "
+                        "result under records/improvement/evaluations/",
+                    )
+                )
+                continue
+            result_document = entry[1]
+            expected_kind = role  # baseline result carries source_kind "baseline", etc.
+            actual_kind = result_document.get("source_kind")
+            if actual_kind != expected_kind:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"{role}_result_id {result_id!r} points at a result whose source_kind "
+                        f"is {actual_kind!r}, not {expected_kind!r}",
+                    )
+                )
+            for field in COMPARISON_CONTEXT_FIELDS:
+                if result_document.get(field) != comparison["context"].get(field):
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"context.{field} does not match the {role} result {result_id!r} "
+                            f"({comparison['context'].get(field)!r} vs {result_document.get(field)!r})",
+                        )
+                    )
+    for path, release in releases:
+        embedded = release.get("candidate")
+        version = embedded.get("candidate_version") if isinstance(embedded, dict) else None
+        candidate_entry = candidates.get(version) if isinstance(version, str) else None
+        if candidate_entry is None:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"embedded candidate_version {version!r} does not resolve to a candidate "
+                    "record under records/improvement/candidates/",
+                )
+            )
+        else:
+            candidate_path = candidate_entry[0]
+            file_document, load_errors = load_json(candidate_path)
+            if load_errors or not isinstance(file_document, dict):
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"candidate record {candidate_path.name} could not be re-read for the "
+                        "equality check",
+                    )
+                )
+            elif json_equal_key(file_document) != json_equal_key(embedded):
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"embedded candidate object is not JSON-equal to candidate record "
+                        f"{candidate_path.name}",
+                    )
+                )
+        referenced: dict[str, str] = {}
+        for role in ("baseline_results", "candidate_results"):
+            entry = release.get(role)
+            result_id = entry.get("result_id") if isinstance(entry, dict) else None
+            referenced[role] = result_id if isinstance(result_id, str) else ""
+            if isinstance(result_id, str) and result_id not in results:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"{role}.result_id {result_id!r} does not resolve to an evaluation "
+                        "result under records/improvement/evaluations/",
+                    )
+                )
+        pair = (referenced["baseline_results"], referenced["candidate_results"])
+        if pair not in comparison_pairs:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    "no comparison under records/improvement/comparisons/ matches this "
+                    f"release's result pair ({pair[0]!r}, {pair[1]!r})",
+                )
+            )
+    for version, (candidate_path, document) in candidates.items():
+        for evidence_id in document.get("evidence_ids") or []:
+            if not isinstance(evidence_id, str):
+                continue
+            if evidence_id.startswith("EP-"):
+                pool, location = seen_episode_ids, "records/episodes/"
+            elif evidence_id.startswith("BUG-"):
+                pool, location = seen_bug_ids, "records/bugs/"
+            else:
+                continue  # other evidence shapes are outside this tree's resolver
+            if evidence_id not in pool:
+                errors.append(
+                    ValidationError(
+                        str(candidate_path),
+                        f"evidence_ids entry {evidence_id!r} does not resolve to an existing "
+                        f"record under {location}",
+                    )
+                )
+    return errors
+
+
 def validate_workspace_artifacts() -> list[ValidationError]:
     """Validate record instances under records/ (Markdown bug records, JSON plans)."""
     errors: list[ValidationError] = []
@@ -1277,11 +1930,36 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     ledgers: dict[str, dict[str, Any]] = {}
     class_records: list[tuple[str, Any, str, Path]] = []
     review_findings: list[tuple[list, Path]] = []
+    seen_test_plan_ids: dict[str, Path] = {}
+    seen_test_run_ids: dict[str, Path] = {}
+    test_plans: dict[str, dict[str, Any]] = {}
+    deferred_test_runs: list[tuple[Path, Path]] = []
+    improvement_candidates: dict[str, tuple[Path, dict[str, Any]]] = {}
+    improvement_results: dict[str, tuple[Path, dict[str, Any]]] = {}
+    improvement_comparisons: list[tuple[Path, dict[str, Any]]] = []
+    improvement_releases: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted(records_root.rglob("*")):
-        if not path.is_file():
-            continue
         relative = path.relative_to(ROOT)
         parts = relative.parts
+        if any(part.startswith(".") for part in parts[1:]):
+            # Hidden entries (e.g. records/.DS_Store) are host/OS artifacts, not records;
+            # skipped explicitly so the unknown-entry check below is not tripped by them.
+            continue
+        if parts[1] not in KNOWN_RECORD_CLASSES:
+            # A stray file at the top of records/ or an unknown subdirectory used to fall
+            # through the parts[0:2] dispatch without any check; report it by path instead.
+            if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                continue  # the top-level records/README.md documents the record classes
+            errors.append(
+                ValidationError(
+                    str(path),
+                    "unexpected entry under records/; record classes are bugs/, episodes/, "
+                    "reviews/, plans/, improvement/, and tests/ (plus records/README.md)",
+                )
+            )
+            continue
+        if not path.is_file():
+            continue
         if parts[0:2] == ("records", "bugs"):
             if path.name == "README.md":
                 continue
@@ -1384,6 +2062,30 @@ def validate_workspace_artifacts() -> list[ValidationError]:
             frontmatter, _, _ = load_bug_markdown(path)
             if frontmatter:
                 review_findings.append((frontmatter.get("findings") or [], path))
+        elif parts[0:2] == ("records", "tests"):
+            if path.name == "README.md":
+                continue
+            if len(parts) != 4 or not path.is_file():
+                # Evidence files and other non-record artifacts (e.g. evidence/<run-id>/…)
+                # are exempt, like the review archive snapshots.
+                continue
+            if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):
+                plan_errors, entry = validate_test_plan_markdown(path, relative, seen_test_plan_ids)
+                errors.extend(plan_errors)
+                if entry is not None:
+                    test_plans[entry["frontmatter"]["test_plan_id"]] = entry
+            elif re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):
+                # Deferred: the referenced plan may be validated later in the same sorted pass.
+                deferred_test_runs.append((path, relative))
+            else:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        "unexpected file in a records/tests/ feature directory; records are "
+                        "plan-*.md and run-*.md (plus README.md and evidence/ subdirectories) "
+                        "— see records/tests/README.md",
+                    )
+                )
         elif parts[0:2] == ("records", "plans"):
             if path.name == "README.md":
                 continue
@@ -1391,6 +2093,65 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(ValidationError(str(path), "plans are Markdown files; unexpected non-md file"))
                 continue
             errors.extend(validate_plan_markdown(path, relative))
+        elif parts[0:2] == ("records", "improvement"):
+            if path.name == "README.md":
+                continue  # the subtree README documents the artifact contracts
+            if len(parts) != 4 or parts[2] not in IMPROVEMENT_SCHEMA_BY_SUBTREE:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        "unexpected entry under records/improvement/; artifacts live directly "
+                        "in candidates/, evaluations/, comparisons/, or releases/ (plus "
+                        "README.md) — see records/improvement/README.md",
+                    )
+                )
+                continue
+            if path.suffix != ".json":
+                errors.append(
+                    ValidationError(str(path), f"{parts[2]} artifacts are JSON files; unexpected non-json file")
+                )
+                continue
+            document, artifact_errors = validate_improvement_document(path, parts[2])
+            errors.extend(artifact_errors)
+            if document is None or artifact_errors:
+                continue
+            if parts[2] == "candidates":
+                version = document["candidate_version"]
+                if version in improvement_candidates:
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"duplicate candidate_version {version!r} already declared in "
+                            f"{improvement_candidates[version][0]}",
+                        )
+                    )
+                else:
+                    improvement_candidates[version] = (path, document)
+            elif parts[2] == "evaluations":
+                result_id = document["result_id"]
+                if result_id in improvement_results:
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"duplicate result_id {result_id!r} already declared in "
+                            f"{improvement_results[result_id][0]}",
+                        )
+                    )
+                else:
+                    improvement_results[result_id] = (path, document)
+            elif parts[2] == "comparisons":
+                pair = (document["baseline_result_id"], document["candidate_result_id"])
+                if pair in {(c["baseline_result_id"], c["candidate_result_id"]) for _, c in improvement_comparisons}:
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"duplicate comparison result pair ({pair[0]!r}, {pair[1]!r})",
+                        )
+                    )
+                else:
+                    improvement_comparisons.append((path, document))
+            elif parts[2] == "releases":
+                improvement_releases.append((path, document))
 
     # Cross-check recurrence ledgers against the records they claim.
     for class_id, entry in ledgers.items():
@@ -1444,28 +2205,80 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(
                     ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
+    for run_path, run_relative in deferred_test_runs:
+        run_errors, run_findings, run_flow_findings = validate_test_run_markdown(
+            run_path, run_relative, seen_test_run_ids, test_plans
+        )
+        errors.extend(run_errors)
+        for bug_id in run_findings:
+            if bug_id not in seen_bug_ids:
+                errors.append(
+                    ValidationError(str(run_path), f"run findings reference unknown bug_id {bug_id!r}")
+                )
+        for bug_id in run_flow_findings:
+            if bug_id not in seen_bug_ids:
+                errors.append(
+                    ValidationError(str(run_path), f"run flow_findings reference unknown bug_id {bug_id!r}")
+                )
+    # Cross-check the improvement artifacts against each other (second pass — a comparison may
+    # reference a result collected later in the same sorted rglob pass).
+    errors.extend(
+        validate_improvement_cross_references(
+            improvement_candidates,
+            improvement_results,
+            improvement_comparisons,
+            improvement_releases,
+            seen_episode_ids,
+            seen_bug_ids,
+        )
+    )
     return errors
 
 
 ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.M)
 SKILL_ROLE_PATTERN = re.compile(r"agentflow:([a-z0-9-]+)")
 
+# 0.5.0 switched plans from JSON to Markdown hybrids (records/plans/README.md); either
+# stale marker in AGENTS.md signals the pre-0.5.0 contract and must fail the docs check.
+PRE_050_PLAN_CONTRACT_MARKERS = ("plans are JSON", "<plan_id>.json")
+
+
+def validate_agents_md_plan_contract(agents_md: Path) -> list[ValidationError]:
+    """Tripwire: AGENTS.md must not carry the pre-0.5.0 JSON plan contract wording."""
+    errors: list[ValidationError] = []
+    text, read_errors = read_document_text(agents_md)
+    if read_errors:
+        return read_errors
+    if any(marker in text for marker in PRE_050_PLAN_CONTRACT_MARKERS):
+        errors.append(
+            ValidationError(
+                str(agents_md),
+                "AGENTS.md carries the pre-0.5.0 JSON plan contract; plans are Markdown "
+                "hybrids named <plan_id>.md — see records/plans/README.md",
+            )
+        )
+    return errors
+
 
 def validate_doc_consistency() -> list[ValidationError]:
     """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
 
     The role/doc surface is synced by hand across twelve agent files, two SKILLs, the roles
-    reference, and the records READMEs — the same failure class as the missed manifest bump.
-    Four assertion groups: every agent file's frontmatter name equals its filename; every
-    `agentflow:<role>` referenced by a SKILL resolves to an agent file; every
-    `schemas/*.schema.json` path named anywhere in the docs/records/skills/agents surface
-    exists; the Chinese mirror keeps section parity with its English contract documents.
+    reference, the records READMEs, and the root AGENTS.md — the same failure class as the
+    missed manifest bump. Five assertion groups: every agent file's frontmatter name equals
+    its filename; every `agentflow:<role>` referenced by a SKILL resolves to an agent file;
+    every `schemas/*.schema.json` path named anywhere in the docs/records/skills/agents
+    surface or in AGENTS.md exists; AGENTS.md carries no pre-0.5.0 JSON plan contract
+    markers; the Chinese mirror keeps section parity with its English contract documents.
     """
     errors: list[ValidationError] = []
     agents_dir = ROOT / "agents"
     agent_files = {p.stem: p for p in sorted(agents_dir.glob("*.md"))}
     for name, path in agent_files.items():
-        text = path.read_text(encoding="utf-8")
+        text, read_errors = read_document_text(path)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
         m = ROLE_NAME_PATTERN.search(text)
         if not m:
             errors.append(ValidationError(str(path), "agent file frontmatter lacks a name field"))
@@ -1475,7 +2288,10 @@ def validate_doc_consistency() -> list[ValidationError]:
             )
 
     for skill in sorted((ROOT / "skills").glob("*/SKILL.md")):
-        text = skill.read_text(encoding="utf-8")
+        text, read_errors = read_document_text(skill)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
         for role in sorted(set(SKILL_ROLE_PATTERN.findall(text))):
             if role not in agent_files:
                 errors.append(
@@ -1488,22 +2304,33 @@ def validate_doc_consistency() -> list[ValidationError]:
         ROOT / "skills",
         ROOT / "agents",
         ROOT / "README.md",
+        ROOT / "AGENTS.md",
     ]
     schema_ref_pattern = re.compile(r"schemas/([a-z0-9-]+\.schema\.json)")
     schema_dir = ROOT / "schemas"
     for base in reference_surface:
         files = base.rglob("*.md") if base.is_dir() else [base]
         for doc in sorted(files):
-            for schema in schema_ref_pattern.findall(doc.read_text(encoding="utf-8")):
+            text, read_errors = read_document_text(doc)
+            if read_errors:
+                errors.extend(read_errors)
+                continue
+            for schema in schema_ref_pattern.findall(text):
                 if not (schema_dir / schema).is_file():
                     errors.append(
                         ValidationError(str(doc), f"references schemas/{schema!r} which does not exist")
                     )
 
+    errors.extend(validate_agents_md_plan_contract(ROOT / "AGENTS.md"))
+
     zh = ROOT / "docs" / "agent-roles.md"
-    zh_text = zh.read_text(encoding="utf-8")
+    zh_text, zh_errors = read_document_text(zh)
+    errors.extend(zh_errors)
     contracts = ROOT / "skills" / "agentflow" / "references" / "contracts.md"
-    contracts_text = contracts.read_text(encoding="utf-8")
+    contracts_text, contracts_errors = read_document_text(contracts)
+    errors.extend(contracts_errors)
+    if zh_errors or contracts_errors:
+        return errors
     zh_schemas = set(schema_ref_pattern.findall(zh_text))
     contracts_schemas = set(schema_ref_pattern.findall(contracts_text))
     if zh_schemas != contracts_schemas:
@@ -1537,12 +2364,17 @@ def load_protected_paths(path: Path) -> tuple[list[str], list[ValidationError]]:
     return entries, []
 
 
-def validate_protected_paths() -> list[ValidationError]:
-    """Check the declared candidate gate surface still covers the required entries."""
+def validate_protected_paths(list_path: Path | None = None) -> list[ValidationError]:
+    """Check the declared candidate gate surface still covers the required entries.
+
+    `list_path` defaults to the repository's protected-paths.txt; the negative contract tests
+    point it at a shrunken fixture copy so a lost required entry is exercised in-process.
+    """
     errors: list[ValidationError] = []
-    if not PROTECTED_PATHS_FILE.is_file():
-        return [ValidationError(str(PROTECTED_PATHS_FILE), "the protected path list is missing")]
-    entries, load_errors = load_protected_paths(PROTECTED_PATHS_FILE)
+    list_path = PROTECTED_PATHS_FILE if list_path is None else list_path
+    if not list_path.is_file():
+        return [ValidationError(str(list_path), "the protected path list is missing")]
+    entries, load_errors = load_protected_paths(list_path)
     if load_errors:
         return load_errors
     normalized = {entry.strip("/") for entry in entries}
@@ -1551,16 +2383,21 @@ def validate_protected_paths() -> list[ValidationError]:
         if not covered:
             errors.append(
                 ValidationError(
-                    str(PROTECTED_PATHS_FILE),
+                    str(list_path),
                     f"required gate path {required!r} is no longer covered by any declared prefix",
                 )
             )
     return errors
 
 
-def manifest_value(name: str, pointer: tuple[Any, ...]) -> tuple[str | None, list[ValidationError]]:
-    """Read a nested manifest value by pointer, e.g. ("plugins", 0, "version")."""
-    path = ROOT / name
+def manifest_value(
+    name: str, pointer: tuple[Any, ...], root: Path = ROOT
+) -> tuple[str | None, list[ValidationError]]:
+    """Read a nested manifest value by pointer, e.g. ("plugins", 0, "version").
+
+    `root` defaults to the repository; the negative contract tests point it at a fixture copy.
+    """
+    path = root / name
     if not path.is_file():
         return None, [ValidationError(name, "manifest is missing")]
     document, load_errors = load_json(path)
@@ -1581,13 +2418,17 @@ def manifest_value(name: str, pointer: tuple[Any, ...]) -> tuple[str | None, lis
     return value, []
 
 
-def validate_manifests() -> list[ValidationError]:
-    """Require the hand-synced manifests to agree on the plugin name and version."""
+def validate_manifests(root: Path = ROOT) -> list[ValidationError]:
+    """Require the hand-synced manifests to agree on the plugin name and version.
+
+    `root` defaults to the repository; the negative contract tests point it at a fixture copy
+    of the five manifests so a version divergence is exercised in-process.
+    """
     errors: list[ValidationError] = []
     names: dict[str, str] = {}
     versions: dict[str, str] = {}
     for name, pointer in MANIFEST_POINTERS:
-        entry, entry_errors = manifest_value(name, pointer)
+        entry, entry_errors = manifest_value(name, pointer, root)
         if entry_errors:
             errors.extend(entry_errors)
             continue
@@ -1618,7 +2459,7 @@ def validate_manifests() -> list[ValidationError]:
     return errors
 
 
-def validate_unit_tests() -> list[ValidationError]:
+def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
     """Assert the declared test layout, then run the repository's regression tests.
 
     `tests/` is protected by file rather than by directory so that generated `__pycache__` entries
@@ -1629,9 +2470,13 @@ def validate_unit_tests() -> list[ValidationError]:
     module replaces a pinned test method at import time, so the broken assertion passes and the
     gate returns PASS. The scan therefore rejects every entry that is not declared here. These
     tests pin `validate.py` and `isolation.py`, so a failure is a gate regression.
+
+    The run must also stay a regression suite: the unittest "Ran N tests" summary is checked
+    against MIN_UNIT_TEST_COUNT, so an empty or degenerate suite fails even when it exits 0.
+    `root` defaults to the repository; the negative contract tests point it at a fixture tree.
     """
     errors: list[ValidationError] = []
-    tests_dir = ROOT / "tests"
+    tests_dir = root / "tests"
     if not tests_dir.is_dir():
         return [ValidationError("tests", "the test directory is missing")]
     allowed = set(EXPECTED_TEST_FILES) | {"__pycache__"}
@@ -1651,17 +2496,38 @@ def validate_unit_tests() -> list[ValidationError]:
         return errors
     completed = subprocess.run(
         [sys.executable, "-m", "unittest", "discover", "-s", "tests"],
-        cwd=str(ROOT),
+        cwd=str(root),
         text=True,
         capture_output=True,
         check=False,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
-    if completed.returncode == 0:
-        return []
-    detail = (completed.stderr.strip() or completed.stdout.strip()).splitlines()
-    summary = detail[-1] if detail else "no output"
-    return [ValidationError("tests", f"unit tests failed (exit {completed.returncode}): {summary}")]
+    ran = re.search(r"Ran (\d+) tests?", f"{completed.stderr}\n{completed.stdout}")
+    count = int(ran.group(1)) if ran else None
+    if count == 0:
+        # unittest exits 5 for an empty run on Python 3.12+, but 0 on older interpreters;
+        # the count check makes the empty suite fail on both.
+        return [ValidationError("tests", "unit tests ran 0 tests; the regression suite is empty")]
+    if completed.returncode != 0:
+        detail = (completed.stderr.strip() or completed.stdout.strip()).splitlines()
+        summary = detail[-1] if detail else "no output"
+        return [ValidationError("tests", f"unit tests failed (exit {completed.returncode}): {summary}")]
+    if count is None:
+        return [
+            ValidationError(
+                "tests",
+                "unit test output has no 'Ran N tests' summary; cannot confirm how many tests ran",
+            )
+        ]
+    if count < MIN_UNIT_TEST_COUNT:
+        return [
+            ValidationError(
+                "tests",
+                f"unit tests ran {count} tests, below the required floor of {MIN_UNIT_TEST_COUNT}; "
+                "shrinking the regression suite is a gate change that requires explicit review",
+            )
+        ]
+    return []
 
 
 def plugin_identity() -> tuple[str, str, str] | None:

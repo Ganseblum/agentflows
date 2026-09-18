@@ -58,9 +58,9 @@ in `validate.py` and protecting it in `protected-paths.txt` in the same change.
 ## Working in this repository
 
 - Records live under `records/`; see [records/README.md](records/README.md) for layout and queries.
-- Bug records are Markdown with validated YAML frontmatter; plans are JSON. A plan file is named
-  exactly `<plan_id>.json`; a bug record file is a kebab-case slug under
-  `records/bugs/<YYYY-MM-DD>/`. The supervisor assigns every record path explicitly.
+- Bug records and plans are Markdown with validated YAML frontmatter. A plan file is named
+  exactly `<plan_id>.md` (shape: `records/plans/README.md`); a bug record file is a kebab-case
+  slug under `records/bugs/<YYYY-MM-DD>/`. The supervisor assigns every record path explicitly.
 - Do not commit, push, or publish unless the user asks. Do not claim a walkthrough of host behavior
   you have not observed — record it in [docs/host-platform-facts.md](docs/host-platform-facts.md)
   with its evidence, scope, and a re-verification method instead.

@@ -1,6 +1,6 @@
 # Agentflow 新对话交接清单
 
-更新时间：2026-09-14
+更新时间：2026-09-17
 
 ## 当前工作区
 
@@ -454,6 +454,19 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
   `execution-coordinator`（断点恢复的持久化版本）待跨会话恢复需求真实出现再做。
 - [x] 角色-文档一致性检查：`validate.py docs`（0.4.1，进 `all`）——frontmatter name、
   SKILL 角色引用、schema 路径、中英镜像引用面四组断言。
+- [ ] 触发描述预算检查（2026-09-17 improve 环 proposal 评估立案，`EP-20260917-001`）：评估
+  结论——两个 SKILL 的 description **本身不需要改**：agentflow/improve 全长 361/342 字符，
+  触发判据句（第一句）分别长 220/136，均在宿主约 250 字符可见窗口内完整结束（余量 30/114）；
+  0.3.2 前置化修复后至 0.6.0 约十个版本，`records/` 无一条 skill 误触发/漏触发记录；被截掉的
+  尾巴是自我描述，对不截断的宿主（Claude Code/Codex）仍是有效信息，为 ZCode 裁短是拿无
+  故障模式的猜测换真实信息量。本会话实测截断行为：ZCode 逐字呈现 description 前 249/250
+  字符前缀（agentflow 第 250 字符恰为空格、去尾随空格后呈现 249），improve 断在单词中间
+  （bounde…）。**缺口**：前置化纪律零确定性保护——`validate.py` 不校验 description 长度，
+  未来编辑可能把触发词挤出 250 窗口或撞 1024 整条 skill 消失，八项检查照样全绿。落地两件
+  事：(1) 新增检查「description ≤1024 且触发判据句在 250 窗口内结束」——动 `tests/` +
+  `EXPECTED_TEST_FILES` + `protected-paths.txt`，属门变更须人工实施；(2) 把上述实测记入
+  `docs/host-platform-facts.md`，Z3 从 doc 级升 observed 级。用户 2026-09-17 决定：先记录
+  问题，两项做不做后续再定。
 
 ### P2 — 数据充分后的自动化
 
@@ -500,8 +513,9 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
   已安装 baseline 当作 candidate 结果。
 - 上一台机器记录的启用源 `/Users/hang/plugins/agentflow` 和 `~/.claude/skills/agentflow` 在本机
   不存在；安装流程和来源需要在本机重新确认后才能验证。
-- 用例内声明的 `repeat_count` 当前会被 `eval_runner.py --repeat-count` 覆盖（后者生效）；
-  记录 baseline/candidate 时必须注明实际重复次数，避免与 suite 设计值（3 次）混淆。
+- 用例内声明的 `repeat_count` 与 `eval_runner.py --repeat-count` 不一致时，请求在构建阶段即被
+  拒绝（0.6.0 起强制一致性，`eval_runner.py build_request`）；baseline/candidate 的重复次数恒等
+  于 suite 冻结值，无需再人工注明。
 - adapter 的用例指标来自模型自报（`accepted`、`first_pass_review` 等），目前没有独立判定器；
   这与 P0「人工闭环」定位一致，但解读结果时必须以此为前提。
 - 本机两个宿主都走第三方中转网关（Claude: `fable`→`anthropic-ccmax/claude-opus-4-6`，
