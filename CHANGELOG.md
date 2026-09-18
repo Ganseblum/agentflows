@@ -1,12 +1,40 @@
 # Changelog
 
-## 0.8.0 — 2026-09-19
+## 0.8.1 — 2026-09-18
+
+Closed-loop follow-up after the 0.8.0 install: the remaining C-domain contract residuals (found
+missing from the 0.8.0 ledger appendix during the post-install review), the D1 convergence
+contradiction resolved as a documented interim state, and the last `open` bug record moved to
+`fixed-pending-review`. Method-level change; `measurement: none`.
+
+- **C-domain residuals closed.** `contracts.md` gains worker failure semantics: `crash` →
+  `blocked` with the named cause (environment-vs-work triage first), `timeout` → `partial` with
+  unverified in-flight work discarded, `empty/invalid return` → returned once with the defect
+  named, then a bug record — the supervisor classifies from evidence, a crashed worker never
+  classifies itself, and silent retries beyond budget or relabeled crashes are supervisor
+  defects. `SKILL.md` step 7 now requires plan-board write-back at each acceptance point
+  (status + evidence columns only), and step 10 references the failure semantics when an
+  outcome feeds the improvement loop.
+- **D1 resolved as an explicit interim state (option a).** `roles.md` and the Chinese mirror
+  declare that bug-investigator / feedback-analyst / technical-director deliberately stay
+  separate from the reviewer despite sharing its shape, with the input-contract rationale;
+  merging them remains a reserved product decision. The contradiction with the convergence
+  principle is gone without changing the public role surface.
+- **BUG-20260914-003 → `fixed-pending-review`.** The last `open` record (print-mode permission
+  profile blocking plan-writing cases) matches the 0.8.0 `--allowed-tools` /
+  `--isolate-host-config` mechanism — the record's own "option A" — and now carries
+  `fix_revision: agentflows@95de103`, `regression_status: not-run` (honest: stub-level
+  verification only; `verified` waits for the first real eval, G4).
+- **Verification**: `validate.py all` 9×PASS (incl. `installed` after the user's marketplace
+  refresh + reinstall to 0.8.0); 149 unit tests OK.
+
+## 0.8.0 — 2026-09-18
 
 Second audit-remediation round (per `docs/audit-2026-09-18-followups.md`): measurement-validity
 S0 closures (B1/B3), the eval isolation preconditions from the P0 list, the honest-documentation
 batch (E2/E3/E5/E8), memory-layer contract closure (F3/G2/G3), and the remaining deterministic
 residuals from the audit report §6. Contains **gate changes (protected paths), applied under
-explicit human instruction on 2026-09-19**: `host_adapter.py`, `eval_runner.py`, `policy.py`,
+explicit human instruction on 2026-09-18**: `host_adapter.py`, `eval_runner.py`, `policy.py`,
 `validate.py`, `artifact_digest.py`, `schemas/`, `skills/improve/references/`,
 `agents/release-governor.md`, `tests/`. Method-level change, no instrumented business task has
 run yet; `measurement: none`.

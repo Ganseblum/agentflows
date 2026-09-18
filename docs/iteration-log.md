@@ -31,7 +31,8 @@
 | 0.6.0 | 2026-09-17 | 用户要求消灭方法级改动的 `measurement: none`（做业务任务度量切片）；批内独立评审抓出四个运行时缺陷 | 业务评测仪器（种子缺陷确定性评分 + 业务面 runner/adapter + 门登记）、判断词可判定定义、CI、两处诊断/读取缺陷修复 | CHANGELOG 0.6.0；本文件 §0.6.0；`records/plans/PLAN-BUSINESS-EVAL-001.md` |
 | 0.7.2–0.7.4 | 2026-09-18 | 审计整改阶段四、五：episode 可验证字段、发布 measurement 链、记录显式检索、版本与 demo 口径漂移 | revision/run/claims/evidence 对齐；measurement none/complete 语义；SQLite FTS5 读侧；0.7.x 迭代留档与 next-session 机器信息修正 | 本批文件、`records/episodes/2026-09-18/`、`tools/lab/record_store.py` |
 | 0.7.5 | 2026-09-18 | 全库只读审计（四项硬缺陷实测复现） | 门进 CI、fail-closed、防刷分评分、measurement/release 契约、record_store 读侧 | CHANGELOG 0.7.5；`docs/audit-2026-09-18-followups.md` |
-| 0.8.0 | 2026-09-19 | 用户授权第二轮整改：B1/B3 度量效度 S0、E 域活跃失真、记忆层闭环、审计 §6 残余 | seeds 防泄漏 fail-closed；claude 观测通道 `observed_permission_denials`；allowed-tools/隔离参数；rollback 如实声明；mock 合并编译门；版本去散文化 + 失真清理；roundtrips 必填回填 | CHANGELOG 0.8.0；本文件 §0.8.0 |
+| 0.8.0 | 2026-09-18 | 用户授权第二轮整改：B1/B3 度量效度 S0、E 域活跃失真、记忆层闭环、审计 §6 残余 | seeds 防泄漏 fail-closed；claude 观测通道 `observed_permission_denials`；allowed-tools/隔离参数；rollback 如实声明；mock 合并编译门；版本去散文化 + 失真清理；roundtrips 必填回填 | CHANGELOG 0.8.0；本文件 §0.8.0 |
+| 0.8.1 | 2026-09-18 | 0.8.0 装后闭环复核：发现 0.8.0 台账附录漏列 C 域残余；用户重装快照后要求核对旧 bug 闭环并修尾项 | C 域失败语义成文 + plan 回写时机进 SKILL 步骤；D1 以选项 a（显式过渡态注记）消解矛盾；BUG-20260914-003 转 fixed-pending-review（修复=0.8.0 选项 A） | CHANGELOG 0.8.1；本文件 §0.8.1 |
 
 ---
 
@@ -408,7 +409,7 @@
   U-02 已实测、U-03 已决（见同计划）；ZCode 未做 host adapter；`measurement: none` 在真实
   对照产出前不得宣称消灭。
 
-## 0.8.0 — 第二轮审计整改（2026-09-19）
+## 0.8.0 — 第二轮审计整改（2026-09-18）
 
 - **触发**：用户在 `docs/audit-2026-09-18-followups.md` 台账上指示「全部开始处理修复」。按台账
   建议顺序执行：第一批 B1+B3（度量效度 S0，gate 批）、第二批 E5/E3/E2/E8（活跃失真）、
@@ -445,3 +446,21 @@
   「活跃误导」类文档失真清零；mock 契约同步从口号变机制；memory 层的强制字段与负样本约定就位。
 - **未决**：G4 首次真实业务评测（挂可信端点/预算）；B3 stream-json×`--json-schema` 组合待
   live 验证；codex 读范围未测；D1 角色收敛是产品决策，保持搁置；F3 的自动归类继续等数据。
+
+## 0.8.1 — 装后闭环复核（2026-09-18）
+
+- **触发**：用户刷新 marketplace 并重装到 0.8.0（`validate.py installed` 转 PASS）后，要求
+  核对「记录过的 bug 能否被现在的能力解决」并修复上轮遗留。复核发现 0.8.0 台账附录漏列了
+  C 域残余两项——补记于此。
+- **改了什么**：
+  - C 域：contracts.md Worker result 增「失败语义」三类（crash→blocked 带因、timeout→partial、
+    空/无效返回→退回一次后立记录），分类权在 supervisor、以证据为准；SKILL 步骤 7 增加 plan
+    看板「验收点即回写」（最小 diff 只改状态与证据列），步骤 10 引用失败语义。
+  - D1（选项 a）：roles.md + 中文镜像加「有意不收敛」注记（输入契约不同，合并是保留的产品
+    决策）——消解与收敛原则的矛盾，不改公开角色面。
+  - 闭环：BUG-20260914-003（最后一条 open）转 `fixed-pending-review`——其修复正是 0.8.0 的
+    `--allowed-tools`/`--isolate-host-config`（记录里当年写的「选项 A」），`regression_status:
+    not-run`，转 verified 等 G4 首次评测。
+- **解决了什么**：bug 语料 9 条全部处于 verified(8)/fixed-pending-review(1) 状态，无 open 残留；
+  失败语义与回写时机两个「靠自觉」的点有了合同文本。
+- **未决**：G4（可信端点/预算）；快照 0.8.1 需再次刷新重装（发布后常规漂移）。

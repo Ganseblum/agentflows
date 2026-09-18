@@ -8,7 +8,7 @@
 
 - Agent 项目目录（当前机器）：`/Users/hang/Documents/myProject/agentflow`
 - 当前配置的 Git remote 为 `https://github.com/Ganseblum/agentflows.git`（GitHub 侧已由
-  `my-agents` 更名至此；本地 origin 配置 2026-09-19 同步更名，旧地址靠 GitHub 重定向仍然可达）；`main` 与
+  `my-agents` 更名至此；本地 origin 配置 2026-09-18 同步更名，旧地址靠 GitHub 重定向仍然可达）；`main` 与
   `origin/main` 一致。远程是否已同步以实际 `git remote -v` 和 fetch 结果为准，不把历史机器的
   仓库名当成事实。
 - 本机 ZCode 已有可被 `validate.py installed` 默认发现的安装源：local-directory marketplace
@@ -21,7 +21,7 @@
 
 ## 已完成
 
-- 2026-09-19 第二十批：0.8.0 第二轮审计整改（用户授权「全部开始处理修复」，含 gate 批）：
+- 2026-09-18 第二十批：0.8.0 第二轮审计整改（用户授权「全部开始处理修复」，含 gate 批）：
   B1 seeds 防泄漏 fail-closed + B3 claude 观测通道 `observed_permission_denials`；
   P0 前置 `--allowed-tools` / `--isolate-host-config`（写进 observed_context）；B5 rollback
   结构化如实声明 + release-governor 回滚/台账回写职责；审计②§6 残余（解码错误、引用

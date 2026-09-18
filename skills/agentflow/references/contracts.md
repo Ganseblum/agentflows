@@ -66,6 +66,24 @@ risks: unresolved issues or assumptions
 next_action: smallest useful follow-up
 ```
 
+**Worker failure semantics (0.8.1).** A worker that produces no result still produces a
+classification, and the supervisor owns that classification — never the crashed worker. Three
+observable classes, derived from evidence (exit code, adapter progress record, missing
+artifact), not from anyone's self-report:
+
+- `crash` — the host or process died before a structured result existed. The delegation is
+  `blocked`, not `partial`: diagnose the host/environment first (the baseline-comparison triage
+  in "Recover from stalled work" separates environment failure from work failure), and
+  re-delegate only with the named cause carried into the new brief.
+- `timeout` — the declared budget ran out. The result is `partial` by definition, never
+  `complete`; work in flight that was never verified is discarded, not silently kept.
+- `empty or invalid return` — output exists but is not a valid worker result (schema-invalid,
+  no checks, no evidence). Handle exactly like a failed compile check: return it once with the
+  defect named; a second occurrence is a bug record, not another retry.
+
+Retrying beyond the brief's declared budget, or re-labeling a crash as worker `partial`, is a
+supervisor defect — both manufacture progress evidence that does not exist.
+
 ## Review result
 
 The Supervisor supplies the reviewer with the raw diff for the exact `reviewed_revision` and the

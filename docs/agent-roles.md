@@ -41,6 +41,14 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | 已有验证复现的小 Bug | Fixer + Supervisor 侧检查；要沉淀时再记录 |
 | 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
+### 角色收敛注记（0.8.1）
+
+Bug Investigator、Feedback Analyst、Technical Director 三个角色与 Reviewer 同构（只读、证据进、
+结构化结论出），**有意不收敛**为 Reviewer 的模式：三者的输入契约与产出不同——带复现与归因的
+诊断、归一化证据聚类、带边界与排序的架构决策——折进 Reviewer 会掩盖简报必须满足的输入面。
+当前保持独立角色文件是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，
+不作为常规编辑执行。
+
 ## 判断词的可判定定义
 
 三个词决定「门要不要上」。定义写在这里，为的是同一情形每次得到同样处理，且事后可核对而不是靠争论；它们只决定门的触发与豁免，不改变「作者不验证自己」这条硬规则。

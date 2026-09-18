@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "episode_id": "EP-20260919-001",
+  "episode_id": "EP-20260918-006",
   "source_type": "acceptance",
   "revision": {
     "source": "working tree on top of 4e30d5f (0.7.5)",
@@ -8,8 +8,8 @@
   },
   "run": {
     "run_id": "0.8.0-audit-remediation-round-2",
-    "started_at": "2026-09-19T00:00:00Z",
-    "ended_at": "2026-09-19T12:00:00Z",
+    "started_at": "2026-09-18T06:00:00Z",
+    "ended_at": "2026-09-18T16:00:00Z",
     "status": "complete"
   },
   "objective": "按 docs/audit-2026-09-18-followups.md 台账执行第二轮整改：B1/B3 度量效度 S0、E 域活跃失真、G2/G3/F3 合同面、B5/B8/D2 确定性残余（用户指令：全部开始处理修复）",
@@ -89,7 +89,7 @@
     {
       "evidence_id": "EV-CHANGELOG",
       "kind": "changelog",
-      "ref": "CHANGELOG.md#080--2026-09-19"
+      "ref": "CHANGELOG.md#080--2026-09-18"
     },
     {
       "evidence_id": "EV-LEDGER",
@@ -99,7 +99,7 @@
     {
       "evidence_id": "EV-VALIDATE",
       "kind": "gate-output",
-      "ref": "validate.py all 9×PASS exit=0 (2026-09-19)"
+      "ref": "validate.py all 9×PASS exit=0 (2026-09-18)"
     }
   ],
   "feedback_summary": "用户一句授权后按台账顺序执行全部可离线批次；containment 首版误杀合法相对引用被新 mock 门首跑抓到（机制价值实证）后修正；G4 仍挂可信端点/预算决策，D1 角色收敛保持产品决策搁置。",
@@ -111,5 +111,5 @@
   },
   "redactions": [],
   "review_roundtrips": [],
-  "occurred_at": "2026-09-19T12:00:00Z"
+  "occurred_at": "2026-09-18T16:00:00Z"
 }
