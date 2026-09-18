@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260918-001",
+  "source_type": "user_feedback",
+  "objective": "把业务侧《Web 自动化测试准入标准》与既有 YAML 驱动 Playwright 框架（web-ai-auto）的成熟约定吸收进 0.7.0 的测试角色：用例词汇对齐目标引擎（注册表别名、操作/断言分离、复用 flow、环境走变量）、准入检查（需求侧缺口登记不臆造）、执行前收集校验（collect-only 防静默不收集）、失败三分流（产品缺陷/注册表漂移/环境数据）与建议修复落点、连跑编排与能力边界降级",
+  "outcome": "accepted",
+  "signals": [
+    { "kind": "external_material", "value": "admission standard + YAML case engine conventions", "evidence_ref": "用户提供的《需求文档-Web 自动化测试准入标准》三检查点/P0 分级/定位优先级，与 web-ai-auto 的 docx/YAML-UI-规范.md（对齐链 §2、Review 清单 §5）、新手接入与执行指南 §2-§6（五步接入、执行五步、踩坑）" },
+    { "kind": "design_decision", "value": "vocabulary alignment, not machinery copying", "evidence_ref": "只吸收流程纪律与词汇（角色检查清单与 records/tests 映射表），不搬 Allure/Stagehand/fixture 工具链；目标项目文件名不写成全局契约（web-ai-auto 自身规则：业务线名称不得进规范）" },
+    { "kind": "convergence", "value": "Planner/Generator/Healer 与 0.7.0 测试链同构", "evidence_ref": "web-ai-auto 的 docx/ui-curious-cascade.md 调研 Playwright Test Agents 的三角色，与 test-planner / test-executor / bug 链路一一对应；Healer 缺口的流程化替代=失败三分流（本批落地）" },
+    { "kind": "change_surface", "value": "2 roles + 1 contract + mirror; no gate change", "evidence_ref": "agents/test-planner.md、agents/test-executor.md、records/tests/README.md（目标项目映射节）、docs/agent-roles.md 同步；schemas/、tools/lab/、tests/ 均未改动" },
+    { "kind": "measurement", "value": "none (method-level change, no instrumented business task)", "evidence_ref": "同 0.7.0：方法级改动，evals/ 无匹配测量切片" }
+  ],
+  "feedback_summary": "用户在看完业务侧准入标准与 web-ai-auto 框架文档后，要求评估并落地吸收。评估确认两类吸收：流程吸收 9 条（collect-only 先行、连跑编排、失败三分流、能力边界声明、登记先行与三处同名铁律、证据顺序、变更分工→修复落点、交付前自检、降级出口）与格式吸收 1 条（对齐关系表：前端 testid↔注册表↔用例库↔引擎 case↔flow↔suite↔config，含变更分工与失败路由）。核心收益：失败拦截前移到成本最低位置（需求→收集→冒烟→分流），变更只改一处，bug 库免于噪音，责任可派工。",
+  "agentflow_version": "0.7.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode-session",
+    "sanitized": true
+  },
+  "redactions": ["业务仓内部路径细节（仅保留结构描述）", "示例账号/邮箱等演示数据"],
+  "occurred_at": "2026-09-18T03:15:00Z"
+}

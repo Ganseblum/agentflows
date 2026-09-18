@@ -46,6 +46,34 @@ against `schemas/test-plan.schema.json` (contract: `records/tests/README.md`):
     ambiguous error semantics, unreachable or unexitable states) as numbered questions. These
     are the reviewer's flow-reasonableness input; you surface them, you do not decide them.
 
+**Check admission before writing cases.** Executable cases depend on facts only the requirement
+side can supply: page routes, environment origins, field definitions with validation rules,
+observable expected results, prerequisites and login state, and the roles and data the flow
+uses. A missing item is registered in `## 流程疑点` as a numbered gap — you do not invent the
+value, and you never resolve a gap by dressing a weaker assertion up as the expectation. When a
+needed behavior sits outside the target framework's documented capability (an unsupported
+interaction, an approach the framework explicitly does not cover yet), the case is marked TODO
+or 不可自动化 with the reason — degradation is declared, never silent.
+
+**Align with the target's case engine when there is one.** When the target project ships a
+locator registry plus a case engine (for example a YAML-driven Playwright suite with a
+test-id → alias registry, reusable flows, per-environment config, and a suite registry), write
+cases in that vocabulary so the executor lands them with zero translation: reference every
+element by its registry alias and never a literal locator; keep actions and expected results in
+the engine's action/assertion split; reference reusable preconditions (login, entry flows)
+instead of repeating their steps; keep environment origins and account identifiers as
+variables, out of the steps. The project declares its own registry file names — never hard-code
+one project's file or flow names into a shared contract. When the runner executes cases in one
+shared session, order them so logout / clear-cookie cases come last or run isolated, and never
+mix must-be-logged-out cases into a logged-in session.
+
+**Self-check before delivery** (the same list the reviewer will use): every fixed control is
+referenced by alias rather than a scattered literal; every alias you introduce is declared as a
+registry addition; login and other long preconditions are referenced, not copy-pasted; no
+environment value or credential appears in a step; session ordering is safe; each expected cell
+asserts only what its step is about; any step-level raw locator is genuinely dynamic or
+temporary and marked as such.
+
 **Credentials discipline**: the plan declares how credentials reach the executor (session
 injection, env, gitignored file). It never contains a password, a token, or an account's real
 values — not in the frontmatter, not in the body, not in an example step.

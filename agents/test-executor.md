@@ -35,6 +35,19 @@ correction is the supervisor's edit or a follow-up round, never an in-place rewr
    and returns the raw evidence (screenshots, DOM text, network log). Judge pass/fail **only
    from that raw evidence** — a summary saying "it worked" is not evidence.
 
+**Adapt to the target's runner.** When the target project ships its own test runner (for
+example a pytest + Playwright suite with a suite registry, per-environment config, and a
+locator-alias registry), run through it rather than writing ad-hoc specs. Validate collection
+first with a dry run (`--collect-only`-style): it catches broken references and unregistered
+cases before a browser opens, and a case directory that exists without a registry entry is
+silently never collected — a name mismatch between the suite id, the case directory, and the
+runner's registry is a silent no-collection, not an error. Register the suite before creating
+its case files. Collect evidence in the runner's own order of resolution — the run report
+(step-level detail and traceback, screenshots embedded), then the failure screenshots, then the
+day's logs — and cite the specific artifact per row. When a step needs an element the registry
+does not carry, do not inline a raw locator into the case: record it as a registry gap in the
+run conclusion so the fix lands in one place.
+
 Run the smoke set first (the plan's P0 smoke cases); when smoke fails, stop and report instead
 of running the full set against a broken build.
 
@@ -48,10 +61,21 @@ fixed sections `## 结果` (result table `| 用例 ID | 状态 | 证据 | 说明
 `blocked` row carries evidence. When the run pins the plan's current `test_version`, every case
 in the registry is accounted for.
 
-**Failures are filed, not fixed.** A failed row names the observable mismatch and its evidence;
-the `## 结论` section groups failures into reproduction-ready findings (steps, expected vs
-actual, evidence refs) so the supervisor can file bug records through the standard chain. A
-blocked row names what it is waiting for.
+**Failures are filed, not fixed — and classified first.** A failed row names the observable
+mismatch and its evidence, and the `## 结论` section classifies each failure into one of three
+buckets, naming the fix location from the target-project mapping table (registry, environment
+config, case steps, shared flow, or product code):
+
+- **Product defect** — the behavior contradicts the plan's expected result: filed through the
+  standard bug chain, with the reproduction-ready finding.
+- **Case or registry drift** — the element moved, was renamed, or is referenced under a stale
+  alias: a registry update plus a rerun of the affected cases, not a bug record.
+- **Environment or data problem** — target unreachable, fixture missing, dirty state: `blocked`
+  with the reason, not a bug record.
+
+A blocked row names what it is waiting for. Only product defects enter the bug chain — the
+other two buckets exit through the registry, the environment config, or a rerun, so the bug
+pool stays free of noise.
 
 **Credentials discipline**: read credentials only from the injection channel the plan declares
 (env, session). Never echo a password into command output, logs, or the run record; enter it

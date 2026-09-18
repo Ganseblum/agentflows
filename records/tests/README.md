@@ -44,6 +44,29 @@ Cross-checks the validator enforces beyond the schemas:
   follows the standard rules (`external` for target-project defects, `agentflow` for gaps in
   Agentflow's own method).
 
+## Target-project mapping
+
+When the target project has its own case engine (a locator registry, reusable flows, a suite
+registry, per-environment config — for example a YAML-driven Playwright suite), the run
+record's conclusion routes each failure along this alignment chain; each link names what must
+agree and where a change lands, so a repair touches one file:
+
+| Chain link | What must agree | Where a change lands |
+| --- | --- | --- |
+| frontend test ids ↔ locator registry | the testid string or dynamic prefix | FE rename → the registry only; cases keep their logical names |
+| registry ↔ plan's case library | every element a case references exists as an alias | new alias declared with the case; no literal locators in cases |
+| case library ↔ engine cases | step/expected semantics land as the engine's actions and assertions | executor lands them; no new vocabulary invented |
+| cases ↔ shared flows | reusable preconditions are referenced, not copy-pasted | shared precondition change → the flow registry, once |
+| cases ↔ suite registry | suite id, case directory, and runner registry agree — a mismatch is a silent no-collection | register the suite before creating its case files |
+| cases ↔ environment config | origins, accounts, and keys resolve per environment; values never inside cases | environment change → the config only |
+
+Failure routing follows the same table: product behavior contradicting an expected result →
+the bug chain; element/registry drift → a registry update plus rerun; environment or data
+problems → `blocked` with the reason. A capability the framework documents as unsupported is
+declared TODO or 不可自动化 in the plan — never weakened into a passing assertion. The concrete
+registry file names are the target project's own; they are declared per project, never
+hard-coded into another project's cases or into this contract.
+
 ## Credentials
 
 Credentials are supplied per session and injected at runtime (env, session, gitignored file) —

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.7.1 — 2026-09-18
+
+Absorption pass on the testing roles, from business-side admission standards and an existing
+YAML-driven Playwright suite (the material is summarized in EP-20260918-001): the case library
+now speaks the target engine's vocabulary, execution validates collection before a browser
+opens, and failures are classified before anything reaches the bug chain. Method-level change,
+no gate change — `schemas/`, `tools/lab/`, and the pinned tests are untouched.
+
+- `test-planner` gains four disciplines: an **admission check** before case authoring (missing
+  routes, expected results, prerequisites, roles/data are registered as numbered gaps in
+  `## 流程疑点` — never invented, never dressed up as a weaker assertion); **target-engine
+  alignment** (elements referenced by registry alias, actions and expected results in the
+  engine's split, reusable preconditions referenced not copy-pasted, environment values as
+  variables, project-declared file names only); **session ordering** (logout / clear-cookie
+  cases last or isolated, never mixed into a logged-in session); and a **capability-boundary
+  rule** (a behavior outside the framework's documented capability is marked TODO /
+  不可自动化 with the reason). A delivery **self-check list** mirrors what the reviewer will
+  check.
+- `test-executor` gains target-runner adaptation and failure triage: **collection dry run
+  first** (`--collect-only`-style — catches broken references before a browser opens, and a
+  case directory without a registry entry is silently never collected; the suite is registered
+  before its case files exist); **evidence in the runner's order of resolution** (run report →
+  failure screenshots → logs, citing the specific artifact per row); a registry gap is recorded
+  in the conclusion instead of inlining a raw locator; and every failure is **classified before
+  filing** — product defect → bug chain; case/registry drift → registry update + rerun;
+  environment/data → `blocked` — each naming the fix location so the bug pool stays free of
+  noise.
+- `records/tests/README.md` gains the **Target-project mapping** section: the alignment chain
+  (frontend test ids ↔ locator registry ↔ case library ↔ engine cases ↔ flows ↔ suite registry
+  ↔ environment config) with, per link, what must agree and where a change lands — the same
+  table that routes failure repairs.
+- `docs/agent-roles.md` (Chinese mirror) records the alignment chain and failure triage.
+- `measurement: none (method-level change, no instrumented business task)` — same class as
+  0.7.0; not a verified improvement.
+
 ## 0.7.0 — 2026-09-18
 
 Automated-testing capability slice — user-visible features can now be tested end to end by the
