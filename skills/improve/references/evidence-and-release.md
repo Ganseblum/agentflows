@@ -12,12 +12,16 @@ Prefer externally observable signals over an Agent's self-assessment:
 
 Keep positive and negative episodes. Do not train the workflow only on failures or only on tasks that reached completion.
 
-An episode should record this logical shape:
+An episode should record this logical shape. `revision`, `run`, `claims`, and `evidence` make the outcome independently checkable; a `complete` run must not be inferred from an agent summary alone:
 
 ```json
 {
   "schema_version": 1,
   "episode_id": "stable-id",
+  "revision": {"source": "git:<revision>", "base": "git:<parent>"},
+  "run": {"run_id": "run-id", "started_at": "2026-09-18T00:00:00Z", "ended_at": "2026-09-18T00:01:00Z", "status": "complete"},
+  "claims": [{"claim_id": "C-1", "claim": "the stated outcome", "status": "verified", "check": "command or reviewer", "evidence_ref": "E-1"}],
+  "evidence": [{"evidence_id": "E-1", "kind": "test", "ref": "path:line or command output"}],
   "source_type": "user_feedback | acceptance | test | review | incident | rollback",
   "objective": "what the task was expected to achieve",
   "outcome": "accepted | rejected | partial | failed | unknown",
@@ -67,6 +71,7 @@ The completed release gate produces a record of this shape:
   "evaluation_suite_revision": "immutable revision",
   "baseline_results": {},
   "candidate_results": {},
+  "measurement": {"status": "complete | none", "basis": "business slice or explicit reason"},
   "decision": "promote | revise | reject | rollback",
   "approvals": [],
   "rollout": {},

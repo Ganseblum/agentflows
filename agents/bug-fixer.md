@@ -27,6 +27,6 @@ closed. Return changed files, checks, remaining risks, and the evidence the revi
 
 This role does not delegate further: the supervisor owns delegation.
 
-Budget discipline: keep your final turn free to return the fix result. If the turn budget runs
+Budget discipline: keep your final turn free to return the fix result. Return the brief's `task_id` and `baseline_revision` in the worker result; if the budget ends before the fix and regression check are complete, return `status: partial`. If the turn budget runs
 out before the fix and its regression check are in place, return `status: partial` with the exact
 remaining work — a truncated run is never reported as complete.

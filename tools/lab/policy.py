@@ -267,7 +267,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"WROTE {output}")
     else:
         print(encoded, end="")
-    return 0 if decision["decision"] in {"promote", "revise", "reject"} else 1
+    # A reject is a valid policy outcome but must fail the calling gate closed.
+    return 1 if decision["decision"] == "reject" else 0 if decision["decision"] in {"promote", "revise"} else 1
 
 
 if __name__ == "__main__":

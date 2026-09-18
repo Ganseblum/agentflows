@@ -20,7 +20,7 @@ It does not invoke or require the standalone `agentflow` CLI.
 
 ## Current maturity
 
-Version `0.6.0` provides:
+Version `0.7.5` provides:
 
 - a shared development Skill;
 - frontend, backend, technical-director, reviewer, bug-investigator, bug-fixer,
@@ -64,7 +64,7 @@ for a small low-risk bug with a known reproduction, while keeping the same evide
 Plan Architect writes the plan; Supervisor authorizes and coordinates execution. A separate
 Execution Coordinator is reserved for a future durable control plane.
 
-The improvement workflow is a governed skeleton. Cross-session telemetry, persistent
+The improvement workflow is a governed skeleton. Use `python3 tools/lab/record_store.py index` to build a disposable SQLite FTS5 lexical index, then `query` for explicit retrieval; the source records remain authoritative and no vector database is used. Cross-session telemetry, persistent
 retrieval, a private holdout service, canary rollout, and automatic rollback are not
 implemented yet. Human approval is the default release boundary.
 
@@ -113,7 +113,7 @@ See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) for observed host constraints, and
 [`docs/iteration-log.md`](docs/iteration-log.md) for why each version changed.
 
-The source checkout currently declares version `0.6.0`. This is not by itself proof that a host is
+The source checkout currently declares version `0.7.5`. This is not by itself proof that a host is
 running that version: ZCode loads installed snapshots and Codex may load a separate plugin cache.
 Before dogfood, compare the actual host snapshot with `python3 tools/lab/validate.py installed
 --path <installed-plugin-root>` (or the host-specific default) and record the result. Do not switch

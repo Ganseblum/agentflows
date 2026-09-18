@@ -9,14 +9,14 @@ hard cases; most tasks use one or two rows.
 
 | Task shape | Roles to start |
 | --- | --- |
-| Single-layer small fix, clear reproduction | Supervisor alone |
+| Single-layer small fix, clear reproduction | Supervisor alone; the independent Reviewer gate still applies to any Supervisor-authored change |
 | Frontend or backend implementation with a bounded scope | One engineer + Reviewer when material |
 | Cross-layer feature, contract change, migration | Technical Director → both engineers (parallel investigation) → Reviewer |
 | Planning request, no code yet | Specialists in parallel → Plan Architect |
 | Automated testing of a user-visible feature (user asked, or the plan carries a test-design task) | Test Planner → Test Executor (supervisor performs host-browser steps) → Reviewer in flow-reasonableness mode |
 | Test run produced failures or coverage gaps | Executor evidence → bug chain (Investigator → Fixer → Reviewer → Recorder) |
 | Material, uncertain, recurring, or cross-layer bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
-| Small bug with a verified reproduction | Fixer + Supervisor-side check; record when it should persist |
+| Small bug with a verified reproduction | Supervisor alone for diagnosis/fix/check; the independent Reviewer gate remains mandatory for Supervisor-authored changes; record when it should persist |
 | Review of documents authored under another system's rules | Supervisor (archive + review record) + Reviewer; findings become bug records with `provenance: external` |
 | Plugin/role-instruction improvement | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 

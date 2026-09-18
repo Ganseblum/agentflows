@@ -15,4 +15,4 @@ Use observable evidence such as user corrections, acceptance checks, tests, revi
 
 Filter by `provenance` before clustering: only records marked `provenance: agentflow` are candidate evidence about Agentflow itself. `session-artifact` (the agent's own ad-hoc plan, analysis, decision, or code with no Agentflow clause covering it), `user-input`, and `external` records are not Agentflow evidence — cite them as context and counterexamples, never as the basis for a source change. A record marked `undetermined` must have its provenance resolved (naming the missing evidence) before it enters a cluster. When a cluster mixes provenances, split it rather than averaging across them.
 
-Return evidence clusters, confidence, affected task slices, likely attribution, counterexamples, and the smallest falsifiable improvement hypothesis.
+Return evidence clusters, confidence, affected task slices, likely attribution, counterexamples, and the smallest falsifiable improvement hypothesis. If the evidence or budget is insufficient, return `status: partial` with the missing evidence; do not present an incomplete cluster as complete.

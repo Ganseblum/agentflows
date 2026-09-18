@@ -95,6 +95,11 @@ def print_errors(errors: list[ValidationError]) -> None:
 
 def load_suite(suite_dir: Path) -> list[dict[str, Any]]:
     suite_dir = suite_dir.resolve()
+    try:
+        suite_dir.relative_to(ROOT.resolve())
+    except ValueError:
+        print(f"suite directory must be inside the repository: {suite_dir}", file=sys.stderr)
+        raise SystemExit(1)
     if not suite_dir.is_dir():
         print(f"suite directory does not exist: {suite_dir}", file=sys.stderr)
         raise SystemExit(1)
@@ -417,8 +422,8 @@ def compare_command(args: argparse.Namespace) -> int:
     for field in ("host", "model", "permissions_profile", "fixture_revision"):
         if baseline["observed_context"][field] != candidate["observed_context"][field]:
             errors.append(ValidationError(f"observed_context.{field}", "baseline and candidate observed contexts must match"))
-    baseline_cases = [(item["case_id"], item["slice"]) for item in baseline["case_results"]]
-    candidate_cases = [(item["case_id"], item["slice"]) for item in candidate["case_results"]]
+    baseline_cases = [(item["case_id"], item["slice"], item["holdout"]) for item in baseline["case_results"]]
+    candidate_cases = [(item["case_id"], item["slice"], item["holdout"]) for item in candidate["case_results"]]
     if baseline_cases != candidate_cases:
         errors.append(ValidationError("case_results", "baseline and candidate cases/slices must match in order"))
     if errors:

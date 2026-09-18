@@ -39,6 +39,7 @@
 
 agents/evaluator.md
 agents/release-governor.md
+.github/
 
 evals/
 
@@ -46,6 +47,7 @@ skills/improve/references/
 
 schemas/
 tests/test_lab_contracts.py
+tests/test_record_store.py
 
 tools/lab/artifact_digest.py
 tools/lab/eval_runner.py

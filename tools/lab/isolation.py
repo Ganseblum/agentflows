@@ -129,22 +129,28 @@ def changed_paths(candidate: Path, base: str) -> list[str]:
     # Compare the complete candidate tree with the frozen parent. Disable rename detection so
     # both the old protected path and the new path are visible to the gate.
     commands = [
-        ["git", "-C", str(candidate), "diff", "--no-renames", "--name-only", base],
-        ["git", "-C", str(candidate), "ls-files", "--others", "--exclude-standard"],
-        ["git", "-C", str(candidate), "ls-files", "--others", "--ignored", "--exclude-standard"],
+        ["git", "-C", str(candidate), "diff", "--no-renames", "--name-only", "-z", base],
+        ["git", "-C", str(candidate), "ls-files", "--others", "--exclude-standard", "-z"],
+        ["git", "-C", str(candidate), "ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
     ]
     paths: set[str] = set()
     for command in commands:
-        completed = subprocess.run(command, text=True, capture_output=True, check=False)
+        completed = subprocess.run(command, capture_output=True, check=False)
         if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.rstrip() or "git diff failed")
-        paths.update(line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip())
+            raise RuntimeError(completed.stderr.decode(errors="replace").rstrip() or "git diff failed")
+        paths.update(item.decode("utf-8", errors="surrogateescape").replace("\\", "/")
+                    for item in completed.stdout.split(b"\0") if item)
     return sorted(paths)
 
 
 def check_diff(args: argparse.Namespace) -> int:
     candidate = resolved(args.candidate)
-    source = PROTECTED_PATHS_FILE
+    checker_root_value = getattr(args, "checker_root", None)
+    checker_root = resolved(checker_root_value) if checker_root_value else ROOT
+    if checker_root == candidate or is_within(checker_root, candidate) or is_within(candidate, checker_root):
+        print("FAIL candidate diff: checker root and candidate must be separate and non-nested", file=sys.stderr)
+        return 1
+    source = checker_root / "protected-paths.txt"
     try:
         forbidden = load_protected_paths(source)
         declared_by = str(source)
@@ -199,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
 
     diff_parser = subparsers.add_parser("check-diff")
     diff_parser.add_argument("--candidate", required=True)
+    diff_parser.add_argument("--checker-root", default=None, help="trusted checker checkout; must not overlap candidate")
     diff_parser.add_argument("--base", required=True, help="frozen parent revision to compare against")
     diff_parser.set_defaults(handler=check_diff)
 

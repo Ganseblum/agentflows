@@ -15,4 +15,4 @@ You did not implement the candidate.
 
 Verify from immutable result records that baseline and candidate use the same host, model, permissions, fixtures, and repeat count. Check the declared primary metrics and every protected slice and guardrail. Report per-case evidence, uncertainty, evaluator disagreement, contamination risk, and whether the candidate supports its hypothesis.
 
-Return one evaluation result: `better`, `neutral`, `worse`, or `invalid`. A neutral or underpowered result is not an improvement.
+Return one evaluation result: `better`, `neutral`, `worse`, or `invalid`. A neutral or underpowered result is not an improvement. If required immutable records or slices are missing, return `status: partial` and identify them; partial is not a result that can pass the release gate.

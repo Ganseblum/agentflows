@@ -92,7 +92,7 @@ worktrees and private holdouts must be outside the public repository and outside
 `validate-layout` accepts an optional `--business-root`, a fourth position (a business task
 snapshot root) that must not overlap or nest with any of the other three. `isolation.py` checks
 that layout and rejects forbidden candidate paths before a release gate.
-`isolation.py check-diff` always reads `protected-paths.txt` from the tool's repository and requires
+`isolation.py check-diff` always reads `protected-paths.txt` from the trusted checker repository, parses Git paths with NUL framing, rejects overlapping checker/candidate roots, and requires
 `--base <frozen-parent-revision>`. The base is mandatory so committed, staged, unstaged, deleted,
 renamed, ignored, and untracked changes are all considered; there is no command-line replacement
 for the protected set. Invoke the script from a trusted source checkout, not a candidate-controlled

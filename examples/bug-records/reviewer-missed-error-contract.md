@@ -63,6 +63,10 @@ reviewer 契约与公开评测用例现在显式要求错误结构与兼容性�
 - decision: approved
 - evidence: review record E-API-REVIEW；修复后上述回归检查通过。
 
+> [!WARNING]
+> 残余风险：同类 `resp.data.error` 读取只核对了 orders 客户端，未做全仓扫描——其他服务端
+> 点可能存在同形信封变更未被覆盖（演示 `records/README.md` 视觉标注约定）。
+
 ## 备注
 
 脱敏示例记录。

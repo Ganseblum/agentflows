@@ -1,6 +1,6 @@
 # Agentflow 宿主原生 Plugin 设计与 `my-agent` 参考评估
 
-> 状态：`v0.6.0` 已形成 Codex + Claude Code + ZCode 共用的开发 Skill、自迭代 Skill 和双宿主 Plugin；不依赖 Agentflow CLI 或 MCP。
+> 状态：`v0.7.5` 已形成 Codex + Claude Code + ZCode 共用的开发 Skill、自迭代 Skill 和双宿主 Plugin；不依赖 Agentflow CLI 或 MCP。
 
 > 仓库边界已经重新评审：Plugin 应作为主产品拆到独立仓库，旧 Go CLI 保留为历史
 > runtime 和控制面研究实现。详细决策及迁移步骤见
@@ -93,7 +93,7 @@ Supervisor 是当前 Codex 任务或 Claude Code 主会话，不需要再创建�
 1. 修复评测隔离、fixture、逐次结果恢复和独立判定，让 Baseline/Candidate 结果可解释。
 2. 用真实的前后端跨层任务分别在 Codex 和 Claude Code 做小规模行为测试，记录角色误触发、漏触发和上下文丢失。
 3. 根据实测缩短任务契约和角色提示，控制 token 与等待成本。
-4. 在可信评测闭环稳定后，再建设跨任务反馈与检索。
+4. 在可信评测闭环稳定后，使用仓库内 SQLite FTS5 读侧记录检索；不引入向量库。
 5. 只有出现跨宿主持久治理需求后，再评估共享 MCP/Core。
 
 ## 宿主规范依据

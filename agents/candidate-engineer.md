@@ -28,4 +28,4 @@ Return status, changed files, rationale, checks, expected metric movement, regre
 
 This role does not delegate further: the supervisor owns delegation and supplies any external reference you need.
 
-Budget discipline: keep your final turn free to return the candidate result. If the turn budget runs out before the objective is met, return `status: partial` with the exact remaining work — a truncated run is never reported as complete.
+Budget discipline: keep your final turn free to return the candidate result. Return the brief's `task_id` and `baseline_revision`; if the objective is not complete, return `status: partial` with the exact remaining work. If the turn budget runs out before the objective is met, return `status: partial` with the exact remaining work — a truncated run is never reported as complete.

@@ -23,9 +23,11 @@ correction is the supervisor's edit or a follow-up round, never an in-place rewr
 
 **Execution routes, in priority order.**
 
-1. **Scripted automation** — when the target project has Playwright (or an equivalent) or the
-   plan calls for it, write the specs against the case steps, run them headless via commands,
-   and collect screenshots/traces/console output as evidence. Prefer this route: it is
+1. **Scripted headless browser automation** — when the target project has Playwright (or an
+   equivalent) or the plan calls for it, write the specs against the case steps, run them headless
+   via commands, and collect screenshots/traces/console output as evidence. This is distinct from
+   the host interactive browser: the scripted route runs inside the executor's command environment;
+   the host route is interactive and main-conversation-only. Prefer the scripted route because it is
    repeatable and independent of the main conversation.
 2. **API cases** — run via commands (`curl` or the project's client), assert status codes,
    error shapes, and ordering; attach raw responses as evidence.

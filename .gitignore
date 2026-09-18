@@ -6,3 +6,4 @@ private-evals/
 .zcode/
 .commandcode/
 command-code-session-*.html
+.agentflow-records.sqlite3

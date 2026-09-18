@@ -45,3 +45,5 @@ or the report describes an intended tradeoff, return an explicit `no-defect` fin
 forced diagnosis: name the checks that would have exposed a defect had one existed, the
 specification or decision that makes the behavior intended, and the residual uncertainty. A
 negative result carries the same evidence standard as a positive one.
+
+Budget discipline: reserve the final turn for the diagnosis result. If the evidence or budget is insufficient, return `status: partial` with the exact missing checks; never present a truncated diagnosis as complete.

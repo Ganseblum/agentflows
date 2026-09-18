@@ -1,6 +1,6 @@
-# mock/ —— 各记录类型的完整样板（仅供预审，非证据）
+# mock/ —— 仓库内受校验的记录样板（非生产证据）
 
-这些文件演示**每种记录类型和关键状态**的最终形态。它们不是证据，不进仓库；预审通过后
+这些文件演示**每种记录类型和关键状态**的最终形态。它们是仓库内受 `validate.py` 校验的 demo fixture，必须随契约同步；它们不是生产证据，也不会被复制成真实记录。不要再表述为“不会进仓库”。
 按下方映射复制进 `records/` 对应位置即可作为真实记录使用（复制后跑
 `python3 tools/lab/validate.py all` 验证）。
 
@@ -17,7 +17,7 @@
 | [records/bugs/archive/2026-09-17/rejected-bug-demo.md](records/bugs/archive/2026-09-17/rejected-bug-demo.md) | `records/bugs/archive/<日期>/<slug>.md` | **rejected**：只在 archive/ 下合法，含 rejection_reason |
 | [records/reviews/demo-project-feature-demo/review-2026-09-17-001.md](records/reviews/demo-project-feature-demo/review-2026-09-17-001.md) | `records/reviews/<project>-<feature-slug>/review-<日期>-<NNN>.md` | **评审记录**：feature 锚目录、决策 changes_requested、findings 关联 bug |
 | [records/reviews/…/archive/2026-09-17-001/design-be.md](records/reviews/demo-project-feature-demo/archive/2026-09-17-001/design-be.md) | 评审记录旁的 `archive/<轮次>/` | **评审快照**：被评审文档逐字副本（证据，非记录） |
-| [records/episodes/2026-09-17/EP-20260917-901.json](records/episodes/2026-09-17/EP-20260917-901.json) | `records/episodes/<日期>/<EP-id>.json` | **episode**：任务级决策记录（JSON），improve 环燃料 |
+| [records/episodes/2026-09-17/EP-20260917-901.json](records/episodes/2026-09-17/EP-20260917-901.json) | `records/episodes/<日期>/<EP-id>.json` | **episode**：任务级决策记录（JSON），material 改动必写（0.7.2 起，含 `review_roundtrips` 评审往返），improve 环燃料 |
 | [records/plans/PLAN-DEMO-SHARE-001.md](records/plans/PLAN-DEMO-SHARE-001.md) | `records/plans/<plan_id>.md` | **执行计划（0.5.0 融合形态）**：frontmatter 信封 + 进展概览/任务清单（状态+证据回写）/验证命令；机器断言=依赖无环、ID 唯一、状态枚举、阻塞未决不得 approved |
 
 ## 预审要点

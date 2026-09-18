@@ -51,6 +51,23 @@ class ValidatorRegressionTests(unittest.TestCase):
             self.assertTrue(validator.validate(True))
             self.assertFalse(validator.validate(1.0))
 
+    def test_changed_paths_is_nul_safe_for_spaces(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            self._git(repository, "init", "-q")
+            self._git(repository, "config", "user.email", "test@example.com")
+            self._git(repository, "config", "user.name", "Agentflow Tests")
+            (repository / "base").write_text("x", encoding="utf-8")
+            self._git(repository, "add", ".")
+            self._git(repository, "commit", "-q", "-m", "base")
+            base = subprocess.run(["git", "-C", str(repository), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+            (repository / "name with space").write_text("x", encoding="utf-8")
+            self.assertIn("name with space", isolation.changed_paths(repository, base))
+
+    def test_layout_rejects_equal_or_nested_checker_roots(self) -> None:
+        root = Path("/tmp/root").resolve()
+        self.assertTrue(isolation.layout_errors(root, root, root))
+
     def test_changed_paths_includes_tracked_and_ignored_untracked_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)
@@ -434,13 +451,13 @@ class SeedGraderGoldenTests(unittest.TestCase):
         self.assertEqual(repetition["status"], "graded")
         self.assertEqual(repetition["hits"], ["TEST-S1"])
         self.assertEqual(repetition["missed"], [])
-        self.assertEqual(repetition["unmatched"], [])
+        self.assertEqual(repetition["unmatched_by_doc"], {})
         self.assertEqual(repetition["recall"], 1.0)
         self.assertTrue(repetition["accepted"])
         self.assertEqual(repetition["escaped_defects"], 0)
         self.assertEqual(seed_grader.exit_code(document), 0)
 
-    def test_near_miss_findings_are_not_hits_and_land_in_unmatched(self) -> None:
+    def test_near_miss_findings_are_not_hits_and_land_in_unmatched_by_doc(self) -> None:
         # Too-loose detector: the right path without an anchor, and the right anchor on a
         # different document, must both stay misses; neither finding is penalized, but both
         # are reported as unmatched.
@@ -464,11 +481,11 @@ class SeedGraderGoldenTests(unittest.TestCase):
         self.assertFalse(repetition["accepted"])
         self.assertEqual(repetition["escaped_defects"], 1)
         self.assertEqual(
-            repetition["unmatched"],
-            [
-                {"path": "docs/spec.md", "issue": "anchor missing"},
-                {"path": "docs/other.md", "issue": "path wrong"},
-            ],
+            repetition["unmatched_by_doc"],
+            {
+                "docs/spec.md": 1,
+                "docs/other.md": 1,
+            },
         )
         self.assertEqual(seed_grader.exit_code(document), 0)
 
@@ -562,6 +579,55 @@ class SeedGraderGoldenTests(unittest.TestCase):
             self.assertEqual(item["hits"], ["TEST-S1"], path)
             self.assertEqual(item["missed"], [], path)
         self.assertEqual(document["summary"], {"reps_graded": 3, "reps_failed": 0, "total_seeds": 1})
+
+    def test_off_target_findings_do_not_count_toward_recall(self) -> None:
+        # With target_docs set, a finding whose path is outside the allowed documents is recorded
+        # as off_target and must neither rescue a missed seed nor fail the repetition. Only the
+        # in-scope hit counts toward recall.
+        target_docs = ["docs/spec.md"]
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            seeds = self._seed_list(base)
+            findings_dir = base / "findings"
+            self._findings(
+                findings_dir,
+                1,
+                [
+                    {"path": "docs/spec.md", "issue": "hit", "evidence": "静默重投"},
+                    {"path": "docs/other.md", "issue": "off target", "evidence": "静默重投"},
+                ],
+            )
+            document = seed_grader.grade_case(
+                seed_grader.load_seeds(seeds), findings_dir, 0.5, target_docs=target_docs
+            )
+        repetition = document["repetitions"][0]
+        self.assertEqual(repetition["status"], "graded")
+        self.assertEqual(repetition["hits"], ["TEST-S1"])
+        self.assertEqual(repetition["missed"], [])
+        self.assertEqual(repetition["recall"], 1.0)
+        self.assertEqual(repetition["off_target"], [{"path": "docs/other.md", "issue": "off target"}])
+
+    def test_unmatched_findings_above_the_per_doc_cap_fail_the_repetition(self) -> None:
+        # Spamming off-topic findings on an allowed document does not game recall: once a target
+        # document accumulates more unmatched findings than the per-doc cap, the repetition fails.
+        target_docs = ["docs/spec.md"]
+        spam = [
+            {"path": "docs/spec.md", "issue": f"noise {index}", "evidence": "unrelated"}
+            for index in range(seed_grader.MAX_UNMATCHED_PER_DOC + 1)
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            seeds = self._seed_list(base)
+            findings_dir = base / "findings"
+            self._findings(findings_dir, 1, spam)
+            document = seed_grader.grade_case(
+                seed_grader.load_seeds(seeds), findings_dir, 0.5, target_docs=target_docs
+            )
+        repetition = document["repetitions"][0]
+        self.assertEqual(repetition["status"], "failed")
+        self.assertIn("unmatched-finding cap exceeded", repetition["error"])
+        self.assertEqual(document["summary"]["reps_failed"], 1)
+        self.assertEqual(seed_grader.exit_code(document), 2)
 
 
 class ContractPinTests(unittest.TestCase):
@@ -2442,9 +2508,10 @@ class GateIntegrityNegativeTests(unittest.TestCase):
             tests_dir = root / "tests"
             tests_dir.mkdir()
             (tests_dir / "test_lab_contracts.py").write_text("", encoding="utf-8")
+            (tests_dir / "test_record_store.py").write_text("", encoding="utf-8")
             (tests_dir / "smuggled_test.py").write_text("", encoding="utf-8")
             undeclared_errors = validate.validate_unit_tests(root)
-            for name in ("smuggled_test.py", "test_lab_contracts.py"):
+            for name in ("smuggled_test.py", "test_lab_contracts.py", "test_record_store.py"):
                 (tests_dir / name).unlink()
             missing_declared_errors = validate.validate_unit_tests(root)
         self.assertTrue(
@@ -2472,6 +2539,7 @@ class GateIntegrityNegativeTests(unittest.TestCase):
             tests_dir.mkdir()
             module = tests_dir / "test_lab_contracts.py"
             module.write_text("# no tests here\n", encoding="utf-8")
+            (tests_dir / "test_record_store.py").write_text("# no tests here\n", encoding="utf-8")
             empty_errors = validate.validate_unit_tests(root)
             module.write_text(
                 "import unittest\n\n\nclass T(unittest.TestCase):\n"

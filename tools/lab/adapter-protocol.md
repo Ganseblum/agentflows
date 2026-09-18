@@ -44,7 +44,7 @@ object on stdout:
 }
 ```
 
-The runner owns the execution identity and repeats it in the result manifest. An adapter
+The runner owns the execution identity and repeats it in the result manifest. Repetition numbers are exactly 1..repeat_count; skipped or fabricated repetitions are invalid, and measured latency is injected by the adapter before schema validation. `accepted` and `escaped_defects` for business cases are grader-owned, not host claims. An adapter
 cannot change the declared host, model, permissions profile, fixture revision, suite
 revision, or repeat count. Baseline and Candidate results are comparable only when these
 fields match exactly.

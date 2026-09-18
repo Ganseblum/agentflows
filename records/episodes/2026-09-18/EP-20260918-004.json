@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260918-004",
+  "source_type": "user_feedback",
+  "objective": "内置 agent 对应关系判定（用户问「ZCode 默认的 agent，agentflow 是否有」）：核实宿主内置 subagent 只有 general-purpose 与 Explore 两个、agentflow 14 角色无对应物；决策不新增通用侦察/通用角色（与 agent-roles.md「不新增通用任务记录 Agent」先例同构），读多写少的调查改派宿主内置 Explore 承接；调查产出的 3 条新宿主事实与 Z5 的 1 处范围修正落 docs/host-platform-facts.md",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "design_decision",
+      "value": "no generic recon/general role added to agentflow; host built-in Explore carries read-heavy fan-out investigations, supervisor relays conclusions into the next role prompt or record",
+      "evidence_ref": "本会话对比（14 角色无 general-purpose/Explore 等价物）+ docs/agent-roles.md 先例（不新增通用任务记录 Agent，宿主已覆盖的通用能力不重复造）"
+    },
+    {
+      "kind": "host_fact",
+      "value": "ZCode built-in subagents are exactly general-purpose (tools *, injects AGENTS.md) and Explore (read-only fan-out, Bash/Glob/Grep/Read/WebFetch/WebSearch/TodoWrite); judge is document-skills-plugin-provided",
+      "evidence_ref": "docs/host-platform-facts.md Z7/Z8；createBuiltInAgents 二元数组 + 保留名集合（app.asar host bundle，2026-09-18 读取，独立 Explore 复核 + supervisor 二次 grep）"
+    },
+    {
+      "kind": "host_fact",
+      "value": "file-defined agents discovered at ~/.zcode/agents (user, desktop-only) and <workspace>/.zcode/agents; agent state in ~/.zcode/v2/agents-state.json (lazily created, absent on this machine)",
+      "evidence_ref": "docs/host-platform-facts.md Z9；resolveUserSubagentRoot / resolveWorkspaceSubagentRoot / resolveSubagentStateFile"
+    },
+    {
+      "kind": "correction",
+      "value": "Z5 rescoped to plugin role files: its 'no .zcode/agents' parenthetical was over-generalized and is superseded by Z9 for file agents; snapshot-only claim and 'config.json has no agents key' hold",
+      "evidence_ref": "docs/host-platform-facts.md Z5 行 2026-09-18 修正注记"
+    },
+    {
+      "kind": "change_surface",
+      "value": "2 surfaces: docs/host-platform-facts.md (Z5 修正 + Z7–Z9 新增 + 复验方法) + 本 episode；无 role/schema/manifest/protected-path 改动",
+      "evidence_ref": "git status 本会话改动；未开独立评审门（文档 + 记录，非 material 代码改动）"
+    }
+  ],
+  "review_roundtrips": [],
+  "feedback_summary": "用户对比宿主内置 agent 与 agentflow 角色后接受「用自带的、不新增」：agentflow 角色的价值增量在方法论 + 记录契约 + 门禁，侦察角色三者皆无，只会是内置 Explore 的复制品。演示 B 路径（侦察结果持久化）时顺带产出真实增量——内置 Explore 独立复核了 app.asar 提取的宿主事实，并发现 Z5 原行把「无工作区活编辑路径」从 plugin agent 过度推广到了文件式 agent：代码明确存在 <workspace>/.zcode/agents 发现机制。事实文档按其自身纪律（证据 + 范围 + 复验方法）修正补录；本次转交通道由 supervisor 承担（内置 Explore 只读、结果只回主对话），与 records/README「supervisor assigns each record path」一致。",
+  "agentflow_version": "0.7.3",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-18T08:02:55Z"
+}

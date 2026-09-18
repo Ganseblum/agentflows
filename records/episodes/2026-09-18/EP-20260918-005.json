@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260918-005",
+  "source_type": "user_feedback",
+  "objective": "0.7.4 措辞清理批（用户批准「改吧」后执行）：收掉 0.7.2/0.7.3 评审遗留的三处残余——records/README.md 与 mock/README.md 的 episode 行改为 0.7.2 后的放宽口径（material 改动必写、含 review_roundtrips）、PLAN-BUSINESS-EVAL-001 frontmatter plan_version 对齐最新修订行（0.2.3→0.2.5）；docs-only，无代码/schema/种子/用例改动",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "design_decision",
+      "value": "close carried residuals instead of letting them ride into the next batch",
+      "evidence_ref": "records/README.md:12 是 0.7.2 扫描中最后一面仍是旧口径（improvement-loop-only）的文档面；mock/README.md:20 同源；评审 0.7.3 轮把 plan_version 失步列为残余——三处一并收掉后仓库进入「所有已知项都有处置结论」状态"
+    },
+    {
+      "kind": "change_surface",
+      "value": "docs-only: 3 fixes + CHANGELOG 0.7.4 + five manifests; no code/schema/seed/case changes",
+      "evidence_ref": "评审 C2''（mock 一行）、C3''（plan 仅 frontmatter + v0.2.5 行）、C4''（两处措辞各一命中）、C5''（五 manifest 0.7.4，marketplace 顶层 version:1 未动）"
+    },
+    {
+      "kind": "risk",
+      "value": "concurrent writer active in the same working tree during this slice",
+      "evidence_ref": "收口检查期间发现 docs/host-platform-facts.md 被另一会话修改（Z5 修正 + 新增 Z7–Z9，mtime 2026-09-18 16:04 本地）且 records/episodes/2026-09-18/EP-20260918-004.json 已被其占用（内置 agent 对应关系判定，16:05）；supervisor 未触碰外来路径、episode ID 让位 004→005、按 BUG-20260917-02 的「占用则停并上报」处置；评审裁定外来足迹不在保护门内、本切片谓词成立。工作树现含两个会话的三个未提交批次，评审建议各自归属分别打包"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (docs-only; S phase still gated by U-01)",
+      "evidence_ref": "CHANGELOG 0.7.4 measurement 行；PLAN-BUSINESS-EVAL-001 阻塞描述未变"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-09-18T08:15:00Z",
+      "reviewer": "agentflow:reviewer",
+      "decision": "approved",
+      "finding": "delta 重审条件性通过（C0''–C6'' 收口）；其中 C1'' 出现偏差——docs/host-platform-facts.md 修改与 EP-004 未跟踪文件均非本 delta 产物，实为另一会话的并发批次；评审确认：目标文件逐一验证干净、外来路径不在 protected-paths.txt 门内、artifacts 校验在 EP-004 存在下仍 8/8 通过，谓词成立；并指出同工作树跨会话打包的归属风险",
+      "resolution": "逐字回传 C0''–C6''（C6'' 为预期中的刷新前 FAIL：源 0.7.4 vs 安装 0.7.2，等用户重装）；评审裁定并发足迹不影响决定，附用户级建议：0.7.2–0.7.4 批次与 host-facts/EP-004 批次分开打包，勿扫入同一提交。最终 approved，无 required_changes；episode 以 EP-005 落盘（004 已被占用）"
+    }
+  ],
+  "feedback_summary": "用户看完「还剩什么要改」的清单后批准收尾（「改吧，我一会更新新包」）。三处措辞修复全部落地，评审门一轮收口（conditional → 逐字检查 → approved）。本轮最重要的意外发现是并发写入者：另一个会话在同一工作树同时推进 host-facts 批次——本次未发生冲突（路径不相交、episode ID 唯一性保持），但两个会话的未提交批次混在同一工作树，提交归属需要用户协调。安装快照等用户刷新 marketplace 重装后复核。",
+  "agentflow_version": "0.7.4",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-18T08:09:32Z"
+}

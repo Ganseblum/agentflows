@@ -15,16 +15,19 @@ records/episodes/
 
 契约**复用** improve 环的既有
 [`skills/improve/references/episode.schema.json`](../../skills/improve/references/episode.schema.json)
-（在保护门内），不另设平行载体。字段速览：`schema_version=1`、`episode_id`、`source_type`
-（user_feedback / acceptance / test / review / incident / rollback）、`objective`、`outcome`
+（在保护门内），不另设平行载体。字段速览：`schema_version=1`、`episode_id`、`source_type`（user_feedback / acceptance / test / review / incident / rollback）、`revision`（source/base）、`run`（run_id/时间/状态）、`claims`（每条带可执行 check）、`evidence`（稳定引用）、`objective`、`outcome`
 （accepted / rejected / partial / failed / unknown）、`signals[]`（kind + value +
-evidence_ref）、`feedback_summary`、`agentflow_version`、`host`、`provenance`、`redactions`。
+evidence_ref）、`review_roundtrips[]`（0.7.2 可选：每轮独立评审一行——`at` / `reviewer` /
+`decision`（approved / changes_requested / blocked）/ `finding` / `resolution` /
+`evidence_ref`；含未通过的轮次与分歧如何收场，中途评审分歧由此可审计）、
+`feedback_summary`、`agentflow_version`、`host`、`provenance`、`redactions`。
 
 要点：
 
 - **谁写**：supervisor 在会话收口时写（final decision record 的落盘动作，不需要新角色）。
-- **何时写**：结果可能喂给改进环的任务都写；outcome 用 worker result 同一语义——预算耗尽
-  是 `partial`，永不 `complete`。
+- **何时写**：0.7.2 起 material 改动（开过独立评审门的）一律写，不再限于「可能喂给改进环」
+  的任务；评审每一轮（含 `changes_requested` 与分歧收场）落 `review_roundtrips`。outcome 用
+  worker result 同一语义——预算耗尽是 `partial`，永不 `complete`。
 - **脱敏**：`redactions` 声明已脱敏的内容；凭证与私人对话内容不进 episode。
 - **provenance**：`carrier`（会话载体）与 `sanitized`（是否已脱敏）两键必填，schema 强制
   `additionalProperties: false`——多余键会被拒。

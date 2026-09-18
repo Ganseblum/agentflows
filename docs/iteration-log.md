@@ -29,6 +29,7 @@
 | 0.5.1 | 2026-09-17 | 用户问 spec/design/proposal 是否吸取、如何方便后续使用 | 文档评审模式（按文档类型分档清单）进 reviewer；不重建模板体系 | CHANGELOG 0.5.1；本文件 §0.5.1 |
 | 0.5.2 | 2026-09-17 | 用户要求自审 0.5.x 有无遗漏 | 一处静默门缺口（反例从未被拾取）+ 死代码 + 五处旧措辞 + 两处失效文档面 | CHANGELOG 0.5.2；本文件 §0.5.2 |
 | 0.6.0 | 2026-09-17 | 用户要求消灭方法级改动的 `measurement: none`（做业务任务度量切片）；批内独立评审抓出四个运行时缺陷 | 业务评测仪器（种子缺陷确定性评分 + 业务面 runner/adapter + 门登记）、判断词可判定定义、CI、两处诊断/读取缺陷修复 | CHANGELOG 0.6.0；本文件 §0.6.0；`records/plans/PLAN-BUSINESS-EVAL-001.md` |
+| 0.7.2–0.7.4 | 2026-09-18 | 审计整改阶段四、五：episode 可验证字段、发布 measurement 链、记录显式检索、版本与 demo 口径漂移 | revision/run/claims/evidence 对齐；measurement none/complete 语义；SQLite FTS5 读侧；0.7.x 迭代留档与 next-session 机器信息修正 | 本批文件、`records/episodes/2026-09-18/`、`tools/lab/record_store.py` |
 
 ---
 

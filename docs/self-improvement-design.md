@@ -1,6 +1,6 @@
 # Agentflow 反馈驱动自迭代设计
 
-> 状态：`v0.6.0` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查、显式 Codex/Claude Adapter 和确定性 Policy Engine；业务任务度量切片（`evals/business/`）仪器就绪，smoke 实跑待 U-01/U-02/U-03；真实模型 dogfood、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
+> 状态：`v0.7.5` 已落地自迭代 Skill、角色分工，以及 episode、评测用例、候选和发布记录 JSON Schema。当前独立工作区已补齐 Bug/Plan 契约、公开评测基线、通用 Adapter 结果协议、隔离检查、显式 Codex/Claude Adapter 和确定性 Policy Engine；业务任务度量切片（`evals/business/`）仪器就绪，smoke 实跑待 U-01/U-02/U-03；真实模型 dogfood、自动遥测、持久检索、私有 holdout 服务和自动灰度尚未实现。当前版本仍是受治理的人工闭环，不是已经闭合的自动学习系统。
 
 ## 判断
 
@@ -105,5 +105,5 @@ holdout 和候选 diff 禁区已由 `tools/lab/isolation.py` 检查，确定性�
 2. 将插件源码、任务 fixture、评测控制面和 private holdout 分离；每个 repetition 独立重置并保存可恢复结果。
 3. 持久化原始轨迹，核实 provider/model 身份，隔离宿主全局配置，并加入独立的任务判定器。
 4. 在可信端点上运行 2–3 个真实 smoke，再决定是否运行完整公开 suite 和冻结阈值。
-5. 评测闭环稳定后，再建设本地反馈池、全文检索和 Canary。
+5. 评测闭环稳定后，再建设本地反馈池；阶段四已提供 SQLite FTS5 读侧索引/query（显式调用，源记录仍是权威），再建设 Canary。
 6. 最后才考虑跨宿主反馈仓库和可选 MCP；MCP 只承担状态、证据和审批，不运行另一套 Agent 循环。

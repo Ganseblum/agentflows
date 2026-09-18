@@ -9,7 +9,7 @@ subtree it may touch.
 | [`bugs/YYYY-MM-DD/*.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Bug archive: symptom, problem code, root cause, fix, priority grade, error kind, provenance, files |
 | [`bugs/recurrence/<class_id>.md`](bugs/README.md) | bug-recorder | Markdown + frontmatter | Recurrence ledger: one file per failure class that recurred or was consolidated — consolidation state, version, occurrence list |
 | [`reviews/<project>-<feature-slug>/`](reviews/README.md) | supervisor | Markdown + frontmatter + archived copies | Second-pass reviews of documents authored under another system's rules: review record, verbatim snapshot, findings linkage |
-| [`episodes/YYYY-MM-DD/<EP-id>.json`](episodes/README.md) | supervisor | JSON | Durable capture of one task's final decision record — the improvement loop's task-level evidence, written before the session ends |
+| [`episodes/YYYY-MM-DD/<EP-id>.json`](episodes/README.md) | supervisor | JSON | Durable capture of one task's final decision record — required for every material change since 0.7.2, review round-trips included; the improvement loop's task-level evidence, written before the session ends |
 | [`plans/<plan_id>.md`](plans/README.md) | plan-architect | Markdown + frontmatter | Versioned execution plans (hybrid): progress overview, task board with status + evidence write-back, contracts, gates, rollback points |
 | [`tests/<project>-<feature-slug>/`](tests/README.md) | test-planner + test-executor | Markdown + frontmatter | Automated-testing evidence: case library (plan) and per-round run records with per-case results, evidence, and findings that feed the bug chain |
 | [`improvement/{candidates,evaluations,comparisons,releases}/*.json`](improvement/README.md) | supervisor + eval_runner tooling | JSON | Improvement-loop artifacts: predeclared candidate, frozen runner evaluation result, baseline/candidate comparison, audited release decision — filename = identity, cross-validated |
@@ -90,10 +90,31 @@ progress surface (shape: [plans/README.md](plans/README.md)).
   form inside Chinese prose. Records written before 2026-09-16 were normalized to this form on
   2026-09-16 — titles and section headings to Chinese, each edit refreshing `updated_at` — and the
   format example under `examples/bug-records/` follows the same convention.
+- **Visual annotations** (0.7.2): records may use two renderer-safe emphasis devices on top of
+  the semantic layer. GFM callouts with a **fixed vocabulary** — `> [!IMPORTANT]` marks an
+  unresolved divergence or a blocked item（未决分歧/阻塞）, `> [!WARNING]` marks a residual risk
+  or a known gap（残余风险/已知缺口）, `> [!NOTE]` marks an interpretation or clarification
+  （口径澄清） — and ` ```diff ` fences for before/after or option-A/B comparisons (red/green
+  on GitHub and VS Code, plain fence in a terminal). The fixed literal prefix keeps callouts
+  greppable (`grep -rn '\[!WARNING\]' records/`), and the semantic layer stays authoritative:
+  frontmatter enums and fixed sections carry the state, callouts only decorate it. Inline HTML
+  colors, custom `[!...]` alert types, and styling-only emphasis are rejected — they do not
+  survive renderers and pollute the machine-greppable layer.
 - A record is accepted only after `python3 tools/lab/validate.py artifacts` passes against the
   actual file. A failed check is a compile error, not a discussion.
 - Records are append-only history: corrections update the record and its `updated_at`; past
   evidence is never rewritten to improve the story.
+
+## Explicit lexical retrieval
+
+The files under `records/` remain authoritative. For Intake, build a disposable SQLite FTS5 read-side index and query it explicitly; this is lexical retrieval only and does not introduce a vector database:
+
+```sh
+python3 tools/lab/record_store.py index
+python3 tools/lab/record_store.py query "permission regression" --limit 20
+```
+
+The index database is local disposable state and is not a record artifact.
 
 ## Retrospective
 

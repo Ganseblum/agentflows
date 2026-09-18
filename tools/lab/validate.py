@@ -64,6 +64,7 @@ REQUIRED_PROTECTED_PATHS = {
     "skills/improve/references/candidate.schema.json",
     "skills/improve/references/release-record.schema.json",
     "tests/test_lab_contracts.py",
+    "tests/test_record_store.py",
     "tools/lab/artifact_digest.py",
     "tools/lab/eval_runner.py",
     "tools/lab/host_adapter.py",
@@ -72,6 +73,7 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/seed_grader.py",
     "tools/lab/validate.py",
     "protected-paths.txt",
+    ".github/workflows/validate.yml",
 }
 
 # The business evaluation slice (evals/business): real document review against a read-only
@@ -88,7 +90,7 @@ BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 # `__pycache__` entries there would otherwise block every candidate that ran the checks — so the
 # pinned test files are protected individually and this list asserts nothing else appears. A new
 # test file is a human-authored change to this list plus the protection entry above.
-EXPECTED_TEST_FILES = ("test_lab_contracts.py",)
+EXPECTED_TEST_FILES = ("test_lab_contracts.py", "test_record_store.py")
 
 # Floor for the regression suite size, parsed from the unittest "Ran N tests" summary. The
 # suite currently runs 108 tests; the floor is set far below that steady state but far above a
@@ -1922,7 +1924,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     errors: list[ValidationError] = []
     records_root = ROOT / "records"
     if not records_root.is_dir():
-        return errors
+        return [ValidationError(str(records_root), "records directory is missing; artifacts are required")]
     seen_bug_ids: dict[str, Path] = {}
     seen_review_ids: dict[str, Path] = {}
     seen_episode_ids: dict[str, Path] = {}
@@ -1938,14 +1940,17 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     improvement_results: dict[str, tuple[Path, dict[str, Any]]] = {}
     improvement_comparisons: list[tuple[Path, dict[str, Any]]] = []
     improvement_releases: list[tuple[Path, dict[str, Any]]] = []
+    if not any(path for path in records_root.iterdir() if not path.name.startswith(".")):
+        errors.append(ValidationError(str(records_root), "records directory is empty; artifacts are required"))
     for path in sorted(records_root.rglob("*")):
         relative = path.relative_to(ROOT)
         parts = relative.parts
         if any(part.startswith(".") for part in parts[1:]):
-            # Hidden entries (e.g. records/.DS_Store) are host/OS artifacts, not records;
-            # skipped explicitly so the unknown-entry check below is not tripped by them.
+            if path.name == ".DS_Store":
+                continue
+            errors.append(ValidationError(str(path), "hidden record entry is not allowed"))
             continue
-        if parts[1] not in KNOWN_RECORD_CLASSES:
+        if len(parts) < 2 or parts[1] not in KNOWN_RECORD_CLASSES:
             # A stray file at the top of records/ or an unknown subdirectory used to fall
             # through the parts[0:2] dispatch without any check; report it by path instead.
             if len(parts) == 2 and path.is_file() and path.name == "README.md":
@@ -2508,6 +2513,9 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
         # unittest exits 5 for an empty run on Python 3.12+, but 0 on older interpreters;
         # the count check makes the empty suite fail on both.
         return [ValidationError("tests", "unit tests ran 0 tests; the regression suite is empty")]
+    skipped = re.search(r"\bskipped=(\d+)", f"{completed.stderr}\n{completed.stdout}")
+    if skipped and int(skipped.group(1)) > 0:
+        return [ValidationError("tests", "skipped tests are not permitted in the regression gate")]
     if completed.returncode != 0:
         detail = (completed.stderr.strip() or completed.stdout.strip()).splitlines()
         summary = detail[-1] if detail else "no output"

@@ -514,7 +514,12 @@ def run_codex(request: dict[str, Any], prompt: str, workspace: Path, schema: Pat
             result_text = Path(output.name).read_text(encoding="utf-8")
         except OSError as exc:
             raise ValueError(f"cannot read the codex result file {output.name}: {exc}") from exc
-        payload = json.loads(result_text)
+        try:
+            payload = json.loads(result_text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"codex output is not JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("codex output must be a JSON object")
     payload["latency_ms"] = elapsed
     return parse_structured_output("codex", json.dumps(payload))
 
@@ -608,7 +613,20 @@ def run_claude(request: dict[str, Any], prompt: str, workspace: Path, schema: Pa
         raise RuntimeError(
             claude_failure_detail(completed.stdout, completed.stderr, completed.returncode)
         )
-    payload = parse_structured_output("claude", completed.stdout)
+    try:
+        raw_payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"claude output is not JSON: {exc}") from exc
+    if not isinstance(raw_payload, dict):
+        raise ValueError("claude output must be a JSON object")
+    payload: Any = raw_payload
+    if isinstance(raw_payload.get("result"), str):
+        try:
+            payload = json.loads(raw_payload["result"])
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Claude result field is not structured JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("Claude structured result must be a JSON object")
     payload["latency_ms"] = elapsed
     return parse_structured_output("claude", json.dumps(payload))
 
@@ -698,7 +716,12 @@ def grade_case_findings(
     directory = findings_directory(workspace, case_id)
     try:
         seed_document = seed_grader.load_seeds(seeds_path)
-        document = seed_grader.grade_case(seed_document, directory, case["grading"]["min_seed_recall"])
+        document = seed_grader.grade_case(
+            seed_document,
+            directory,
+            case["grading"]["min_seed_recall"],
+            target_docs=case.get("target_docs"),
+        )
     except seed_grader.SeedGraderError as exc:
         raise ValueError(f"cannot grade {case_id!r}: {exc}") from exc
     grading_path = directory / "grading.json"

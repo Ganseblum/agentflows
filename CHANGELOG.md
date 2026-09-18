@@ -1,5 +1,99 @@
 # Changelog
 
+## 0.7.5 — 2026-09-18
+
+Audit-driven hardening: gate, evaluation identity, scoring, role/loop contracts, episode/release
+consistency, and a first local read-side for `records/`. Method-level change, no behavior change
+with an instrumented business task; `measurement: none`.
+
+- **Gate now runs and is fail-closed.** `.github/workflows/validate.yml` runs
+  `isolation.py check-diff` from a trusted checkout against a frozen base revision and protects
+  `.github/`; `isolation.changed_paths` switched to NUL-delimited Git output so spaces,
+  quoting, newlines and non-ASCII paths no longer evade the protected-prefix check, and the
+  checker refuses to run when its own root is the candidate or nested with it.
+- **`validate.py` fail-closed.** `artifacts` errors when `records/` is missing or empty; the
+  records walker rejects hidden entries except `.DS_Store`; the regression-suite gate now parses
+  the final `Ran N tests` summary, rejects any `skipped > 0`, and keeps the floor. Added
+  `tests/test_record_store.py` to the pinned test list and `REQUIRED_PROTECTED_PATHS`.
+- **Deterministic policy/adapter fixes.** `policy.main` returns non-zero on `reject`; the Codex
+  and Claude adapters now parse the host JSON first, inject `latency_ms` once, validate once, and
+  convert non-object payloads into structured failures instead of tracebacks; `eval_runner` keeps
+  `suite` inside the repository and unifies the baseline/candidate case-coverage key to
+  `(case_id, slice, holdout)`.
+- **Business scoring can no longer be gamed.** `seed_grader` rejects path traversal and
+  off-target findings, caps total findings and per-field length, dedupes findings, and enforces a
+  per-target-document unmatched cap; findings outside `target_docs` are recorded as `off_target`
+  and do not affect recall. `evals/business/README.md` documents the anti-gaming constraints.
+- **Episode/release integrity and read-side.** Episode schema gained `revision`, `run`, `claims`
+  and `evidence`; release schema added a structured `measurement` (`status` + `basis` +
+  `business_case_ids`) and tighter promotion constraints so a `promote` requires `better` and an
+  approval, while measurement-`none` releases cannot be misrecorded as verified improvements. New
+  `tools/lab/record_store.py` gives a disposable SQLite FTS5 read-side over `records/`; Intake is
+  documented to retrieve with it before briefing.
+- **Role/loop contract convergence.** Routing, `roles.md`, `docs/agent-roles.md` and the SKILLs
+  now agree that a Supervisor-only small change still passes a non-waivable independent reviewer;
+  `test-executor` distinguishes scripted headless browser automation from host-interactive
+  browser automation; worker briefs and results carry `task_id`/`baseline_revision` and a
+  separated `status: partial` semantic; `plan-architect`/`test-planner`/`bug-recorder` got the
+  `Edit` their contracts require; missing improvement-role bindings were added; improvement
+  SKILL/roles name the Supervisor as the sole writer of plan status/evidence during execution.
+
+## 0.7.4 — 2026-09-18
+
+Wording-cleanup pass, closing the reviewer residuals carried from 0.7.2/0.7.3:
+
+- `records/README.md` episode row now states the widened trigger — required for every material
+  change since 0.7.2, review round-trips included — the last doc surface still carrying the
+  old improvement-loop-only framing.
+- `mock/README.md` episode row synced to the same framing (material 改动必写，含
+  `review_roundtrips`).
+- `PLAN-BUSINESS-EVAL-001` frontmatter `plan_version` aligned with its latest revision line
+  (0.2.3 → 0.2.5); no task-row or content changes.
+- Docs-only; no code, schema, seed, or case changes. Measurement state unchanged (still
+  U-01-blocked).
+
+## 0.7.3 — 2026-09-18
+
+Jargon-discipline criterion widened from user feedback: the 术语歧义 (terminology-ambiguity)
+category now explicitly covers the high-frequency variant — habitual compressed terms
+(基线 / 现网 class) whose referent varies by reader and drifts with time — not only invented
+undefined terms. The fix discipline is ranked **换 > 释 > 删**: substitute the concrete object
+first (commit, version, environment, value — usually shorter, zero reading burden); a one-line
+in-place definition only when the term must stay; drop the word and state the behavior
+otherwise. Over-explaining counts as a reading-burden defect. Seed-planting note updated for
+the variant: the anchor is a unique existing fragment of the target text, no planting needed.
+Case and seed files unchanged; new variant seeds land with the S phase once U-01 clears.
+Gate change (protected path `evals/business/README.md`), human-authorized in session;
+measurement state unchanged (instrument built, not yet run — U-01/U-08 still gate S).
+
+## 0.7.2 — 2026-09-18
+
+Divergence-auditability slice: mid-flow review disagreement gets a durable, machine-checked
+carrier, and records get a renderer-safe visual layer. **Gate change, human-authorized in
+session**: `skills/improve/references/episode.schema.json` (inside `protected-paths.txt`)
+gains one optional field — no other gate path is touched.
+
+- **Episodes carry review round-trips.** `review_roundtrips[]` (at / reviewer / decision /
+  finding / resolution / evidence_ref, `additionalProperties: false`) records every
+  independent-review round — the rounds that returned `changes_requested`, what the
+  disagreement was, how it was resolved. The episode trigger is widened: every **material**
+  change (anything that opened the review gate) lands an episode before the session ends, not
+  only improvement-loop candidates. Mid-flow review divergence stays auditable after the
+  conversation is gone, not only the final verdict.
+- **Visual annotation conventions** (`records/README.md`): GFM callouts with a fixed
+  vocabulary — `> [!IMPORTANT]` 未决分歧/阻塞, `> [!WARNING]` 残余风险/已知缺口, `> [!NOTE]`
+  口径澄清 — plus ` ```diff ` fences for before/after or A/B comparisons. Fixed literal
+  prefixes keep callouts greppable; frontmatter enums and fixed sections stay the
+  authoritative semantic layer. Inline HTML colors and custom `[!...]` alert types are
+  rejected (not renderer-portable, pollute the greppable layer).
+- Examples demonstrate the conventions: the bug-record example gains a `> [!WARNING]`
+  residual-risk callout, the plan example gains `> [!WARNING]` (external dependency risk) and
+  `> [!NOTE]` (non-blocking open item) — mirrored into `mock/`.
+- Docs synced: `docs/agent-roles.md` (episode trigger + annotation conventions),
+  `records/episodes/README.md` (field list + trigger), both SKILL.md copies (step 10).
+- Measurement: none — documentation conventions plus one optional schema field; no behavior
+  change with an instrumented business task.
+
 ## 0.7.1 — 2026-09-18
 
 Absorption pass on the testing roles, from business-side admission standards and an existing

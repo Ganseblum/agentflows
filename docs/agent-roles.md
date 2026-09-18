@@ -5,7 +5,7 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 
 | 角色 | 主要职责 | 是否改代码 | 可写产物 |
 | --- | --- | --- | --- |
-| Supervisor | 明确范围、调度、集成、最终交付 | 可以在集成阶段 | 共享工作区（最终集成） |
+| Supervisor | 明确范围、调度、集成、最终交付；执行期间唯一回写计划状态与证据 | 可以在集成阶段 | 共享工作区（最终集成）与指定记录路由 |
 | Frontend Engineer | 前端实现、状态、交互和客户端契约 | 是 | 指派的前端文件范围 |
 | Backend Engineer | API、数据、服务端逻辑和迁移 | 是 | 指派的后端文件范围 |
 | Technical Director | 跨层接口、架构、风险和顺序决策 | 否 | 无（只读） |
@@ -108,6 +108,12 @@ slug/ID/路径、`project` slug；章节标题是固定字面量但为中文—�
 命令、技术名词在中文行文里保留原文）。2026-09-16 之前的 6 条记录已于当日统一到该
 形式（title 与章节标题中文化，各自刷新 `updated_at`），`examples/bug-records/` 示例
 同一约定。
+
+视觉标注（0.7.2，约定见 `records/README.md`）：记录正文可用两类渲染安全的强调——GFM
+callout（`> [!IMPORTANT]` 未决分歧/阻塞、`> [!WARNING]` 残余风险/已知缺口、`> [!NOTE]`
+口径澄清；固定字面量前缀可 grep）与 ```` ```diff ```` 围栏（改前/改后或方案 A/B 对照）。
+语义权威层仍是 frontmatter 枚举与固定章节，标注只是视觉层；内联 HTML 颜色与非标准
+alert 类型一律不用（渲染器间不可移植，污染可 grep 层）。
 
 严重度用优先级别：`P0`（critical——数据损坏、安全、发布阻断）/ `P1`（high）/ `P2`（medium）/
 `P3`（low）；`validate.py report` 第 4 列直接输出该档位。
@@ -341,12 +347,14 @@ Bug 记录是 Episode 的一种来源，不是生产 Memory。只有经过归因
 经验才能进入 `memory/validated`。计划记录则提供 workflow 和执行顺序的证据，可用于
 发现“遗漏接口、并行冲突、审核过晚”等系统性问题。
 
-Episode 目前不会自动产生：final decision record 默认是会话级产物，宿主对话历史一旦
-消失它就不可恢复。因此当结果可能喂给改进环时，Supervisor 在会话结束前把它落成
-`records/episodes/<日期>/<EP-id>.json`（复用 improve 环的 episode.schema.json，文件名 =
-episode_id，`validate.py artifacts` 强制）——「没有投诉不等于成功」的前提是证据先活
-下来。bug 记录承载缺陷证据，episode 承载任务级证据，两者共同构成 feedback-analyst
-的输入。
+Episode 的落盘从「喂改进环才写」收紧为 **material 改动一律写**（0.7.2）：final decision
+record 默认是会话级产物，宿主对话历史一旦消失它就不可恢复——凡开过独立评审门的改动，
+Supervisor 在会话结束前都要把它落成 `records/episodes/<日期>/<EP-id>.json`（复用 improve 环
+的 episode.schema.json，文件名 = episode_id，`validate.py artifacts` 强制）。评审**每一轮**
+（含 `changes_requested`、分歧是什么、如何收场）写进 episode 的 `review_roundtrips[]`
+（schema 新增可选字段；episode.schema.json 在保护门内，本次为人工批准的门变更）——中途评审
+分歧从此可审计，而不只留最终判定。「没有投诉不等于成功」的前提是证据先活下来。bug 记录
+承载缺陷证据，episode 承载任务级证据，两者共同构成 feedback-analyst 的输入。
 
 `bug-recorder`、`plan-architect` 和其他角色的写入边界以角色文件内的「产物所有权矩阵」
 为准；`records/`（`bugs/`、`plans/` 及后续同类产物）下的记录已纳入确定性校验

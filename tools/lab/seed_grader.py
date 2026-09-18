@@ -59,9 +59,18 @@ def require(condition: bool, message: str) -> None:
         raise SeedGraderError(message)
 
 
+MAX_FINDINGS = 200
+MAX_TEXT_LENGTH = 4000
+MAX_UNMATCHED_PER_DOC = 10
+
+
 def normalize_path(value: str) -> tuple[str, ...]:
-    """Path components with ``./`` segments and any absolute prefix dropped."""
-    return tuple(part for part in value.strip().split("/") if part not in ("", "."))
+    """Normalize a relative POSIX path without permitting traversal."""
+    raw = value.replace("\\", "/").strip()
+    parts = tuple(part for part in raw.split("/") if part not in ("", "."))
+    if any(part == ".." for part in parts):
+        return ()
+    return parts
 
 
 def is_suffix(short: tuple[str, ...], long: tuple[str, ...]) -> bool:
@@ -188,13 +197,24 @@ def load_findings(path: Path, case_id: str) -> list[dict[str, str]]:
     findings = document.get("findings")
     if not isinstance(findings, list):
         raise SeedGraderError(f"{path}: findings artifact must carry a findings array")
+    if len(findings) > MAX_FINDINGS:
+        raise SeedGraderError(f"{path}: findings exceeds maximum of {MAX_FINDINGS}")
     validated: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
     for index, finding in enumerate(findings):
         if not isinstance(finding, dict):
             raise SeedGraderError(f"{path}: findings[{index}] must be an object")
         for field in FINDING_FIELDS:
-            if not isinstance(finding.get(field), str):
-                raise SeedGraderError(f"{path}: findings[{index}].{field} must be a string")
+            if not isinstance(finding.get(field), str) or not finding[field].strip():
+                raise SeedGraderError(f"{path}: findings[{index}].{field} must be a non-empty string")
+            if len(finding[field]) > MAX_TEXT_LENGTH:
+                raise SeedGraderError(f"{path}: findings[{index}].{field} exceeds {MAX_TEXT_LENGTH} characters")
+        if not normalize_path(finding["path"]):
+            raise SeedGraderError(f"{path}: findings[{index}].path must be a safe relative path")
+        item = tuple(finding[field] for field in FINDING_FIELDS)
+        if item in seen:
+            raise SeedGraderError(f"{path}: duplicate finding at index {index}")
+        seen.add(item)
         validated.append({field: finding[field] for field in FINDING_FIELDS})
     return validated
 
@@ -205,31 +225,59 @@ def grade_repetition(
     findings_path: Path,
     min_seed_recall: float,
     rep: int,
+    target_docs: list[str] | None = None,
+    max_unmatched_per_doc: int = MAX_UNMATCHED_PER_DOC,
 ) -> dict[str, Any]:
-    """Grade one repetition into hits/missed/unmatched, recall, acceptance, escapes."""
+    """Grade one repetition into hits/missed/unmatched, recall, acceptance, escapes.
+
+    ``target_docs`` are the snapshot-relative documents the case asked the agent to
+    review. A finding whose ``path`` does not match any of them is off-target: it is
+    recorded under ``off_target`` and, per document, contributes to an unmatched cap
+    that fails the repetition if exceeded. This blocks the "paste the whole document
+    as evidence / spam findings" strategies without penalizing legitimate extra
+    defects on the allowed documents.
+    """
     try:
         findings = load_findings(findings_path, case_id)
     except SeedGraderError as exc:
         return {"rep": rep, "status": "failed", "error": str(exc)}
+    if target_docs:
+        allowed = [normalize_path(doc) for doc in target_docs]
+    else:
+        allowed = None
     hits: list[str] = []
     missed: list[str] = []
+    off_target: list[dict[str, str]] = []
+    unmatched_by_doc: dict[str, int] = {}
     for seed in seeds:
         if any(seed_matches_finding(seed, finding) for finding in findings):
             hits.append(seed["seed_id"])
         else:
             missed.append(seed["seed_id"])
-    unmatched = [
-        {"path": finding["path"], "issue": finding["issue"]}
-        for finding in findings
-        if not any(seed_matches_finding(seed, finding) for seed in seeds)
-    ]
+    for finding in findings:
+        if allowed is not None and not any(
+            paths_match(finding["path"], doc) for doc in target_docs
+        ):
+            off_target.append({"path": finding["path"], "issue": finding["issue"]})
+            continue
+        if not any(seed_matches_finding(seed, finding) for seed in seeds):
+            doc = finding["path"].replace("\\", "/")
+            unmatched_by_doc[doc] = unmatched_by_doc.get(doc, 0) + 1
+    if any(count > max_unmatched_per_doc for count in unmatched_by_doc.values()):
+        over = {doc: count for doc, count in unmatched_by_doc.items() if count > max_unmatched_per_doc}
+        return {
+            "rep": rep,
+            "status": "failed",
+            "error": "unmatched-finding cap exceeded per target document: " + json.dumps(over, ensure_ascii=False),
+        }
     recall = len(hits) / len(seeds)
     return {
         "rep": rep,
         "status": "graded",
         "hits": hits,
         "missed": missed,
-        "unmatched": unmatched,
+        "off_target": off_target,
+        "unmatched_by_doc": unmatched_by_doc,
         "recall": recall,
         "accepted": recall >= min_seed_recall,
         "escaped_defects": len(missed),
@@ -237,7 +285,11 @@ def grade_repetition(
 
 
 def grade_case(
-    seed_document: Any, findings_dir: Path | str, min_seed_recall: float
+    seed_document: Any,
+    findings_dir: Path | str,
+    min_seed_recall: float,
+    target_docs: list[str] | None = None,
+    max_unmatched_per_doc: int = MAX_UNMATCHED_PER_DOC,
 ) -> dict[str, Any]:
     """Grade every repetition under ``findings_dir`` and return the result document.
 
@@ -245,6 +297,11 @@ def grade_case(
     repetition, because a missing artifact must not silently shrink a run. Repetition
     failures are data in the returned document; answer-key or input problems raise
     :class:`SeedGraderError` instead, since there is no score to report.
+
+    ``target_docs`` are the snapshot-relative documents the agent was asked to review.
+    When provided, any finding whose path does not match one of them is off-target; such
+    findings do not count toward recall and, per document, contribute to an unmatched cap
+    that fails the repetition when exceeded.
     """
     document = validate_seed_document(seed_document, "seed document")
     threshold = validate_min_recall(min_seed_recall)
@@ -275,7 +332,15 @@ def grade_case(
             )
             continue
         repetitions.append(
-            grade_repetition(seeds, case_id, rep_dir / FINDINGS_FILE_NAME, threshold, rep)
+            grade_repetition(
+                seeds,
+                case_id,
+                rep_dir / FINDINGS_FILE_NAME,
+                threshold,
+                rep,
+                target_docs=target_docs,
+                max_unmatched_per_doc=max_unmatched_per_doc,
+            )
         )
     graded = sum(1 for item in repetitions if item["status"] == "graded")
     return {

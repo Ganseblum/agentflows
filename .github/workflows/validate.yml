@@ -12,7 +12,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Trusted protected-diff check
+        run: |
+          git clone --no-local "$GITHUB_WORKSPACE" "$RUNNER_TEMP/trusted-checker"
+          git -C "$RUNNER_TEMP/trusted-checker" checkout --detach "${{ github.event.repository.default_branch }}"
+          python3 "$RUNNER_TEMP/trusted-checker/tools/lab/isolation.py" check-diff \
+            --checker-root "$RUNNER_TEMP/trusted-checker" \
+            --candidate "$GITHUB_WORKSPACE" \
+            --base "${{ github.event.repository.default_branch }}"
       - name: Contract, record, and gate validation
         run: python3 tools/lab/validate.py all
       - name: Regression tests
-        run: python3 -m unittest discover -s tests
+        run: python3 tools/lab/validate.py tests

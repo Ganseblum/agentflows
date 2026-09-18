@@ -9,16 +9,16 @@ Run a controlled improvement cycle for the Agentflow plugin. The current host su
 
 The executing Agent may discover problems and create a candidate, but it must not approve its own evidence or silently replace the installed plugin. Keep analysis, candidate implementation, evaluation, and release decisions as separate roles.
 
-Read [evidence and release rules](references/evidence-and-release.md) before creating a candidate.
+Read [evidence and release rules](references/evidence-and-release.md) before creating a candidate. During Intake, explicitly retrieve relevant prior records with `python3 tools/lab/record_store.py index` followed by `python3 tools/lab/record_store.py query '<terms>'`; this is a lexical SQLite FTS5 read-side index only, not a vector store, and it never replaces the files under `records/`.
 
 ## Bind roles to the host
 
-- Use the main task as the **improvement supervisor**.
+- Use the main task as the **improvement Supervisor**; during execution it is the sole writer of plan status and evidence write-back, and it owns canonical record routing.
 - Assign a read-only **feedback analyst** to normalize evidence and identify failure patterns.
 - Assign a **candidate engineer** to implement one bounded hypothesis in plugin source.
 - Assign a read-only **evaluator** that did not implement the candidate.
 - Assign a read-only **release governor** to decide whether evidence satisfies the declared gate.
-- In Claude Code, prefer `agentflow:feedback-analyst`, `agentflow:candidate-engineer`, `agentflow:evaluator`, and `agentflow:release-governor`.
+- In Claude Code, prefer the plugin agents `agentflow:feedback-analyst`, `agentflow:candidate-engineer`, `agentflow:evaluator`, and `agentflow:release-governor`.
 - In ZCode, prefer the same plugin agents (`agentflow:feedback-analyst`, `agentflow:candidate-engineer`, `agentflow:evaluator`, `agentflow:release-governor`) plus `agentflow:bug-investigator` when evidence collection needs a read-only diagnosis. Agent roles load from the installed plugin snapshot, so a role-instrument change is only observable after a reinstall; check `python3 tools/lab/validate.py installed`.
 
 If the host cannot provide independent agents, prepare a proposal but do not claim independent evaluation or automatic promotion.
