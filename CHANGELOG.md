@@ -52,7 +52,9 @@ run yet; `measurement: none`.
 - **E2/E3/E5 — active misdirection removed.** Version literals are gone from the four
   current-maturity prose surfaces (README + three design docs; `validate.py docs` now fails if
   they reappear); `iteration-log.md`'s twelve "当前源码" headers are time-scoped as history;
-  the handoff remote string matches the actual remote; the false "excluded by packaging
+  the handoff remote strings match the actual repository — which push revealed had been
+  renamed on GitHub to `Ganseblum/agentflows.git`, so the local origin URL was updated too
+  (the old name still works via redirect); the false "excluded by packaging
   allowlist" banner is replaced by the observed fact that the local-directory marketplace
   snapshots the whole directory (host-platform-facts Z10).
 - **G2/G3 — memory-layer contract closure.** `review_roundtrips` is required in the episode

@@ -7,7 +7,8 @@
 ## 当前工作区
 
 - Agent 项目目录（当前机器）：`/Users/hang/Documents/myProject/agentflow`
-- 当前配置的 Git remote 为 `https://github.com/Ganseblum/my-agents.git`；`main` 与
+- 当前配置的 Git remote 为 `https://github.com/Ganseblum/agentflows.git`（GitHub 侧已由
+  `my-agents` 更名至此；本地 origin 配置 2026-09-19 同步更名，旧地址靠 GitHub 重定向仍然可达）；`main` 与
   `origin/main` 一致。远程是否已同步以实际 `git remote -v` 和 fetch 结果为准，不把历史机器的
   仓库名当成事实。
 - 本机 ZCode 已有可被 `validate.py installed` 默认发现的安装源：local-directory marketplace
@@ -494,7 +495,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 
 新对话开始时可以直接使用下面的上下文：
 
-> 继续处理 `/Users/hang/Documents/myProject/agentflow`（remote: `Ganseblum/my-agents.git`）。
+> 继续处理 `/Users/hang/Documents/myProject/agentflow`（remote: `Ganseblum/agentflows.git`，原 `my-agents` 已更名）。
 > 先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
 > 保留按风险启用的 Bug Investigator/Fixer/Recorder 设计；Plan Architect 只写计划，
 > Supervisor 负责执行授权和调度。P0 契约、公开评测、通用校验/Policy 工具、隔离检查和显式

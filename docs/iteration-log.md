@@ -434,8 +434,9 @@
   - E8：新增 `validate.py mock`（进 `all`）——/tmp 整树副本 + mock/records 覆盖合并 + 完整
     artifacts 编译；fixture 失同步或 id 与真实记录冲突即 FAIL；/tmp 故障注入验证 FAIL/恢复。
   - E2/E3/E5：四份当前成熟度散文的版本字面量清零并加 `docs` 守卫；iteration-log 12 处
-    「当前源码」时间化；handoff remote 与实际对齐（并核实台账里「:485 错误」的说法本身与实测
-    remote 不符，只有 `:10` 陈旧）；打包 allowlist 假横幅换成实测事实（快照整目录含审计记录，
+    「当前源码」时间化；handoff remote 与实际对齐（含二次更正：push 时证实 GitHub 侧已由
+    `my-agents` 更名 `agentflows`、本地 origin 停留旧名靠重定向可达，已同步更名——台账
+    对 `:10`/`:485` 的原始判断实为「指向了新名字」）；打包 allowlist 假横幅换成实测事实（快照整目录含审计记录，
     Z10）。
   - G2/G3/D2/F3：episode `review_roundtrips` required 化 + 5 条 0.7.2 前存量以 `[]` +
     `review_roundtrips_backfill` signal 回填（未捕获≠没有评审）；负向 outcome 收录约定进

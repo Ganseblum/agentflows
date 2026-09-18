@@ -157,9 +157,13 @@
 3. **E5 已关闭**：假横幅替换为实测事实——2026-09-18 `ls` 安装快照 0.7.5 目录证实整目录打包
    （含 233KB 审计记录），无 allowlist 机制；事实入 host-platform-facts Z10（带复验方法）。
    真正的排除留给 P2 独立发布来源。
-4. **E3 已关闭**：handoff `:10` remote 修正为实测 `my-agents.git`；**勘误**：台账称 `:485`
-   也错——实测 `:485` 与真实 remote 一致，台账该句本身失真，以本条为准。iteration-log 12 处
-   「当前源码」改为「该批发布时的源码（历史状态，非当前事实）」。
+4. **E3 已关闭**：handoff `:10` remote 修正为实测配置 `my-agents.git`；**勘误**：台账称 `:485`
+   也错——实测 `:485` 与当时本地配置一致，台账该句本身失真。**再勘误（同日）**：push 时
+   GitHub 返回仓库已更名 `agentflows.git`，本地 origin 停在旧名 `my-agents`（旧地址靠重定向
+   可达）——最初台账对 `:10`/`:485` 的判断实为「指向了更名后的新名字」。local remote 已同步
+   更名，handoff 两处与 iteration-log 措辞均按新位置二次修正；最终事实：remote 为
+   `https://github.com/Ganseblum/agentflows.git`。iteration-log 12 处「当前源码」改为
+   「该批发布时的源码（历史状态，非当前事实）」。
 5. **E2 已关闭（机制化）**：README 与三份设计文档的当前版本字面量清零；`validate.py docs`
    新增守卫——四份文件再出现版本字面量即 FAIL（/tmp 注入 `9.9.9` 实测 FAIL、恢复观察 PASS）。
    历史性版本引用（iteration-log/handoff）不在守卫范围，属历史记录。
