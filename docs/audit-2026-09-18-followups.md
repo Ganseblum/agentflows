@@ -1,7 +1,7 @@
 # Agentflow 审计整改台账（2026-09-18）
 
 依据：2026-09-18 全库只读审计（四路并行子代理审计 + 人工实测复核）。逐字对话记录见仓库根
-[`对话记录-2026-09-18-agentflow整体审计.md`](../对话记录-2026-09-18-agentflow整体审计.md)，
+[`对话记录-2026-09-18-agentflow整体审计.md`](audit-2026-09-18/对话记录-2026-09-18-agentflow整体审计.md)（2026-09-18 清理时与三份报告一并移入 `docs/audit-2026-09-18/`），
 其中四项硬缺陷均为实测复现（非推断）。本台账回答三个问题：做了哪些、还剩哪些没做、从哪开始做以及为什么。
 
 审计之后，仓库已落盘一轮 **0.7.5「Audit-driven hardening」**（未提交工作树，本台账创建时与 0.7.2~0.7.4
@@ -226,3 +226,16 @@
     的 allowed-tools/隔离机制（记录内当年预案的选项 A），`regression_status: not-run`，转
     `verified` 等 G4。原清单 B1/B3/E5/E3/E2/E8/G2/G3/F3/B5/B8/D2/P0-前置 各项维持 0.8.0
     附录的关闭状态，本次安装快照刷新后 `validate.py installed` 已 PASS。
+
+### 根目录清理（2026-09-18，用户指示「该删的删、该清理的清理」）
+
+18. **归档不删除**：`ANALYSIS-REPORT.md`、`REVIEW-REPORT.md`、`CONSOLIDATED-REVIEW-REPORT.md`
+    与 233KB 逐字对话记录移入 `docs/audit-2026-09-18/`——三份报告的 actionable 内容已被本台账
+    与 CHANGELOG 0.7.5/0.8.x 消化，但它们被 `records/plans/PLAN-BUSINESS-EVAL-001.md` 与
+    `EP-20260917-002` 引用为证据，删除会制造悬空证据，故归档集中、正文一字未动。
+19. **worktree 残留清理**：`agentflow-candidate`（f11c3b6 旧基线）与
+    `agentflow-candidate-current`（6de7507）两个 detached worktree 均无未提交工作、提交均在
+    main 可达，按 `git worktree remove` 移除并 prune——candidate 评测布局在需要时按
+    `isolation.py create-worktree` 重建（0.8.x 起评测 workspace 另需剥离 seeds）。
+20. **/tmp 清理**：640 个历史 `agentflow-*` 临时目录（多为旧 multi-agent-cli Go 构建缓存与本仓
+    故障注入副本）清空；均为一次性目录，无状态损失。

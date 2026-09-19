@@ -105,7 +105,7 @@ updated_at: 2026-09-18T08:07:13Z
 3. **真实 codex CLI 真跑**未验证（现有证据止于 stub 层）。
 4. **`claude_failure_detail` 残差**：`error: null` + 非空 `result` 时仍取 result 文本；真实宿主失败 payload 形状未观测。
 5. **delta 变更面为作者声明**：基线 0.6.0 批次整体未提交，git 无法隔离 delta（K1 不可作隔离证据）。
-6. **排除声明**：`.commandcode/`、`ANALYSIS-REPORT.md` 不属于本交付（untracked）。
+6. **排除声明**：`.commandcode/`、`ANALYSIS-REPORT.md` 不属于本交付（untracked；该文件后已入库，2026-09-18 清理时移至 `docs/audit-2026-09-18/`）。
 7. **Backlog（人工授权变更，不夹带本批）**：`tools/lab/validate.py` 阻塞未决检测器的「不阻塞」整格豁免盲区；「受保护门工具行为变更须同轮同步 CHANGELOG + iteration-log + 计划看板」——本批第二次出现，建议记 bug/台账。
 
 ## 接口与共享机制
