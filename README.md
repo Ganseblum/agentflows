@@ -133,7 +133,10 @@ yet. The smoke run is blocked on the trusted endpoint, the measured permission p
 snapshot placement decisions, so a method-level change without a matching business case still
 releases as `measurement: none`.
 
-See [`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
+Start with [`docs/system-guide.md`](docs/system-guide.md) for the day-to-day walkthrough — how the
+workflow flows, how the improvement loop runs, what gets recorded where, and how failures are
+handled (with diagrams and worked examples). Then see
+[`docs/agent-product-boundary.md`](docs/agent-product-boundary.md),
 [`docs/agent-roles.md`](docs/agent-roles.md),
 [`docs/self-improvement-design.md`](docs/self-improvement-design.md), and
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) for observed host constraints, and

@@ -496,7 +496,7 @@ Bug Recorder 记录 Bug；未来共享控制面再考虑 Evidence Recorder/Store
 新对话开始时可以直接使用下面的上下文：
 
 > 继续处理 `/Users/hang/Documents/myProject/agentflow`（remote: `Ganseblum/agentflows.git`，原 `my-agents` 已更名）。
-> 先阅读 `README.md`、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
+> 先阅读 `README.md`、`docs/system-guide.md`（体系怎么用的带图指南）、`docs/next-session-handoff.md` 和 `docs/agent-roles.md`。
 > 保留按风险启用的 Bug Investigator/Fixer/Recorder 设计；Plan Architect 只写计划，
 > Supervisor 负责执行授权和调度。P0 契约、公开评测、通用校验/Policy 工具、隔离检查和显式
 > Codex/Claude Adapter 均已完成（Codex candidate 路径按设计 fail-closed），adapter 的
