@@ -2,7 +2,7 @@
 
 更新时间：2026-09-18
 
-> 当前机器路径以本文件所在仓库为准；不要复制历史机器的绝对路径作为当前事实。阶段四、五已补齐 episode 可验证字段、SQLite FTS5 记录读侧和 measurement 语义。对话记录与历史报告（现集中于 `docs/audit-2026-09-18/`，2026-09-18 从仓库根移入）**没有**任何打包排除机制：local-directory marketplace 以 `"source": "./"` 整目录快照，2026-09-18 实测 `~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.7.5/` 内就含有审计对话记录（233KB）、三份 REVIEW/ANALYSIS 报告和 mock/tests/tools/records 全部内容（证据见 docs/host-platform-facts.md Z10）；宿主实际加载的只有 agents/、skills/ 与 manifest，其余是随包死重。要真正排除，需要换发布来源（P2 独立版本/安装），当前只如实声明。
+> 当前机器路径以本文件所在仓库为准；不要复制历史机器的绝对路径作为当前事实。阶段四、五已补齐 episode 可验证字段、SQLite FTS5 记录读侧和 measurement 语义。local-directory marketplace 的 `source` 现为 `./packaging/runtime`（由 `packaging/build_runtime.py` 从 `agents/`、`skills/`、`schemas/` 与 manifest 生成）。2026-09-18 实测的 0.7.5 快照仍是整目录打包（Z10）；瘦快照要等重新生成 runtime 并重装后才能声称。宿主实际加载的仍是 agents/、skills/ 与 manifest。
 
 ## 当前工作区
 

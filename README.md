@@ -13,10 +13,11 @@ It does not invoke or require the standalone `agentflow` CLI.
   invoke `$improve` only when improving Agentflow itself.
 - Claude Code: start development with `claude --plugin-dir .`, then invoke
   `/agentflow:agentflow` or `/agentflow:improve`.
-- ZCode: install the plugin from the local marketplace in [`marketplace.json`](marketplace.json)
-  (it points at this directory). Skills resolve through `.zcode/skills/` symlinks, but **agents
-  load from the installed snapshot** — after changing `agents/*.md`, refresh the marketplace and
-  reinstall, then confirm with `python3 tools/lab/validate.py installed`.
+- ZCode: run `python3 packaging/build_runtime.py`, then install from the local marketplace in
+  [`marketplace.json`](marketplace.json) (it points at `packaging/runtime`, not this
+  directory). Skills resolve through `.zcode/skills/` symlinks, but **agents load from the
+  installed snapshot** — after changing `agents/*.md`, regenerate the runtime tree, refresh the
+  marketplace and reinstall, then confirm with `python3 tools/lab/validate.py installed`.
 
 ## Current maturity
 
@@ -90,6 +91,7 @@ are still intentionally pending.
 | `examples/` | Validator fixtures — positive, negative, and worked examples |
 | `mock/` | Demo record fixtures compiled by `validate.py mock`; never production evidence |
 | `docs/` | Design and operations documents; `docs/audit-2026-09-18/` archives the 2026-09-18 audit evidence |
+| `packaging/` | Generated ZCode install surface (`build_runtime.py` → `runtime/`); marketplace `source` points here |
 | `protected-paths.txt` | The candidate gate surface, declared once |
 | manifests | `plugin.json`, `marketplace.json`, `.zcode-plugin/`, `.claude-plugin/`, `.codex-plugin/` |
 

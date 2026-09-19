@@ -7,3 +7,4 @@ private-evals/
 .commandcode/
 command-code-session-*.html
 .agentflow-records.sqlite3
+packaging/runtime/

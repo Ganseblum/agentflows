@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "agentflow",
-      "source": "./",
+      "source": "./packaging/runtime",
       "description": "Host-native multi-agent development and evidence-driven improvement workflows with specialized implementation, evaluation, and release roles.",
       "version": "0.8.1",
       "author": {
