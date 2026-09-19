@@ -232,7 +232,10 @@
 18. **归档不删除**：`ANALYSIS-REPORT.md`、`REVIEW-REPORT.md`、`CONSOLIDATED-REVIEW-REPORT.md`
     与 233KB 逐字对话记录移入 `docs/audit-2026-09-18/`——三份报告的 actionable 内容已被本台账
     与 CHANGELOG 0.7.5/0.8.x 消化，但它们被 `records/plans/PLAN-BUSINESS-EVAL-001.md` 与
-    `EP-20260917-002` 引用为证据，删除会制造悬空证据，故归档集中、正文一字未动。
+    `EP-20260917-002` 引用为证据，删除会制造悬空证据，故归档集中、正文一字未动。归档文件里的
+    相对链接因此解析不通——那些链接多数本就是对其他文件链接的**引文**（置于根目录时同样不通），
+    逐字记录的价值在原文保真，不为导航而改；归档（frozen）与活跃台账（`docs/` 顶层 followups）
+    的分界即在此。
 19. **worktree 残留清理**：`agentflow-candidate`（f11c3b6 旧基线）与
     `agentflow-candidate-current`（6de7507）两个 detached worktree 均无未提交工作、提交均在
     main 可达，按 `git worktree remove` 移除并 prune——candidate 评测布局在需要时按

@@ -22,10 +22,10 @@ It does not invoke or require the standalone `agentflow` CLI.
 
 The version is declared once in the five manifests and [CHANGELOG.md](CHANGELOG.md); this file never restates it. The current release provides:
 
-- a shared development Skill;
-- frontend, backend, technical-director, reviewer, bug-investigator, bug-fixer,
-  bug-recorder, and plan-architect roles;
-- a feedback-analysis, candidate, evaluation, and release-governance workflow;
+- a shared development Skill and fourteen role profiles: the frontend/backend pair,
+  technical director, reviewer, the Investigator → Fixer → Recorder bug chain, plan
+  architect, the Test Planner/Executor chain, and the improvement loop's feedback
+  analyst, candidate engineer, evaluator, and release governor;
 - machine-readable bug, plan, episode, candidate, evaluation-case, evaluation-result,
   and release-record schemas;
 - a business-task measurement slice (`evals/business/`) scored deterministically against
@@ -54,8 +54,9 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` keeps the list from being quietly trimmed, and `validate.py all` now also
-requires the five manifests to agree on name and version and runs the repository's regression tests.
+`validate.py protected` keeps the list from being quietly trimmed. `validate.py all` runs nine
+checks — schemas, examples, evals, record artifacts, the merged mock compile, the protected
+list, manifest agreement, the document surface, and the repository's regression tests.
 
 The three Bug roles are selectable capabilities, not a mandatory ceremony for every issue.
 Use the full Investigator → Fixer → Reviewer → Recorder flow for material, uncertain,
@@ -74,6 +75,26 @@ validator (including the installed-snapshot drift check), an explicit host-adapt
 isolation checks, a fail-closed Codex/Claude host-adapter wrapper, and a deterministic policy
 evaluator. Real model dogfood, private holdout service, and installation/release switch
 are still intentionally pending.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `agents/` | The fourteen role profiles a host loads (the public role surface) |
+| `skills/` | `agentflow` (development workflow) and `improve` (governed self-improvement loop), plus their reference contracts |
+| `schemas/` | Record and result contracts the compile step enforces (protected) |
+| `evals/` | `public/` workflow-decision cases; `business/` instrumented method-measurement cases (protected) |
+| `tools/lab/` | Deterministic gate and measurement tooling: `validate.py`, `eval_runner.py`, `host_adapter.py`, `isolation.py`, `policy.py`, `seed_grader.py`, `record_store.py`, `artifact_digest.py` (protected) |
+| `tests/` | Pinned regression tests for the gate tools (protected) |
+| `records/` | Live evidence: bugs, recurrence ledgers, plans, episodes, reviews, tests, improvement artifacts |
+| `examples/` | Validator fixtures — positive, negative, and worked examples |
+| `mock/` | Demo record fixtures compiled by `validate.py mock`; never production evidence |
+| `docs/` | Design and operations documents; `docs/audit-2026-09-18/` archives the 2026-09-18 audit evidence |
+| `protected-paths.txt` | The candidate gate surface, declared once |
+| manifests | `plugin.json`, `marketplace.json`, `.zcode-plugin/`, `.claude-plugin/`, `.codex-plugin/` |
+
+`docs/audit-2026-09-18/` holds frozen evidence and is not edited; the living ledger for that
+audit stays at [`docs/audit-2026-09-18-followups.md`](docs/audit-2026-09-18-followups.md).
 
 ## Business evaluation slice
 
@@ -100,7 +121,12 @@ a real business run requires it, checks the snapshot HEAD against the case `targ
 the patch to be cleanly reversible, and re-checks the snapshot file set and the `git diff` digest after every host call.
 Business requests must use a `workspace-write` permission profile because the findings artifact is
 written into the workspace; the snapshot itself is made read-only when seeded, and only the
-sanitized briefs and abstracted seed lists are public.
+sanitized briefs and abstracted seed lists are public. Two additions in the current release
+close the measurement-validity gaps: the tested workspace copy must exclude `evals/business/seeds/` —
+the adapter fails closed when any `*.seeds.json` is reachable from the model's working
+directory, because the answers belong to the trusted fixture root, not the tested tree — and
+authoritative runs pass `--allowed-tools` plus `--isolate-host-config`, so permission
+semantics and MCP/config isolation are explicit and recorded in `observed_context`.
 
 The slice is instrument-ready, not measured: no baseline/candidate comparison has been produced
 yet. The smoke run is blocked on the trusted endpoint, the measured permission profile, and the
