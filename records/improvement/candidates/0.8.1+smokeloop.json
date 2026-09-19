@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "candidate_version": "0.8.1+smokeloop",
+  "parent_version": "0.8.1",
+  "source_revision": "ceb639f56c940939c36c745e739c237167048159+manifest-0.8.1+smokeloop",
+  "artifact_digest": "sha256:b810f06a60fb4143b8c1a4024de548555d19bf32e31d13644162bc3d7e7c3095",
+  "hypothesis": "Changing only the five plugin version strings to 0.8.1+smokeloop does not move public workflow-decision metrics on AF-001, AF-004, and AF-011; the comparison measures instrument noise, not a method improvement.",
+  "evidence_ids": ["EP-20260919-001"],
+  "changed_components": [
+    "plugin.json",
+    "marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".zcode-plugin/plugin.json"
+  ],
+  "risk_class": "low",
+  "evaluation_suite_revision": "git:ceb639f56c940939c36c745e739c237167048159:evals/public#AF-001,AF-004,AF-011",
+  "primary_metrics": ["acceptance_rate", "first_pass_review_rate"],
+  "guardrails": ["permission_violations", "escaped_defects", "tool_failures"],
+  "rejection_criteria": [
+    "Any guardrail increases.",
+    "Any protected slice regresses.",
+    "The candidate artifact_digest equals the baseline artifact."
+  ],
+  "protected_slices": ["role-selection", "architecture-and-safety", "artifact-verification"]
+}

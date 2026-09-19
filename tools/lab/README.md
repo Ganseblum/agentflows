@@ -78,6 +78,12 @@ python3 tools/lab/policy.py --help
 python3 tools/lab/isolation.py --help
 ```
 
+`eval_runner.py run --case-ids AF-001,AF-004,AF-011` selects a fail-closed subset of
+the loaded suite (unknown, duplicate, or empty id lists abort before the adapter). Omit the flag to
+run every case. Record the same id list in `--suite-revision`; the runner does not
+rewrite that field, so baseline and candidate slices stay comparable only when both
+invocations pass the same ids in the same order.
+
 Before starting a model, validate an adapter request and inspect its resolved workspace,
 permission arguments, plugin directory, and invocation count with `host_adapter.py --dry-run`.
 This still refuses invalid isolation layouts and unsupported candidate bindings.

@@ -135,6 +135,56 @@ def load_suite(suite_dir: Path) -> list[dict[str, Any]]:
     return cases
 
 
+def parse_case_ids(value: str | None) -> list[str] | None:
+    """Parse ``--case-ids``: None means the full suite; an empty token list is an error."""
+    if value is None:
+        return None
+    case_ids = [item.strip() for item in value.split(",") if item.strip()]
+    if not case_ids:
+        raise ValueError("--case-ids must name at least one case_id")
+    return case_ids
+
+
+def select_cases(cases: list[dict[str, Any]], case_ids: list[str] | None) -> list[dict[str, Any]]:
+    """Return a suite subset in the requested order; unknown or duplicate ids fail closed.
+
+    Omitting ``case_ids`` keeps the loaded suite unchanged. The filter never silently
+    drops a named case: a missing or repeated id is a hard error so baseline and
+    candidate slices cannot drift. Callers must record the same id list in
+    ``--suite-revision``; the runner does not rewrite that field.
+    """
+    if case_ids is None:
+        return cases
+    by_id: dict[str, dict[str, Any]] = {}
+    for case in cases:
+        case_id = case["case_id"]
+        if case_id in by_id:
+            raise ValueError(f"duplicate case_id {case_id!r} in suite")
+        by_id[case_id] = case
+    seen: set[str] = set()
+    selected: list[dict[str, Any]] = []
+    duplicates: list[str] = []
+    missing: list[str] = []
+    for case_id in case_ids:
+        if case_id in seen:
+            duplicates.append(case_id)
+            continue
+        seen.add(case_id)
+        match = by_id.get(case_id)
+        if match is None:
+            missing.append(case_id)
+            continue
+        selected.append(match)
+    problems: list[str] = []
+    if duplicates:
+        problems.append("duplicate --case-ids entries: " + ", ".join(duplicates))
+    if missing:
+        problems.append("unknown case_id(s): " + ", ".join(missing))
+    if problems:
+        raise ValueError("; ".join(problems))
+    return selected
+
+
 def summarize(case_results: list[dict[str, Any]]) -> dict[str, int | float]:
     repetitions = [rep for case in case_results for rep in case["repetitions"]]
     count = len(repetitions)
@@ -315,6 +365,19 @@ def run_adapter(args: argparse.Namespace) -> int:
     suite_dir = (ROOT / args.suite).resolve()
     public_suite = is_public_suite(suite_dir)
     cases = load_suite(suite_dir)
+    try:
+        selected_ids = parse_case_ids(getattr(args, "case_ids", None))
+        cases = select_cases(cases, selected_ids)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    if selected_ids:
+        print(
+            "eval_runner: selected "
+            + ", ".join(case["case_id"] for case in cases)
+            + f" ({len(cases)} case(s))",
+            file=sys.stderr,
+        )
     repository = Path(args.repository).resolve()
     workspace = Path(args.workspace).resolve()
     holdout_root = Path(args.holdout_root).resolve()
@@ -504,6 +567,13 @@ def add_context_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="run the host with no operator MCP configuration (--strict-mcp-config) and a "
         "scratch CLAUDE_CONFIG_DIR; required for reproducible authoritative runs",
+    )
+    parser.add_argument(
+        "--case-ids",
+        default=None,
+        help="comma-separated case_id subset of the suite, in the order they should run; "
+        "omit to run every case. Unknown or duplicate ids fail closed. Record the same "
+        "slice in --suite-revision — the runner does not rewrite that field.",
     )
 
 

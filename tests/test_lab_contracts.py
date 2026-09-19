@@ -1044,6 +1044,62 @@ class BuildRequestRepeatCountTests(unittest.TestCase):
                 eval_runner.build_request(self._args(1, base), [self._case()])
 
 
+class CaseIdSubsetTests(unittest.TestCase):
+    """--case-ids selects a suite subset fail-closed; omitted, the full suite still runs."""
+
+    def _cases(self) -> list[dict[str, Any]]:
+        return [
+            {"case_id": "AF-003", "slice": "c"},
+            {"case_id": "AF-001", "slice": "a"},
+            {"case_id": "AF-002", "slice": "b"},
+        ]
+
+    def test_omitted_case_ids_keeps_the_loaded_suite(self) -> None:
+        cases = self._cases()
+        self.assertIs(eval_runner.select_cases(cases, None), cases)
+
+    def test_selection_follows_requested_order_not_suite_order(self) -> None:
+        selected = eval_runner.select_cases(self._cases(), ["AF-001", "AF-003"])
+        self.assertEqual([case["case_id"] for case in selected], ["AF-001", "AF-003"])
+
+    def test_unknown_id_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, r"unknown case_id\(s\): AF-999"):
+            eval_runner.select_cases(self._cases(), ["AF-001", "AF-999"])
+
+    def test_duplicate_requested_id_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, r"duplicate --case-ids entries: AF-001"):
+            eval_runner.select_cases(self._cases(), ["AF-001", "AF-001"])
+
+    def test_empty_case_ids_flag_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, r"--case-ids must name at least one case_id"):
+            eval_runner.parse_case_ids("")
+        with self.assertRaisesRegex(ValueError, r"--case-ids must name at least one case_id"):
+            eval_runner.parse_case_ids(" , , ")
+        self.assertIsNone(eval_runner.parse_case_ids(None))
+        self.assertEqual(eval_runner.parse_case_ids("AF-001, AF-004"), ["AF-001", "AF-004"])
+
+    def test_run_adapter_rejects_unknown_case_ids_before_the_adapter(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            for directory in (base / "repo", base / "workspace", base / "holdout"):
+                directory.mkdir()
+            args = argparse.Namespace(
+                suite="evals/public",
+                repository=str(base / "repo"),
+                workspace=str(base / "workspace"),
+                holdout_root=str(base / "holdout"),
+                adapter="definitely-not-an-adapter-command",
+                case_ids="AF-999",
+            )
+            standard_out, standard_error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(standard_out), contextlib.redirect_stderr(standard_error):
+                code = eval_runner.run_adapter(args)
+        self.assertEqual(code, 1)
+        self.assertEqual(standard_out.getvalue(), "")
+        self.assertIn("unknown case_id(s): AF-999", standard_error.getvalue())
+        self.assertNotIn("definitely-not-an-adapter-command", standard_error.getvalue())
+
+
 class IsolationBusinessRootTests(unittest.TestCase):
     """layout_errors keeps its three-argument behavior and adds an optional fourth position."""
 
