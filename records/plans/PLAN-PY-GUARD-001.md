@@ -50,13 +50,13 @@ updated_at: 2026-09-19T13:53:00Z
 | `T03` | U-01 复测：`claude --print --output-format json --no-session-persistence` 一词探测、90s 超时；结果回写 PLAN-LOOP-SMOKE-001 T05 证据列 + updated_at | P1 | —（无代码） | — | ☑ 已完成 | 13:38Z 探测：90s `TimeoutExpired`、stdout/stderr 皆空——C10 挂起类持续，U-01 仍开；证据已回写 PLAN-LOOP-SMOKE-001 T05 |
 | `T04` | 独立评审门：reviewer 子代理审 T01 的原始 diff 与 T02 原始输出；`changes_requested` 则一轮修复再审 | P0 | — | `T01`、`T02` | ☑ 已完成 | agentflow:reviewer **approved**（status: complete，零必改项，三项残余风险记录在案）；其两项 authored checks 已执行并回传原始输出（porcelain 对账 + A/B IDENTICAL），确认轮回复见 episode review_roundtrips |
 | `T05` | 收口：EP-20260919-005 落盘（含 review_roundtrips）+ 本计划回写 + `validate.py artifacts` 过 | P0 | `records/episodes/2026-09-19/` | `T03`、`T04` | ☑ 已完成 | EP-20260919-005 落盘（5 claims 全 verified、E1–E4 含逐字附证、两轮 review_roundtrips）；`artifacts` PASS；最终 `python3.12 validate.py all` 9×PASS（证据见下） |
-| `T06` | 提交 + CHANGELOG/iteration-log + 五 manifest bump | P1 | — | `T05` | — 本期不做 | 用户未要求提交；随下次发布批执行（未决项 U-01） |
+| `T06` | 提交 + CHANGELOG/iteration-log + 五 manifest bump | P1 | — | `T05` | — 本期不做 | 提交部分已由用户授权完成（3f902a3 / 4543b69 / a6fd485，未 push）；CHANGELOG/iteration-log/bump 仍随下次发布批 |
 
 ### 未决项
 
 | 编号 | 问题 | 是否阻塞 | 状态 |
 | --- | --- | --- | --- |
-| U-01 | 本批改动（连同在途 smokeloop 批）的提交与版本 bump 时机 | 不阻塞 | 未关闭 |
+| U-01 | 本批改动（连同在途 smokeloop 批）的提交与版本 bump 时机 | 不阻塞 | 已关闭：用户 2026-09-19 授权提交，三批分 commits 落地（3f902a3 / 4543b69 / a6fd485，逐文件路径，c1/c2 树 worktree 验证 9×PASS）；bump 随下次发布批 |
 | U-02 | 若 T03 探测恢复，PLAN-LOOP-SMOKE-001 T06–T08 的 18 次真实调用成本授权 | 不阻塞 | 未关闭 |
 
 ## 接口与共享机制
