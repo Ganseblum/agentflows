@@ -38,6 +38,8 @@ Last verified: 2026-09-18 (row Z5 correction, rows Z7–Z9; row C8 2026-09-17; a
 
 | Z10 | A local-directory marketplace (`"source": "./"`) snapshots the ENTIRE plugin directory into the cache: the installed 0.7.5 snapshot contains the 233KB audit transcript (`对话记录-2026-09-18-*.md` — since moved to `docs/audit-2026-09-18/`, whole-directory snapshotting unchanged), the three REVIEW/ANALYSIS reports, `mock/`, `tests/`, `tools/`, `records/`, `evals/`, `docs/` — no packaging allowlist exists. | Observed 2026-09-18: `ls ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.7.5/`. The host's loaded components remain `agents/` + `skills/` + manifests (INSTALLED_COMPONENTS); everything else is inert ballast. | ZCode local-directory marketplace on this machine | Do not claim packaging exclusion without a release-source mechanism (P2); extra files cost cache size only, not loaded behavior. |
 
+| C10 | The third-party gateway serving `claude --print` fails closed for model calls: 2026-09-14 a minimal AF-007 smoke returned structured `API Error: 502` twice (~195s, ~203s); 2026-09-19 a one-word probe returned `API Error: 502 status code (no body)` immediately, and a retry after 20s hung past 180s with no output. | Observed directly both days via `claude --print --output-format json` (exit 0 shell, `is_error: true`, error text quoted). | This machine's gateway (`fable`→`anthropic-ccmax/...` family) | The endpoint question (U-01) is not bureaucratic: authoritative evals and C9 live verification both block on a gateway that completes calls. Re-verify by re-running the one-word probe before any eval session. |
+
 ## Codex CLI
 
 | # | Fact | Evidence | Scope | Consequence |

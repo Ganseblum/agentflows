@@ -242,3 +242,14 @@
     `isolation.py create-worktree` 重建（0.8.x 起评测 workspace 另需剥离 seeds）。
 20. **/tmp 清理**：640 个历史 `agentflow-*` 临时目录（多为旧 multi-agent-cli Go 构建缓存与本仓
     故障注入副本）清空；均为一次性目录，无状态损失。
+
+### 迭代升级日（2026-09-19，用户指示「今天跑一下，再升级迭代一下」）
+
+21. **确定性面全绿后，live 验证被网关阻断**：bug 语料 9 条（8 verified / 1 fixed-pending-review）、
+    0 open、再犯类 0 次（`recurrence` 输出 single）；`validate.py all` 九项 PASS。随后尝试对
+    BUG-20260914-003 的修复机制做首次 live 验证（即 C9 的 stream-json × `--json-schema` ×
+    allowed-tools × 隔离参数组合）：最小探测调用返回结构化 `API Error: 502`，20 秒后重试挂起
+    超 180 秒——与 2026-09-14 的两次 502 同族，观测记入 host-platform-facts **C10**（含网关地址
+    与复验方法）。**含义**：可信端点（U-01）不是流程偏好而是硬阻塞——G4、C9、BUG-003 转
+    verified 三件事共用这一个前提。等一个能完成调用的端点后：先一行探测 → 再 adapter 级
+    smoke → 再 2–3 用例对照。

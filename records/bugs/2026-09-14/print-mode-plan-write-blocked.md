@@ -70,6 +70,8 @@ def permission_args(host: str, profile: str) -> list[str]:
 
 - 2026-09-14 12:04 · 建档（open）· AF-002 诊断证据入库。
 - 2026-09-16 12:03 · 备注更新（handoff P0 待办挂起）。
+- 2026-09-19 · live 验证尝试被网关阻断（502/挂起，host-platform-facts C10）· 维护
+  `fixed-pending-review` 与 `regression_status: not-run`；机制级 stub 验证已过，实跑等可用端点。
 - 2026-09-18（0.8.1 批转状态）· 0.8.0 落地选项 A · 转 `fixed-pending-review`；`regression_status: not-run`
   （修复是适配器机制 + stub 级验证，真实用例能否跑通要等 G4 首次评测确认后转 `verified`）。
 
