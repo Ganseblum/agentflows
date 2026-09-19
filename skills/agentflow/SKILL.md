@@ -140,7 +140,7 @@ rule that the author is not the verifier.
 
 Before treating a failing check as a regression, run the same check against the pre-change revision — a worktree of the parent commit is enough. If it fails there too, the failure is environmental (tooling, network, host, gateway): fix the environment or report it, and do not loop workers on it. Only a check that passes on the baseline and fails on the change is evidence of a regression.
 
-Treat two consecutive failures with the same cause (see *Judgement calls made checkable*) as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach or a smaller task boundary.
+Treat two consecutive failures with the same cause (see *Judgement calls made checkable*) as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach (a different tool, a different path, or a different method) or a smaller task boundary.
 
 If a repair/review loop still cannot pass after the bounded retry, report the blocker with evidence and the smallest decision needed from the user. Do not keep agents cycling on unchanged inputs.
 

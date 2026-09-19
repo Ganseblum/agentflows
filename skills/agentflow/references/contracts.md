@@ -84,6 +84,13 @@ artifact), not from anyone's self-report:
 Retrying beyond the brief's declared budget, or re-labeling a crash as worker `partial`, is a
 supervisor defect — both manufacture progress evidence that does not exist.
 
+Degradation is a result downgrade, not a fallback path. The orchestration layer has no
+best-effort fallback that runs unverified work to keep a delegation moving: `crash` and
+`timeout` end in `blocked`/`partial` with in-flight work discarded, because work manufactured
+to look complete is the exact evidence defect the claims ledger exists to stop. A fallback for
+a product failure mode is a design decision and belongs in the exception matrix, where it must
+name its owner, trigger, and verification instead of a blanket phrase.
+
 ## Review result
 
 The Supervisor supplies the reviewer with the raw diff for the exact `reviewed_revision` and the
