@@ -2876,6 +2876,17 @@ def report(label: str, errors: list[ValidationError]) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Hard floor: tests/ use PEP 604 syntax without a future import, so an
+    # interpreter below 3.10 cannot run the suite — refuse loudly instead of
+    # reporting 8 PASS plus a misleading tests failure.
+    if sys.version_info < (3, 10):
+        found = ".".join(str(part) for part in sys.version_info[:3])
+        sys.stderr.write(
+            f"validate.py: interpreter too old: found Python {found}, require >= 3.10. "
+            "The default `python3` may be the Xcode CLT 3.9; use `python3.12` explicitly. "
+            "No check was run.\n"
+        )
+        return 2
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "target",
