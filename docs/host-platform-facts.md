@@ -5,7 +5,7 @@ Every row below was observed directly on this machine unless its evidence is mar
 names its evidence and its scope. Do not generalize a fact beyond its scope row. Re-verify by
 re-running the named check, not by editing this file.
 
-Last verified: 2026-09-18 (row Z5 correction, rows Z7–Z9; row C8 2026-09-17; all other rows 2026-09-14). Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZCode (desktop).
+Last verified: 2026-09-18 (row Z5 correction, rows Z7–Z9; row C8 2026-09-17; all other rows 2026-09-14); rows X1/C10 live probes 2026-09-19. Hosts: Claude Code `2.1.268`, Codex CLI `0.154.0`, ZCode (desktop).
 
 ## ZCode (desktop)
 
@@ -38,13 +38,13 @@ Last verified: 2026-09-18 (row Z5 correction, rows Z7–Z9; row C8 2026-09-17; a
 
 | Z10 | A local-directory marketplace snapshots whatever directory `marketplace.json` names as `source`. On 2026-09-18 that source was `"./"` and the 0.7.5 cache contained the audit transcript, REVIEW/ANALYSIS reports, `mock/`, `tests/`, `tools/`, `records/`, `evals/`, and `docs/`. | Observed 2026-09-18: `ls` of the 0.7.5 cache directory. Host-loaded components remain `agents/` + `skills/` + manifests. | ZCode local-directory marketplace on this machine | Extra files cost cache size only, not loaded behavior. Re-verify after changing `source` by listing a newly installed snapshot; do not assume an older cache is slim. |
 
-| C10 | The third-party gateway serving `claude --print` fails closed for model calls: 2026-09-14 a minimal AF-007 smoke returned structured `API Error: 502` twice (~195s, ~203s); 2026-09-19 a one-word probe returned `API Error: 502 status code (no body)` immediately, a retry after 20s hung past 180s with no output, and a 2026-09-19T12:46Z re-verify hung 90s with empty stdout/stderr (`TimeoutExpired`, exit 124). | Observed directly via `claude --print --output-format json` (502 days: shell exit 0, `is_error: true`; hang days: no JSON body). | This machine's gateway (`fable`→`anthropic-ccmax/...` family) | The endpoint question (U-01) is not bureaucratic: authoritative evals and C9 live verification both block on a gateway that completes calls. Re-verify by re-running the one-word probe before any eval session. |
+| C10 | The third-party gateway serving `claude --print` fails closed for model calls: 2026-09-14 a minimal AF-007 smoke returned structured `API Error: 502` twice (~195s, ~203s); 2026-09-19 a one-word probe returned `API Error: 502 status code (no body)` immediately, a retry after 20s hung past 180s with no output, and a 2026-09-19T12:46Z re-verify hung 90s with empty stdout/stderr (`TimeoutExpired`, exit 124); 2026-09-19T14:15Z/14:17Z two further probes (90s timeout each, 20s apart) both hung with empty streams. The machine configures exactly one endpoint for the CLI (single `ANTHROPIC_BASE_URL` in `~/.claude/settings.json`; no alternate configured). | Observed directly via `claude --print --output-format json` (502 days: shell exit 0, `is_error: true`; hang days: no JSON body). | This machine's gateway (`fable`→`anthropic-ccmax/...` family) | The endpoint question (U-01) is not bureaucratic: authoritative evals and C9 live verification both block on a gateway that completes calls. Re-verify by re-running the one-word probe before any eval session. Switching endpoints requires a user-supplied URL + token; none exists locally. |
 
 ## Codex CLI
 
 | # | Fact | Evidence | Scope | Consequence |
 | --- | --- | --- | --- | --- |
-| X1 | `codex exec` supports `--ephemeral`, `--skip-git-repo-check`, `--cd`, `--model`, `--sandbox`, `--output-schema`, `--output-last-message`, `--color`. | `codex exec --help` on 0.154.0 (`flag` for combination use). | `codex exec` | The adapter command shape is compatible; a real Codex model run has not been executed yet (dogfood pending). |
+| X1 | `codex exec` supports `--ephemeral`, `--skip-git-repo-check`, `--cd`, `--model`, `--sandbox`, `--output-schema`, `--output-last-message`, `--color`. | `codex exec --help` on 0.154.0 (`flag` for combination use); 2026-09-19 live one-word probe: `codex exec --ephemeral --skip-git-repo-check` returned `pong` in ~20 s (model `gpt-5.6-luna`, provider `openai`, sandbox `workspace-write`). | `codex exec` | The adapter command shape is compatible; a minimal real Codex model run has now completed (one-word, ephemeral, 2026-09-19), while the claude-family gateway hung in the same window — codex is this machine's only live model endpoint, but per X2 it cannot evaluate candidates. Full dogfood still pending. |
 | X2 | Codex has no per-invocation local plugin binding; candidate-source evaluation fails closed by design. | `host_adapter.validate_request` refuses `source_kind=candidate` on codex; documented in `tools/lab/adapter-protocol.md`. | Current Codex CLI | Codex can evaluate installed baselines only; never label an installed-source result as a candidate result. |
 
 ## Re-verification

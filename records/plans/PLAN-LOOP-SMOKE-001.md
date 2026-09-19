@@ -4,7 +4,7 @@ plan_version: 0.1.0
 status: proposed
 objective: 用公开用例噪声底闭合第一次 improve 环（仪器可出 better/neutral/worse），不把 18 次业务调用当第一根尺子
 recorded_at: 2026-09-19T09:40:00Z
-updated_at: 2026-09-19T13:38:00Z
+updated_at: 2026-09-19T14:22:00Z
 ---
 
 # 公开用例噪声底 — 第一次 improve 闭环
@@ -39,7 +39,7 @@ updated_at: 2026-09-19T13:38:00Z
 | `T02` | 冻结基线：源 revision、插件版本、安装快照是否与源码一致 | P0 | `plugin.json` | — | ☑ 已完成 | `git rev-parse HEAD` = `ceb639f56c940939c36c745e739c237167048159`；`plugin.json` 0.8.1；`validate.py installed` FAIL：缓存仅有 0.8.0，对照不用该缓存 |
 | `T03` | 在仓库外建候选 worktree：五份 manifest 版本改为 `0.8.1+smokeloop`；`check-diff`；两侧 digest | P0 | 五份 manifest（仅候选树） | `T02` | ☑ 已完成 | `check-diff` blocked=[]，仅五份 manifest；基线 digest `sha256:47d5c7ceb53719f1351023f0f38ed91cffa25fb5aac63241df834c94779bcf18`；候选 `sha256:b810f06a60fb4143b8c1a4024de548555d19bf32e31d13644162bc3d7e7c3095` |
 | `T04` | `host_adapter.py --dry-run`：公开切片 AF-001,AF-004,AF-011，`--repeat-count 3`，隔离布局合法 | P0 | `tools/lab/host_adapter.py` | `T01`、`T03` | ☑ 已完成 | dry_run exit 0；invocation_count=9；三例 AF-001/AF-004/AF-011；plugin_dir=baseline worktree |
-| `T05` | 一行探测：宿主完成最短模型调用（非 502/403/挂起） | P0 | — | — | ⚠ 阻塞 | 2026-09-19T12:46Z `claude --print --output-format json --no-session-persistence` 一词探测：90s `TimeoutExpired`，stdout/stderr 皆空，退出 124。属 C10 挂起类，不是带 `is_error` 的 502 JSON；13:38Z 复测同口径（PLAN-PY-GUARD-001 T03，Supervisor 执行）：90s `TimeoutExpired`，stdout/stderr 皆空——挂起类持续，U-01 仍开 |
+| `T05` | 一行探测：宿主完成最短模型调用（非 502/403/挂起） | P0 | — | — | ⚠ 阻塞 | 2026-09-19T12:46Z `claude --print --output-format json --no-session-persistence` 一词探测：90s `TimeoutExpired`，stdout/stderr 皆空，退出 124。属 C10 挂起类，不是带 `is_error` 的 502 JSON；13:38Z 复测同口径（PLAN-PY-GUARD-001 T03，Supervisor 执行）：90s `TimeoutExpired`，stdout/stderr 皆空——挂起类持续，U-01 仍开；14:15Z/14:17Z（UTC）U-02 授权后两次探测（C10 协议：20s 间隔重试一次）均 90s 挂起无输出；同刻 codex `exec --ephemeral` 一词探测 20s 返回 `pong`（`gpt-5.6-luna`）——但 X2 契约下 codex 不能评候选，对照仍需 claude 族端点 |
 | `T06` | 基线实跑：`--case-ids AF-001,AF-004,AF-011`，`--source-kind baseline`，`--agentflow-version 0.8.1` | P0 | `records/improvement/evaluations/` | `T04`、`T05` | ☐ 未开始 | |
 | `T07` | 候选实跑：同切片同宿主同模型，`--source-kind candidate`，`--agentflow-version 0.8.1+smokeloop` | P0 | `records/improvement/evaluations/` | `T03`、`T06` | ☐ 未开始 | |
 | `T08` | `eval_runner.py compare` + `policy.py`；期望 `neutral`/`revise`（主指标不改善）；显著偏离先修仪器 | P0 | `records/improvement/comparisons/` | `T07` | ☐ 未开始 | |
