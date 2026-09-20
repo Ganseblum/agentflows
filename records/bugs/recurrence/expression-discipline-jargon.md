@@ -2,7 +2,7 @@
 class_id: expression-discipline-jargon
 title: 自造行话/压缩词无就地说明——违反 0.7.3 表达纪律（换>释>删）
 status: consolidated
-consolidated_in: 0.8.2
+consolidated_in: 0.8.3
 first_record: BUG-20260920-03
 occurrences:
   - BUG-20260920-03
@@ -20,7 +20,7 @@ updated_at: 2026-09-20T06:20:00Z
 
 ## 归纳内容（已吸收进 Agentflow 的哪一层）
 
-已归纳于 Agentflow 0.8.2 工作树：`document-chain.md` 质量判据新增表达纪律条款——
+已归纳于 Agentflow 0.8.2→0.8.3（初版条款随 0.8.2 发布，本类完整吸收——表达纪律/模板/C11 结构检查——随 0.8.3 发布）：`document-chain.md` 质量判据新增表达纪律条款——
 禁止发明行话与指代依赖读者的压缩词，修复优先级「换 > 释 > 删」，过度讲解本身计
 阅读负担缺陷；全量替换已有违规词（grep 复核 0 命中）。测量面：术语歧义种子类别
 （evals/business，待 U-01 端点解除后随 S 阶段扩两变体口径）。

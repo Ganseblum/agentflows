@@ -2,7 +2,7 @@
 class_id: full-rewrite-drop-promised-content
 title: 整文件重写丢失已承诺内容——图目录/章节/夹具在覆盖式重写中蒸发
 status: consolidated
-consolidated_in: 0.8.2
+consolidated_in: 0.8.3
 first_record: BUG-20260920-04
 occurrences:
   - BUG-20260920-04
@@ -19,7 +19,7 @@ doc_chain.py 自测丢 C6 夹具（独立评审 round-2 点名）。
 
 ## 归纳内容（已吸收进 Agentflow 的哪一层）
 
-已归纳于 Agentflow 0.8.2 工作树：`doc_chain.py` 图覆盖检查（C4 数据模型图可落 spec、
+已归纳于 Agentflow 0.8.2→0.8.3（初版条款随 0.8.2 发布，本类完整吸收——表达纪律/模板/C11 结构检查——随 0.8.3 发布）：`doc_chain.py` 图覆盖检查（C4 数据模型图可落 spec、
 C7 线框或 prototype HTML 二选一、C8 fe 三类图必须齐）+ 18 例判别性自测；
 `document-chain.md` 图目录纪律（所列必须逐张兑现）。流程约束：整文件重写前先列
 "已承诺内容清单"，重写后逐项对照。

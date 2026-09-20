@@ -2,7 +2,7 @@
 class_id: doc-chain-generation-density
 title: 文档交付链生成缺密度门——四层"齐全"但无契约/无图/未提问/plan 无落点
 status: consolidated
-consolidated_in: 0.8.2
+consolidated_in: 0.8.3
 first_record: BUG-20260920-02
 occurrences:
   - BUG-20260920-02
@@ -20,7 +20,7 @@ updated_at: 2026-09-20T06:20:00Z
 
 ## 归纳内容（已吸收进 Agentflow 的哪一层）
 
-已归纳于 Agentflow 0.8.2 工作树（随文档链批 7b41cc6 + 后续增量）：`document-chain.md`
+已归纳于 Agentflow 0.8.2→0.8.3（初版条款随 0.8.2 发布，本类完整吸收——表达纪律/模板/C11 结构检查——随 0.8.3 发布）（随文档链批 7b41cc6 + 后续增量）：`document-chain.md`
 门禁 1–5（产品决策必须提问确认、design 必带契约与失败分支时序图）+ Quality density
 floor（C1–C10）+ 深度优先推进规则；新增 `tools/lab/doc_chain.py` 判别性自测 18 例；
 `AGENTS.md` 增文档链 linter 必跑。回归=自测 case 02（原始薄形态必须失败）+ 真实链 PASS。

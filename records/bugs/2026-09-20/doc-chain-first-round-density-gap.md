@@ -26,7 +26,7 @@ regression_status: pass
 reviewer: agentflow:reviewer
 review_decision: approved
 closure_criteria: python3 tools/lab/doc_chain.py --self-test → 18/18 exit 0；真实链 doc_chain PASS exit 0；validate.py all → 9×PASS exit 0
-fix_revision: agentflow 0.8.2 worktree 2026-09-20（文档链批 7b41cc6 + 后续未提交增量）
+fix_revision: agentflow 0.8.3
 class_id: doc-chain-generation-density
 occurrence: "1"
 ---

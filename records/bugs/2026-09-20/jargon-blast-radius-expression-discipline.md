@@ -23,7 +23,7 @@ regression_status: pass
 reviewer: agentflow:reviewer
 review_decision: approved
 closure_criteria: grep -rn '爆炸半径\|blast radius' skills/ docs/ 与 aiwork 定时任务链 → 0 命中；validate.py installed → PASS（0.8.2 快照含表达纪律条款）
-fix_revision: agentflow 0.8.2 worktree 2026-09-20（未提交增量，随文档链批）
+fix_revision: agentflow 0.8.3
 class_id: expression-discipline-jargon
 occurrence: "1"
 ---

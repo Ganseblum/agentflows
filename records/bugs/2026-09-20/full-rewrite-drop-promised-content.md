@@ -23,7 +23,7 @@ regression_status: pass
 reviewer: agentflow:reviewer
 review_decision: approved
 closure_criteria: doc_chain 自测 18/18（含图覆盖判别 case 02/08/09/10/11/12/18）；真实链 doc_chain PASS exit 0；validate.py all → 9×PASS
-fix_revision: agentflow 0.8.2 worktree 2026-09-20（linter 图覆盖检查 + 18 例自测）
+fix_revision: agentflow 0.8.3
 ---
 
 ## 现象

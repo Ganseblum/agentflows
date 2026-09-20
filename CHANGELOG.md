@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.8.3 — 2026-09-20
+
+Self-recorded defect batch and anti-drift hardening, user-directed ("把你犯的错记录一下" /
+"加点模板处理，不然一句话会偏移"). Method-level change; `measurement: none`.
+
+- **Three self-recorded bug records (`verified`, independent reviewer two rounds, final
+  approved)**: BUG-20260920-02 first-round doc-chain density failure (no field-level
+  contracts / no failure-branch diagrams / plans ungrounded / blocking items never put to
+  the requirement owner — fix = gates 1–5 + density floor + `doc_chain.py`, reviewed in
+  EP-20260920-002); BUG-20260920-03 invented jargon 「爆炸半径」 violating the 0.7.3
+  expression discipline (fix = 换>释>删 full replacement, zero grep, discipline clause added);
+  BUG-20260920-04 full-file rewrites silently dropping promised content (figure-directory
+  entries, a section, the C6 fixture — fix = figure-coverage checks C4/C7/C8 + 18→20-case
+  discriminating self-test + promised-content checklist discipline).
+- **Three recurrence ledgers** (`doc-chain-generation-density` / `expression-discipline-jargon`
+  / `full-rewrite-drop-promised-content`, consolidated_in 0.8.3 — the completing increments
+  ship here, not in 0.8.2).
+- **Expression discipline in the generation contract**: no invented jargon or compressed
+  words with reader-dependent referents; fix priority 换 > 释 > 删; over-explanation counts
+  as reading-burden defect.
+- **Corpus-derived devices** (30-feature survey of the business repo): plan↔design
+  traceability column, 落点校对表, unified error-code table standard, OQ owner/blocked-by
+  fields, QA-layer discipline (N/A must name where acceptance lives), 8-item documentation
+  anti-pattern list.
+- **Fill-in templates with fixed heading literals** (`document-chain-templates.md`, 12
+  skeletons incl. README entry board and the QA triple) + linter C11 structure check
+  (marker-gated via the README declaration line; self-test 20 cases).
+- **Verification**: self-test 20/20; real chain `PASS doc-chain`; `validate.py all` 9×PASS;
+  snapshot reinstalled.
+
 ## 0.8.2 — 2026-09-20
 
 Merge/integration quality gate: the trigger surface and contracts now cover the task shape
