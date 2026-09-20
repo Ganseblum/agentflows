@@ -18,6 +18,7 @@ hard cases; most tasks use one or two rows.
 | Material, uncertain, recurring, or cross-layer bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | Small bug with a verified reproduction | Supervisor alone for diagnosis/fix/check; the independent Reviewer gate remains mandatory for Supervisor-authored changes; record when it should persist |
 | Review of documents authored under another system's rules | Supervisor (archive + review record) + Reviewer; findings become bug records with `provenance: external` |
+| Task is itself a branch merge with conflict resolution | Supervisor resolves and verifies + independent Reviewer (mandatory when the supervisor resolved code conflicts; post-merge deterministic checks with raw output before completion) |
 | Plugin/role-instruction improvement | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
 ## Supervisor

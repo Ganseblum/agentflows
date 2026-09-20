@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.8.2 — 2026-09-20
+
+Merge/integration quality gate: the trigger surface and contracts now cover the task shape
+"the task is itself a git merge with conflict resolution" (BUG-20260920-01, class
+`merge-integration-quality-gate`). Method-level change; `measurement: none (method-level
+change, no instrumented business task)` — not a verified improvement; prevention effect
+awaits post-release comparison verification.
+
+- **Trigger surface.** The `agentflow` skill description enumerates *branch integration and
+  conflict resolution (merging branches whose conflicts must be resolved by hand)*; the
+  routing table (`roles.md` + the `docs/agent-roles.md` zh mirror) gains the matching row:
+  Supervisor resolves and verifies + independent Reviewer, mandatory when the supervisor
+  resolved code conflicts.
+- **Integrate-step merge gate (SKILL.md step 6).** A merge whose conflicts the supervisor
+  resolved by hand — or whose result changes user-visible behavior — is a material change:
+  the step-8 review gate applies and the supervisor's own conflict tradeoffs are not exempt.
+  Before reporting completion, run the deterministic checks that prove the merged artifact
+  builds and behaves (build/compile + test suite per affected deployable, e.g. `go build
+  ./...` + `go test ./...`, per-app `tsc --noEmit`; migration-touching merges run the
+  migration once) and keep the raw output. Conflict-marker grep is triage, never acceptance —
+  the named anti-pattern behind the escaped `validate()` duplicate. A workspace rule that
+  bans routine builds/tests is an iteration default, not an exemption: run the checks or
+  escalate to the user, never skip silently.
+- **Authorization ≠ verification (contracts.md hard boundary 3).** Authorization settles
+  whether the integration may happen; it does not verify the result — a hand-resolved merge
+  stays subject to the review gate (boundary 1) and the deterministic-check discipline
+  (boundary 4); clearing conflict markers is not a check.
+- **Verification**: `validate.py all` 9×PASS EXIT=0; `isolation.py check-diff` (candidate
+  tree vs frozen base `5da90f2`) `blocked: []`; freeze anchor 2026-09-20T04:18:55Z, artifact
+  digest `sha256:e40d281cb2a8f6186405148a318ca9372c0fb9910f26d747a94be340e93e85e0`.
+  Evidence: BUG-20260920-01, EP-20260920-001. Host snapshot pending the user's marketplace
+  refresh + reinstall; the workspace `.zcode/skills/` live path carries the new wording via
+  symlink.
+
 ## 0.8.1 — 2026-09-18
 
 Closed-loop follow-up after the 0.8.0 install: the remaining C-domain contract residuals (found

@@ -39,6 +39,7 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | 执行报告产出失败或覆盖缺口 | Executor 证据 → Bug 链路（Investigator → Fixer → Reviewer → Recorder） |
 | 重要、反复、跨层的 Bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | 已有验证复现的小 Bug | Fixer + Supervisor 侧检查；要沉淀时再记录 |
+| 任务本身是分支合并/解冲突 | Supervisor 解决并验证 + 独立 Reviewer（supervisor 亲解代码冲突时评审门强制；报完成前留存合并后确定性检查原始输出） |
 | 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
 ### 角色收敛注记（0.8.1）
