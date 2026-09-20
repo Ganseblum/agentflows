@@ -33,6 +33,7 @@
 | 0.7.5 | 2026-09-18 | 全库只读审计（四项硬缺陷实测复现） | 门进 CI、fail-closed、防刷分评分、measurement/release 契约、record_store 读侧 | CHANGELOG 0.7.5；`docs/audit-2026-09-18-followups.md` |
 | 0.8.0 | 2026-09-18 | 用户授权第二轮整改：B1/B3 度量效度 S0、E 域活跃失真、记忆层闭环、审计 §6 残余 | seeds 防泄漏 fail-closed；claude 观测通道 `observed_permission_denials`；allowed-tools/隔离参数；rollback 如实声明；mock 合并编译门；版本去散文化 + 失真清理；roundtrips 必填回填 | CHANGELOG 0.8.0；本文件 §0.8.0 |
 | 0.8.1 | 2026-09-18 | 0.8.0 装后闭环复核：发现 0.8.0 台账附录漏列 C 域残余；用户重装快照后要求核对旧 bug 闭环并修尾项 | C 域失败语义成文 + plan 回写时机进 SKILL 步骤；D1 以选项 a（显式过渡态注记）消解矛盾；BUG-20260914-003 转 fixed-pending-review（修复=0.8.0 选项 A） | CHANGELOG 0.8.1；本文件 §0.8.1 |
+| 0.8.2 | 2026-09-20 | 双批同版入库：①文档交付链质量门（用户两轮质量否决驱动，本文件 §0.8.2）②合并解冲突质量门（BUG-20260920-01，兄弟会话批） | 文档链：SKILL 文档交付链接线 + document-chain.md 契约（门禁 1–5 + density floor + 深度优先）+ doc_chain.py C1–C10 linter（17 例判别自测）+ AGENTS.md 验收段 + docs/product/ 内部链自举；合并门：SKILL description/Integrate 合并质量门 + 硬边界 3 授权≠验证 | CHANGELOG 0.8.2；`7b41cc6`（文档链批，EP-20260920-002）、`57050e3`（合并门批，EP-20260920-001） |
 
 ---
 
@@ -464,3 +465,38 @@
 - **解决了什么**：bug 语料 9 条全部处于 verified(8)/fixed-pending-review(1) 状态，无 open 残留；
   失败语义与回写时机两个「靠自觉」的点有了合同文本。
 - **未决**：G4（可信端点/预算）；快照 0.8.1 需再次刷新重装（发布后常规漂移）。
+
+---
+
+## 0.8.2 — 文档交付链质量门 + 合并解冲突质量门（2026-09-20）
+
+> 双批同版：本节主体记文档交付链批（`7b41cc6`，本会话）；合并解冲突批（`57050e3`，
+> 兄弟会话）详见 CHANGELOG 0.8.2 与 EP-20260920-001，此处只记同版发布事实。
+
+- **触发**：用户对照 aiwork 业务仓文档（对话分享 feature 全链 7108 行：决策表带理由、
+  字段级契约、时序图、反审门）两轮否决 agentflow 生成文档的质量（"可能连 30 分都没有"），
+  点名四个缺口：proposal/spec 阶段不向需求方提问对齐、design 无接口字段定义、FE 无异常
+  边界与线框、plan 无分支/落点/伪代码；随后要求"保证下次不出现类似问题"。
+- **改了什么**：
+  - 方法层：`skills/agentflow/SKILL.md` 增 Document delivery chain 段与 description 路由
+    短语；`references/document-chain.md` 链契约——门禁 1–5（含产品决策阻塞项必须以
+    问题+推荐默认值向需求方确认、design 必带字段级契约与含失败分支的时序图）、Quality
+    density floor（linter 强制）、深度优先推进规则（代码事实未读不写 design）。该批推翻
+    0.5.1「只吸收评审判据、不建模板体系」取舍，翻案记录见 docs/product/design D12。
+  - 机器门：新增 `tools/lab/doc_chain.py`（C1–C10 交叉闭合 linter：结构占位/入口门禁/
+    反审阻塞未闭/契约表缺失/契约 ID 未闭合到 FE/异常矩阵缺失/线框不足/图覆盖/plan 落点
+    与 V 项闭合/围栏平衡）+ 17 例判别性自测矩阵；`AGENTS.md` 验收节增文档链 linter 要求。
+  - 自举样例：`docs/product/` 内部链（README 门禁 + proposal + spec(S1–S15+验收矩阵) +
+    design(D1–D14)），plan 层复用 records/plans。
+  - 真实链验证：aiwork `feature-2026-09-18-定时任务` 全链生成（含 15 张图、契约 A1–A11、
+    异常矩阵、分支与落点），用户在线确认 B-1/B-2/B-3 三个产品决策；linter 首跑抓出
+    25 项发现（3 处误报逻辑 + 11 处真实缺陷）修复后 PASS。
+- **独立评审**：三轮（changes_requested ×2 → approved），评审员只读、自编 6 检查、
+  supervisor 逐字执行；自测矩阵抓到 linter 自身表格正则跨空行桥接真 bug（静态分析未发现）。
+  证据：`records/episodes/2026-09-20/EP-20260920-002.json`。
+- **解决了什么**：文档质量从"靠当次会话自觉"变为"会失败的机器检查 + 门禁 5 的契约要求"；
+  阻塞产品决策有了强制提问通道；改进环吃进第一条来自文档质量否决的证据。
+- **measurement**：none（方法级改动，无 instrumented 业务用例；预防效果待下一次文档交付
+  对照，不称已验证改进）。
+- **未决**：linter 并入 `validate.py all` 属门变更（protected），待用户裁决；`docs/product/`
+  自身的需求评审门/技术方案评审门 ☐ 待独立评审；宿主快照 0.8.2 重装（发布后常规漂移）。
