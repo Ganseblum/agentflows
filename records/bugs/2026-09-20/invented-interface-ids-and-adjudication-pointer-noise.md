@@ -1,0 +1,36 @@
+---
+bug_id: BUG-20260920-07
+title: 自造接口编号体系（A1–A16）迫使跨文档翻页；「契约以谁为准」逐行指针×16 是噪音——模板无禁令、评审清单无检查
+status: fixed-pending-review
+regression_status: not-run
+severity: P2
+error_kind: missing-constraint
+attribution: role_prompt
+provenance: agentflow
+project: agentflow
+files:
+  - skills/agentflow/references/document-chain-templates.md
+  - agents/reviewer.md
+recorded_at: 2026-09-20T21:00:00+08:00
+source_revision: agentflow@0.8.3
+agentflow_version: 0.8.3
+---
+
+## 现象
+
+design/be 契约表自造 A1–A16 编号，design/fe、design/qa 引用时读者必须翻回 be 才知道 A1 是什么（用户："还要再往回翻吗 直接写对应的不行吗"）；「契约以谁为准」列把统一裁决规则复制成 16 行指针（"design/be §1.4.2 / 同上"×16），用户："感觉都是理解负担"。
+
+两条语料反证：aiwork-workflow-ai 与 ts-workflow-ai 的成熟文档均**不发明接口编号**（一律方法+路径直写，fe 侧用 endpoints 常量名关联）；裁决规则均为"写一次"（ts 语料在接口文档头声明权威来源）。
+
+## 根因
+
+1. 模板 1.4 节没有「接口以方法+路径标识、禁止自造编号」的条款；本仓 linter C5 历史上以编号为闭合检查锚（现以总览表首列路径已可工作，非保留编号的理由）。
+2. 模板「契约以谁为准」以节/列形式出现，未注明"裁决规则写一次，不做逐行指针；指针只服务下钻"。
+3. agents/reviewer.md 的文档评审模式（proposal/spec/design/plan 四档）全部是完整性检查，无一条「阅读负担」类检查项（自造编号、逐行指针、元话语密度均不在清单）。
+
+## 修复
+
+已按上述方向整合入库（同仓提交：agents/reviewer.md、skills/agentflow/references/document-chain.md、skills/agentflow/references/document-chain-templates.md），regression_status=not-run（规则文本变更，无自动化回归面）；生效仍待 improve 治理环收口（evaluator/governor/版本发布）与插件重装。
+
+1. 模板加两条表达约束：接口以方法+路径标识（fe 侧可加 endpoints 常量名）；裁决/权威声明写一次。
+2. reviewer 文档模式 general pass 增加阅读负担检查项（可引用即报：自造编号、逐行重复指针、与内容无关的流程元话语）。

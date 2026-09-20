@@ -163,6 +163,15 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   of per-interface scatter, when a feature introduces new error semantics.
 - **OQ/冻结台账**: each open question carries Owner, what it blocks (design? plan? release?),
   and a closure condition; frozen decisions are recorded with date and who confirmed.
+- **契约先核实（写前）**: before writing any new interface contract, verify the platform's
+  existing conventions — response envelope, error-code system (errno table / gate tests),
+  auth, openapi/IDL location — and state the contract source (契约真源) once at the top of the
+  design's interface section; inventing an envelope or a code table is a defect.
+- **主线与克制**: every design document can answer "in what order does a reader read this, and
+  what question does each section answer"; the data section opens with a lifecycle narrative
+  (when each table's rows are written, and why) before DDL; interfaces are grouped by user
+  journey instead of flat listings; a document running more than three numbering systems opens
+  with a legend; adjudication/authority rules are stated once, never repeated per row.
 - **QA layer**: module acceptance blocks (M0*-AC-*), coverage mapping, and a conclusion grade
   (通过/有条件通过/不通过); marking QA "N/A" requires a stated reason pointing at where the
   acceptance criteria DO live — an empty QA layer under a progressing README is a defect.
@@ -170,7 +179,8 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   文档头声明与实际产出脱节（如「本期不产出 QA」却存在 QA 文档）；下游文档落后上游已冻结
   结论不回写；同一结论双源并存（两处 DDL/两套错误码）不声明取舍；决策编号断档；单文件
   巨石（design 单文件超 ~1500 行应拆模块篇）；README 进度与产物脱节（空层照列步骤）；
-  第三方附件整篇搬运不裁剪不标注适用范围。
+  第三方附件整篇搬运不裁剪不标注适用范围；同一文档编号体系过载（超过三套）且无图例；
+  元话语（关于文档的流程叙述）成段出现、或裁决规则逐行重复。
 - Status lines are honest: `待评审` / `待验证` / `未实施` stay until the gate or evidence
   exists; strength of claim never exceeds strength of evidence.
 

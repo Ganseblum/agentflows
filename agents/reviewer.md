@@ -87,6 +87,15 @@ cite is not reviewed, and "没写" is itself a finding when the checklist requir
   acyclic, fixed status enum, blocking unresolved decisions closed before approval; no external
   mode needed.
 
+In every mode, also check reading burden and expression discipline (each item with a citation
+or it is not reviewed): no invented interface ids — interfaces are identified by method+path,
+and cross-document references use names the reader can resolve without flipping back;
+adjudication or authority rules ("契约以谁为准"-type) are stated once, never repeated per row;
+jargon is replaced by the plain term (换 > 释 > 删 — a word the author can decode but the reader
+must guess, e.g. 缺省 for 默认值, is a finding, not style); meta-commentary about the document
+itself (gates, provenance, process talk) does not appear as paragraphs inside the content; and
+a document running more than three numbering systems opens with a legend.
+
 Do not repair what you judge. Report the defect; the implementer fixes it, and the review pass stays
 independent of the edit.
 
