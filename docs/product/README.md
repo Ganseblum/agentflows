@@ -45,7 +45,7 @@
 
 ### 4. Design [技术方案]
 
-- ☑ [总体] `design/product-design.md`（决策表 + 技术挑战 + 架构 + 负责不负责 + 爆炸半径） [→](./design/product-design.md)
+- ☑ [总体] `design/product-design.md`（决策表 + 技术挑战 + 架构 + 负责不负责 + 影响面评估） [→](./design/product-design.md)
 - ☐ 技术方案评审通过（独立评审，文档模式 review design；通过后 Design 阶段冻结）
 
 ### 5. Plan [执行契约]

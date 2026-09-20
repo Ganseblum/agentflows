@@ -140,8 +140,10 @@ def lint(feature_dir: Path) -> list[str]:
             errors.append("C4 design/be: 缺少含失败分支（alt）的时序图")
         if "flowchart" not in kinds:
             errors.append("C4 design/be: 缺少架构/流程 flowchart")
-        if not (kinds.get("erDiagram") or kinds.get("stateDiagram")):
-            errors.append("C4 design/be: 缺少 ER 图或状态机图")
+        spec_kinds = mermaid_kinds("\n".join(all_text[f] for f in spec_files) if spec_files else "")
+        if not (kinds.get("erDiagram") or kinds.get("stateDiagram")
+                or spec_kinds.get("erDiagram") or spec_kinds.get("stateDiagram")):
+            errors.append("C4 design/be: 缺少 ER 图或状态机图（design/be 或 spec）")
         if not re.search(r"\|\s*#?\s*接口.*\|.*请求字段.*响应字段|\|.*请求字段.*\|.*响应字段", be_text):
             errors.append("C4 design/be: 缺少字段级 API 契约表（请求字段/响应字段列表头）")
         # C5: ids declared in the CONTRACT TABLE's first column must appear in design/fe
@@ -175,8 +177,10 @@ def lint(feature_dir: Path) -> list[str]:
             for b in re.findall(r"```text\n(.*?)```", fe_text, re.S)
             if any(c in b for c in BOX_CHARS)
         ]
-        if len(wireframes) < 2:
-            errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）")
+        has_prototype = any(f.suffix == ".html" and "prototype" in str(f.relative_to(feature_dir)).lower()
+                            for f in md_files + [x for x in files if x.is_file() and x.suffix == ".html"])
+        if len(wireframes) < 2 and not has_prototype:
+            errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）且无 prototype HTML 原型")
         for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", fe_text, re.M):
             header = table.splitlines()[0]
             if ("成功" in header or "正常" in header) and ("失败" in header or "异常" in header):
@@ -216,6 +220,23 @@ def lint(feature_dir: Path) -> list[str]:
             for line in all_text[f].splitlines():
                 if line.lstrip().startswith("|") and "⚠ 阻塞" in line and "☐" in line:
                     errors.append(f"C9 plan: {f.relative_to(feature_dir)} 存在未回写证据的阻塞任务行")
+
+    # C11 template structure (marker-gated): chains declaring the agentflow doc-chain
+    # marker in README must carry the fixed design headings (heading literals, like the
+    # records contract) — prose skeletons alone allow generation drift.
+    if readme.is_file() and "agentflow 文档链方法生成" in all_text.get(readme, ""):
+        be_heads = "\n".join(all_text[f] for f in be_files) if be_files else ""
+        fe_heads = "\n".join(all_text[f] for f in fe_files) if fe_files else ""
+        import re as _re
+        if not _re.search(r"^##+ .*(先说结论|关键决策速览|结论先行)", be_heads, _re.M):
+            errors.append("C11 结构模板: design/be 缺固定标题（先说结论/关键决策速览）")
+        if "影响面评估" not in be_heads:
+            errors.append("C11 结构模板: design/be 缺「影响面评估」章")
+        for fname, head in (("design/be", be_heads), ("design/fe", fe_heads)):
+            if "评审前自检" not in head:
+                errors.append(f"C11 结构模板: {fname} 缺「评审前自检」章")
+        if fe_files and "data-testid" not in fe_heads:
+            errors.append("C11 结构模板: design/fe 缺 data-testid 可测性清单")
 
     # C10 mermaid fence balance
     for f in md_files:
@@ -355,6 +376,24 @@ def self_test() -> int:
     run_case("16 C9 open blocking plan row trips C9", 1, ["未回写证据的阻塞任务行"],
              lambda f: f.update({"plan/be/p.md": f["plan/be/p.md"] + "| T99 | 修复 | `fix/x.go` | — | ⚠ 阻塞 ☐ |\n"}) or f,
              results)
+    def strip_wireframes(f):
+        # remove all text-wireframe blocks (fence-to-fence), keep everything else
+        f["design/fe/f.md"] = re.sub(r"```text\n.*?```", "", f["design/fe/f.md"], flags=re.S)
+        f["design/fe/prototype.html"] = "<html>定时任务原型</html>"
+        return f
+    run_case("18 html prototype alone satisfies C7", 0, ["PASS doc-chain"], strip_wireframes, results)
+
+    def add_marker(f):
+        f["README.md"] = f["README.md"] + "\n本 feature 文档链由 agentflow 文档链方法生成（2026-09-20）\n"
+        return f
+    run_case("19 marker without fixed headings trips C11", 1, ["C11 结构模板"], add_marker, results)
+
+    def add_marker_and_heads(f):
+        f = add_marker(f)
+        f["design/be/b.md"] += "\n## 0. 先说结论\n| 问题 | 结论 |\n\n## 1.6 兼容性思考 & 影响面评估\n\n## 4. Design 评审前自检\n"
+        f["design/fe/f.md"] += "\n## 4. Design 评审前自检\n\n| data-testid | 节点 | 出现条件 |\n| --- | --- | --- |\n| x-card | 卡片 | 列表 |\n"
+        return f
+    run_case("20 marker with fixed headings passes C11", 0, ["PASS doc-chain"], add_marker_and_heads, results)
     run_case("17 task-like row inside a DESIGN table is never a C9 task row", 0, ["PASS doc-chain"],
              lambda f: rep(f, "design/be/b.md", "| V-9 | 外部接口形态 | T02 |\n",
                            "| V-9 | 外部接口形态 | T02 |\n| T99 | 待核实事项 | — |\n"),

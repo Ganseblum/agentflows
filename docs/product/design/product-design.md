@@ -3,7 +3,7 @@
 > 适用阶段：`design/`。前置依赖：`proposal/proposal.md`、`spec/method-spec.md`（含反审
 > checklist，阻塞项已全关）。实施仓：本仓库。
 > 契约：`spec/method-spec.md` 是行为承诺的唯一依据；本文回答"技术上如何承接、怎么验证、
-> 爆炸半径多大"。文档状态：**待技术方案评审**。
+> 影响面多大"。文档状态：**待技术方案评审**。
 > 图纪律：每张图只回答一个问题。
 
 ## 0. 关键决策速览
@@ -95,9 +95,9 @@ flowchart LR
 | design | 相应角色（跨层时 technical-director 定边界） | 技术方案评审门（独立评审） | 同上 |
 | plan | plan-architect（只写不改码） | plan 前置门=design 冻结 | `records/plans/`（本仓）或目标仓计划契约 |
 
-### 1.4 本批改动与爆炸半径
+### 1.4 本批改动与影响面评估
 
-| 改动 | 落点 | 爆炸半径 | 回滚 |
+| 改动 | 落点 | 影响面 | 回滚 |
 | --- | --- | --- | --- |
 | 产品文档链建立 | `docs/product/`（新增 5 文件） | 纯新增；旧设计文档不迁移不改写，引用不断 | 删目录即回滚，无外部引用 |
 | 文档交付链契约 | `skills/agentflow/references/document-chain.md`（新增） | 新 reference；宿主装载面 +1 文件 | 删文件 + 还原 SKILL.md 接线 |

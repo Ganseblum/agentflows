@@ -30,7 +30,7 @@ docs/features/feature-<slug>/
   README.md          single entry: meta + progress board with stage gates
   proposal/          why: background, goals, scope (incl. NOT doing), principles, open questions
   spec/              what it must finally behave like (+ re-audit checklist of the proposal)
-  design/            how: decision table, challenges, architecture, blast radius, verification
+  design/            how: decision table, challenges, architecture, impact assessment, verification
   plan/              execution contract (follow the target repo's plan convention if any)
 ```
 
@@ -40,8 +40,14 @@ review gates checked only by the independent reviewer.
 
 ## Stage skeletons
 
-Keep skeletons as section lists, not prose templates. Each stage states its sections; a stage
-document missing a section is incomplete, and a section with no content says "N/A: reason".
+Fill-in templates with **fixed heading literals** live in
+[document-chain-templates.md](document-chain-templates.md) — copy the template, fill the
+placeholders, do not rename or drop sections (the records contract's fixed-heading approach,
+applied to doc chains). Adding domain-specific sections is allowed; the template core is not
+optional. A chain that declares itself in its README with the marker line 「本 feature 文档链
+由 agentflow 文档链方法生成（<日期>）」 opts into the linter's structure check (C11: the
+fixed design headings must be present). A stage document missing a section is incomplete, and
+a section with no content says "N/A: reason".
 
 - **proposal**: 文档信息（原文出处与版本）· 背景与目标（含本期不包含）· 产品定位与核心
   原则 · 用户与场景 · 范围决策表（含"明确不做"）· 待冻结问题台账（每项 owner + 关闭条件）。
@@ -49,10 +55,26 @@ document missing a section is incomplete, and a section with no content says "N/
 - **spec**: §0 反审 checklist（对照 proposal 逐节挑缺口，阻塞项全关才能进 design）· 行为
   条目（陈述 → 验收口径 → 标尺）· 条目索引。验收口径必须可判定；"标尺"指会失败的
   具体检查（测试、脚本、评审门），写不出标尺的条目诚实标注。
-- **design**: 0. 关键决策速览（编号 D1..Dn：结论 + 一句话理由 + 详见交叉引用）· 技术挑战
-  （优先级 + 应对）· 架构图（每张图只回答一个问题）· 组件负责/**不负责**表 ·
-  爆炸半径声明（改什么、明确不改什么）· 验证与灰度 · 失败模式与回滚。推翻既有决策时
-  留翻案记录（改了什么结论、原前提为何不成立、何时定稿）。
+- **design**: 0. 先说结论（问题→结论速览表）· 关键决策速览（编号 D1..Dn：结论 + 一句话
+  理由 + 详见交叉引用）· 技术挑战（优先级 + 应对）· 架构图（每张图只回答一个问题）·
+  **主链路 S 步骤表**（每步：调用方→承接方 / 动作输入输出 / 状态数据变化 / 失败处理 /
+  观测点）· 组件负责/**不负责**表 · 核心算法（判断顺序 + 伪代码 + 代码职责落点 + 不变式）·
+  **存储设计：新增表必须给字段级 DDL**（每个字段的类型/空性/默认值/注释/索引，迁移文件
+  命名与回滚方式）· 详细接口设计（清单表 + 每接口请求/响应字段与错误 + 运行逻辑 +
+  错误幂等状态约束表）· 验证与灰度 · 失败模式与回滚 · **影响面评估**（L0–L3 定级 +
+  变更兼容性分类 + 影响面 checklist + 消费方清单与结论）·
+  监控告警（编号 + 阈值）与问题定位预案（现象→首查→日志→原因→动作）· 评审前自检
+  checklist。推翻既有决策时留翻案记录（改了什么结论、原前提为何不成立、何时定稿）。
+- **design（前端）**: 技术挑战表 · 分层职责表（视图/hooks/store 各自边界）·
+  **文件落点表**（每个新增/修改文件的精确路径，路径未核实的挂显式核实项）· **S 步骤表**
+  （每步：视图层状态 / hooks 编排 / store 读写 / 服务端调用 / 成功异常去向 / 观测点）·
+  组件复用边界与 **data-testid 清单**（QA 可测性）· 核心逻辑带语言级伪代码 ·
+  **类型/接口契约**（请求响应的 TS/interface 定义）· **字段映射处理表**（服务端字段 →
+  前端模型 → UI 展示 → 可空默认 → 非法枚举处理）· 错误重试并发表 · Mock/联调/接口未就绪
+  方案 · 评审前自检。
+- **线框/原型**: ASCII 线框保底（diff 友好、linter 可查）或 feature 目录内静态
+  `prototype/*.html`（浏览器直开、CSS 自由；不引入 MDX/构建链）。两者择一即可，均须
+  标注「结构稿，非最终视觉」。
 - **plan**: the target repo's execution-plan contract; when none exists, reuse this repo's
   hybrid shape (envelope + progress overview + task table with status/evidence write-back +
   interfaces and shared mechanisms + verification commands) per `records/plans/README.md`.
@@ -120,10 +142,35 @@ directory, verbatim archive per round, findings as bug records with provenance/a
 
 - Scope always includes an explicit "not doing" list with one-line reasons.
 - Every decision has a stated rationale and a cross-reference; no naked conclusions.
-- Blast radius is explicit: what changes, what explicitly does not, per repository/IDL/config.
+- Impact assessment is explicit: rated L0–L3 with justification,
+  per-change compatibility classification (breaking / non-breaking), what changes and what
+  explicitly does not per repository/IDL/config, and a consumer list with dependency strength.
+- New tables carry field-level DDL (type/nullability/default/comment/index per column);
+  new interfaces carry request/response fields and per-call error semantics; frontend designs
+  carry the field-mapping table and testid list.
 - Responsible / not-responsible tables bound every component or role introduced.
 - Open questions live in a ledger with owner and closure condition — never scattered in prose.
 - Original requirement text is preserved verbatim; changelogs record who changed what when.
+- **表达纪律（术语）**: no invented jargon, no compressed words whose referent depends on the
+  reader (the 基线/现网 class). Fix priority is 换 > 释 > 删 — replace with the plain term
+  first; an in-place one-line explanation only when no plain term exists; over-explanation is
+  itself a reading-burden defect. A term only the author can resolve is a finding, not style.
+- **plan ↔ design traceability**: the plan task table carries a 「关联 design 条目」 column
+  (design section/decision ids) and, for frontend, a 「计划验证方式/验收标准」 column; when
+  landing on existing code, a 落点校对表 (file:line anchors against the real tree) is the
+  single source for code locations.
+- **错误码表**: a unified table (code / fixed copy / retryable-yes-no / client action) instead
+  of per-interface scatter, when a feature introduces new error semantics.
+- **OQ/冻结台账**: each open question carries Owner, what it blocks (design? plan? release?),
+  and a closure condition; frozen decisions are recorded with date and who confirmed.
+- **QA layer**: module acceptance blocks (M0*-AC-*), coverage mapping, and a conclusion grade
+  (通过/有条件通过/不通过); marking QA "N/A" requires a stated reason pointing at where the
+  acceptance criteria DO live — an empty QA layer under a progressing README is a defect.
+- **文档治理反模式**（语料普查 2026-09-20 提炼，出现即缺陷）: 整表「待补充」占位常态化；
+  文档头声明与实际产出脱节（如「本期不产出 QA」却存在 QA 文档）；下游文档落后上游已冻结
+  结论不回写；同一结论双源并存（两处 DDL/两套错误码）不声明取舍；决策编号断档；单文件
+  巨石（design 单文件超 ~1500 行应拆模块篇）；README 进度与产物脱节（空层照列步骤）；
+  第三方附件整篇搬运不裁剪不标注适用范围。
 - Status lines are honest: `待评审` / `待验证` / `未实施` stay until the gate or evidence
   exists; strength of claim never exceeds strength of evidence.
 
