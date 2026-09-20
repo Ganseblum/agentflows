@@ -21,6 +21,25 @@
 
 ## 已完成
 
+- 2026-09-20 第二十一批：文档交付链建立 + 文档质量确定性门（用户驱动，两轮真实反馈）：
+  - 起因：用户对照 aiwork 文档质量指出 agentflow 自身文档链缺失（proposal/spec/design/plan
+    不齐、无结构化）。第一批落 `docs/product/` 内部链 5 文件 + `skills/agentflow/references/
+    document-chain.md` 契约 + SKILL 接线（推翻 0.5.1「不重建模板体系」取舍，翻案记 D12）。
+  - 第二批：用 aiwork `feature-2026-09-18-定时任务` 真实走查，首轮产出被用户判不合格
+    （design 无接口契约/时序图/线框、plan 无落点分支、阻塞项未向需求方提问确认）。重做后
+    由用户在线确认 B-1/B-2/B-3 三个阻塞项；全链补 15 张图（状态机×2/时序×3/ER/判定流/
+    线框×4/边界图/发布顺序/门禁流）、字段级契约 A1–A11、异常矩阵、分支与落点。
+  - 保证机制（本轮核心）：新增 `tools/lab/doc_chain.py`（C1–C10 交叉闭合 linter +
+    16 例自测矩阵）；`document-chain.md` 加 Quality density floor（linter 强制）+ 门禁
+    5（design 必带契约与失败分支时序）+ 产品决策阻塞项必须向需求方提问 + 深度优先推进规则；
+    `AGENTS.md` 验收节新增文档链 linter 要求。独立评审两轮（round1 changes_requested：
+    F1 自测无判别力/F2 V 项闭合静默失效/F3 编号/F4 文案失同步——全采纳修复；
+    自测矩阵随即抓到 linter 自身表格正则跨空行桥接真 bug，已修）。
+  - `validate.py all` 9×PASS（含修正兄弟会话记录的未来时间戳一次，已如实标注）；
+    installed PASS；真实链条 doc-chain PASS。episode 落 `records/episodes/2026-09-20/`。
+  - **未决**：linter 是否并入 `validate.py all` 是门变更（protected），待用户裁决；
+    本批与兄弟会话工作树改动（records/bugs/2026-09-20、candidates/0.8.2.json 等）均未提交。
+
 - 2026-09-18 第二十批：0.8.0 第二轮审计整改（用户授权「全部开始处理修复」，含 gate 批）：
   B1 seeds 防泄漏 fail-closed + B3 claude 观测通道 `observed_permission_denials`；
   P0 前置 `--allowed-tools` / `--isolate-host-config`（写进 observed_context）；B5 rollback

@@ -1,6 +1,6 @@
 ---
 name: agentflow
-description: Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, automated testing of user-visible features, or work that benefits from an explicit review gate; skip trivial single-step work where delegation would add overhead. Applies the Agentflow method with the host's own agents: supervisor, frontend/backend engineers, technical director, independent review, and test design/execution roles.
+description: Use for cross-layer features, architecture changes, parallel investigation, delegated implementation, automated testing of user-visible features, document-chain delivery (proposal/spec/design/plan for a feature), or work that benefits from an explicit review gate; skip trivial single-step work where delegation would add overhead. Applies the Agentflow method with the host's own agents: supervisor, frontend/backend engineers, technical director, independent review, and test design/execution roles.
 ---
 
 # Agentflow
@@ -96,6 +96,21 @@ the independent reviewer role against those documents and land the evidence here
 
 The full bridge workflow, attribution table, and known limits (cross-repo recurrence tiers are
 not auto-derived) live in [records/reviews/README.md](../../records/reviews/README.md).
+
+## Document delivery chain
+
+When the user asks you to **produce** the document set for a feature (需求提案/规格/技术方案/
+实施计划) — or a feature starts from documents before any code — follow the chain contract in
+[references/document-chain.md](references/document-chain.md): proposal → spec → design → plan,
+each stage with its required skeleton and checkable quality criteria, and stage gates so a stage
+only opens when the previous stage's blocking checklist has closed. The supervisor collects the
+proposal with the user and preserves the original text verbatim; the spec re-audits the proposal
+as a blocking checklist; the independent reviewer runs the document review modes before the
+design freezes; the plan stays an execution contract under the target repository's plan
+convention (or this repo's hybrid shape when none exists). A target repository with its own
+template system keeps it — apply the gates and quality criteria on top. Review evidence lands in
+the target repository, or through the second-pass review bridge above when this repo is the
+reviewer.
 
 ## Run the workflow
 

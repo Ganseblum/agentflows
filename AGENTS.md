@@ -25,6 +25,20 @@ The tests can also be run directly while iterating:
 python3 -m unittest discover -s tests
 ```
 
+A **document chain** (a feature's `README + proposal/ + spec/ + design/ + plan/` directory) is
+additionally a compiled artifact: run the doc-chain linter against the actual directory before
+accepting or declaring it complete — it fails `.gitkeep`-only stages, missing re-audit
+checklists, open blocking rows, designs without field-level contracts / failure-branch
+sequence diagrams / state or ER diagrams, FE designs without exception matrices or wireframes,
+and plan tasks without code locations:
+
+```sh
+python3 tools/lab/doc_chain.py <feature-dir>
+```
+
+Linter self-test (pins the checker itself): `python3 tools/lab/doc_chain.py --self-test`.
+Contract: [skills/agentflow/references/document-chain.md](skills/agentflow/references/document-chain.md).
+
 ## Editing a role or a skill
 
 - `agents/*.md` and `skills/**` are loaded by a host from its **installed plugin snapshot**, not
