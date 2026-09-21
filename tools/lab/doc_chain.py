@@ -27,6 +27,14 @@ Checks:
   C9  plan grounding   every task row carries a code-location token; branch strategy present;
                        design's V-n open items are referenced by some plan
   C10 mermaid fences   every ```mermaid block is closed
+  C11 structure template  chains whose README declares the agentflow marker carry the fixed
+                       design headings (先说结论 / 影响面评估 / 评审前自检 / data-testid)
+  C12 stale references  a stage-document line claims a target is still 待产出-style while a
+                       markdown link or backtick code path on that line already resolves on
+                       disk — the claim rotted
+  C13 session role words  stage documents carry session-bound process words (supervisor /
+                       coordinator case-insensitive; literal TD 开放问题 / 本轮评审 /
+                       本次会话 / 本轮会话) — replace with a concrete role name or delete
 
 Usage:
     python3 tools/lab/doc_chain.py <feature-dir>
@@ -43,6 +51,23 @@ from pathlib import Path
 
 MERMAID_KINDS = ("sequenceDiagram", "flowchart", "erDiagram", "stateDiagram")
 BOX_CHARS = ("┌", "└", "├", "│")
+
+# C12 stale-time reference: claim words whose truth depends on the world, not the text — a
+# line claiming one of these while pointing at a target that already exists on disk (markdown
+# link OR backtick code path — the 2026-09-18 corpus used the backtick form) has rotted.
+STALE_WORDS = ("待产出", "尚未产出", "待补充", "待生成")
+MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+\.md)\)")
+BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
+
+# C13 session role words: a formal document must be readable without the session that wrote
+# it. Case-insensitive process-role names plus the literal session-bound phrases seen in the
+# 2026-09-21 corpus (TD 开放问题 etc.).
+ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.I)
+ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话")
+
+# C12/C13 scan stage documents only: proposal/spec/design/plan. The README progress log and
+# .gitkeep placeholders are out of scope (progress-log wording is not document wording).
+STAGE_DIRS = ("proposal", "spec", "design", "plan")
 
 
 def read(p: Path) -> str:
@@ -238,6 +263,36 @@ def lint(feature_dir: Path) -> list[str]:
         if fe_files and "data-testid" not in fe_heads:
             errors.append("C11 结构模板: design/fe 缺 data-testid 可测性清单")
 
+    # C12/C13 chain-closure pass (machine-checkable part of closure gate 6): a stage document
+    # must stay true over time and readable without the session that wrote it.
+    stage_files = sorted(
+        {f for stage in STAGE_DIRS for f in find_stage(md_files, feature_dir / stage)}
+    )
+    for f in stage_files:
+        rel = f.relative_to(feature_dir)
+        for i, line in enumerate(all_text[f].splitlines(), 1):
+            # C12 stale-time reference: the line claims a target is still pending while the
+            # markdown link OR backtick code path on the same line already resolves on disk —
+            # delete the claim or re-point it. Targets are resolved against the document's
+            # directory and the feature root; external URLs and absolute paths are out of
+            # scope. Both pointee forms share one resolution pass, deduped per line.
+            if any(w in line for w in STALE_WORDS):
+                seen: set[str] = set()
+                for target in MD_LINK_RE.findall(line) + BT_PATH_RE.findall(line):
+                    t = target.split("#", 1)[0].split("?", 1)[0].strip()
+                    if not t or t in seen or t.startswith(("/", "http:", "https:", "mailto:")):
+                        continue
+                    seen.add(t)
+                    if (f.parent / t).is_file() or (feature_dir / t).is_file():
+                        errors.append(
+                            f"C12 时效性引用: {rel}:{i} 声称待产出但目标已存在: {t}"
+                        )
+            # C13 session role words: replace with the concrete role name, or delete the
+            # clause so the body stands on its own.
+            hits = ROLE_WORD_RE.findall(line) + [w for w in ROLE_PHRASES if w in line]
+            for w in sorted(set(hits)):
+                errors.append(f"C13 会话角色词: {rel}:{i} {w}")
+
     # C10 mermaid fence balance
     for f in md_files:
         text = all_text[f]
@@ -398,6 +453,50 @@ def self_test() -> int:
              lambda f: rep(f, "design/be/b.md", "| V-9 | 外部接口形态 | T02 |\n",
                            "| V-9 | 外部接口形态 | T02 |\n| T99 | 待核实事项 | — |\n"),
              results)
+
+    def add_stale_existing_link(f):
+        # claim word + link that resolves from spec/ -> design/be/b.md exists on disk
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n详设 [设计文档](../design/be/b.md) 尚未产出\n")
+    run_case("21 C12 stale claim with an existing linked target trips C12", 1,
+             ["C12 时效性引用: spec/s.md", "声称待产出但目标已存在: ../design/be/b.md"],
+             add_stale_existing_link, results)
+
+    def add_stale_absent_link(f):
+        # same claim words, but the linked target does not exist — an honest pending claim
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n错误码表 [草案](./errata-draft.md) 待产出\n")
+    run_case("22 C12 stale claim with an absent target does NOT trip", 0, ["PASS doc-chain"],
+             add_stale_absent_link, results)
+
+    def add_role_word(f):
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n按 supervisor 的本轮评审意见执行\n")
+    run_case("23 C13 session role word trips C13 (both the name and the session phrase)", 1,
+             ["C13 会话角色词: proposal/p.md", "supervisor", "本轮评审"],
+             add_role_word, results)
+
+    def add_formal_role_name(f):
+        # formal role names outside the closed word list never trip C13
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n由独立评审人与技术负责人收口\n")
+    run_case("24 C13 formal role names do NOT trip", 0, ["PASS doc-chain"],
+             add_formal_role_name, results)
+
+    def add_stale_backtick_path(f):
+        # claim word + backtick code path to a target that exists (the corpus's other form)
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n设计稿见 `../design/be/b.md`，待补充\n")
+    run_case("25 C12 stale claim with an existing backtick path trips C12", 1,
+             ["C12 时效性引用: spec/s.md", "声称待产出但目标已存在: ../design/be/b.md"],
+             add_stale_backtick_path, results)
+
+    def add_stale_backtick_absent(f):
+        # same claim words, backtick form, but the path does not exist — honest pending claim
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n验收脚本 `./qa-check.md` 待补充\n")
+    run_case("26 C12 stale backtick path with an absent target does NOT trip", 0, ["PASS doc-chain"],
+             add_stale_backtick_absent, results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

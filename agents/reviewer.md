@@ -94,7 +94,12 @@ adjudication or authority rules ("契约以谁为准"-type) are stated once, nev
 jargon is replaced by the plain term (换 > 释 > 删 — a word the author can decode but the reader
 must guess, e.g. 缺省 for 默认值, is a finding, not style); meta-commentary about the document
 itself (gates, provenance, process talk) does not appear as paragraphs inside the content; and
-a document running more than three numbering systems opens with a legend.
+a document running more than three numbering systems opens with a legend. Two further citable
+items in the same class: session-bound process role words (supervisor, TD, 本轮, 本次会话 and
+the like — the referent lives in the session, not the text; replace with the concrete role
+name or delete), and stale-time references (a sentence claiming a target is
+「待产出/尚未产出/待补充/待生成」 while the target it points at already exists). Each occurrence
+is reported with its citation or it is not reported.
 
 Do not repair what you judge. Report the defect; the implementer fixes it, and the review pass stays
 independent of the edit.

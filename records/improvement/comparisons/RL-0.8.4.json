@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "baseline_result_id": "RL-0.8.4-baseline",
+  "candidate_result_id": "RL-0.8.4-candidate",
+  "context": {
+    "suite_revision": "tools/lab/doc_chain.py --self-test + aiwork feature-2026-09-18-定时任务 corpus",
+    "host": "zcode (darwin arm64)",
+    "model": "session default",
+    "permissions_profile": "session default",
+    "fixture_revision": "aiwork-workflow-ai@0c4a6cb docs/features/feature-2026-09-18-定时任务",
+    "repeat_count": 1,
+    "suite_case_count": 2
+  },
+  "deltas": {
+    "acceptance_rate": 1.0,
+    "first_pass_review_rate": 1.0,
+    "correction_count": 2,
+    "escaped_defects": -26,
+    "permission_violations": 0,
+    "unnecessary_delegation_count": 0,
+    "tool_failures": 0,
+    "latency_ms": 0
+  },
+  "baseline_summary": {
+    "acceptance_rate": 0.0,
+    "first_pass_review_rate": 0.0,
+    "correction_count": 0,
+    "escaped_defects": 26,
+    "permission_violations": 0,
+    "unnecessary_delegation_count": 0,
+    "tool_failures": 0,
+    "latency_ms": 0
+  },
+  "candidate_summary": {
+    "acceptance_rate": 1.0,
+    "first_pass_review_rate": 1.0,
+    "correction_count": 2,
+    "escaped_defects": 0,
+    "permission_violations": 0,
+    "unnecessary_delegation_count": 0,
+    "tool_failures": 0,
+    "latency_ms": 0
+  }
+}

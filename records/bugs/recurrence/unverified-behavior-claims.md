@@ -35,3 +35,8 @@ updated_at: 2026-09-16T11:57:15Z
 且 `agentflow_version` 高于 `consolidated_in`），`python3 tools/lab/validate.py recurrence`
 会把该类标为 `escalated`，并按首现记录 Notes 写明的触发条件升级为评测用例；归纳状态回到
 `unconsolidated`，直到新版本重新归纳。
+  - BUG-20260921-05
+
+## 升级记录（2026-09-21）
+
+BUG-20260921-05：episode method_effect_signal「零复发」缺证即断言（前提假：05~09 修复未安装；方法假：评审未报≠零复发）。按本类升级条件触发评测用例义务；吸收见候选 0.8.4（episode signal integrity 指引）。

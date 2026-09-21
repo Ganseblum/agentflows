@@ -10,7 +10,11 @@ to per-session discipline, which is inconsistent with how every other surface of
 governed. The user reversed it on 2026-09-20; the reversal is recorded as D12 in this repo's
 product design. Target repositories that already run their own template system keep it — this
 contract is the **floor when none exists or the user asks for this method's chain**, never a
-replacement for a working convention.
+replacement for a working convention. Adjudication when they collide: a target template's
+structural requirements never override this contract's quality clauses — when a template
+demands what a quality clause forbids (per-row adjudication pointers, per-line authority
+declarations and the like), keep the template's skeleton, collapse the conflict per the
+quality clauses, and record the trim as a one-line 「结构性裁剪声明」 in the document head.
 
 ## When to use
 
@@ -101,6 +105,18 @@ a section with no content says "N/A: reason".
    contracts to "after review" is incomplete. Facts blocked on unread code go on an explicit
    to-verify list with what each item blocks — they defer precision, never the contract's
    existence.
+6. **链路收口通读（chain-closure pass）** — after the chain's last document lands and before
+   completion is declared, a **non-author** reads the whole chain end to end and checks:
+   ① 时效性引用 — a sentence claiming a target is 「待产出 / 尚未产出 / 待补充 / 待生成」 while the
+   target it points at already exists is a finding; delete the claim or re-point it;
+   ② 流程角色词 — session-bound process words (supervisor, 评审人缩写, TD, 本轮, 本次会话 …) never
+   appear in a formal document; replace with the concrete role name or delete;
+   ③ 会话材料落仓 — a session artifact a formal document cites (decision notes, recon reports)
+   is archived into the feature directory before it is cited; otherwise remove the citation
+   and make the body self-sufficient;
+   ④ the machine-checkable part of ①② is carried by `tools/lab/doc_chain.py` — run
+   `python3 tools/lab/doc_chain.py <feature-dir>` (C12 时效性引用, C13 会话角色词) and fix or
+   explicitly gate every finding.
 
 ## Quality density floor (machine-checked)
 
@@ -120,8 +136,10 @@ field-level API contract table; contract interface ids are missing from design/f
 lacks the success/failure exception matrix, at least two text wireframes, or its
 flow/sequence/state diagrams; plan task rows carry neither a code-location path nor an
 explicit to-verify reference; a plan lacks a branch-strategy declaration; a plan task row
-stays blocking with no evidence written back; an open mermaid fence is left unclosed; or a
-design's open V-items are unreferenced by any plan. The
+stays blocking with no evidence written back; an open mermaid fence is left unclosed; a
+stage document claims a target is pending while a target it points at (markdown link or
+backtick code path) already exists (时效性引用失实, C12) or carries a session-bound process
+word (会话角色词, C13); or a design's open V-items are unreferenced by any plan. The
 self-test fixtures pin the checker itself: `python3 tools/lab/doc_chain.py --self-test`.
 
 Expectations beyond what the linter can parse (review-gate material, not optional): state
@@ -155,6 +173,10 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   reader (the 基线/现网 class). Fix priority is 换 > 释 > 删 — replace with the plain term
   first; an in-place one-line explanation only when no plain term exists; over-explanation is
   itself a reading-burden defect. A term only the author can resolve is a finding, not style.
+  流程角色词与会话指称 (supervisor, TD, 本轮, 本次会话 …) follow the same discipline
+  (换 > 释 > 删): their referent lives in the session, not the text, so they hide even better
+  than domain jargon — the devices are a pre-write pass against the word list, plus review
+  that reports each occurrence on citation.
 - **plan ↔ design traceability**: the plan task table carries a 「关联 design 条目」 column
   (design section/decision ids) and, for frontend, a 「计划验证方式/验收标准」 column; when
   landing on existing code, a 落点校对表 (file:line anchors against the real tree) is the
@@ -172,6 +194,10 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   (when each table's rows are written, and why) before DDL; interfaces are grouped by user
   journey instead of flat listings; a document running more than three numbering systems opens
   with a legend; adjudication/authority rules are stated once, never repeated per row.
+- **存在性 ≠ 形态**: passing the linter's existence checks is not the form standard. An
+  index-style summary table (契约总表 / 清单表) is navigation only; the form baseline for a
+  field-level contract is per-field columns or a code block with per-field comments — cramming
+  fields into a wide summary table is the same defect (the BUG-20260920-07 fix extended).
 - **QA layer**: module acceptance blocks (M0*-AC-*), coverage mapping, and a conclusion grade
   (通过/有条件通过/不通过); marking QA "N/A" requires a stated reason pointing at where the
   acceptance criteria DO live — an empty QA layer under a progressing README is a defect.
@@ -194,3 +220,14 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   modes with citations to the reviewed text.
 - Evidence for every round lands in the target repository when it owns the documents, and
   through the review bridge into `records/reviews/` when this repo is the second-pass reviewer.
+- **Brief hygiene**: the delegation brief is upstream of document wording and follows the same
+  expression discipline — no session-bound process words (supervisor / TD / 本轮 / 本次会话 …);
+  any decision or fact material a brief cites is given as a path already archived inside the
+  feature directory (archive first, cite after), never a temp path.
+
+## Episode signal integrity (doc chains)
+
+When a doc-chain session is captured as an improvement episode, any method-effect signal must
+state its verification status: an observation without a check is recorded as unverified, never as
+"no recurrence". Claims about what the runtime had installed are anchored by
+`python3 tools/lab/validate.py installed` output captured during the run.
