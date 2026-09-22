@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.8.4",
+  "version": "0.8.6",
   "description": "Host-native multi-agent development and evidence-driven improvement workflows: supervisor, frontend/backend engineers, technical director, reviewer, bug roles, plan architect, and governed improvement roles.",
   "author": {
     "name": "Ganseblum"

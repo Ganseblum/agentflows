@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260922-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree at git:e32ef14 + uncommitted candidate（document-chain-templates.md 新增 spec/ui 与 design/ui 骨架、document-chain.md 新增 UI 轨条款，经独立 evaluator 修复轮收口）；目标仓 Youc（feature-ui-showcase 分支工作树，未 commit）：docs/features/feature-2026-09-19-office-agent/ 十件文档链 + docs/planning 追溯索引与 11 份状态行 + records/README.md + records/bugs/README.md",
+    "base": "agentflows git:e32ef14 (0.8.4)"
+  },
+  "run": {
+    "run_id": "youc-docchain-pilot-001",
+    "started_at": "2026-09-22T10:30:00+08:00",
+    "ended_at": "2026-09-22T15:15:00+08:00",
+    "status": "partial"
+  },
+  "objective": "用户两项直接反馈驱动：(1) Youc 历史交付缺 feature 文档链形态、records/plans 与 docs/planning 无反向索引、改动无类型分类——建立追溯索引 + 规划文档状态行 + records 布局约定，并把第六期（office agent）重组为 agentflow 文档链试点（proposal 单一 + spec/be|fe|qa|ui + design/be|fe|qa|ui + plan 落点声明 + 原文快照归档）；(2) agentflow 方法补 ui 轨——document-chain-templates.md 加 spec/ui 与 design/ui 骨架、document-chain.md 声明 ui 轨启用规则，走 improve 治理环（human-gated）",
+  "outcome": "partial",
+  "signals": [
+    {
+      "kind": "doc_chain_linter",
+      "value": "Youc 试点 feature 目录 linter PASS（修复 C5 一处：A9 接口号未在 design/fe 显式出现）；linter 自测 26/26 PASS 不回归",
+      "evidence_ref": "python3 tools/lab/doc_chain.py /Users/lihanghang1/Desktop/TestProject/Youc/docs/features/feature-2026-09-19-office-agent（exit 0）；tools/lab/doc_chain.py --self-test 26/26"
+    },
+    {
+      "kind": "validate_all",
+      "value": "agentflows validate.py all 9 项 PASS（schemas/examples/evals/artifacts/mock/protected/manifests/docs/tests），候选改动后复跑仍 9 项 PASS",
+      "evidence_ref": "validate.py all 输出（supervisor 执行，evaluator 检查协议第 4 项）"
+    },
+    {
+      "kind": "isolation_gate",
+      "value": "isolation.py check-diff --candidate <tmp 副本> --base HEAD：blocked=[]，候选改动未触及受保护路径",
+      "evidence_ref": "isolation.py 输出（/tmp/af-candidate-ui 一次性副本）"
+    },
+    {
+      "kind": "independent_evaluator",
+      "value": "独立 evaluator（agentflow:evaluator，只读）按 7 项检查协议执行：内容面 3 项 pass（模板三节命中、骨架三要素齐备、UI 轨条款三点成立），4 项运行时检查因子代理无 shell 判未运行、由 supervisor 按 evaluator 署名的协议补跑并留原始输出；产出 4 项发现全部进入修复轮：①document-chain.md「linter 不检查 ui 轨」措辞强于事实（C1/C3/C10/C12/C13 实扫 ui 文件）→ 收窄为「仅存在性与围栏/时效性，不做形态/密度检查」；②试点 design/ui.md 节标题偏离模板字面（组件视觉状态表未独立成节、自检节编号）→ 对齐模板 0–6 节；③试点 README 缺 ui 轨启用声明 → 元信息补一行；④0.8.5 无治理记录与版本声明 → 本记录与 candidates/0.8.5.json 补齐（manifests bump 留待发布门）",
+      "evidence_ref": "evaluator 报告（agent_85e2b39d，本 episode review_roundtrips）"
+    },
+    {
+      "kind": "staleness_discovery",
+      "value": "写前核实发现第六期文档两处与现状脱节并已收口：①OQ-2 落位（/office 放现有 web）已被 work-spinoff 期 2（0cfbc02）推翻——office 域随 server/cmd/work、工作台在 work/src/pages/office/，proposal 增「范围外变更登记」+ design/be 翻案记录；②前端方案组件树/渲染管线与实施实况有偏差（6 组件精简态、streamdown 替代 react-markdown 栈）——design/fe 按实路径与实况登记，原选型保留 archive 快照作历史依据",
+      "evidence_ref": "git log main --oneline（0cfbc02/158287a）；ls work/src/pages/office server/internal/office"
+    },
+    {
+      "kind": "naming_normalization",
+      "value": "用户反馈链内文件名 be/be.md 类目录-文件双写怪异，随后又指出 spec/ 未分目录与 design/ 不对称——最终形态：角色轨道=目录，spec 与 design 两阶段镜像（spec/be/backend.md↔design/be/backend.md、spec/fe/frontend.md↔design/fe/frontend.md、spec/qa/acceptance.md↔design/qa/testing.md、spec/ui/visual.md↔design/ui/visual.md；proposal/prd.md、plan/execution.md 单文件阶段；目录保留角色码因 linter 硬编码要求 design/be|fe/ 子目录），正文引用保留角色码短写并在 feature README 声明一次映射图例；全部交叉引用更新、linter 复跑 PASS；document-chain.md 命名规范段改为镜像式最终形态，候选 artifact_digest 刷新（sha256:e3edae0c49eee…）并回填两份记录",
+      "evidence_ref": "git mv/mv 记录 + doc_chain linter PASS + validate.py all 9 PASS"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C-1",
+      "claim": "Youc 试点文档链通过 doc-chain linter 全部检查（C1–C13）",
+      "status": "verified",
+      "check": "python3 tools/lab/doc_chain.py <feature-dir>",
+      "evidence_ref": "E-1"
+    },
+    {
+      "claim_id": "C-2",
+      "claim": "候选源码改动（两文件）未触及受保护路径且不回归既有检查",
+      "status": "verified",
+      "check": "isolation.py check-diff blocked=[] + doc_chain --self-test 26/26 + validate.py all 9 PASS",
+      "evidence_ref": "E-2"
+    },
+    {
+      "claim_id": "C-3",
+      "claim": "ui 轨骨架三要素（§0 反审/评审前自检与变更记录/真源声明）与既有模板家族同构",
+      "status": "verified",
+      "check": "evaluator 第 6 项对照检查（模板 152–191 行 vs spec/qa/design/fe 骨架）",
+      "evidence_ref": "E-3"
+    },
+    {
+      "claim_id": "C-4",
+      "claim": "ui 轨模板对 ui 文档生成质量的改进效果已被度量",
+      "status": "unverified",
+      "check": "无 instrumented business task（evals/business 切片不覆盖 ui 轨生成面）",
+      "evidence_ref": "E-4"
+    },
+    {
+      "claim_id": "C-5",
+      "claim": "Youc 追溯索引表内 4 处「执行时核」commit 已回填",
+      "status": "unverified",
+      "check": "回填属交付收口动作，本会话未执行",
+      "evidence_ref": "E-5"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E-1",
+      "kind": "test",
+      "ref": "doc_chain.py <youc-feature-dir> exit 0（supervisor 原始输出）"
+    },
+    {
+      "evidence_id": "E-2",
+      "kind": "test",
+      "ref": "isolation.py check-diff blocked=[]；doc_chain --self-test 26/26；validate.py all 9 PASS"
+    },
+    {
+      "evidence_id": "E-3",
+      "kind": "review",
+      "ref": "evaluator 报告第 6 项（agent_85e2b39d-b3ff-4442-83f5-2b2d82a974c6）"
+    },
+    {
+      "evidence_id": "E-4",
+      "kind": "scope_note",
+      "ref": "measurement: none (method-level change, no instrumented business task)——与 0.8.4 同口径"
+    },
+    {
+      "evidence_id": "E-5",
+      "kind": "scope_note",
+      "ref": "docs/planning/README.md 追溯索引表「执行时核」标注"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-09-22T14:00:00+08:00",
+      "reviewer": "agentflow:evaluator（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "内容面 pass 但：措辞强于事实（linter 覆盖面）、试点 design/ui 节标题偏离模板、试点 README 缺启用声明、0.8.5 无治理记录；且子代理无 shell，4 项运行时检查由 supervisor 按其协议补跑",
+      "resolution": "修复轮四项全收口（措辞收窄/标题对齐/README 补声明/records 补齐），修复后 linter+自测+validate 复跑全绿；发布门留 release-governor 与用户"
+    },
+    {
+      "at": "2026-09-22T15:20:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读，Youc 文档链试点文档模式评审）",
+      "decision": "changes_requested",
+      "finding": "阻塞 1 项：compose/nginx 接线状态与代码树矛盾（design/be 落点表写「修改中/T06 余项」，实际已随 work-spinoff 期 2 接线，且根 nginx /api/v1/office/ 现指 api:8080 待裁决）；非阻塞 6 项：B-1 决策项编号错（2→3）、F-3 引用方向与原文相反、design/ui 死引用 spec/fe §8、PLAN-OFFICE-AGENT 进度行与任务表矛盾（0 进行中 vs 六行◐）、追溯索引 office 行状态措辞、体例小项",
+      "resolution": "修复轮七项全收口：落点表/README/spec-be B-2 改为「已接线+T06 收敛为部署核验（根 nginx 指向待裁决）」并附 reviewer 要求的两条 git log 原始输出（0cfbc02/94d9d3f 等 2026-09-22 提交在案）；B-1 编号改 3；F-3 改为「不引 canvasThemes」原文方向；design/ui 前置输入改 spec/ui §3；PLAN-OFFICE-AGENT 进度行对齐任务表（6 进行中含 T17）+ updated_at 刷新；索引行改「M3 部分（T17）进行中、M2 未开始」；README 元信息注明 agentflow 仓为证据来源。修复后 doc_chain linter 复跑 PASS。修复属 delta 复核范围，门禁（需求/技术方案评审）仍按链上声明保持未勾"
+    },
+    {
+      "at": "2026-09-22T15:05:00+08:00",
+      "reviewer": "agentflow:release-governor（agent_03dcb015，独立只读）",
+      "decision": "approved",
+      "finding": "promote（human-gated）：primary_metrics 三条全过（自测不回归/试点 lint PASS/ui 骨架三要素同构三重印证）、guardrails 四条全绿、rejection_criteria 全未触发、measurement:none 如实；条件=release record 收口 uncertainty/项号引用卫生（pin agent_85e2b39d）、密度台账判定（不构成 occurrence，判定已留档）、单批双发说明",
+      "resolution": "0.8.5 release record 已按条件写入（releases/0.8.5.json）；用户发布门批准（AskUserQuestion「两个都批准并发布」）；manifests 随 0.8.6 同批落 0.8.6"
+    }
+  ],
+  "feedback_summary": "用户确认四项决策并要求两边同时开工；Youc 侧完成文档链试点+追溯收口，agentflow 侧完成 ui 轨候选并经独立 evaluator 修复轮 + reviewer 轮 + release-governor promote；0.8.5 已随 0.8.6 同批获用户批准发布（单批双发，manifests 落 0.8.6）；Youc 侧 C-5 回填仍待执行（outcome 维持 partial）",
+  "agentflow_version": "0.8.4",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode session（Youc 仓 + agentflows 仓双工作树）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-22T10:30:00+08:00"
+}

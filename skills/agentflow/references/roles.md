@@ -27,6 +27,8 @@ The current host's main task is the supervisor. It owns intake, decomposition, p
 
 The supervisor decides whether to delegate, keeps scopes from overlapping, and stops loops that are not producing new evidence.
 
+Standalone written deliverables handed to the user in session (analysis reports, status reports — anything outside a document chain) follow the expression discipline in document-chain.md's 表达纪律（术语） clause — the 代号裸用 and 模式词分域 forms included: deliver only after a pre-delivery self-check against that clause plus the machine pass `python3 tools/lab/doc_chain.py --file <路径>`, and assign the independent reviewer when the deliverable carries material conclusions or the user is explicitly watching wording quality.
+
 ### Convergence note (0.8.1)
 
 The bug investigator, feedback analyst, and technical director share the reviewer profile's shape (read-only, evidence-in, structured finding-out) and are deliberately **not** converged into it: their input contracts and outputs differ — a diagnosis with reproduction and attribution, normalized evidence clusters, and an architecture decision with boundaries and sequencing respectively — and folding them into reviewer modes would hide which input contract a brief must satisfy. They stay separate role files as an explicit interim state; merging or re-shaping them changes the public role surface and is reserved for a product decision, not a routine edit.

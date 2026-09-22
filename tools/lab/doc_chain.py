@@ -35,12 +35,21 @@ Checks:
   C13 session role words  stage documents carry session-bound process words (supervisor /
                        coordinator case-insensitive; literal TD 开放问题 / 本轮评审 /
                        本次会话 / 本轮会话) — replace with a concrete role name or delete
+  C14 bare code subjects  a stage document uses a single uppercase letter as a standing prose
+                       subject with the 桶 classifier (「A 桶」「D 桶」, spaced or not) away from
+                       its definition site — codes pair with the plain word (白话（代号）) in
+                       prose; the schema-word form (「prepared 会话」) is C15 and is deliberately
+                       clause-governed, not machine-checked (see the note at CODE_SUBJECT_RE)
 
 Usage:
     python3 tools/lab/doc_chain.py <feature-dir>
+    python3 tools/lab/doc_chain.py --file <single-markdown-path>
     python3 tools/lab/doc_chain.py --self-test
 
-Exit code 0 = all checks pass; 1 = findings; 2 = usage error.
+Exit code 0 = all checks pass; 1 = findings; 2 = usage error. --file runs only the text-form
+checks (C12/C13/C14) against one standalone markdown file — a session deliverable handed to
+the user (analysis report, status report) has no feature-directory shape, so every structure
+check (C1–C11) is skipped by design; --file and a positional feature dir are mutually exclusive.
 """
 
 from __future__ import annotations
@@ -65,13 +74,108 @@ BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.I)
 ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话")
 
-# C12/C13 scan stage documents only: proposal/spec/design/plan. The README progress log and
+# C12/C13/C14 scan stage documents only: proposal/spec/design/plan. The README progress log and
 # .gitkeep placeholders are out of scope (progress-log wording is not document wording).
 STAGE_DIRS = ("proposal", "spec", "design", "plan")
+
+# C14 bare code subjects: single uppercase letter + optional (half/full-width) space + 桶, the
+# 2026-09-22 report corpus form — the report defined every bucket in its §1 glossary yet kept
+# 「A 桶/D 桶/G 桶」 as bare prose subjects (「D 桶积分中断」「A 桶：36 会话」). Tight by design;
+# the two near-misses in the wild both need a constraint below: 「IP 桶」(rate-limit bucket) is
+# saved by the no-ASCII-alnum lookbehind, 「office 桶」 by uppercase-only. 组/档 stay out — both
+# are productive ordinary classifiers (A 组对照组 / A 档价位) with real false-positive surface.
+# Exempt, matching the clause's sanctioned sites (document-chain.md 表达纪律（术语）): table rows
+# (口径表/图例 are the definition site — bare codes inside body tables stay clause-governed, the
+# accepted false-negative direction for a floor linter), code fences and inline code spans, and
+# the two paired forms — the code inside （…） (白话（代号）) or directly glossed by （…）
+# (代号（白话）). A prose legend like 「A 桶=交付」 is still reported (tolerance; the compliant
+# legend shape is the paired form).
+CODE_SUBJECT_RE = re.compile(r"(?<![A-Za-z0-9])([A-Z])[ \u3000]?桶")
+
+# C15 (schema words in prose — 「prepared 会话」「单次 Run 积分」) is deliberately NOT
+# implemented. The closed-set heuristic the improvement brief allowed (prepared/pending/
+# running/failed/… + CJK, outside code) was validated against a real reviewed chain and
+# flooded: state→visual mapping rows (「queued 灰 / running 蓝 / succeeded 绿」) are the
+# legend-class site the clause sanctions, while 「running 中禁发」「failed 可重试」 one line
+# away is the defect — a line-local heuristic cannot tell them apart without punishing one
+# side. The form stays governed by the clause text (document-chain.md 模式词分域), the
+# pre-write pass, and the reviewer's per-occurrence citation; self-test case 34 pins the
+# boundary (schema-word prose exits 0).
+
 
 
 def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
+
+
+def fenced_lines(text: str) -> set[int]:
+    """Line numbers inside or on a ``` fence (the toggle lines themselves included)."""
+    inside, out = False, set()
+    for i, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            inside = not inside
+            out.add(i)
+        elif inside:
+            out.add(i)
+    return out
+
+
+def strip_inline_code(line: str) -> str:
+    """Drop `...` spans (even segments after a backtick split); unbalanced tail reads as code."""
+    return "".join(line.split("`")[0::2])
+
+
+def inside_parens(s: str, idx: int) -> bool:
+    """True when s[idx] sits inside a （…）/ (…) span of its own line (depth counting, no nesting)."""
+    depth = 0
+    for ch in s[:idx]:
+        if ch in "（(":
+            depth += 1
+        elif ch in "）)":
+            depth = max(0, depth - 1)
+    return depth > 0
+
+
+def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list[str]:
+    """C12/C13/C14 — the text-form checks that need no feature-directory shape.
+
+    Shared by the feature-chain pass (label = repo-relative path; link targets resolve against
+    the document's directory and the feature root) and --file mode (label = the path as given;
+    targets resolve against the file's own directory).
+    """
+    errors: list[str] = []
+    fences = fenced_lines(text)
+    for i, line in enumerate(text.splitlines(), 1):
+        # C12 stale-time reference: the line claims a target is still pending while the
+        # markdown link OR backtick code path on the same line already resolves on disk —
+        # delete the claim or re-point it. Both pointee forms share one resolution pass,
+        # deduped per line.
+        if any(w in line for w in STALE_WORDS):
+            seen: set[str] = set()
+            for target in MD_LINK_RE.findall(line) + BT_PATH_RE.findall(line):
+                t = target.split("#", 1)[0].split("?", 1)[0].strip()
+                if not t or t in seen or t.startswith(("/", "http:", "https:", "mailto:")):
+                    continue
+                seen.add(t)
+                if any((root / t).is_file() for root in resolve_roots):
+                    errors.append(
+                        f"C12 时效性引用: {label}:{i} 声称待产出但目标已存在: {t}"
+                    )
+        # C13 session role words: replace with the concrete role name, or delete the
+        # clause so the body stands on its own.
+        hits = ROLE_WORD_RE.findall(line) + [w for w in ROLE_PHRASES if w in line]
+        for w in sorted(set(hits)):
+            errors.append(f"C13 会话角色词: {label}:{i} {w}")
+        # C14 bare code subjects: codes pair with the plain word in prose; the definition
+        # site, code spans/fences, and the two paired forms are exempt (see CODE_SUBJECT_RE).
+        if i not in fences and not line.lstrip().startswith("|"):
+            prose = strip_inline_code(line)
+            for m in CODE_SUBJECT_RE.finditer(prose):
+                glossed = prose[m.end():].lstrip(" \u3000").startswith(("（", "("))
+                if glossed or inside_parens(prose, m.start()):
+                    continue
+                errors.append(f"C14 代号裸用: {label}:{i} {m.group(0)}")
+    return errors
 
 
 def mermaid_blocks(text: str) -> list[str]:
@@ -263,35 +367,15 @@ def lint(feature_dir: Path) -> list[str]:
         if fe_files and "data-testid" not in fe_heads:
             errors.append("C11 结构模板: design/fe 缺 data-testid 可测性清单")
 
-    # C12/C13 chain-closure pass (machine-checkable part of closure gate 6): a stage document
-    # must stay true over time and readable without the session that wrote it.
+    # C12/C13/C14 chain-closure pass (machine-checkable part of closure gate 6): a stage document
+    # must stay true over time, readable without the session that wrote it, and free of bare code
+    # subjects away from their definition site.
     stage_files = sorted(
         {f for stage in STAGE_DIRS for f in find_stage(md_files, feature_dir / stage)}
     )
     for f in stage_files:
         rel = f.relative_to(feature_dir)
-        for i, line in enumerate(all_text[f].splitlines(), 1):
-            # C12 stale-time reference: the line claims a target is still pending while the
-            # markdown link OR backtick code path on the same line already resolves on disk —
-            # delete the claim or re-point it. Targets are resolved against the document's
-            # directory and the feature root; external URLs and absolute paths are out of
-            # scope. Both pointee forms share one resolution pass, deduped per line.
-            if any(w in line for w in STALE_WORDS):
-                seen: set[str] = set()
-                for target in MD_LINK_RE.findall(line) + BT_PATH_RE.findall(line):
-                    t = target.split("#", 1)[0].split("?", 1)[0].strip()
-                    if not t or t in seen or t.startswith(("/", "http:", "https:", "mailto:")):
-                        continue
-                    seen.add(t)
-                    if (f.parent / t).is_file() or (feature_dir / t).is_file():
-                        errors.append(
-                            f"C12 时效性引用: {rel}:{i} 声称待产出但目标已存在: {t}"
-                        )
-            # C13 session role words: replace with the concrete role name, or delete the
-            # clause so the body stands on its own.
-            hits = ROLE_WORD_RE.findall(line) + [w for w in ROLE_PHRASES if w in line]
-            for w in sorted(set(hits)):
-                errors.append(f"C13 会话角色词: {rel}:{i} {w}")
+        errors.extend(text_form_findings(str(rel), all_text[f], [f.parent, feature_dir]))
 
     # C10 mermaid fence balance
     for f in md_files:
@@ -309,7 +393,11 @@ def self_test() -> int:
 
     One dense chain must pass; one mutation per check must fail with that check id; the
     AC3 non-regression classes (非阻塞 rows, decision-table ids, design ledger rows) must
-    NOT trip. Fixes review finding F1 ("self-test vacuous for most checks").
+    NOT trip. Fixes review finding F1 ("self-test vacuous for most checks"). Cases 27–34
+    pin C14's positive/negative surface (paired forms, definition rows, code spans, the
+    real-corpus 「IP 桶」 near-miss); cases 35–38 pin the --file text-form mode and its
+    mutual exclusion with the positional feature dir; case 34 documents why C15 stays
+    clause-governed (see the note at CODE_SUBJECT_RE).
     """
     import subprocess
     import tempfile
@@ -498,6 +586,82 @@ def self_test() -> int:
     run_case("26 C12 stale backtick path with an absent target does NOT trip", 0, ["PASS doc-chain"],
              add_stale_backtick_absent, results)
 
+    # --- C14 bare code subjects + --file mode. C15 (schema words in prose) is deliberately
+    # NOT implemented — the closed-set heuristic flooded a real reviewed chain's legend rows;
+    # case 34 pins that boundary. See the note at CODE_SUBJECT_RE for the full trade. ---
+
+    def add_bare_bucket(f):
+        return rep(f, "design/be/b.md", "### 1.3 待核实清单\n",
+                   "### 1.3 待核实清单\n\nD 桶积分中断时对账回滚\n")
+    run_case("27 C14 bare code subject in prose trips (D 桶)", 1,
+             ["C14 代号裸用: design/be/b.md", "D 桶"], add_bare_bucket, results)
+
+    def add_bare_bucket_heading(f):
+        return rep(f, "proposal/p.md", "# proposal\n", "# proposal\n\n### A 桶：36 会话\n")
+    run_case("28 C14 bare code subject as a heading trips (A 桶：36 会话)", 1,
+             ["C14 代号裸用: proposal/p.md", "A 桶"], add_bare_bucket_heading, results)
+
+    def add_bold_definition_row(f):
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n| **A** 交付 .pptx |\n")
+    run_case("29 C14 bold-code definition row (口径表 form) never matches", 0,
+             ["PASS doc-chain"], add_bold_definition_row, results)
+
+    def add_paired_forms(f):
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n交付桶（A 桶）承接演示物；A 桶（交付 .pptx）已就绪\n")
+    run_case("30 C14 sanctioned paired forms 白话（代号）/代号（白话） do NOT trip", 0,
+             ["PASS doc-chain"], add_paired_forms, results)
+
+    def add_backtick_bucket(f):
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n跑批脚本按 `A 桶` 过滤，日志另记\n")
+    run_case("31 C14 inside an inline code span does NOT trip", 0,
+             ["PASS doc-chain"], add_backtick_bucket, results)
+
+    def add_glossary_row(f):
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n| A 桶 | 交付 .pptx 的会话集合 |\n| --- | --- |\n")
+    run_case("32 C14 glossary table rows are the sanctioned definition site", 0,
+             ["PASS doc-chain"], add_glossary_row, results)
+
+    def add_ip_bucket(f):
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n限流口径：验证码与找回共用同一个 IP 桶\n")
+    run_case("33 C14 real-corpus near-miss IP 桶 (letter run, not a lone code) does NOT trip", 0,
+             ["PASS doc-chain"], add_ip_bucket, results)
+
+    def add_schema_word(f):
+        return rep(f, "proposal/p.md", "# proposal\n",
+                   "# proposal\n\n单次执行积分按 prepared 会话口径统计\n")
+    run_case("34 schema-word prose (prepared 会话) stays clause-governed — C15 deliberately "
+             "not implemented (closed-set heuristic flooded a real chain's legend rows)", 0,
+             ["PASS doc-chain"], add_schema_word, results)
+
+    def run_file_case(name: str, expect_rc: int, want: list[str], text: str,
+                      argv: list[str] | None = None) -> None:
+        d = Path(tempfile.mkdtemp()) / "deliverable.md"
+        d.write_text(text, encoding="utf-8")
+        cmd = [sys.executable, str(linter)] + (argv if argv is not None else ["--file", str(d)])
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        ok = r.returncode == expect_rc and all(w in out for w in want)
+        results.append((name, ok))
+        if not ok:
+            print(f"  wanted {want}, exit={r.returncode}, got:\n{out}")
+
+    run_file_case("35 --file mode: session deliverable hitting C13+C14 exits 1", 1,
+                  ["C14 代号裸用", "C13 会话角色词", "D 桶"],
+                  "# 数据分析报告\n\n## 口径表\n\n| 代号 | 白话 |\n| --- | --- |\n| D | 中断桶 |\n\n"
+                  "## 结论\n\nD 桶积分中断最多，本轮评审已确认。\n")
+    run_file_case("36 --file mode: clean deliverable exits 0", 0, ["PASS doc-chain --file"],
+                  "# 状态汇报\n\n全部检查通过，剩余两例行已排期。\n")
+    run_file_case("37 --file together with a positional feature dir is a usage error", 2,
+                  ["Usage"], "# 报告\n",
+                  argv=[str(Path(tempfile.mkdtemp())), "--file", "deliverable.md"])
+    run_file_case("38 --file without a path is a usage error", 2, ["Usage"], "# 报告\n",
+                  argv=["--file"])
+
     ok = all(passed for _, passed in results)
     for name, passed in results:
         print(("PASS " if passed else "FAIL ") + name)
@@ -505,9 +669,30 @@ def self_test() -> int:
     return 0 if ok else 1
 
 
+def lint_file(path: Path) -> int:
+    """--file mode: text-form checks only (C12/C13/C14) against one standalone markdown file."""
+    if not path.is_file():
+        print("FAIL doc-chain --file (1 findings)")
+        print(f"  - 文件不存在: {path}")
+        return 1
+    errors = text_form_findings(str(path), read(path), [path.parent])
+    if errors:
+        print(f"FAIL doc-chain --file {path} ({len(errors)} findings)")
+        for e in errors:
+            print(f"  - {e}")
+        return 1
+    print(f"PASS doc-chain --file {path}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if len(argv) == 1 and argv[0] == "--self-test":
         return self_test()
+    if argv and argv[0] == "--file":
+        if len(argv) != 2:
+            print(__doc__)
+            return 2
+        return lint_file(Path(argv[1]))
     if len(argv) != 1:
         print(__doc__)
         return 2

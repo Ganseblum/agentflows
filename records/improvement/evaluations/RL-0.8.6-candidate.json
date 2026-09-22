@@ -1,0 +1,117 @@
+{
+  "result_id": "RL-0.8.6-candidate",
+  "source_kind": "candidate",
+  "source_revision": "git:e32ef14 + uncommitted candidate (working tree at evaluation time: 0.8.5 ui-track delta + 0.8.6 expression-scope delta)",
+  "artifact_digest": "sha256:4713e1a2050805d1aae9322c2ad04b30a9c6bef73fcd2cb9aaa8f80d55148121",
+  "agentflow_version": "0.8.6-candidate",
+  "suite_revision": "tools/lab/doc_chain.py --self-test (26 baseline cases / 38 candidate cases) + validate.py all + unittest discover + --file corpus lint (aiwork analysis reports; baseline lacks --file, recorded not-measurable)",
+  "host": "zcode (darwin arm64)",
+  "model": "session default",
+  "permissions_profile": "session default",
+  "fixture_revision": "aiwork working tree (uncommitted, outside repo): temp/AIPPT专家-交付漏斗与积分消耗异常分析-20260916.md + temp/会话聚合分析-近7天全专家-20260910至0916.md",
+  "repeat_count": 1,
+  "suite_case_count": 4,
+  "observed_context": {
+    "host": "zcode (darwin arm64)",
+    "model": "session default",
+    "permissions_profile": "session default",
+    "fixture_revision": "aiwork working tree (uncommitted, outside repo): temp/AIPPT专家-交付漏斗与积分消耗异常分析-20260916.md + temp/会话聚合分析-近7天全专家-20260910至0916.md",
+    "evidence_refs": [
+      "records/improvement/candidates/0.8.6.json",
+      "records/bugs/2026-09-22/session-deliverable-jargon-scope-gap.md",
+      "measurement: none (method-level change, no instrumented business task)",
+      "executed_by: supervisor 复跑全部确定性检查（candidate-engineer 声称的输出全部本机复现）；语料 --file 原始输出留存会话",
+      "summary_note: defect-corpus-detection——--file 对 AIPPT 报告 exit 1、C14×4（:40 C 桶/:274 :280 :648 D 桶；:99 A 桶在括注内按成对形式豁免，属声明的 floor 容差）。corpus-precision-guard——姊妹报告 exit 0（撞墙/零交付属条款文本管辖非 C14 机器面，符合声明）；Youc 含『IP 桶』文件 exit 0 零误报。isolation blocked=[]；self-test 38/38；validate all 9 PASS；unittest 155 OK"
+    ]
+  },
+  "case_results": [
+    {
+      "case_id": "doc-chain-self-test",
+      "slice": "doc-chain-linter-discrimination",
+      "holdout": false,
+      "protected_guardrails": [
+        "escaped_defects"
+      ],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": true,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    },
+    {
+      "case_id": "repo-regression-suite",
+      "slice": "validate-all-and-unittest",
+      "holdout": false,
+      "protected_guardrails": [
+        "escaped_defects"
+      ],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": true,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    },
+    {
+      "case_id": "defect-corpus-detection",
+      "slice": "aiwork-analysis-report-jargon",
+      "holdout": false,
+      "protected_guardrails": [],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": true,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    },
+    {
+      "case_id": "corpus-precision-guard",
+      "slice": "clean-report-and-IP-bucket-smoke",
+      "holdout": false,
+      "protected_guardrails": [],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": true,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "acceptance_rate": 1.0,
+    "first_pass_review_rate": 1.0,
+    "correction_count": 0,
+    "escaped_defects": 0,
+    "permission_violations": 0,
+    "unnecessary_delegation_count": 0,
+    "tool_failures": 0,
+    "latency_ms": 0
+  },
+  "generated_at": "2026-09-22T14:05:00+08:00",
+  "schema_version": 1
+}

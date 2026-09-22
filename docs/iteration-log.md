@@ -524,3 +524,21 @@
   （口径住处已声明），下个 feature 按 QA 模板默认出件。
 - **未决**：linter 并入 `validate.py all` 门变更待用户裁决；定时任务链两道评审门待独立
   评审；U-01 端点（改进环业务测量前置）。
+
+## 0.8.4 — doc-chain 收口批（2026-09-21）
+
+- **解决了什么**：BUG-20260921-01~05（时效性引用无收口、会话角色词经 brief 注入+会话材料未落仓、机器门存在性≠形态 cram 复发、方法与目标模板冲突无裁决、episode 信号缺证即断言零复发）——链路收口通读门、冲突裁决条款、存在性≠形态条款、brief 卫生条款、episode signal integrity 节；linter C12/C13（自测 26 例）；reviewer 两类可引用缺陷。复发台账两类升级+两类新立。
+- **诚实注记**：五条 bug 均 fixed-pending-review、regression_status=not-run；CHANGELOG/迭代台账 0.8.4 条目当时遗漏，随 0.8.6 批次补记。
+
+## 0.8.5 — ui 轨（2026-09-22）
+
+- **解决了什么**：文档链缺 ui 轨支撑（设计稿评审/品牌规范散落在 spec/fe 与会话纪律）——spec/ui 与 design/ui 骨架（与既有模板家族同构：§0 反审/自检/真源三要素）+ ui 轨启用规则（proposal 单一；linter 对 ui 仅存在性/围栏/时效性）；Youc office-agent 试点作为消费方 linter PASS。
+- **证据与评审**：独立 evaluator changes_requested 修复轮（linter 覆盖面措辞收窄/试点标题对齐/README 启用声明/治理记录补齐）+ reviewer 轮（compose 接线状态矛盾等 7 项）全收口；release-governor promote。
+- **诚实注记**：measurement: none（method-level change，无 instrumented business task）；ui 形态质量机器面按设计仅存在性。
+
+## 0.8.6 — 表达纪律作用域扩展到会话交付物（2026-09-22）
+
+- **解决了什么**：用户九组黑话反馈（自制解码表）归因为作用域缺口——表达纪律条款/模板提醒/linter/reviewer 全锚文档链，会话交付的分析报告零覆盖；两个条款未点名新形态（代号一次定义后裸用作正文主语、模式词直搬散文主语）。修复=两条形态规则+作用域声明+supervisor 写前自查职责+reviewer 可引用检查项+doc_chain.py C14 与 --file 单文件机器门（自测 26→38）；同批按用户对照表就地修复两份存量报告（--file exit 0，数字/SQL 未动）。
+- **证据与评审**：真实缺陷语料 C14 命中 4/零误报；evaluator pass（0 阻塞/8 非阻塞，R1-R6 协议复现）；release-governor promote；BUG-20260922-01 fix_revision 回锚 0.8.6，新台账类 session-deliverable-jargon-scope consolidated_in 0.8.6。
+- **诚实注记**：measurement: none（evals/business 不覆盖会话交付物面，预防效果待首个真实交付物对照）；C15 降级条款+reviewer 管辖（误报面留档 case 34）；非阻塞 N4/N6 留后续批，N7（validate.py:99 陈旧注释）属受保护文件待人工门。
+- **未决**：0.8.5 密度台账判定记录已留档（不构成 occurrence）；evals/business 术语歧义种子扩口径仍待 U-01 端点解除（PLAN-BUSINESS-EVAL-001 T03）。

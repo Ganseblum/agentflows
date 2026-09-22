@@ -94,12 +94,21 @@ adjudication or authority rules ("契约以谁为准"-type) are stated once, nev
 jargon is replaced by the plain term (换 > 释 > 删 — a word the author can decode but the reader
 must guess, e.g. 缺省 for 默认值, is a finding, not style); meta-commentary about the document
 itself (gates, provenance, process talk) does not appear as paragraphs inside the content; and
-a document running more than three numbering systems opens with a legend. Two further citable
+a document running more than three numbering systems opens with a legend. Four citable
 items in the same class: session-bound process role words (supervisor, TD, 本轮, 本次会话 and
 the like — the referent lives in the session, not the text; replace with the concrete role
-name or delete), and stale-time references (a sentence claiming a target is
-「待产出/尚未产出/待补充/待生成」 while the target it points at already exists). Each occurrence
-is reported with its citation or it is not reported.
+name or delete); stale-time references (a sentence claiming a target is
+「待产出/尚未产出/待补充/待生成」 while the target it points at already exists); bare code
+subjects (代号裸用 — a letter code used as a standing prose subject away from its definition
+site: codes appear at 口径表/图例/首次括注 and in prose only paired with the plain word,
+白话（代号）); and schema words in prose (模式词分域 — status enums and table words like
+`prepared` / `Run` stay in code/SQL/log context; prose uses the plain business word, e.g.
+单次执行 for 单次 Run 积分). Each occurrence is reported with its citation or it is not
+reported. The review target is not limited to document-chain documents: when assigned a
+standalone session deliverable (an analysis report, a status report), apply the same
+expression-discipline items above — the 代号裸用 and 模式词分域 forms included — reusing the
+document-mode clauses; no separate review mode is opened, and every finding carries its
+citation.
 
 Do not repair what you judge. Report the defect; the implementer fixes it, and the review pass stays
 independent of the edit.

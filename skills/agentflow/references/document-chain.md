@@ -42,6 +42,14 @@ One directory per feature. The README is the only entry point and carries the pr
 with stage gates — checkboxes move only with a document link, `N/A: reason` for skips, and
 review gates checked only by the independent reviewer.
 
+File naming inside the chain: each role track is a directory at both stages, mirroring each
+other — `spec/be/backend.md` ↔ `design/be/backend.md`, `spec/fe/frontend.md` ↔
+`design/fe/frontend.md`, `spec/qa/acceptance.md` ↔ `design/qa/testing.md`, `spec/ui/visual.md` ↔
+`design/ui/visual.md` (`design/be/` and `design/fe/` as directories are hard-required by the
+linter; the rest mirror them, so a role's read scope is exactly one directory per stage).
+Single-document stages keep one file: `proposal/prd.md`, `plan/execution.md`. A `be/be.md`
+double-write is a naming defect — fix it before the closure pass, not in review.
+
 ## Stage skeletons
 
 Fill-in templates with **fixed heading literals** live in
@@ -76,6 +84,13 @@ a section with no content says "N/A: reason".
   **类型/接口契约**（请求响应的 TS/interface 定义）· **字段映射处理表**（服务端字段 →
   前端模型 → UI 展示 → 可空默认 → 非法枚举处理）· 错误重试并发表 · Mock/联调/接口未就绪
   方案 · 评审前自检。
+- **design（UI 轨，可选扩展）**: 目标仓有独立设计流（设计稿评审、品牌/多站点规范）时，在
+  spec 与 design 各加一份 ui 文档（`spec/ui` + `design/ui`，骨架见模板），与 fe 同构但只装
+  视觉/交互/可达性内容——布局断点、token 纪律、组件视觉状态表、线框真源声明、用户迭代
+  变更记录；proposal 保持单一不分角色，ui 分歧从 spec/ui 开始。linter 对 ui 轨仅做存在性与
+  围栏/时效性检查（C1/C3/C10/C12–C14 会扫到 ui 文件），不做形态/密度检查（C4–C8/C11），
+  ui 轨的待核实项也不进 C9 闭合——其质量靠 §0 反审 checklist、与 spec/fe 的真源声明
+  （引用不复制）和 README 门禁记录兜底；启用与否在 README 元信息里声明一行。
 - **线框/原型**: ASCII 线框保底（diff 友好、linter 可查）或 feature 目录内静态
   `prototype/*.html`（浏览器直开、CSS 自由；不引入 MDX/构建链）。两者择一即可，均须
   标注「结构稿，非最终视觉」。
@@ -114,9 +129,10 @@ a section with no content says "N/A: reason".
    ③ 会话材料落仓 — a session artifact a formal document cites (decision notes, recon reports)
    is archived into the feature directory before it is cited; otherwise remove the citation
    and make the body self-sufficient;
-   ④ the machine-checkable part of ①② is carried by `tools/lab/doc_chain.py` — run
-   `python3 tools/lab/doc_chain.py <feature-dir>` (C12 时效性引用, C13 会话角色词) and fix or
-   explicitly gate every finding.
+   ④ the machine-checkable part of ①② plus the 代号裸用 form is carried by
+   `tools/lab/doc_chain.py` — run `python3 tools/lab/doc_chain.py <feature-dir>` (C12 时效性引用,
+   C13 会话角色词, C14 代号裸用) and fix or explicitly gate every finding; a standalone session
+   deliverable gets the same text-form pass via `python3 tools/lab/doc_chain.py --file <路径>`.
 
 ## Quality density floor (machine-checked)
 
@@ -138,8 +154,9 @@ flow/sequence/state diagrams; plan task rows carry neither a code-location path 
 explicit to-verify reference; a plan lacks a branch-strategy declaration; a plan task row
 stays blocking with no evidence written back; an open mermaid fence is left unclosed; a
 stage document claims a target is pending while a target it points at (markdown link or
-backtick code path) already exists (时效性引用失实, C12) or carries a session-bound process
-word (会话角色词, C13); or a design's open V-items are unreferenced by any plan. The
+backtick code path) already exists (时效性引用失实, C12), carries a session-bound process
+word (会话角色词, C13), or uses a bare letter code as a standing prose subject away from its
+definition site (代号裸用, C14); or a design's open V-items are unreferenced by any plan. The
 self-test fixtures pin the checker itself: `python3 tools/lab/doc_chain.py --self-test`.
 
 Expectations beyond what the linter can parse (review-gate material, not optional): state
@@ -176,7 +193,17 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   流程角色词与会话指称 (supervisor, TD, 本轮, 本次会话 …) follow the same discipline
   (换 > 释 > 删): their referent lives in the session, not the text, so they hide even better
   than domain jargon — the devices are a pre-write pass against the word list, plus review
-  that reports each occurrence on citation.
+  that reports each occurrence on citation. 两个语料新形态（2026-09-22 反馈）适用同一纪律：
+  **代号裸用** —— 代号/编号（桶号、组号、字母代号）只可出现在定义处（口径表、图例、首次括注）；
+  正文一律用白话状态词作主词，代号以「白话（代号）」或「代号+白话」成对形式伴随出现。判据：
+  读者不回翻定义表、不记忆映射，能读懂任意一段正文；自造代号整个弃用（取 换 > 释 > 删 的「换」）。
+  **模式词分域** —— 数据库表名、字段枚举值、内部状态字（`status='prepared'` 的 prepared、
+  `agent_run` 的 Run）保留在代码、SQL、日志语境（反引号或代码块内）；散文正文用业务白话
+  （「前端预建的空会话」「单次执行」），必要时括注原标识符——正文用「执行」，代码和 SQL 里
+  保留 `Run`。作用域：本节纪律适用于文档链全部文档，且同等适用于会话中交付给用户的其他书面
+  产物（数据分析报告、状态汇报、交付说明）——这类产物没有模板与机器门兜底，交付前必须对照
+  本节做一次写前自查，单文件可用 `python3 tools/lab/doc_chain.py --file <路径>` 做机器自查
+  （C12–C14 文本形态检查）；材料性交付物可指派 reviewer 评审。
 - **plan ↔ design traceability**: the plan task table carries a 「关联 design 条目」 column
   (design section/decision ids) and, for frontend, a 「计划验证方式/验收标准」 column; when
   landing on existing code, a 落点校对表 (file:line anchors against the real tree) is the

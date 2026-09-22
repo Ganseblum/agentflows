@@ -24,3 +24,7 @@ updated_at: 2026-09-20T06:20:00Z
 门禁 1–5（产品决策必须提问确认、design 必带契约与失败分支时序图）+ Quality density
 floor（C1–C10）+ 深度优先推进规则；新增 `tools/lab/doc_chain.py` 判别性自测 18 例；
 `AGENTS.md` 增文档链 linter 必跑。回归=自测 case 02（原始薄形态必须失败）+ 真实链 PASS。
+
+## 判定记录（2026-09-22，0.8.5 发布门）
+
+0.8.5（ui 轨）候选假设自述 ui 维度缺口是「0.8.2 前文档链存在但质量靠会话自觉」的同型缺口再现。release-governor（agent_03dcb015）条件 6 要求明确判定其是否构成本类 occurrence。判定：**不构成**——本类形态是「已生成的文档密度/cram 失效」，0.8.5 的缺口是模板族覆盖面（ui 维度从未有骨架，无任何 ui 文档被生成过，无密度缺陷实例）；记为 occurrence 会污染档位推导。0.8.5 以模板族扩展收口该覆盖面（ui 轨按设计仅存在性/围栏/时效性机器覆盖，形态质量靠反审+README 门禁兜底），判定与理由随 records/improvement/releases/0.8.5.json approvals 留档。

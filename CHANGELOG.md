@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.8.6 — 2026-09-22
+
+Expression-discipline scope extension to session deliverables, user-directed ("agentflow 写
+的东西还是有黑话" — nine-term jargon decoder the user had to build by hand). Method-level
+change; `measurement: none`.
+
+- **Scope gap closed (BUG-20260922-01, provenance agentflow / attribution workflow_policy)**:
+  the expression-discipline suite (clause, template reminder, linter, reviewer doc mode) was
+  anchored exclusively to document chains, while analysis reports delivered in session — the
+  aiwork 交付漏斗/聚合分析 reports — had zero coverage. Two sub-patterns the clause text did
+  not name: coded handles used bare as the main prose vocabulary after one definition
+  (「A 桶/D 桶/G 桶」), and schema tokens as prose subjects (「prepared 会话」,「Run」).
+- **Method**: two new clause rules — 代号裸用 (plain-word subject, code always paired with the
+  plain gloss; test = no definition-table flipping) and 模式词分域 (identifiers stay in
+  code/SQL contexts, prose uses business wording; user's own rule: 正文用「执行」，代码和 SQL
+  里保留 Run) — plus an explicit scope declaration extending the discipline to session
+  deliverables. Supervisor pre-delivery self-check (roles.md) and two citable reviewer items
+  with a delegation path.
+- **Reachable device**: `doc_chain.py --file <path>` single-file mode (text-form checks C12–C14,
+  structure checks skipped) and **C14 代号裸用** (single capital letter + 桶, definition-table /
+  code-span / paired-gloss exemptions). Self-test 26→38 cases. C15 (schema-token lint) evaluated
+  and deliberately downgraded to clause+reviewer governance — real-corpus flood risk documented
+  in self-test case 34.
+- **Corpus evidence**: `--file` on the flagged AIPPT report → 4 C14 findings (:40/:274/:280/:648);
+  clean companion report and a Youc "IP 桶" file → zero false positives. Same-batch in-place
+  de-jargonization of both flagged reports per the user's own mapping table (machine gate exit 0,
+  numbers/SQL untouched).
+- **Verification**: self-test 38/38; unittest 155 OK; `validate.py all` 9×PASS; isolation
+  blocked=[]; evaluator pass (0 blocking / 8 non-blocking, N1–N8 dispositioned in
+  EP-20260922-002); release-governor promote (human-gated).
+- **measurement: none** (method-level change, no instrumented business task; evals/business does
+  not cover the session-deliverable surface).
+
+## 0.8.5 — 2026-09-22
+
+UI track for document chains (spec/ui + design/ui skeletons), user-driven via the Youc
+office-agent doc-chain pilot (EP-20260922-001). Method-level change; `measurement: none`.
+
+- **spec/ui 与 design/ui 骨架**（`document-chain-templates.md`）：与 spec/fe、design/be|fe
+  家族同构（§0 反审/自检、固定节标题 0–6、真源引用不复制、变更记录承载用户迭代）；
+  `document-chain.md` 声明 ui 轨启用规则（proposal 保持单一；linter 对 ui 文件仅做
+  存在性/围栏/时效性检查，形态质量靠反审+README 门禁兜底）。
+- **Verification**: self-test 26/26（当时）; Youc 试点 linter PASS（含 ui 文件被扫描）;
+  `validate.py all` 9×PASS; isolation blocked=[]; independent evaluator 修复轮（linter
+  覆盖面措辞收窄、试点 design/ui 标题对齐模板、README 启用声明、治理记录补齐）后 pass;
+  release-governor promote（human-gated）。
+- **measurement: none**（method-level change, no instrumented business task）。
+
+## 0.8.4 — 2026-09-21
+
+Doc-chain closure batch (BUG-20260921-01~05) — stale forward references, session role words via
+brief injection, existence≠form cram recurrence, method-vs-template conflict adjudication,
+episode signal integrity. See the release record and `records/bugs/recurrence/` escalations;
+linter C12/C13 (self-test 26 cases). `measurement: none`.
+
 ## 0.8.3 — 2026-09-20
 
 Self-recorded defect batch and anti-drift hardening, user-directed ("把你犯的错记录一下" /

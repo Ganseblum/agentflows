@@ -1,0 +1,99 @@
+{
+  "result_id": "RL-0.8.5-baseline",
+  "source_kind": "baseline",
+  "source_revision": "git:e32ef14",
+  "artifact_digest": "sha256:d8aaeac14de6dac3de4ed3da7a0b6bea3d7134b4aa3eac1215e8740d9139b0d4",
+  "agentflow_version": "0.8.4",
+  "suite_revision": "tools/lab/doc_chain.py --self-test (26 cases) + validate.py all + Youc consumer pilot lint",
+  "host": "zcode (darwin arm64)",
+  "model": "session default",
+  "permissions_profile": "session default",
+  "fixture_revision": "Youc@feature-ui-showcase working tree (uncommitted): docs/features/feature-2026-09-19-office-agent/",
+  "repeat_count": 1,
+  "suite_case_count": 3,
+  "observed_context": {
+    "host": "zcode (darwin arm64)",
+    "model": "session default",
+    "permissions_profile": "session default",
+    "fixture_revision": "Youc@feature-ui-showcase working tree (uncommitted): docs/features/feature-2026-09-19-office-agent/",
+    "evidence_refs": [
+      "records/episodes/2026-09-22/EP-20260922-001.json",
+      "records/improvement/candidates/0.8.5.json",
+      "measurement: none (method-level change, no instrumented business task)",
+      "executed_by: supervisor per evaluator-authored protocol (evaluator subagent has no shell; raw outputs retained in session)"
+    ]
+  },
+  "case_results": [
+    {
+      "case_id": "doc-chain-self-test",
+      "slice": "doc-chain-linter-discrimination",
+      "holdout": false,
+      "protected_guardrails": [
+        "escaped_defects",
+        "permission_violations"
+      ],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": true,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    },
+    {
+      "case_id": "consumer-pilot-lint",
+      "slice": "youc-office-agent-pilot",
+      "holdout": false,
+      "protected_guardrails": [
+        "escaped_defects"
+      ],
+      "repetitions": [
+        {
+          "accepted": true,
+          "first_pass_review": false,
+          "correction_count": 1,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    },
+    {
+      "case_id": "ui-skeleton-coverage",
+      "slice": "template-guidance-coverage",
+      "holdout": false,
+      "protected_guardrails": [],
+      "repetitions": [
+        {
+          "accepted": false,
+          "first_pass_review": false,
+          "correction_count": 0,
+          "escaped_defects": 0,
+          "permission_violations": 0,
+          "unnecessary_delegation": false,
+          "tool_failures": 0,
+          "latency_ms": 0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "acceptance_rate": 0.67,
+    "first_pass_review_rate": 0.33,
+    "correction_count": 1,
+    "escaped_defects": 0,
+    "permission_violations": 0,
+    "unnecessary_delegation_count": 0,
+    "tool_failures": 0,
+    "latency_ms": 0
+  },
+  "generated_at": "2026-09-22T14:40:00+08:00",
+  "schema_version": 1
+}
