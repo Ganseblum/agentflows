@@ -93,10 +93,61 @@ a section with no content says "N/A: reason".
   （引用不复制）和 README 门禁记录兜底；启用与否在 README 元信息里声明一行。
 - **线框/原型**: ASCII 线框保底（diff 友好、linter 可查）或 feature 目录内静态
   `prototype/*.html`（浏览器直开、CSS 自由；不引入 MDX/构建链）。两者择一即可，均须
-  标注「结构稿，非最终视觉」。
+  标注「结构稿，非最终视觉」。它同时是提问出口：谈不出来的问题（长什么样 / 怎么感觉）
+  用一次性原型回答，**结论（哪个方案对、为什么）写回台账**——结论是交付物；原型按本条
+  存放位置留作证据，不作为文档链的交付物，也不在结论落账后删除。
 - **plan**: the target repo's execution-plan contract; when none exists, reuse this repo's
   hybrid shape (envelope + progress overview + task table with status/evidence write-back +
   interfaces and shared mechanisms + verification commands) per `records/plans/README.md`.
+
+## Intake interview (proposal stage)
+
+The proposal is collected through rounds, not one sitting. Model the open decisions as a design
+tree: each decision branches into the decisions that hang off it. The **frontier** is every
+decision whose prerequisites are already settled. Ask the whole frontier in one round — numbered,
+each with a recommended answer and the reason that recommends it, worded so "yes" accepts the
+recommendation — then wait for the answers before computing the next frontier. A question that
+depends on a decision still open in this round belongs to a later round, not this one.
+
+Facts are the author's job, never the owner's: anything findable in the repositories, the
+environment, or the platform's documentation is looked up rather than asked, and an unresolved
+lookup blocks only the questions downstream of it — keep asking the rest of the frontier. The
+decisions are the owner's: put each to them and wait; never fill one in and record it as closed.
+An open question that only a product owner can answer never rides into the spec as an assumption.
+
+The interview is done when the frontier is empty — every branch visited, nothing silently
+assumed — and the owner confirms the shared understanding; only then does the proposal freeze.
+There is no question-count limit: the frontier is the bound, not a number. When the frontier
+keeps expanding past a few rounds, the scope is too large — split the feature rather than
+compressing the rounds.
+
+**Question format.** Ask the question in one line, then at most three options — normally the
+status quo, the cheapest workable path, and the recommendation — each with one line of applying
+condition and price, never a pros-and-cons essay. Mark the recommendation and name the condition
+under which it is the wrong pick; a fourth option appears only when it is genuinely independent,
+and when no engineering preference exists the recommendation says so ("no engineering difference;
+choose on product preference") instead of disappearing. The detailed comparison — compliance
+citations, failure modes, rejected alternatives — belongs to the design's decision table; the
+question points at it rather than restating it. Every question accepts a free-form answer, stated
+once for the round: pick one; pick one and amend it; or none of them, which re-opens the branch
+instead of adding options. Option letters are round-local labels — the ledger and every downstream
+document write the outcome in plain words (白话（代号）).
+
+**Challenge the answer.** When an answer conflicts with the frozen original text, an existing
+glossary or spec term, or what the repositories' code actually does, put the conflict back in the
+same round (「文档写 X，你说 Y，哪个为准」) and record which one won and why. An answer that
+contradicts already-frozen text without being flagged is a defect, not a note.
+
+**Ungrillable questions.** A question that talking cannot settle — what it should look like, how
+it should feel — is not asked again: build the cheapest throwaway artifact that answers it (the
+wireframe / prototype route above), answer it there, and record the verdict next to the question;
+the artifact stays where that route stores it, as the verdict's evidence.
+
+**Ledger write-back.** Every answer lands in the proposal's 待冻结问题台账 as a row whose closure
+condition is decidable (「做了」 is not a closure condition), dated, with who confirmed it. A
+question that cannot yet be phrased sharply goes to the 「未成型」 list with what blocks it, and
+graduates into a row or a 范围决策表 entry as the frontier advances — it is never dropped and
+never sharpened by guesswork.
 
 ## Gates
 
@@ -105,7 +156,9 @@ a section with no content says "N/A: reason".
    being ledgered. A blocking item that is a **product decision** (semantics the requirement
    owner must choose, e.g. conflicting states or undefined first-fire timing) is put to the
    owner as an explicit question with a recommended default — the spec author never fills it
-   in unilaterally and calls it closed. Design work does not start with a blocking item open.
+   in unilaterally and calls it closed — put per the intake interview above (whole frontier per
+   round, facts looked up rather than asked, answer conflicts adjudicated in the round they
+   arrive). Design work does not start with a blocking item open.
 2. **Requirement review gate** — the independent reviewer runs the document review modes
    (proposal/PRD and spec) over the frozen candidates. Blocking findings close before design
    freezes.
@@ -239,7 +292,9 @@ directory, verbatim archive per round, findings as bug records with provenance/a
 
 ## Role wiring
 
-- The supervisor collects the proposal with the user and preserves originals verbatim.
+- The supervisor collects the proposal by running the intake interview (rounds over the decision
+  frontier; facts resolved by the author, decisions put to the owner; answer conflicts surfaced
+  and adjudicated in the round they arrive) and preserves originals verbatim.
 - Spec and design may be drafted by the supervisor (single-layer document work) or delegated to
   `plan-architect` (plan layer only writes; never approves) and, for cross-layer features,
   bounded by a `technical-director` interface decision first.

@@ -23,7 +23,7 @@ Before calling a reused method or mounting into a shared layout or component, tr
 
 Wiring that binds runtime context — route params (`useParams`, `useSearchParams`), route element construction, providers, portals, layout mounts — is not proven by unit tests. Name the runtime check that would fail if the wiring were wrong (open the route and assert the param-bound output) and run it; if it cannot be run, report it as not run under risks.
 
-Run focused checks for your changes. Return the Agentflow worker result fields: status, summary, files, checks, risks, and next_action. Do not claim integration success outside the scope you verified.
+Run focused checks for your changes. Return the Agentflow worker result fields as the delegation contract defines them (`skills/agentflow/references/contracts.md`); when the brief carries `design_refs`, the result cites each implemented design decision (`design_refs_implemented`) or states its divergence with a reason. Do not claim integration success outside the scope you verified.
 
 This role does not delegate further: the supervisor owns delegation and supplies any external reference you need. Report work outside your scope (backend contracts, infrastructure, shared components you do not own) as a named item instead of starting another agent.
 

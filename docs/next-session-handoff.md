@@ -1,8 +1,14 @@
 # Agentflow 新对话交接清单
 
-更新时间：2026-09-18
+更新时间：2026-10-08
 
 > 当前机器路径以本文件所在仓库为准；不要复制历史机器的绝对路径作为当前事实。阶段四、五已补齐 episode 可验证字段、SQLite FTS5 记录读侧和 measurement 语义。local-directory marketplace 的 `source` 现为 `./packaging/runtime`（由 `packaging/build_runtime.py` 从 `agents/`、`skills/`、`schemas/` 与 manifest 生成）。2026-09-18 实测的 0.7.5 快照仍是整目录打包（Z10）；瘦快照要等重新生成 runtime 并重装后才能声称。宿主实际加载的仍是 agents/、skills/ 与 manifest。
+
+## 0.8.7 批的当前状态（2026-10-08）
+
+- 五批条款（E 提问程序/A 防跑偏/B 首阻协议/C design_refs/D contracts 去重）+ 五 manifest 0.8.7 + CHANGELOG + iteration-log + episode `records/episodes/2026-10-08/EP-20261008-001.json` + agent-roles.md 镜像行，独立评审两轮（changes_requested→approved）+ 发布审计一轮（机械项已修）；与门变更三文件分两个 commit 提交并 push（门变更：doc_chain.py 入保护清单 + self-test 并入 all，纯加法）。
+- **宿主生效路径未收口**：`~/.zcode/cli/plugins/installed_plugins.json` 仍指 0.8.3——0.8.4/0.8.5/0.8.6 在插件路径上可能从未生效（本仓内 `.zcode/skills/` 软链源码树，不受影响）。待办：客户端刷新 marketplace + 重装 agentflow，装后跑 `python3 tools/lab/validate.py installed` 复核。
+- **用户待裁决**：improve 环四件套（candidates/evaluations/comparisons/releases 的 0.8.7 记录）是否补齐（推荐后续批回填，证据已在 episode）。
 
 ## 当前工作区
 

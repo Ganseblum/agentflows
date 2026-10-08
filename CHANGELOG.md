@@ -1,5 +1,71 @@
 # Changelog
 
+## 0.8.7 — 2026-10-08
+
+Execution-side wiring + proposal-stage questioning procedure, user-directed ("实现和执行的时候
+老是跑偏…遇到阻塞不思考、不确认、不参考" + "提问比较重要"), with the method sources read
+verbatim from the mattpocock/skills repository (grilling, wayfinder, diagnosing-bugs, prototype,
+writing-for-agents, code-review, retro) and every adopted mechanism re-grounded in this repo's own
+clauses and episodes. Method-level change; `measurement: none`.
+
+- **E — Intake interview (proposal stage)**: `document-chain.md` new section — rounds over the
+  decision **frontier** (whole frontier per round, one question per branch with a recommended
+  answer), facts looked up by the author instead of asked, decisions put to the owner and waited
+  on, completion = frontier empty + owner confirms, scope-split signal when rounds keep expanding.
+  Question format: ≤3 options (status quo / cheapest workable / recommendation), each with one
+  line of applying condition and price, never a pros-and-cons essay; the recommendation names the
+  condition under which it is the wrong pick; free-form answers ("pick one / pick one and amend /
+  none of them" — the last re-opens the branch); option letters are round-local (白话（代号） in
+  the ledger). **Challenge-the-answer** rule (answer vs frozen text/code conflicts adjudicated in
+  the round they arrive), **ungrillable → throwaway prototype** exit (verdict written back to the
+  ledger, prototype kept as evidence per the 线框/原型 route), and **ledger write-back**
+  (decidable closure condition, date, confirmer; a 「未成型」 fog list with graduation rules).
+  Wired into Gate 1, Role wiring, the SKILL.md document-delivery paragraph, and the proposal
+  template's 待冻结问题台账 placeholder.
+- **A — Unrequested behavior**: reviewer gains a citable finding class reading the diff in both
+  directions (speculative abstractions, unneeded refactors, unrelated edits riding along); each
+  finding cites its hunk and the objective sentence it does not serve. Worker side gets the
+  positive action (`contracts.md` **Change discipline**): unneeded work is returned as a named
+  item, one change set serves one objective. `roles.md` reviewer checklist updated.
+- **B — First blocker protocol** (`contracts.md` new section, `SKILL.md` entry): a first blocker
+  that is not a failure loop gets four steps — enumerate what was tried ("stuck" carries the same
+  evidence standard as any claim), resolve the facts yourself and continue what does not depend on
+  them, put only the owner-decisions with a recommended default (the Spec re-audit gate's shape),
+  then `blocked` with the smallest decision. Repeated-failure rule unchanged.
+- **C — design_refs**: the plan row's 「关联 design 条目」 enters the brief (`design_refs` in
+  read_scope) and the result (`design_refs_implemented`, divergence with reason); reviewer
+  verifies each citation resolves and the behavior matches the decision it cites; both engineer
+  role files now point at the contract instead of trailing a stale field list.
+- **D — contracts.md dedup**: the duplicated `## Worker result` and `## Review result` sections
+  merged to one each (failure semantics, degradation, cost/duration, compile-before-accept,
+  budget discipline all preserved — verified by the reviewer and the single-copy grep), with a
+  header line declaring single-source.
+- **Verification**: `doc_chain.py --self-test` 38/38; unittest 155 OK; `validate.py all` 10×PASS
+  (schemas examples evals artifacts mock protected manifests docs tests doc_chain); independent
+  review two rounds — round 1 `changes_requested` (4 findings: wrong-direction reference,
+  prototype-retention contradiction, imprecise gate name, stale field enumeration in engineer
+  roles) all repaired, round 2 `approved` with 0 required changes; `validate.py installed` re-run
+  post-repair: exit 1 with exactly the expected 8-file drift, then PASS after the runtime rebuild
+  against `cache/agentflow-local/agentflow/0.8.7` (note: `validate.py installed` compares the
+  source tree to the version-named cache directory, not the host registry — the host registry
+  still points at 0.8.3; in-app marketplace refresh + reinstall is pending, and until it runs a
+  host outside this repository loads the old clauses). `isolation.py check-diff` (candidate copy
+  with the gate trio reverted, base d7461e6): `blocked: []`. Out-of-scope pre-existing uncommitted
+  edits (AGENTS.md, protected-paths.txt, tools/lab/validate.py — the doc-chain self-test gate
+  wiring) deliberately left on their own track per the user's decision.
+- **Governance lane (explicit)**: this batch is a **direct user-directed method change, not an
+  improve-loop governed promotion** — no candidate/evaluation/comparison/release record set was
+  produced for it (0.8.4–0.8.6 each shipped the four-artifact set). It therefore must not be
+  described as a verified or evaluated improvement; its evidence is the episode plus the two
+  reviewer rounds recorded in it. If the loop's full record set is wanted for parity, it is a
+  follow-up batch. One mixture this creates is disclosed: `packaging/runtime/protected-paths.txt`
+  and the `cache/0.8.7` snapshot carry the protected-list state including the
+  `tools/lab/doc_chain.py` line (uncommitted at snapshot-build time; the gate trio ships in its
+  own commit in the same push) because the runtime rebuild copies `protected-paths.txt` from the
+  working tree.
+- **measurement: none** (method-level change, no instrumented business task; prevention effects
+  await the first real delivery comparison).
+
 ## 0.8.6 — 2026-09-22
 
 Expression-discipline scope extension to session deliverables, user-directed ("agentflow 写

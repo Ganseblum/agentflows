@@ -9,7 +9,7 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | Frontend Engineer | 前端实现、状态、交互和客户端契约 | 是 | 指派的前端文件范围 |
 | Backend Engineer | API、数据、服务端逻辑和迁移 | 是 | 指派的后端文件范围 |
 | Technical Director | 跨层接口、架构、风险和顺序决策 | 否 | 无（只读） |
-| Reviewer | 独立检查实现、回归和权限边界 | 否 | 无（只读，审查期间不改码） |
+| Reviewer | 独立检查实现、回归、权限边界与 diff 中无人要求的行为 | 否 | 无（只读，审查期间不改码） |
 | Bug Investigator | 发现、复现描述和根因归因 | 否 | 无（只读） |
 | Bug Fixer | 在候选工作区实施单个 Bug 修复 | 是 | 候选工作区内指派的文件范围 |
 | Bug Recorder | 保存脱敏 Bug 记录和适用边界 | 只写记录 | Supervisor 显式指定的 `records/bugs/<日期>/` 单一 md 文件 |
