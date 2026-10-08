@@ -14,10 +14,10 @@ python3 tools/lab/validate.py all
 `all` covers the schemas, the examples, the public evaluation cases, the records under `records/`,
 the mock fixtures under `mock/` (compiled by merging them into a throwaway repository copy), the
 role/document surface including the version-in-prose guard, the integrity of the protected gate
-list, manifest name/version agreement across the five manifests, and the repository's own
-regression tests under `tests/`. A failing check is a compile
-error: fix it or return it to the worker with the output. A check you cannot reproduce counts as
-not run, never as a pass.
+list, the doc-chain linter's discrimination self-test, manifest name/version agreement across the
+five manifests, and the repository's own regression tests under `tests/`. A failing check is a
+compile error: fix it or return it to the worker with the output. A check you cannot reproduce
+counts as not run, never as a pass.
 
 The tests can also be run directly while iterating:
 
@@ -36,7 +36,8 @@ and plan tasks without code locations:
 python3 tools/lab/doc_chain.py <feature-dir>
 ```
 
-Linter self-test (pins the checker itself): `python3 tools/lab/doc_chain.py --self-test`.
+Linter self-test (pins the checker itself, and since it joined `validate.py all` it runs as part
+of the gate): `python3 tools/lab/doc_chain.py --self-test`.
 Contract: [skills/agentflow/references/document-chain.md](skills/agentflow/references/document-chain.md).
 
 ## Editing a role or a skill

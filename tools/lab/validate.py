@@ -68,6 +68,7 @@ REQUIRED_PROTECTED_PATHS = {
     "tests/test_lab_contracts.py",
     "tests/test_record_store.py",
     "tools/lab/artifact_digest.py",
+    "tools/lab/doc_chain.py",
     "tools/lab/eval_runner.py",
     "tools/lab/host_adapter.py",
     "tools/lab/isolation.py",
@@ -95,10 +96,18 @@ BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 EXPECTED_TEST_FILES = ("test_lab_contracts.py", "test_record_store.py")
 
 # Floor for the regression suite size, parsed from the unittest "Ran N tests" summary. The
-# suite currently runs 108 tests; the floor is set far below that steady state but far above a
-# trivial suite, so deleting or gutting the tests cannot yield a green gate — shrinking the
-# suite becomes a deliberate gate change that must be reviewed, not an accident that passes.
+# floor is set far below the suite's steady state but far above a trivial suite, so deleting
+# or gutting the tests cannot yield a green gate — shrinking the suite becomes a deliberate
+# gate change that must be reviewed, not an accident that passes. (A hardcoded current count
+# went stale here once already — BUG-era finding N7 — so the suite size is asserted by the
+# run itself, never restated in prose.)
 MIN_UNIT_TEST_COUNT = 20
+
+# Floor for the doc-chain linter's discrimination self-test, parsed from the linter's
+# "N/M self-test cases pass" summary. Same bargain as MIN_UNIT_TEST_COUNT: the floor stays
+# far below the linter's steady state and far above a trivial suite, so gutting the checker's
+# own discrimination matrix cannot yield a green gate.
+MIN_DOC_CHAIN_SELF_TEST_CASES = 20
 
 # Every manifest that carries the plugin name and version. They are bumped by hand, so a missed
 # bump would otherwise surface only after a host reinstall. The pointer locates the value.
@@ -2647,6 +2656,64 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
     return []
 
 
+def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
+    """Run the doc-chain linter's discrimination self-test as part of the compile gate.
+
+    The linter gates every document chain a worker delivers, but until now it only ever ran
+    when someone remembered to invoke it by hand, so a regression in one of its checks
+    surfaced late or not at all. This check runs `doc_chain.py --self-test` the way
+    validate_unit_tests runs the suite — as a subprocess whose summary line is parsed, not
+    trusted: exit code, the N/M pass count (N must equal M and M must clear
+    MIN_DOC_CHAIN_SELF_TEST_CASES), and the absence of silent truncation are all asserted,
+    so an empty or half-disabled self-test fails the gate like an empty unit-test run.
+    Per-feature linting stays a separate explicit invocation: this pins the checker, it does
+    not guess which directories in the tree happen to be document chains.
+    """
+    linter = root / "tools" / "lab" / "doc_chain.py"
+    if not linter.is_file():
+        return [ValidationError("doc_chain", "tools/lab/doc_chain.py is missing")]
+    completed = subprocess.run(
+        [sys.executable, str(linter), "--self-test"],
+        cwd=str(root),
+        text=True,
+        capture_output=True,
+        timeout=300,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    output = f"{completed.stdout}\n{completed.stderr}"
+    ran = re.search(r"(\d+)/(\d+) self-test cases pass", output)
+    if completed.returncode != 0:
+        detail = (completed.stderr.strip() or completed.stdout.strip()).splitlines()
+        summary = detail[-1] if detail else "no output"
+        return [
+            ValidationError(
+                "doc_chain",
+                f"doc-chain self-test failed (exit {completed.returncode}): {summary}",
+            )
+        ]
+    if ran is None:
+        return [
+            ValidationError(
+                "doc_chain",
+                "self-test output has no 'N/M self-test cases pass' summary; "
+                "cannot confirm how many cases ran",
+            )
+        ]
+    passed, total = int(ran.group(1)), int(ran.group(2))
+    if passed != total or total == 0:
+        return [ValidationError("doc_chain", f"doc-chain self-test passed {passed}/{total} cases")]
+    if total < MIN_DOC_CHAIN_SELF_TEST_CASES:
+        return [
+            ValidationError(
+                "doc_chain",
+                f"doc-chain self-test ran {total} cases, below the required floor of "
+                f"{MIN_DOC_CHAIN_SELF_TEST_CASES}; shrinking the linter's self-test is a gate "
+                "change that requires explicit review",
+            )
+        ]
+    return []
+
+
 def plugin_identity() -> tuple[str, str, str] | None:
     """Return (marketplace, plugin, version) for the source checkout, when declared."""
     manifest, load_errors = load_json(ROOT / "plugin.json")
@@ -2900,6 +2967,7 @@ def main(argv: list[str] | None = None) -> int:
             "manifests",
             "docs",
             "tests",
+            "doc_chain",
             "installed",
             "all",
             "report",
@@ -2946,6 +3014,7 @@ def main(argv: list[str] | None = None) -> int:
         "manifests": [("manifests", validate_manifests)],
         "docs": [("docs", validate_doc_consistency)],
         "tests": [("tests", validate_unit_tests)],
+        "doc_chain": [("doc_chain", validate_doc_chain)],
         "all": [
             ("schemas", validate_schemas),
             ("examples", validate_examples),
@@ -2956,6 +3025,7 @@ def main(argv: list[str] | None = None) -> int:
             ("manifests", validate_manifests),
             ("docs", validate_doc_consistency),
             ("tests", validate_unit_tests),
+            ("doc_chain", validate_doc_chain),
         ],
     }[args.target]
 

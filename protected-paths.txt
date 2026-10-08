@@ -50,6 +50,7 @@ tests/test_lab_contracts.py
 tests/test_record_store.py
 
 tools/lab/artifact_digest.py
+tools/lab/doc_chain.py
 tools/lab/eval_runner.py
 tools/lab/host_adapter.py
 tools/lab/isolation.py
