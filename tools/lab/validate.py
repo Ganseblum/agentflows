@@ -2365,6 +2365,111 @@ VERSION_PROSE_FILES = (
 VERSION_LITERAL_PATTERN = re.compile(r"\bv?\d+\.\d+\.\d+\b")
 
 
+# Retired-path residue on the live document surface (2026-10-09 cleanup batch). The 2026-10
+# structural overhaul mechanically re-pointed existing references, but nothing kept NEW prose
+# from naming a retired path again — the same reliance-on-memory gap this check family exists to
+# close. Two classes are machine-checkable: a relative Markdown link whose target does not
+# resolve, and a retired path token in prose. Fenced blocks and inline code are quotations, not
+# claims (the record contracts' 引文 exemption) — but a mermaid diagram is content, not a
+# quotation, so diagrams stay scanned. The generated `packaging/runtime/` tree and the
+# frozen `_archive/` are out of both scans; `CHANGELOG.md` and `docs/iteration-log.md` are exempt
+# from the token scan only — like the frozen archive, their entries describe the layout of their
+# own time and keep retired paths verbatim — and so is the migration execution record directory
+# (`MIGRATION_RECORD_DIRS`), whose old→new mapping is its content.
+RETIRED_PATH_TOKENS = (
+    "records/",
+    "bugs/",
+    "improvement/",
+    "docs/audit-2026-09-18",
+    "next-session-handoff",
+)
+HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md", "docs/iteration-log.md")
+# The migration execution record's content IS the old→new path mapping (migration-mapping.md,
+# migration-spec.md, batch3-gate-change-spec.md, the batch README/plan); its old paths are
+# load-bearing content, not residue — the same treatment as the frozen archive, declared here
+# as the single exemption for that directory.
+MIGRATION_RECORD_DIRS = ("features/feature-2026-10-09-结构改造/",)
+FROZEN_HANDOFF_PREFIX = "_archive/handoff-2026-10/"
+FENCED_BLOCK_PATTERN = re.compile(r"```(?P<info>[^\n`]*)\n.*?```", re.DOTALL)
+INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
+LINK_TARGET_PATTERN = re.compile(r"\]\(([^)]+)\)")
+
+
+def strip_quotation_fences(text: str) -> str:
+    """Remove fenced blocks except mermaid diagrams; a diagram is content, not a quotation."""
+    def keep_mermaid(match: re.Match) -> str:
+        return match.group(0) if match.group("info").strip().startswith("mermaid") else ""
+
+    return FENCED_BLOCK_PATTERN.sub(keep_mermaid, text)
+
+
+def live_doc_paths(root: Path) -> list[Path]:
+    """Every *.md outside the frozen archive and the generated runtime tree."""
+    paths: list[Path] = []
+    for path in root.rglob("*.md"):
+        relative = path.relative_to(root)
+        if any(part.startswith(".") for part in relative.parts):
+            continue
+        posix = relative.as_posix()
+        if posix.startswith("_archive/") or posix.startswith("packaging/runtime/"):
+            continue
+        paths.append(path)
+    return sorted(paths)
+
+
+def validate_live_doc_references(root: Path = ROOT) -> list[ValidationError]:
+    errors: list[ValidationError] = []
+    for path in live_doc_paths(root):
+        relative = path.relative_to(root)
+        text, read_errors = read_document_text(path)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
+        link_scan_text = INLINE_CODE_PATTERN.sub("", strip_quotation_fences(text))
+        for match in LINK_TARGET_PATTERN.finditer(link_scan_text):
+            target = match.group(1).strip()
+            if target.startswith(("http://", "https://", "mailto:", "#", "<", "/")):
+                continue
+            target_path = target.split("#", 1)[0].strip()
+            if not target_path or target_path.startswith("<"):
+                continue
+            if not (path.parent / target_path).exists():
+                errors.append(ValidationError(str(relative), f"broken relative link: {target}"))
+        if relative.as_posix() in HISTORICAL_DOC_CARRIERS:
+            continue
+        if relative.as_posix().startswith(MIGRATION_RECORD_DIRS):
+            continue
+        inside_fence: str | None = None
+        for number, line in enumerate(text.splitlines(), start=1):
+            if line.lstrip().startswith("```"):
+                fence_info = line.lstrip()[3:].strip()
+                inside_fence = None if inside_fence is not None else fence_info
+                continue
+            if inside_fence is not None and not inside_fence.startswith("mermaid"):
+                continue
+            scan = INLINE_CODE_PATTERN.sub("", line)
+            for token in RETIRED_PATH_TOKENS:
+                index = scan.find(token)
+                while index != -1:
+                    preceded_by_word = index > 0 and (
+                        scan[index - 1].isalnum() or scan[index - 1] == "_"
+                    )
+                    frozen_pointer = (
+                        token == "next-session-handoff"
+                        and scan[max(0, index - len(FROZEN_HANDOFF_PREFIX)) : index]
+                        == FROZEN_HANDOFF_PREFIX
+                    )
+                    if not preceded_by_word and not frozen_pointer:
+                        errors.append(
+                            ValidationError(
+                                str(relative),
+                                f"retired path in prose (line {number}): {token!r}",
+                            )
+                        )
+                    index = scan.find(token, index + 1)
+    return errors
+
+
 def validate_doc_consistency() -> list[ValidationError]:
     """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
 
@@ -2375,8 +2480,11 @@ def validate_doc_consistency() -> list[ValidationError]:
     resolves to an agent file; every `schemas/*.schema.json` path named anywhere in the
     docs/live-roots/skills/agents surface or in AGENTS.md exists; AGENTS.md carries no
     pre-0.5.0 JSON plan contract markers; the Chinese mirror keeps section parity with its
-    English contract documents. `_archive/` is frozen history and stays outside the surface
-    (FROZEN_ARCHIVE_ROOT).
+    English contract documents. Two live-surface scans close the 2026-10 residue classes:
+    relative Markdown links must resolve, and prose must not name a retired path (fenced and
+    inline code are quotations — except mermaid diagrams, which are content — and
+    `CHANGELOG.md` / `docs/iteration-log.md` keep their historical entries verbatim).
+    `_archive/` is frozen history and stays outside the surface (FROZEN_ARCHIVE_ROOT).
     """
     errors: list[ValidationError] = []
     agents_dir = ROOT / "agents"
@@ -2470,6 +2578,7 @@ def validate_doc_consistency() -> list[ValidationError]:
                 f"schema references diverge from {contracts.name}: zh-only={sorted(only_zh)}, en-only={sorted(only_en)}",
             )
         )
+    errors.extend(validate_live_doc_references())
     return errors
 
 

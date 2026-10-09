@@ -91,7 +91,7 @@ updated_at: 2026-09-18T08:07:13Z
 | U-02 | 权限档：read-only 档在 claude host 的实际拦截行为待实测（print 模式下 sensitive write 与 Bash 审批） | 阻塞 S02；不阻塞 T01–T13 | 已测量关闭（2026-09-17：acceptEdits 无头写入实测成功（探针文件落盘）；业务档定为 workspace-write。**同时发现读侧约束**：cwd 之外的文件访问被工具层拒绝，见 U-08） |
 | U-03 | 环境隔离：pin 快照放置位置与实跑环境隔离方案未定（第四位置目录约定、打种机） | 阻塞 S01–S03（smoke 阶段）；不阻塞 T01–T13 | 已决关闭（2026-09-17：第四位置＝本机 smoke 根下 `snapshot/`（路径不入仓），与 repository/workspace/holdout 四位置互不嵌套；S01 已按此物化并校验） |
 | U-04 | 版本号：0.6.0（新增能力面，建议）还是 0.5.3 | 不阻塞（T10 合入前确认即可） | 未关闭 |
-| U-05 | 评测结果长期落点：聚合指标进 records/ 还是 examples/（待改进控制面落地时定） | 不阻塞（smoke 结果只留本地） | 未关闭 |
+| U-05 | 评测结果长期落点：聚合指标进记录根（improvements/）还是 examples/（待改进控制面落地时定） | 不阻塞（smoke 结果只留本地） | 未关闭 |
 | U-06 | 两处当前态版本横幅未收口：docs/self-improvement-design.md:3、docs/host-native-plugin-design.md:3 仍写 0.5.2（不在 T12 写范围） | 不阻塞 | 已关闭（2026-09-17 两处横幅已更新为 0.6.0 并补业务切片状态） |
 | U-07 | codex 侧真跑缺陷：host_adapter.run_codex 用 NamedTemporaryFile 对象调 read_text()（HEAD 即存在），任何 codex 真跑必失败 | 不阻塞（S02 只用 claude host） | 已关闭（2026-09-17 修复落地：按 `Path(output.name)` 读取、失败包成 ValueError；两条 stub 回归测试钉住；真实 codex 真跑仍未验证） |
 | U-08 | 宿主文件访问被限制在 cwd：业务跑必须给 claude 传 `--add-dir <快照根>`，否则四份目标文档 Read 全被拒、Bash 被 "only files under <cwd> are permitted" 拦（工具层拒绝、`permission_denials` 为空） | 阻塞 S02 重跑验证（修复已落地、未验证）；不阻塞 T01–T13（仪器阶段） | 修复落地待验证（2026-09-17：`run_claude` 业务命令加 `--add-dir`（解析为绝对路径）+ 两条回归测试 + host-platform-facts C8 留档；smoke 重跑确认前不视为关闭） |

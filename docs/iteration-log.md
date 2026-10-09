@@ -3,11 +3,11 @@
 > 作用：按版本回答三个问题——**为什么迭代**（触发/证据）、**改了什么**、**解决了什么问题**，
 > 并注明未决与未验证项。
 > 发布级差异见 [CHANGELOG](../CHANGELOG.md)，会话级细节见
-> [next-session-handoff.md](next-session-handoff.md)。
+> [next-session-handoff.md](../_archive/handoff-2026-10/next-session-handoff.md)（冻结原文）。
 >
 > 记录规则：只写有留档支撑的内容——提交、CHANGELOG、bug 记录、复盘文档；无法核实的标注
 > 「未验证」。更早的插件版本（记录中可见 `0.2.0` 引用，见
-> [`examples/bug-records/`](../examples/bug-records/)）早于本仓库的留档历史，不在此追溯。
+> [`examples/issues/`](../examples/issues/)）早于本仓库的留档历史，不在此追溯。
 
 ## 总览
 
@@ -34,7 +34,13 @@
 | 0.8.0 | 2026-09-18 | 用户授权第二轮整改：B1/B3 度量效度 S0、E 域活跃失真、记忆层闭环、审计 §6 残余 | seeds 防泄漏 fail-closed；claude 观测通道 `observed_permission_denials`；allowed-tools/隔离参数；rollback 如实声明；mock 合并编译门；版本去散文化 + 失真清理；roundtrips 必填回填 | CHANGELOG 0.8.0；本文件 §0.8.0 |
 | 0.8.1 | 2026-09-18 | 0.8.0 装后闭环复核：发现 0.8.0 台账附录漏列 C 域残余；用户重装快照后要求核对旧 bug 闭环并修尾项 | C 域失败语义成文 + plan 回写时机进 SKILL 步骤；D1 以选项 a（显式过渡态注记）消解矛盾；BUG-20260914-003 转 fixed-pending-review（修复=0.8.0 选项 A） | CHANGELOG 0.8.1；本文件 §0.8.1 |
 | 0.8.2 | 2026-09-20 | 双批同版入库：①文档交付链质量门（用户两轮质量否决驱动，本文件 §0.8.2）②合并解冲突质量门（BUG-20260920-01，兄弟会话批） | 文档链：SKILL 文档交付链接线 + document-chain.md 契约（门禁 1–5 + density floor + 深度优先）+ doc_chain.py C1–C10 linter（17 例判别自测）+ AGENTS.md 验收段 + docs/product/ 内部链自举；合并门：SKILL description/Integrate 合并质量门 + 硬边界 3 授权≠验证 | CHANGELOG 0.8.2；`7b41cc6`（文档链批，EP-20260920-002）、`57050e3`（合并门批，EP-20260920-001） |
-| 0.8.3 | 2026-09-20 | 用户指令"把你犯的错记录一下"+"加点模板处理，不然一句话会偏移"（本文件 §0.8.3） | 自我立账三条 verified（BUG-20260920-02/03/04：文档链密度缺口/爆炸半径黑话违反表达纪律/重写丢承诺内容）+ 复发台账三类；表达纪律条款进生成契约（换>释>删）；语料普查装置（plan↔design 关联列/错误码表/OQ Owner/QA-N/A 纪律/治理反模式八条）；12 件填空模板（固定标题字面量，全层含 QA 三件套）+ linter C11 结构检查（自测 20 例）+ HTML 原型形态 | CHANGELOG 0.8.3；`a71acc6` + 本批 | 文档链：SKILL 文档交付链接线 + document-chain.md 契约（门禁 1–5 + density floor + 深度优先）+ doc_chain.py C1–C10 linter（17 例判别自测）+ AGENTS.md 验收段 + docs/product/ 内部链自举；合并门：SKILL description/Integrate 合并质量门 + 硬边界 3 授权≠验证 | CHANGELOG 0.8.2；`7b41cc6`（文档链批，EP-20260920-002）、`57050e3`（合并门批，EP-20260920-001） |
+| 0.8.3 | 2026-09-20 | 用户指令"把你犯的错记录一下"+"加点模板处理，不然一句话会偏移"（本文件 §0.8.3） | 自我立账三条 verified（BUG-20260920-02/03/04：文档链密度缺口/爆炸半径黑话违反表达纪律/重写丢承诺内容）+ 复发台账三类；表达纪律条款进生成契约（换>释>删）；语料普查装置（plan↔design 关联列/错误码表/OQ Owner/QA-N/A 纪律/治理反模式八条）；12 件填空模板（固定标题字面量，全层含 QA 三件套）+ linter C11 结构检查（自测 20 例）+ HTML 原型形态 | CHANGELOG 0.8.3；`a71acc6` + 本批 |
+| 0.8.4 | 2026-09-21 | doc-chain 收口批（五条 bug：时效性引用/会话角色词/存在性≠形态/模板冲突裁决/episode 信号缺证） | 链路收口通读门、冲突裁决条款、brief 卫生条款；linter C12/C13（自测 26 例） | CHANGELOG 0.8.4；本文件 §0.8.4 |
+| 0.8.5 | 2026-09-22 | UI 需求缺 ui 轨支撑（设计稿评审/品牌规范散落） | spec/ui 与 design/ui 骨架 + ui 轨启用规则；Youc 试点消费方 PASS | CHANGELOG 0.8.5；本文件 §0.8.5 |
+| 0.8.6 | 2026-09-22 | 用户九组黑话反馈：表达纪律作用域缺口（会话交付物零覆盖） | 两形态规则 + 作用域扩展 + C14 与 --file 机器门；存量报告修复 | CHANGELOG 0.8.6；本文件 §0.8.6 |
+| 0.8.7 | 2026-10-08 | 执行期跑偏/遇阻三不 + 提问重要 | 首次遇阻四步协议 + proposal 阶段 intake interview（含反问规则）；design_refs 接线 | CHANGELOG 0.8.7；本文件 §0.8.7 |
+| 0.9.0 | 2026-10-09 | 用户结构指令：去 records 树、改六活区、模板真文件、docs 收窄 | 记录树迁移（107 件移动、40 件重编号、273 处机械改指）+ index.md + 模板拆件；校验面全适配 | CHANGELOG 0.9.0；本文件 §0.9.0（补记）；EP-20261009-001 |
+| 0.10.0 | 2026-10-09 | 用户「一步到位」指令：去除残留与过时、保证后续不漂移 | 断链 3 处修复 + 旧路径/计数收敛 + N4/N6/N7 收口 + `validate.py docs` 增断链与退役路径扫描（红 9 项→绿） | CHANGELOG 0.10.0；本文件 §0.10.0；EP-20261009-002 |
 
 ---
 
@@ -551,3 +557,47 @@
 - **解决了什么**：三个「门开在验收侧不在生成/执行侧」的缺口收口——范围从文件级扩到工作内容级（评审端检测器）、首次遇阻从「禁令无动作」变四步默认动作、design 决策从追溯列变执行引用；提问从「必须问+推荐默认值」的结果形态补上「前沿-轮次-终止判据」的过程程序。
 - **诚实注记**：measurement: none（method-level change，无 instrumented business task；演示验证只证格式可读不证有效，护栏是各批拒绝判据）；**治理轨道显式声明：本批为用户直接指挥的方法改动+独立评审，非 improve 环受治理晋升——未产 0.8.4–0.8.6 惯例的四件套（candidates/evaluations/comparisons/releases），不得表述为已验证或已评测的改进，补齐四件套属后续批**；新条款无机器检查可钉，回归靠 bug 记录→条款+用例反馈环；快照混合态已披露（runtime/protected-paths.txt 含门行 tools/lab/doc_chain.py——构建时该行尚未提交，门变更三文件随后另行提交）；宿主注册表仍指 0.8.3——validate installed PASS 只证 cache/0.8.7 与源一致，宿主侧需客户端刷新+重装才生效（且 0.8.4–0.8.6 在插件路径上可能从未生效过，待客户端核实）；基线外门变更三文件经用户裁决单独成 commit 提交。
 - **未决**：宿主客户端刷新 marketplace+重装 0.8.7；bug 链候选（red-capable 复现门+3–5 排序假设）与 writing-for-agents 语料审计（no-op 猎杀/否定式/leading words）已评估未成案留后续批；reviewer frontmatter description 未列新发现类（宿主触发摘要，留档）；improve 环四件套是否补齐待用户裁决。
+
+---
+
+## 0.9.0 — 结构改造（2026-10-09）〔补记〕
+
+- **为什么迭代**：用户结构指令——「不要 records 了…全部改成类似 youc-workflow-ai 的结构」+
+  「全部完成，然后把没用、过期的都删除」；走用户直接指挥 + 独立评审轨道（未产 improve 环四件套）。
+- **改了什么**：记录树退役，记录面迁六活区（`issues/`、`episodes/`、`plans/`、`improvements/`、
+  `releases/`、`reviews/`）+ 批次目录 `features/`；40 件缺陷重编号 `ISS-2026-001…040`；
+  12 件模板自单体重拆为真文件（含清单）；`index.md` 唯一索引；`docs/` 收窄为设计·指南·事实；
+  三级冻结规则落地 `_archive/`；校验器/测试/夹具/角色/评测全仓改指（未放宽任何检查）。
+- **解决了什么**：记录路径与文档导航全仓一致；模板可按件复制；历史件与活文档分区。
+- **证据与评审**：`validate.py all` 10×PASS；`doc_chain.py --self-test` 38/38；计划评审两轮
+  （F1–F9、R1–R10 全修，reviewer: releasable）；迁移映射表
+  `features/feature-2026-10-09-结构改造/plan/migration-mapping.md`；EP-20261009-001。
+- **诚实注记**：受保护面改动（校验器/测试/schemas/评测官发布官文本/evals）在用户显式指令下
+  进行，记入批次 episode 供回溯；`measurement: none`；安装快照漂移为预期（重装属用户侧）。
+  本条系 0.9.0 发布时遗漏，由 0.10.0 批补记（同 0.8.4 随 0.8.6 补记先例）。
+
+---
+
+## 0.10.0 — 彻底清理与防漂移（2026-10-09）
+
+- **为什么迭代**：用户「一步到位」指令——去除残留与过时、保证后续都是最新、无残留和过时干扰。
+  全仓扫描（209 个 Markdown + 根目录）确认：无大面积死目录（门夹具 `mock/`、`examples/`、
+  `evals/`、`tests/` 均在用），残留集中在断链 / 旧路径 / 陈旧计数 / 历史评审遗留 / 本地垃圾五类。
+- **改了什么**：断链 3 处修复（iteration-log 两处、system-guide 一处；生成树内一处为核心限制、
+  入检查排除清单）；现行文档旧路径收敛（system-guide §6 流程图、index 迁移清单、
+  spec-fact-check-design、plans 措辞）；「九项」陈旧计数 5 处去数字、清单补齐 `doc_chain`；
+  迭代台账补记 0.9.0 节、修复 0.8.3 总览行错位、补 0.8.4–0.9.0 总览行；N4 条款措辞对齐机器
+  豁免的括注两形态、N6 模板写前自查回归并点名两形态、N7 复核为 0.9.0 重写时已消解；删除
+  2 个会话 HTML 与 1 个可再生产 SQLite；`validate.py docs` 新增断链与退役路径两组扫描
+  （引文不扫、mermaid 图按内容扫、迁移执行记录目录单点豁免），`tests` 增两个判别用例。
+- **解决了什么**：残留检测从「靠人发现」变为「机器必拦」——断链与退役路径以后直接 FAIL；
+  历史载体（CHANGELOG / iteration-log / `_archive/` / 迁移记录）与引文的边界在检查器内单点声明。
+- **证据与评审**：修复前树叠加新检查器 = 9 项命中（红，逐字留档）；修复后绿；故障注入
+  FAIL→恢复→PASS 已观察；`validate.py all` 10×PASS、self-test 38/38、unittest 159 OK、
+  `isolation.py check-diff`（两处授权门文件在一次性副本还原后）blocked=[]；独立评审轮次与
+  结论见 EP-20261009-002 与批次 `reviews/`。
+- **诚实注记**：受保护面改动（`validate.py`、`tests/test_lab_contracts.py`）在用户显式批准下
+  进行，记入 episode 供回溯；`measurement: none`；0.10.0 快照已装入本机 cache 且
+  `validate.py installed` PASS——宿主客户端刷新重装仍属用户侧。
+- **未决**：ZCode 客户端刷新 marketplace + 重装 0.10.0（用户侧一步）；`features/` 巡检扩展、
+  Cursor 规则与工作区初始化能力留后续批（批次 proposal 已登记不做清单）。

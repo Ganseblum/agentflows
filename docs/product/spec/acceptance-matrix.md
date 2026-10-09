@@ -2,7 +2,7 @@
 
 > 用途：把 `spec/method-spec.md` 的每条承诺映射到**会失败的具体检查**。右列是检查本体，
 > 不是"已验证"的声明——状态列才表达当前结论，且只写机器可复现或人工门已发生的事实。
-> 机器标尺状态以最近一次 `python3 tools/lab/validate.py all` 为准（9×PASS 口径见
+> 机器标尺状态以最近一次 `python3 tools/lab/validate.py all` 为准（全项 PASS 口径见
 > `docs/iteration-log.md`）；本文不维护通过次数快照，避免与台账漂移。
 
 | 规格 | 验收方式（会失败的东西） | 标尺落点 | 当前状态 |
@@ -14,7 +14,7 @@
 | S5 失败语义 | 三类语义文本在 contracts 单点成文（作者不自证/超预算重试=supervisor 缺陷） | 人工评审 + episode 抽查 | 绿（文本）/ 注入演练未做 |
 | S6 记录体系 | 每类记录样例过 schema；坏记录（如引用断链）编译失败 | `validate.py schemas` + `artifacts` | 绿 |
 | S7 改进环 | 未知/重复 `--case-ids` 退出 1；digest 对贴被 policy 拒；候选碰保护门被拒 | `eval_runner.py` + `policy.py` + 单测（`CaseIdSubsetTests` 等） | 绿（仪器）/ live `待验证`（U-01） |
-| S8 确定性验证面 | 九项任一红则 `all` 退出非 0；CI 缺门则 `protected` 失败 | `validate.py all` + `.github/` | 绿 |
+| S8 确定性验证面 | 任一检查红则 `all` 退出非 0；CI 缺门则 `protected` 失败 | `validate.py all` + `.github/` | 绿 |
 | S9 打包安装 | 生成树缺组件或 sha256 与源码不一致即 FAIL | `validate.py installed` | 绿（0.8.1 快照已重装比对） |
 | S10 业务仪器 | 被测树含 seeds 即 fail-closed；缺 allowed-tools/隔离参数被大声拒绝 | `seed_grader.py`、`host_adapter.py` 拒绝路径 + 单测 | 绿（仪器）/ live `待验证`（U-01/U-02） |
 | S11 文档交付链 | 契约文件存在且被 SKILL 引用；本目录自身即首个全链样例 | `validate.py docs`（引用存在性）+ 人工评审门 | 绿（成稿）/ 评审门未跑 |

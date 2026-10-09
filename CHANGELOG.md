@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.10.0 — 2026-10-09
+
+Full-repo cleanup and anti-drift pass, user-directed ("要一步到位 去除之前不合理的地方，保证后续
+都是最新 无残留和过时干扰"): the residue the structural overhaul left behind is removed, and the
+machine gate now detects the two residue classes. Method-level change; `measurement: none`.
+
+- **Residue fixed**: three broken relative links re-pointed (two in `iteration-log`, one in
+  `system-guide`; the generated-runtime link is a declared limitation); stale path mentions in
+  current-state docs converged (the `system-guide` §6 flowchart, the `index.md` migration
+  checklist, `spec-fact-check-design`, `plans/` wording); the "nine checks" stale counts in
+  `README.md`, `system-guide`, and `docs/product/*` removed or re-pointed to the run itself,
+  with `doc_chain` added where the check set is enumerated; `iteration-log` gains the missing
+  0.9.0 section (marked 补记), a repaired malformed overview row, and 0.8.4–0.10.0 overview rows.
+- **Review leftovers closed**: N4 (clause wording now names exactly the parenthesized paired
+  forms the linter exempts), N6 (the templates README regains the pre-write self-check, naming
+  both forms), N7 verified as already resolved in the 0.9.0 rewrite.
+- **Local residue deleted**: two session HTML exports and the disposable FTS5 index.
+- **Gate change (user-authorized)**: `validate.py docs` gains two scans over the live document
+  surface — broken relative links, and retired-path prose. Fenced/inline code are quotations,
+  mermaid diagrams are content and stay scanned; `_archive/`, the generated runtime tree,
+  `CHANGELOG.md`, `docs/iteration-log.md`, and the migration execution record directory are
+  declared exemptions. `tests/test_lab_contracts.py` pins discrimination fixtures.
+- **Verification**: pre-fix tree + new checker = 9 findings (red, archived verbatim); fixed tree
+  green; fault injection observed FAIL → restore → PASS on a throwaway copy; `validate.py all`
+  10×PASS; `doc_chain.py --self-test` 38/38; unittest 159 OK; `isolation.py check-diff`
+  `blocked=[]` with the two authorized gate files restored in a throwaway copy; `validate.py
+  installed` green against the freshly installed 0.10.0 snapshot (marketplace refresh and
+  reinstall in the host client remain the user-side step). Independent review rounds (round 1
+  `changes_requested` — seven findings repaired; round 2 `changes_requested` — two text-level
+  items repaired and released under the recorded maintainer precedent) are recorded in the
+  batch `reviews/` and `EP-20261009-002`. Note: the five manifests' Chinese description
+  localization present in the working tree is a concurrent writer's uncommitted work (observed
+  2026-10-09 23:24, authored outside this batch) and is not part of this release commit.
+- **Governance lane**: direct user-directed change (same lane as 0.9.0); the protected-path
+  edits were made under the user's explicit approval and are recorded in the batch episode for
+  retrospective review; no candidate/evaluation/comparison set; not described as a verified
+  improvement.
+- **measurement: none** (method-level change, no instrumented business task).
+
 ## 0.9.0 — 2026-10-09
 
 Repository structure generation change, user-directed ("不要 records 了…全部改成类似

@@ -272,7 +272,8 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   than domain jargon — the devices are a pre-write pass against the word list, plus review
   that reports each occurrence on citation. 两个语料新形态（2026-09-22 反馈）适用同一纪律：
   **代号裸用** —— 代号/编号（桶号、组号、字母代号）只可出现在定义处（口径表、图例、首次括注）；
-  正文一律用白话状态词作主词，代号以「白话（代号）」或「代号+白话」成对形式伴随出现。判据：
+  正文一律用白话状态词作主词，代号以括注成对形式伴随出现——「白话（代号）」或「代号（白话）」；
+  机器豁免即此两形，无括号的并排写法不算豁免。判据：
   读者不回翻定义表、不记忆映射，能读懂任意一段正文；自造代号整个弃用（取 换 > 释 > 删 的「换」）。
   **模式词分域** —— 数据库表名、字段枚举值、内部状态字（`status='prepared'` 的 prepared、
   `agent_run` 的 Run）保留在代码、SQL、日志语境（反引号或代码块内）；散文正文用业务白话

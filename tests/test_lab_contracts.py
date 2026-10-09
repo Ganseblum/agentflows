@@ -324,6 +324,64 @@ class ValidatorRegressionTests(unittest.TestCase):
         errors = validate.validate_doc_consistency()
         self.assertEqual(errors, [])
 
+    def test_live_doc_scan_flags_broken_links_and_retired_paths(self) -> None:
+        # Discrimination fixtures for the 2026-10 residue scans. The good file pins every
+        # exemption (fenced/inline quotations, an archive pointer, near-miss word hits, the
+        # current roots); the bad file must trip both scan classes.
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            (base / "docs").mkdir()
+            (base / "docs" / "target.md").write_text("ok\n", encoding="utf-8")
+            (base / "docs" / "good.md").write_text(
+                "见 [target](target.md)。\n"
+                "引文 `records/bugs/` 与 `](target)` 示例不扫。\n"
+                "```\nrecords/ in a fence is a quotation\n```\n"
+                "冻结引用见 _archive/handoff-2026-10/next-session-handoff.md 的登记。\n"
+                "现行目录 improvements/ 与 releases/ 正常。\n"
+                "```mermaid\nflowchart TB\n    A[\"issues/ 是现行路径\"]\n```\n"
+                "词内命中不入罪：debugs/、subrecords/ 均非退役路径。\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_live_doc_references(root=base)
+            self.assertEqual([error.message for error in errors], [])
+
+            (base / "docs" / "bad.md").write_text(
+                "断链：[missing](gone.md)。\n"
+                "```mermaid\nflowchart TB\n    X[\"bugs/<日期>/ 旧图节点\"]\n```\n",
+                encoding="utf-8",
+            )
+            messages = [error.message for error in validate.validate_live_doc_references(root=base)]
+            self.assertTrue(any("broken relative link" in message for message in messages), messages)
+            # The retired-path hit lives only inside the mermaid block: the mermaid-scanned
+            # branch is the sole source of this assertion, so skipping diagrams fails here.
+            self.assertTrue(
+                any(
+                    "retired path in prose" in message and "(line 4)" in message
+                    for message in messages
+                ),
+                messages,
+            )
+
+    def test_live_doc_scan_exempts_freeze_carriers_runtime_and_migration_record(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            (base / "_archive").mkdir()
+            (base / "_archive" / "old.md").write_text(
+                "records/ old tree\n[dead](missing.md)\n", encoding="utf-8"
+            )
+            (base / "packaging" / "runtime").mkdir(parents=True)
+            (base / "packaging" / "runtime" / "generated.md").write_text(
+                "records/ residue\n", encoding="utf-8"
+            )
+            (base / "docs").mkdir()
+            (base / "docs" / "iteration-log.md").write_text("records/ history\n", encoding="utf-8")
+            (base / "CHANGELOG.md").write_text("records/ history\n", encoding="utf-8")
+            (base / "features" / "feature-2026-10-09-结构改造" / "plan").mkdir(parents=True)
+            (
+                base / "features" / "feature-2026-10-09-结构改造" / "plan" / "migration-mapping.md"
+            ).write_text("records/bugs/ -> issues/ 映射是内容\n", encoding="utf-8")
+            self.assertEqual(validate.validate_live_doc_references(root=base), [])
+
     def test_agents_md_plan_contract_tripwire_rejects_pre_050_wording(self) -> None:
         # The tripwire must fire on either stale marker of the pre-0.5.0 JSON plan
         # contract. The helper is pure, so it is pointed at a temporary file instead of

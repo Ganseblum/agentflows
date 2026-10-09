@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261009-002",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（彻底清理与防漂移批：断链/旧路径/陈旧计数收敛、0.8.6 遗留 N4/N6/N7 收口、validate.py docs 增断链与退役路径扫描 + tests 判别用例、本地残留删除、五清单 0.10.0 + CHANGELOG + 台账 0.10.0 节与 0.9.0 补记、runtime 重建与 cache/0.10.0 安装）",
+    "base": "72a1b5a52104ab17464998d45dc37e5af0456e83"
+  },
+  "run": {
+    "run_id": "session-20261009-agentflow-0.10.0",
+    "started_at": "2026-10-09T22:00:00+08:00",
+    "ended_at": "2026-10-09T23:58:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户「一步到位」指令（去除之前不合理的地方、保证后续都是最新、无残留和过时干扰）：全仓残留在四类上清零（断链、退役路径、陈旧计数、本地垃圾），新检查器把残留检测从人工发现变为机器必拦，版本 0.10.0 刷新收口。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_feedback_quote",
+      "value": "要一步到位 去除之前不合理的地方，保证后续都是最新 无残留和过时干扰"
+    },
+    {
+      "kind": "gate_change",
+      "value": "受保护面改动：tools/lab/validate.py（docs 检查增断链+退役路径两组扫描；mermaid 图按内容扫；_archive/ 生成树/两个历史载体/迁移执行记录目录单点豁免）、tests/test_lab_contracts.py（判别用例 2 个）——经用户批准执行方案（ExitPlanMode，2026-10-09）"
+    },
+    {
+      "kind": "coverage_check",
+      "value": "红=9 项（修复前树 + 新检查器，逐字留档 plan/evidence-2026-10-09.md）→ 修复后绿；故障注入 FAIL→恢复→PASS 已观察；validate all 10×PASS、self-test 38/38、unittest 159 OK、isolation check-diff blocked=[]（两授权门文件在一次性副本还原后）"
+    },
+    {
+      "kind": "installed_state",
+      "value": "runtime 重建并装入 ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.10.0；validate.py installed PASS；宿主客户端刷新重装属用户侧"
+    },
+    {
+      "kind": "concurrent_writer_observation",
+      "value": "同日 23:24:17 一次原子流水线（五清单描述汉化 + runtime 重建 + cache 同步）由本会话之外的写者完成；按并发写者纪律保持未提交、不纳入本批提交，待其作者处置（证据：五件 mtime 同为 23:24:17、runtime/cache 同刻同步、客户端注册表未变（15:58））"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (method-level change, no instrumented business task)",
+      "evidence_ref": "CHANGELOG.md 0.10.0"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "四类残留清零：断链 3 处修复（生成树一处入检查排除清单）、现行文档旧路径 0 处（历史载体与引文按规则豁免、迁移执行记录目录单点豁免）、陈旧计数现行文档 0 处（去数字）、本地残留 3 件删除、N4/N6/N7 收口",
+      "status": "verified",
+      "check": "validate.py docs PASS（含新扫描）+ 逐项复核（L1–L3、S1–S6、C1–C6、N4/N6/N7、D1–D3）+ 全仓 grep 复核（现行文档口径）",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "门变更判别力：修复前树叠加新检查器必红（9 项逐字对应存量）、修复后绿；mermaid 分支被测试独立钉住；故障注入 FAIL→恢复→PASS 已观察",
+      "status": "verified",
+      "check": "plan/evidence-2026-10-09.md §1–§3 逐字输出；tests -k live_doc 2 用例 OK；静态变异由评审员复核（去掉 mermaid 分支用例必失败）",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "全量验证与边界：validate all 10×PASS、self-test 38/38、unittest 159 OK、isolation check-diff blocked=[]；受保护面仅两个授权文件被改（纯加法，既有检查语义未动）",
+      "status": "verified",
+      "check": "原始输出逐字留档（evidence §4）；isolation 在一次性副本中把两授权门文件还原到基线后 blocked=[]；diff 对照 protected-paths.txt 逐项核",
+      "evidence_ref": "E3"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "发布链完整：五清单 0.10.0 一致；runtime 重建；cache/0.10.0 装入且 installed PASS；CHANGELOG 0.10.0 条目 + 台账 0.10.0 节（含 0.9.0 补记与 0.8.4–0.9.0 总览行）",
+      "status": "verified",
+      "check": "validate.py manifests PASS；build_runtime 输出与 runtime 版本核对；installed PASS（源树↔cache 逐文件 sha256）；逐条文档核对",
+      "evidence_ref": "E4"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "提交边界：本批提交仅含本会话改动——五清单描述本地化（并发写者 23:24:17 输出）不纳入、保持未提交待其作者处置（暂存区逐条核对：五清单仅 version hunk 入暂存，描述 hunk 留在工作树）",
+      "status": "verified",
+      "check": "git diff --cached 逐文件核对（五个清单仅含版本行变更）+ git status 观察（描述 hunk 保持未提交）",
+      "evidence_ref": "E5"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "cleanup_spec_outputs",
+      "ref": "features/feature-2026-10-09-彻底清理与防漂移/spec/cleanup-spec.md（L/S/C/N/D 逐项）+ plan/cleanup-plan.md（逐任务证据列）+ README.md（变更前后）"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "acceptance_output",
+      "ref": "features/feature-2026-10-09-彻底清理与防漂移/plan/evidence-2026-10-09.md §1（红 9 项逐字）、§2（绿）、§3（故障注入 FAIL→恢复→PASS）、§6（扫描面灵敏度）"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "acceptance_output",
+      "ref": "同证据档 §4（validate all 10×PASS / self-test 38/38 / unittest 159 OK / isolation blocked=[]）；批次 README「文档形态与门禁判定」节（批次目录 linter 判定留档）"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "release_record",
+      "ref": "CHANGELOG.md 0.10.0 节 + 五清单（0.10.0）+ docs/iteration-log.md §0.10.0（含 0.9.0 补记）；安装快照 ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.10.0"
+    },
+    {
+      "evidence_id": "E5",
+      "kind": "review_record",
+      "ref": "features/feature-2026-10-09-彻底清理与防漂移/reviews/review-2026-10-09-001.md（两轮 findings 与处置）；批次 README 执行记录（并发写者观察）"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-09T23:28:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "F1 证据档缩进块被新扫描命中（交付树绿声明不成立，必改）；F2 PLAN-PRODUCT-001.md:150 陈旧计数（必改）；F3 method-spec 快照排除清单旧口径；F4 mermaid 分支未被测试独立钉住；F5 会话指称与 N 码裸用；F6 lab README 扫描说明缺 mermaid 例外与豁免、批次文档新写硬计数；F7 台账行应为 N4/N6/N7、批次目录 linter 判定须留档",
+      "resolution": "F1–F7 全部修复：证据档全部原始输出改围栏并复跑全绿；F2/F3/F6 逐条改（去数字/现行口径/说明补全）；F4 以「token 只留 mermaid 图节点 + 断言钉行号」独立钉住；F5 两处修正；F7 改 N4/N6/N7 并将 C9 修复与 C1/C2/C3 不适用判定落批次 README",
+      "evidence_ref": "E5"
+    },
+    {
+      "at": "2026-10-09T23:48:00+08:00",
+      "reviewer": "agentflow:reviewer（同一独立子代理，增量复审）",
+      "decision": "changes_requested",
+      "finding": "F1–F7 全闭环；新出 N1 批次 README 总览重复行（同结论双源，必改）；N2 五清单描述本地化为本会话之外写者的搭车改动、未入任何批量记录（必改）；N3 措辞「回复核」→「复核」",
+      "resolution": "N1 删旧行、N3 修复；N2 按并发写者纪律处置——保持未提交、不纳入本批提交（不覆盖、不搭车），批次 README 与 CHANGELOG 补观察说明，待其作者处置；修复后 docs/all 复跑全绿，按评审者给出的先例（同 EP-20261009-001「修完即可放行」）附原始输出收口，未再开轮",
+      "evidence_ref": "E5"
+    }
+  ],
+  "feedback_summary": "用户「一步到位」指令驱动 0.10.0 彻底清理与防漂移：四类残留清零 + 门变更两组扫描（红 9 项→绿、故障注入已观察）+ 版本刷新与快照安装（installed PASS）；独立评审两轮（round 1 F1–F7、round 2 N1–N3）逐条收口；受保护面两文件改动经用户批准记入本 episode 供回溯；并发写者的五清单描述本地化按纪律未纳入提交；measurement: none",
+  "agentflow_version": "0.9.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "ZCode 会话（supervisor 主对话 + reviewer 子代理两轮）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-09T22:05:00+08:00"
+}

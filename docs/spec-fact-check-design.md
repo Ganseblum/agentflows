@@ -187,7 +187,7 @@ disallowedTools: Bash, Write, Edit
   审查流转约束，不能假设为默认能力。
 - **强制力不足**：`maxTurns` 未验证（Z6）、路径级权限不存在（C7）；工具级白名单由宿主
   强制时可以形成硬边界，预算纪律与路径范围仍需 Supervisor diff 和人工门兜底。
-- **评测可信度**：adapter 指标为模型自报，缺独立判定器（next-session-handoff.md:227）；
+- **评测可信度**：adapter 指标为模型自报，缺独立判定器（`_archive/handoff-2026-10/next-session-handoff.md:227`）；
   本机模型标签不可信（C6）；真实模型 dogfood 未完成（self-improvement-design.md:3、:92）。
 - **文档漂移**：角色在 agents/*.md、references/roles.md、docs/agent-roles.md 三处重复，
   无跨文件一致性校验。

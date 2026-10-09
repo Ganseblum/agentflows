@@ -109,7 +109,7 @@ flowchart LR
 
 ### 2. 验证与灰度
 
-1. 确定性面：`python3 tools/lab/validate.py all` 9 项全绿（docs 检查覆盖新文件的 schema
+1. 确定性面：`python3 tools/lab/validate.py all` 全套全绿（docs 检查覆盖新文件的 schema
    引用与角色引用）。
 2. 安装面：`build_runtime.py` 重新生成 → marketplace 刷新 → 重装 → `validate.py installed`
    逐文件 PASS。

@@ -55,9 +55,11 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` keeps the list from being quietly trimmed. `validate.py all` runs nine
-checks — schemas, examples, evals, record artifacts, the merged mock compile, the protected
-list, manifest agreement, the document surface, and the repository's regression tests.
+`validate.py protected` keeps the list from being quietly trimmed. `validate.py all` runs the
+full check set — schemas, examples, evals, record artifacts, the merged mock compile, the
+protected list, manifest agreement, the document surface (broken-link and retired-path scans
+included), the doc-chain linter's discrimination self-test, and the repository's regression
+tests.
 
 The three Bug roles are selectable capabilities, not a mandatory ceremony for every issue.
 Use the full Investigator → Fixer → Reviewer → Recorder flow for material, uncertain,

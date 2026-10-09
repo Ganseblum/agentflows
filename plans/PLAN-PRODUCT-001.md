@@ -86,7 +86,7 @@ updated_at: 2026-09-19T13:00:00Z
 | `T04` | 源码版本 bump 与 CHANGELOG：记下门变更与 `measurement: none`（live 未出前不得写成已验证改进） | P1 | 五份 manifest、`CHANGELOG.md`、`docs/iteration-log.md` | `T03` | ☐ 未开始 | |
 | `T05` | 用户授权后再提交本批；默认不 push | P1 | 工作树已改文件 | `T03` | ☐ 未开始 | |
 | `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 安装快照 | `T04` | ☐ 未开始 | |
-| `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `source`=`./packaging/runtime`；生成树 43 文件且无 records/tests/tools/docs/evals/mock；独立评审 `approved`；评审后补目的地禁写源码树 |
+| `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `source`=`./packaging/runtime`；生成树 43 文件，`records/`、`tests/`、`tools/`、`docs/`、`evals/`、`mock/` 均排除（旧路径为当时口径）；独立评审 `approved`；评审后补目的地禁写源码树 |
 | `T08` | 默认路径缩短：Skill 强调只启用有工作的角色；14 角色留作可选能力 | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | `T01` | ☑ 已完成 | Bind 段不再枚举 14 个 `agentflow:*`；独立评审 `approved`；`validate.py docs` PASS；ZCode 重装提示保留 |
 | `T09` | 日常 Intake 显式检索再犯类（FTS5）；不作为向量 RAG | P2 | `skills/agentflow/SKILL.md`、`tools/lab/record_store.py` | `T02` | ☐ 未开始 | 适合噪声底之后的第一个真假设候选 |
 | `T10` | ZCode 评测适配器（本机已在用 marketplace，无 adapter） | P2 | `tools/lab/host_adapter.py` | `T02` | ☐ 未开始 | 门变更，需人审 |
@@ -147,4 +147,4 @@ git status --porcelain
 git worktree list
 ```
 
-预期：`all` 九项 PASS；`git status` 仅含本批未提交文件（`eval_runner.py`、测试、lab README、噪声底计划、本计划、episode、candidate）；worktree 列表可含噪声底基线/候选树。
+预期：`all` 全套 PASS；`git status` 仅含本批未提交文件（`eval_runner.py`、测试、lab README、噪声底计划、本计划、episode、candidate）；worktree 列表可含噪声底基线/候选树。

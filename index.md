@@ -24,16 +24,13 @@
 - 新增顶层目录或新的文档类型须先经用户确认，不得自动创建。
 - 相对链接带 `.md` 后缀；文档正文不写会话角色词与裸代号（判据见 `skills/agentflow/references/document-chain.md` 的表达纪律节）。
 
-## 待迁移清单（已完成 — 2026-10 结构改造迁移执行批次）
+## 迁移与清理记录
 
-- [x] `records/bugs/` → `issues/`（统一 `ISS-<YYYY>-<NNN>`；仅 `rejected` 记录进 `issues/归档/<日期>/`）
-- [x] `records/plans`、`records/episodes`、`records/reviews`、`records/tests`、`records/improvement` → 批次目录与 `releases/`
-- [x] `docs/audit-2026-09-18/`、`docs/audit-2026-09-18-followups.md`、`docs/next-session-handoff.md` → `_archive/`（未决项先出表）
-- [x] 全仓引用改指与检索索引重建
+- 2026-10 结构改造迁移执行批次（已完成）：记录树撤换为活区、审计/交接件入档、全仓引用改指与检索索引重建。
+- 2026-10-09 彻底清理与防漂移批次：断链与退役路径收敛，`validate.py docs` 增断链/退役路径机器门。
 
-逐文件「旧路径 → 新路径」对照见
-[`features/feature-2026-10-09-结构改造/plan/migration-mapping.md`](features/feature-2026-10-09-结构改造/plan/migration-mapping.md)；
-迁移契约见同目录 `migration-spec.md`。
+逐文件「旧路径 → 新路径」对照与迁移契约见
+[`features/feature-2026-10-09-结构改造/plan/migration-mapping.md`](features/feature-2026-10-09-结构改造/plan/migration-mapping.md)（`migration-spec.md` 同目录）。
 
 ## 冻结历史
 

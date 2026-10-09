@@ -15,7 +15,8 @@ python3 tools/lab/validate.py all
 the live record roots (`issues/`, `episodes/`, `plans/`, `improvements/`, `releases/`,
 `reviews/`),
 the mock fixtures under `mock/` (compiled by merging them into a throwaway repository copy), the
-role/document surface including the version-in-prose guard, the integrity of the protected gate
+role/document surface including the version-in-prose guard and the broken-link / retired-path
+scans of the live document surface, the integrity of the protected gate
 list, the doc-chain linter's discrimination self-test, manifest name/version agreement across the
 five manifests, and the repository's own regression tests under `tests/`. A failing check is a
 compile error: fix it or return it to the worker with the output. A check you cannot reproduce

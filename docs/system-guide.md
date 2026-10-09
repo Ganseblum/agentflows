@@ -5,7 +5,7 @@
 > [`skills/agentflow/references/contracts.md`](../skills/agentflow/references/contracts.md)（硬边界与简报/结果契约）、
 > [`skills/agentflow/SKILL.md`](../skills/agentflow/SKILL.md)（步骤）、
 > [`AGENTS.md`](../AGENTS.md)（仓库纪律）与
-> [`docs/audit-2026-09-18-followups.md`](audit-2026-09-18-followups.md)（整改台账）。
+> [`_archive/audit-2026-09/followups.md`](../_archive/audit-2026-09/followups.md)（整改台账，冻结原文）。
 
 ---
 
@@ -40,7 +40,7 @@ flowchart TB
     end
 
     subgraph GATE["确定性门 tools/lab/（保护区）"]
-        VAL["validate.py all（九项）"]
+        VAL["validate.py all（全套检查）"]
         ISO["isolation.py check-diff（候选禁区）"]
         POL["policy.py（promote/revise/reject）"]
         GR["seed_grader / record_store / artifact_digest"]
@@ -190,15 +190,15 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     subgraph WRITTEN["人写（会话里产生）"]
-        B["bugs/<日期>/<slug>.md<br/>现象/问题代码/根因/修复/变更记录"]
+        B["issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>现象/问题代码/根因/修复/变更记录"]
         P["plans/<plan_id>.md<br/>进展概览+任务表+未决项"]
         E["episodes/<日期>/EP-*.json<br/>目标/outcome/claims/evidence"]
         RV["reviews/<项目>-<功能>/review-*.md<br/>+ archive/ 逐字快照"]
-        T["tests/<项目>-<功能>/{plan,run}-*.md"]
-        I["improvement/{candidates,evaluations,comparisons,releases}/"]
+        T["features/<批次>/testing/<项目>-<功能>/{plan,run}-*.md"]
+        I["improvements/{candidates,evaluations,comparisons}/ + releases/"]
     end
     subgraph COMPILED["机器校验（写完就编，FAIL 即编译错误）"]
-        V["validate.py artifacts：schema + 跨文档不变量<br/>validate.py mock：样板合并编译<br/>validate.py docs：文档面一致性 + 版本散文守卫"]
+        V["validate.py artifacts：schema + 跨文档不变量<br/>validate.py mock：样板合并编译<br/>validate.py docs：文档面一致性 + 版本散文守卫 + 断链/退役路径扫描"]
     end
     WRITTEN --> COMPILED
 ```
@@ -215,7 +215,7 @@ flowchart LR
 
 ---
 
-## 7. 门：九项检查与常用命令
+## 7. 门：检查清单与常用命令
 
 `python3 tools/lab/validate.py all`（本机用 Python ≥3.10，装了 3.12）：
 
@@ -228,8 +228,9 @@ flowchart LR
 | `mock` | 样板 fixture 合并进临时仓库副本后仍编译 | fixture 跟上契约，或改契约（人审） |
 | `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
 | `manifests` | 五份 manifest 名字版本一致 | 补 bump |
-| `docs` | 角色文档面一致性 + 版本散文守卫 | 版本号只活在 manifest/CHANGELOG |
+| `docs` | 角色/文档面一致性 + 版本散文守卫 + 断链与退役路径扫描 | 按报错修文档；版本号只活在 manifest/CHANGELOG |
 | `tests` | tests/ 目录内容受控 + 回归全绿 + 拒绝 skip | 测试红即门回归 |
+| `doc_chain` | 文档链 linter 判别自测（用例数下限守卫） | 自测红或用例数缩水即门红（缩水=门变更，需人审） |
 
 其他日常命令：
 
@@ -298,7 +299,7 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 
 1. **回归先行**：能机器化的发现，先在 `tests/` 加"修复前红、修复后绿"的用例；
 2. **实施**：普通改动直接做；触及保护区 = gate change → 只能由人授权实施，候选无权自改；
-3. **编译**：`validate.py all` 九项全绿才算完（FAIL 是编译错误，不是警告）；
+3. **编译**：`validate.py all` 全套检查全绿才算完（FAIL 是编译错误，不是警告）；
 4. **故障注入**（可选但推荐）：在 /tmp 副本上破坏新机制验证它真的会 FAIL，恢复后复跑观察 PASS
    ——未观察的恢复不算恢复；
 5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态）+ iteration-log 小节 + 台账追加式更新；

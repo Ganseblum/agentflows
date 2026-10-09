@@ -103,8 +103,8 @@
 
 ### S8 确定性验证面
 
-- **陈述**：`validate.py all` 九项（schemas / examples / evals / artifacts / mock /
-  protected / manifests / docs / tests）全绿是任何交付的最低门槛；保护门清单
+- **陈述**：`validate.py all` 全套检查（schemas / examples / evals / artifacts / mock /
+  protected / manifests / docs / tests / doc_chain 自测）全绿是任何交付的最低门槛；保护门清单
   （`protected-paths.txt`）覆盖评测官/发布官角色、评测套件、测量路径、记录 schema、钉住
   回归测试；门变更须人工评审。
 - **验收口径**：`python3 tools/lab/validate.py all` 退出码 0；`validate.py protected`
@@ -115,9 +115,9 @@
 ### S9 打包与安装
 
 - **陈述**：marketplace 源指向 `packaging/build_runtime.py` 生成的瘦快照（含 agents /
-  skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除 records / tests /
-  tools / docs / evals / mock / examples）；五份 manifest 是唯一版本事实源；源码编辑在
-  重装前不改变宿主行为。
+  skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除六个记录根、`_archive/`
+  与 tests / tools / docs / evals / mock / examples / packaging）；五份 manifest 是唯一版本
+  事实源；源码编辑在重装前不改变宿主行为。
 - **验收口径**：生成目录存在且组件齐全；`validate.py installed` 逐文件 sha256 与源码一致；
   克隆后先跑构建脚本（gitignore 产物）。
 - **标尺**：`validate.py installed`；`validate.py manifests`（名称/版本五处一致）。
@@ -196,7 +196,7 @@
 | S5 | 失败语义三类，编排层不做保底 | 生效（注入演练待做） |
 | S6 | 九类记录 + 编译门 | 生效 |
 | S7 | 改进环：预声明 → 独立评测 → 人批门 | 待验证（U-01） |
-| S8 | 九项确定性检查 + 保护门 | 生效 |
+| S8 | 确定性检查全套 + 保护门 | 生效 |
 | S9 | 瘦快照打包，manifest 为版本事实源 | 生效 |
 | S10 | 业务尺子：种子隔离 fail-closed | 待验证（U-01/U-02） |
 | S11 | 文档交付链（对外生成） | 生效 |

@@ -16,8 +16,8 @@ rules, plan dependency graphs and public fixture references. A failing check ret
 `validate.py artifacts` additionally validates the record instances actually written under the
 live record roots (`issues/`, `episodes/`, `plans/`, `improvements/`, `releases/`, `reviews/`,
 recursive) — issue records with their recurrence ledgers and rejected-record archive, review
-records, episodes, plans, and the improvement/release artifacts — against the same schemas and
-body assertions; `all` includes it.
+records, episodes, plans, and the improvement-loop and release artifacts — against the same
+schemas and body assertions; `all` includes it.
 This is the compile step for supervisor artifact acceptance: run it against the real files
 before accepting a worker's record, and treat failures as compile errors. `_archive/` is the
 frozen archive and is deliberately not patrolled; test records now live in the feature batch
@@ -57,7 +57,12 @@ check includes ignored files; they are listed, not blocked.
 frontmatter name equals its filename, every `agentflow:<role>` referenced by a SKILL
 resolves to an agent file, every `schemas/*.schema.json` path named in the docs/live-record-
 roots/skills/agents surface exists, and the Chinese mirror's schema-reference set matches
-`contracts.md`'s. `all` includes it.
+`contracts.md`'s. It also scans the live Markdown surface (everything outside `_archive/` and
+the generated runtime tree) for broken relative links and for retired-path prose. Non-mermaid
+fenced blocks and inline code are quotations and stay exempt — mermaid diagrams are content and
+stay scanned; `CHANGELOG.md` and `docs/iteration-log.md` stay exempt from the token scan as
+historical carriers, and the migration execution record directory is exempt from the token
+scan. `all` includes it.
 
 Two read-only retrospective tables print and exit without validating: `validate.py report
 [--project X] [--status Y] [--provenance Z]` (the bug-record table, provenance as the last
