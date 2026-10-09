@@ -10,7 +10,7 @@
 
 - 一行进度：T01–T15 完成（评审两轮：round 1/round 2 均 `changes_requested`，逐条修复后收口）。
 - 阻塞：无。
-- 下一步：无（提交随本批落盘；不推送）。
+- 下一步：无（提交与推送按用户指示执行）。
 
 ## 任务清单
 
@@ -29,8 +29,8 @@
 | T11 | 全量验证：`all` + self-test + unittest + `isolation.py check-diff` | P0 | — | T09、T10 | ☑ 已完成 | all 10×PASS；self-test 38/38；unittest 159 OK；isolation（两门文件在副本还原后）blocked=[] |
 | T12 | 版本刷新：五清单 0.10.0 + CHANGELOG 条目 + iteration-log 新节 | P0 | 五 manifest、`CHANGELOG.md`、`docs/iteration-log.md` | T11 | ☑ 已完成 | 五清单一致（`manifests` PASS）；CHANGELOG 0.10.0；台账 0.10.0 节 + 总览行 + 0.9.0 补记 |
 | T13 | 运行时重建 + 本地快照安装 + `installed` 转绿 | P0 | `packaging/`、`~/.zcode/.../cache/agentflow-local/agentflow/0.10.0` | T12 | ☑ 已完成 | `build_runtime.py` WROTE；装入 cache/0.10.0；`validate.py installed` PASS |
-| T14 | 独立评审门（author ≠ verifier）：reviewer 审原始 diff 与验证输出；changes_requested 则一轮修复再审 | P0 | 评审结论入批次 `reviews/` 与 episode | T13 | ☑ 已完成 | round 1 `changes_requested`（F1/F2 必改 + F3–F7 建议）→ 修复轮（证据档改围栏、F2–F7 逐条修复、F4 判别力补钉）→ round 2 `changes_requested`（N1 重复行/N2 并发写者本地化/N3 措辞）→ N1/N3 修复、N2 按并发写者纪律保持未提交不纳入提交；复跑全绿后按先例收口；两轮逐条见 `reviews/review-2026-10-09-001.md` 与 EP-20261009-002 |
-| T15 | 收口：episode EP-20261009-002 + README 执行记录与变更前后回写 + 单次提交（不推送） | P0 | `episodes/2026-10-09/`、批次 README、批次 `reviews/` | T14 | ☑ 已完成 | EP-20261009-002 落仓（含两轮 review_roundtrips 与并发写者观察）；`reviews/review-2026-10-09-001.md` 落档；单次提交（不含并发写者改动；不推送） |
+| T14 | 独立评审门（author ≠ verifier）：reviewer 审原始 diff 与验证输出；changes_requested 则一轮修复再审 | P0 | 评审结论入批次 `reviews/` 与 episode | T13 | ☑ 已完成 | round 1 `changes_requested`（F1/F2 必改 + F3–F7 建议）→ 修复轮（证据档改围栏、F2–F7 逐条修复、F4 判别力补钉）→ round 2 `changes_requested`（N1 重复行/N2 并发写者本地化/N3 措辞）→ N1/N3 修复、N2 按并发写者纪律当时保持未提交不纳入本批；复跑全绿后按先例收口（后经用户指示随跟进 `chore` 提交落库）；两轮逐条见 `reviews/review-2026-10-09-001.md` 与 EP-20261009-002 |
+| T15 | 收口：episode EP-20261009-002 + README 执行记录与变更前后回写 + 提交与推送（按用户指示） | P0 | `episodes/2026-10-09/`、批次 README、批次 `reviews/` | T14 | ☑ 已完成 | EP-20261009-002 落仓（含两轮 review_roundtrips 与并发写者观察）；`reviews/review-2026-10-09-001.md` 落档；提交：de25e76（本批）+ 跟进 `chore`（五清单本地化，2026-10-10 用户指示）；按用户指示推送 |
 
 ## 接口与共享机制
 

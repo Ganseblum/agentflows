@@ -1,7 +1,7 @@
 {
   "name": "agentflow",
   "version": "0.10.0",
-  "description": "Run host-native multi-agent development and governed evidence-driven improvement workflows.",
+  "description": "运行宿主原生的多智能体开发与受治理的证据驱动改进工作流。",
   "author": {
     "name": "Ganseblum"
   },
@@ -14,8 +14,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Agentflow",
-    "shortDescription": "Coordinate multi-agent coding with review and traceability.",
-    "longDescription": "Use the coding host's native agents as a bounded engineering team with frontend, backend, technical director, supervisor, and reviewer roles. Agentflow defines the workflow and contracts without invoking a separate orchestration CLI or requiring another provider credential.",
+    "shortDescription": "以评审与可追溯性协调多智能体编码。",
+    "longDescription": "把编码宿主的原生智能体作为一支有界的工程团队使用，涵盖前端、后端、技术负责人、主管与评审角色。Agentflow 只定义工作流与契约，不调用独立的编排 CLI，也不需要额外的提供方凭证。",
     "developerName": "Ganseblum",
     "category": "Developer Tools",
     "capabilities": [

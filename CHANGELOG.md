@@ -31,8 +31,8 @@ machine gate now detects the two residue classes. Method-level change; `measurem
   `changes_requested` — seven findings repaired; round 2 `changes_requested` — two text-level
   items repaired and released under the recorded maintainer precedent) are recorded in the
   batch `reviews/` and `EP-20261009-002`. Note: the five manifests' Chinese description
-  localization present in the working tree is a concurrent writer's uncommitted work (observed
-  2026-10-09 23:24, authored outside this batch) and is not part of this release commit.
+  localization (observed 2026-10-09 23:24, authored outside this batch) was kept out of this
+  release commit and, on the user's instruction, is committed in the follow-up chore commit.
 - **Governance lane**: direct user-directed change (same lane as 0.9.0); the protected-path
   edits were made under the user's explicit approval and are recorded in the batch episode for
   retrospective review; no candidate/evaluation/comparison set; not described as a verified

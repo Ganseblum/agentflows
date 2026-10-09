@@ -1,7 +1,7 @@
 {
   "name": "agentflow",
   "version": "0.10.0",
-  "description": "Host-native multi-agent development and evidence-driven improvement workflows: supervisor, frontend/backend engineers, technical director, reviewer, bug roles, plan architect, and governed improvement roles.",
+  "description": "宿主原生多智能体开发与证据驱动改进工作流：主管、前端/后端工程师、技术负责人、评审、Bug 链路角色、计划架构师与受治理的改进角色。",
   "author": {
     "name": "Ganseblum"
   },

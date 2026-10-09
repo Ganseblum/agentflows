@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "description": "Run host-native development and governed improvement workflows with specialized implementation, evaluation, and release roles.",
+  "description": "以专职的实现、评测与发布角色运行宿主原生开发与受治理的改进工作流。",
   "version": "0.10.0",
   "author": {
     "name": "Ganseblum"
