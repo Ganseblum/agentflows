@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260917-001",
+  "source_type": "user_feedback",
+  "objective": "评估 agentflow/improve 两个 Skill 的触发描述是否需要精修（用户问：要不要处理精准描述，现在的描述是否需要改）",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_visible_claims",
+      "value": 2,
+      "evidence_ref": "会话最终决策记录：①两个 description 本身不需要改（触发判据句 220/136 字符，均在宿主约 250 字符窗口内完整结束，余量 30/114；0.3.2 前置化后至 0.6.0 零触发事故记录）；②缺口是预算无确定性检查保护，两项待办录入 _archive/handoff-2026-10/next-session-handoff.md P1"
+    },
+    {
+      "kind": "observed_host_facts",
+      "value": "ZCode 呈现 description 的前 249/250 字符逐字前缀，截断后去尾随空格加省略号",
+      "evidence_ref": "本会话技能清单与源文件逐字比对：agentflow 呈现 249 字符（第 250 字符为空格被去除）、improve 呈现 250 字符且断在单词中间（bounde…）"
+    },
+    {
+      "kind": "cost",
+      "value": "not measured",
+      "evidence_ref": "host did not report"
+    },
+    {
+      "kind": "review_roundtrips_backfill",
+      "value": "pre-0.7.2 episode: per-round review records were not captured by the bridge contract at recording time; review_roundtrips=[] means not captured, not that no review ran (0.8.0 required-field backfill)"
+    }
+  ],
+  "feedback_summary": "improve 环 proposal 模式评估（基线 main@3862083，validate all 八项 PASS）：触发描述不需要改——agentflow/improve description 全长 361/342，触发判据句在窗口内完整结束；0.3.2 前置化修复后约十个版本 records/ 无误触发/漏触发记录；被截尾巴对不截断宿主是有效信息。真实缺口：前置化纪律无确定性检查（validate.py 不校验 description 长度），未来编辑可能静默破坏触发面。待办两项：①预算检查（门变更：tests/ + EXPECTED_TEST_FILES + protected-paths.txt，须人工实施）；②把 Z3 截断实测记入 host-platform-facts.md（doc 级升 observed 级）。用户决定：先记录问题，两项做不做后续再定。",
+  "agentflow_version": "0.6.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-17T13:04:06Z",
+  "review_roundtrips": []
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/bug-record.schema.json",
   "title": "Agentflow bug record frontmatter",
-  "description": "Contract for the YAML frontmatter of a Markdown bug record under records/bugs/.",
+  "description": "Contract for the YAML frontmatter of a Markdown issue record under issues/ (flat: issues/ISS-<YYYY>-<NNN>-<slug>.md; rejected records move to issues/归档/<YYYY-MM-DD>/).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,7 +20,7 @@
   "properties": {
     "bug_id": {
       "type": "string",
-      "pattern": "^BUG-[A-Z0-9][A-Z0-9._-]*$"
+      "pattern": "^ISS-\\d{4}-\\d{3,}$"
     },
     "title": { "type": "string", "minLength": 1 },
     "status": {
@@ -71,7 +71,7 @@
       "items": { "type": "string", "minLength": 1 }
     },
     "class_id": {
-      "description": "Failure class this record belongs to; the recurrence ledger lives at records/bugs/recurrence/<class_id>.md.",
+      "description": "Failure class this record belongs to; the recurrence ledger lives at issues/recurrence/<class_id>.md.",
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]*$"
     },

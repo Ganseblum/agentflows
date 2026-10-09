@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20260920-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "working tree on git:5da90f2ec08111386045c3b26c5e8badce053f7b + uncommitted four-file candidate patch (skills/agentflow/SKILL.md, skills/agentflow/references/roles.md, skills/agentflow/references/contracts.md, docs/agent-roles.md); the tree coexists with pre-existing/concurrent parallel-session work that is NOT part of the candidate: SKILL.md document-chain section, untracked skills/agentflow/references/document-chain.md and docs/product/, tracked AGENTS.md +14-line document-chain linter section, untracked tools/lab/doc_chain.py (mtime 2026-09-20 12:00/12:04 +0800, concurrent session, zero overlap with the four candidate files and the bug's gap surfaces; AGENTS.md/tools/lab are not protected paths). Functional parent = installed 0.8.1 snapshot, hunk-verified by the evaluator.",
+    "base": "git:5da90f2ec08111386045c3b26c5e8badce053f7b (frozen isolation base; functional parent for content comparison is the 0.8.1 installed snapshot)"
+  },
+  "run": {
+    "run_id": "merge-quality-gate-candidate-001",
+    "started_at": "2026-09-20T03:05:00Z",
+    "ended_at": "2026-09-20T06:05:00Z",
+    "status": "complete"
+  },
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "The four-file patch is the complete candidate delta relative to the functional parent (0.8.1 installed snapshot): description task-shape enumeration, Integrate-step merge quality gate, routing-table row (en+zh mirror), hard-boundary-3 authorization-vs-verification sentence; workflow step numbering and hard-boundary numbering unchanged; existing document-chain work untouched",
+      "status": "verified",
+      "check": "evaluator hunk-by-hunk audit vs 0.8.1 snapshot (S5: snapshot step-6 same-text count 1, quality-sentence count 0) + frozen S3 enumeration (tracked diff vs 5da90f2 = four candidate files + attributed AGENTS.md; any new path = FAIL, none appeared)",
+      "evidence_ref": "E1; E3; E5"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "All five new clauses are present exactly once: 'branch integration and conflict resolution' (SKILL.md description), 'branch merge with conflict resolution' (roles.md), '任务本身是分支合并/解冲突' (docs/agent-roles.md), 'clearing conflict markers is not a check' (contracts.md boundary 3), 'iteration default, not an exemption' (SKILL.md step 6)",
+      "status": "verified",
+      "check": "S1 five greps, each count 1, exit 0 (run twice: evaluator round and freeze anchor)",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "Structural integrity: workflow steps 1-10 in original order, hard boundaries 3/14 at their line anchors, zero 0.8.2 version literals in skills/agentflow/** and docs/agent-roles.md, zero schema-reference additions/removals",
+      "status": "verified",
+      "check": "S2 greps verbatim (step-title count 10; version-literal grep zero hits exit 1)",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "Deterministic gates green in the coexistence tree: validate.py all 9x PASS EXIT=0 and isolation.py check-diff blocked:[] EXIT=0, re-verified at the freeze anchor and again after the recorder's record-hygiene edits",
+      "status": "verified",
+      "check": "python3 tools/lab/validate.py all + isolation.py check-diff --candidate /tmp/af-merge-gate-frozen --base 5da90f2..., verbatim outputs at anchor 2026-09-20T04:18:55Z and after",
+      "evidence_ref": "E3; E4"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "Incident defect body verified: 'func (c *Config) validate() error {' appears exactly 2 times in 7af6cf5's server/internal/config/config.go and exactly 1 time in 619ae69's; infinite-canvas-base worktree at 619ae69 clean",
+      "status": "verified",
+      "check": "git show 7af6cf5:server/internal/config/config.go | grep -c ... -> 2; git show 619ae69:... -> 1; git status --porcelain empty in the base worktree",
+      "evidence_ref": "E8"
+    },
+    {
+      "claim_id": "C6",
+      "claim": "Coexistence attribution: AGENTS.md (+14-line document-chain linter section) and tools/lab/doc_chain.py belong to a concurrent session, not this candidate — content zero-overlap, mtime timeline (12:00:53/12:04:19, after the candidate engineer's closing status), and gate-surface check (neither path protected; neither touches the bug's gap surfaces); gates green in the coexistence state",
+      "status": "verified",
+      "check": "evaluator independent re-read (AGENTS.md diff, doc_chain.py header, protected-paths.txt) + supervisor git diff/stat evidence; evaluator accepted the attribution and required it recorded (A1)",
+      "evidence_ref": "E7; E3"
+    },
+    {
+      "claim_id": "C7",
+      "claim": "Measurement posture: no instrumented merge/integration case exists in evals/ or evals/business/; improvements/evaluations, improvements/comparisons, releases are empty; the release must state measurement: none (method-level change, no instrumented business task), primary_metrics are declared-not-measured, no metric numbers may be cited, and the candidate must not be described as a verified improvement — prevention effect awaits post-0.8.2 comparison verification",
+      "status": "verified",
+      "check": "governor direct read (subtrees empty) + candidate record rejection_criteria predeclaration + evaluator A5 ruling; structural fact: release-record contract requires a runner result pair + comparison, so releases/ cannot compile for this class (episode-route bookkeeping per EP-20260919-006 precedent)",
+      "evidence_ref": "E6"
+    },
+    {
+      "claim_id": "C8",
+      "claim": "Runtime effect is NOT yet claimed: hosts keep loading the installed 0.8.1 snapshot (and this workspace's .zcode active copy) until bump to 0.8.2 + marketplace refresh + reinstall + validate.py installed green; whether the new clauses actually redirect merge-shaped tasks at runtime is unverified and awaits both reinstall and an instrumented comparison",
+      "status": "unverified",
+      "check": "would require: user-approved promotion execution (bump, packaging/runtime rebuild, reinstall, validate.py installed) plus an instrumented merge/integration business case (none exists — declared measurement: none)",
+      "evidence_ref": "E9"
+    },
+    {
+      "claim_id": "C9",
+      "claim": "Promotion executed after user approval ('可以'): five manifests + regenerated packaging/runtime all at 0.8.2, CHANGELOG 0.8.2 entry added, post-bump validate.py all 9x PASS EXIT=0, workspace .zcode/skills/agentflow symlink live path byte-identical to source (three diffs empty), recurrence ledger consolidated with consolidated_in: 0.8.2, ISS-2026-026 verified with fix_revision agentflow 0.8.2 (schema-required reviewer/review_decision/regression_status fields added); known residual: the host's installed snapshot is still 0.8.1 — validate.py installed reports 'no snapshot for source version 0.8.2' verbatim until the user refreshes the marketplace and reinstalls inside the ZCode app (no headless CLI exists on this machine)",
+      "status": "verified",
+      "check": "governor execution-list steps 0-7 executed with verbatim outputs; rollback target 0.8.1 remains available (repoint reinstall, never in-place repair)",
+      "evidence_ref": "E10"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "verbatim_output",
+      "ref": "/tmp/af-merge-gate-review/candidate.diff — 5 hunks: SKILL.md description, SKILL.md step 6, roles.md routing row, contracts.md boundary-3 sentence, docs/agent-roles.md zh mirror row",
+      "digest": "sha256:e40d281cb2a8f6186405148a318ca9372c0fb9910f26d747a94be340e93e85e0"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "verbatim_output",
+      "ref": "S1 five clause greps (1/1/1/1/1) and S2 structural greps (10 steps; boundary 14 @contracts.md:24; boundary 3 @contracts.md:13; 0.8.2 literal zero-hit) — executed by supervisor per evaluator authorship, no output suppression"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "command",
+      "ref": "freeze anchor 2026-09-20T04:18:55Z on /tmp/af-merge-gate-frozen: validate.py all -> PASS schemas/examples/evals/artifacts/mock/protected/manifests/docs/tests, ALL-EXIT=0; re-run after recorder edits identical; S3 enumeration unchanged vs evaluator-approved state"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "command",
+      "ref": "isolation.py check-diff --candidate /tmp/af-merge-gate-frozen --base 5da90f2ec08111386045c3b26c5e8badce053f7b -> blocked: [] EXIT=0 (changed paths enumerated incl. candidate four files, new records, coexistence set)"
+    },
+    {
+      "evidence_id": "E5",
+      "kind": "verbatim_output",
+      "ref": "S5 functional-parent anchoring: 0.8.1 snapshot SKILL.md contains the pre-candidate step-6 sentence (count 1) and does NOT contain 'Authorization settles whether the integration may happen' (count 0)"
+    },
+    {
+      "evidence_id": "E6",
+      "kind": "directory_listing",
+      "ref": "improvements/evaluations/, improvements/comparisons/, releases/ all empty (ls -t) — release-record result-pair prerequisites unmet, episode-route bookkeeping (EP-20260919-006 precedent)"
+    },
+    {
+      "evidence_id": "E7",
+      "kind": "verbatim_output",
+      "ref": "git diff AGENTS.md (+14-line document-chain linter section referencing tools/lab/doc_chain.py), stat mtimes 12:04:19/12:00:53 +0800, doc_chain.py header self-description (born from a separate 2026-09-20 doc-chain quality failure)"
+    },
+    {
+      "evidence_id": "E8",
+      "kind": "command",
+      "ref": "git show 7af6cf5:server/internal/config/config.go | grep -c 'func (c \\*Config) validate() error {' -> 2; git show 619ae69:... -> 1; git worktree list + empty status --porcelain for infinite-canvas-base @619ae69"
+    },
+    {
+      "evidence_id": "E9",
+      "kind": "command",
+      "ref": "governor execution-list step 1: artifact_digest.py --root /tmp/af-merge-gate-frozen (excludes .zcode symlink, .agentflow-records.sqlite3, .DS_Store, command-code-session-*.html) -> sha256:e40d281c... equals the pinned value; the frozen copy's embedded candidate record still carries the pre-backfill value 7babb3c6 — explained: the pinned digest covers the tree as frozen at the anchor (a digest cannot contain its own backfilled value); the one-field backfill happened after the anchor and is the only difference between the frozen copy and the working tree record"
+    },
+    {
+      "evidence_id": "E10",
+      "kind": "command",
+      "ref": "promotion execution (user-approved): post-bump validate.py all -> 9x PASS ALL-EXIT=0; validate.py installed -> 'FAIL installed (1 error(s)): ... no snapshot for source version 0.8.2; installed versions: 0.8.1. Refresh the marketplace and reinstall...' (expected pre-reinstall drift, verbatim); packaging/build_runtime.py WROTE packaging/runtime (agents, skills, schemas, manifests, protected-paths.txt); five source manifests + runtime copies all 'version': '0.8.2'; runtime snapshot clause greps 1/1/1/1/1; readlink .zcode/skills/agentflow -> ../../skills/agentflow with three empty diffs vs source; promotion-time coexistence enumeration: tracked AGENTS.md + _archive/handoff-2026-10/next-session-handoff.md (concurrent session) + candidate files, untracked declared foreign set + this loop's records"
+    }
+  ],
+  "objective": "处理用户提交的《agentflow-合并解冲突质量门缺口分析与优化建议》：把复盘确认的缺口（触发判据不含合并/集成形态、merge 只有授权维度、评审门无激活外兜底的 agentflow 侧、与宿主不构建规则未调和的 agentflow 侧张力）落地为 0.8.2 候选，走完整角色分离改进环（feedback-analyst 归一化→bug-recorder 建档+台账→candidate-engineer 实现→evaluator 独立评审→release-governor 裁决），并同步落地其 4.2 宿主侧建议（用户级 AGENTS.md 启用清单条目 + infinite-canvas AGENTS.md 不构建例外）。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "measurement_scope",
+      "value": "measurement: none (method-level rule-text change, no instrumented merge/integration business task); primary_metrics merge_integration_gate_trigger_rate / first_pass_review_rate are declared-not-measured; no metric numbers cited anywhere; prevention effect awaits post-0.8.2 comparison verification",
+      "evidence_ref": "E6; C7"
+    },
+    {
+      "kind": "review_isolation",
+      "value": "evaluator and release-governor ran as read-only subagents that did not implement; evaluator authored S1-S5 confirmatory checks executed by the supervisor with verbatim output; procedural role separation, not environment isolation (hard boundary 7)",
+      "evidence_ref": "review_roundtrips"
+    },
+    {
+      "kind": "concurrent_session",
+      "value": "a concurrent session landed AGENTS.md +14-line doc-chain linter section and untracked tools/lab/doc_chain.py mid-loop; attributed by content/mtime/gate-surface triple evidence, zero overlap with the candidate; the S3 enumeration set was frozen at approval and verified non-growing at the anchor; gates green throughout the coexistence state",
+      "evidence_ref": "E7; E3"
+    },
+    {
+      "kind": "accounting_route",
+      "value": "release-record plane structurally requires runner result pair + comparison (both absent for measurement: none), so promotion bookkeeping follows the episode route per EP-20260919-006 precedent; changing that contract is a protected-surface (gate) change requiring human review",
+      "evidence_ref": "E6"
+    },
+    {
+      "kind": "pending_user_gate",
+      "value": "governor decision was promote-conditional; the user approved ('可以') and execution-list steps 0-7 ran: manifests+runtime at 0.8.2, CHANGELOG entry, post-bump gates green, ledger consolidated_in 0.8.2, bug record verified. Remaining user-side action: marketplace refresh + reinstall inside the ZCode app (no headless CLI) to move the installed snapshot to 0.8.2; rollback target 0.8.1 verified, rollback = repoint reinstall, never in-place repair",
+      "evidence_ref": "C8"
+    },
+    {
+      "kind": "host_side_actions",
+      "value": "the md's 4.2 host-side recommendations were applied by the supervisor outside this repo: ~/.zcode/AGENTS.md 主动启用清单 gained the branch-merge/conflict bullet (backup at ~/.zcode/AGENTS.md.bak-20260920; Go commands generalized to 'the repo's build+test checks' with go/tsc as examples), and infinite-canvas AGENTS.md gained the merge exception clause after its no-build rule (git-tracked, feature-admin-usage-analytics branch)",
+      "evidence_ref": "feedback_summary"
+    }
+  ],
+  "feedback_summary": "用户提交 infinite-canvas 仓库《agentflow-合并解冲突质量门缺口分析与优化建议》并要求处理优化。intake：record_store 检索 'merge conflict integration' 命中同任务族授权侧先例 ISS-2026-007（0.4.2 修复），质量侧为新失败类。feedback-analyst 只读归一化：四缺口判定成立（含已覆盖面精确边界）、归因 workflow_policy、provenance agentflow（缺口落点为 agentflow 独立于会话的工件面，先例同构）、建议 class_id merge-integration-quality-gate；两项 NOT RUN（缺陷本体计数、worktree 干净度）由 supervisor 用 git show/worktree list 补验闭合（2→1、干净）。bug-recorder 建档 ISS-2026-026 + 台账（首现即归纳先例，unconsolidated 待 0.8.2 发布）；supervisor 修一处台账文件名笔误（-gap 后缀）后 artifacts 编译通过。candidate-engineer 落四文件补丁（description 枚举/第 6 步合并质量门含反模式与宿主规则不豁免裁决句/roles.md 路由行+中文镜像/contracts.md 硬边界 3 质量句），validate.py all 首跑即 9×PASS；isolation check-diff 以 /tmp 独立副本复跑 blocked:[]。evaluator 独立评审两轮：第一轮逐 hunk 审计（对照 0.8.1 安装快照功能父版）+语义冲突扫描（无矛盾，F1-F6 均不阻断）+授权 supervisor 执行 S1-S5；第二轮接受 S3 偏离归因（AGENTS.md/doc_chain.py 系并行会话 document-chain 工作，内容/mtime/门面三重证据），最终 approved，附 A1（并存说明入三处记录）/A2（closure_criteria 口径）/A3（冻结锚定）/A4（晋升时点义务）/A5（measurement:none 不可豁免）。supervisor 落实 A1/A2，钉冻结锚（04:18:55Z，S1-S4 全绿、枚举集未增长、digest e40d281c 并经第 1 步复算等于钉住值）。release-governor 复核后出 promote（条件性，用户批准为执行前置）：七条件六满足、第七条按 human-gated 模式落在批准后执行；发现冻结副本内嵌记录保留回填前旧 digest 值，已由第 1 步复算与自引用解释闭合。4.1.4（episode schema 增合并类固定字段）与 doc_chain.py 未入 protected-paths 两项标为人审 gate 变更事项，不进候选。宿主侧：用户级 AGENTS.md 增分支合并启用条目（Go 命令泛化为例示）、infinite-canvas AGENTS.md 增不构建例外，均已落盘。全部时间戳为会话工具调用锚点的近似值；未提交、未 bump、未重装，等用户最终批准。",
+  "agentflow_version": "0.8.1",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-20T04:40:00Z",
+  "review_roundtrips": [
+    {
+      "at": "2026-09-20T03:55:00Z",
+      "reviewer": "agentflow:evaluator",
+      "decision": "approved",
+      "finding": "Round 1: five hunks match hypothesis scope one-to-one against the functional parent (0.8.1 installed snapshot, hunk-verified); semantic-conflict scan clean (anti-pattern vs step-7 grep is complementary; host-rule ruling aligns with step 5; boundary-3 sentence needs no SKILL.md:167 sync — F1 sync suggestion, F2 wording residue, F3 pre-existing zh-mirror gap, all non-blocking); coverage: all four agentflow-side gap surfaces closed, host-side parts correctly not claimed; measurement honesty predeclared. Conditional on supervisor-executed S1-S5 returning as expected.",
+      "resolution": "supervisor executed S1-S5 verbatim: S1 five greps each 1; S2 10 steps + boundary anchors + zero version literals; S3 deviation found (AGENTS.md modified + untracked doc_chain.py beyond declared set) and attributed to the concurrent document-chain session; S4 gates re-run green; S5 as expected. Attributed deviation accepted by evaluator; final approved with A1-A5 conditions.",
+      "evidence_ref": "E1; E2; E3; E5; E7"
+    },
+    {
+      "at": "2026-09-20T04:15:00Z",
+      "reviewer": "agentflow:evaluator",
+      "decision": "approved",
+      "finding": "Round 2 (final): S1/S2/S4/S5 all as expected; S3 deviation independently re-verified and accepted (content zero-overlap, mtime timeline after candidate closing, neither path gate-protected); coexistence notes (A1) made a condition of the approval's validity; freeze re-verification (A3) required before the governor consumes evidence; S3 expected surface re-pinned to the frozen enumeration set (any new path = FAIL).",
+      "resolution": "supervisor applied A1 to the candidate record (source_revision composition) and dispatched the recorder for the bug-record coexistence line + closure_criteria backfill; freeze anchor executed 2026-09-20T04:18:55Z (S1-S4 green, enumeration non-growing, digest pinned); governor received only the frozen outputs.",
+      "evidence_ref": "E2; E3; E4; E9"
+    }
+  ]
+}

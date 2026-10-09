@@ -1,5 +1,5 @@
 ---
-bug_id: BUG-INVALID-001
+bug_id: ISS-2026-907
 title: verified 记录缺少独立审查
 status: verified
 severity: P3

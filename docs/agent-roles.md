@@ -12,10 +12,10 @@ Agentflow 的角色是能力边界，不是每个任务都必须启动的固定�
 | Reviewer | 独立检查实现、回归、权限边界与 diff 中无人要求的行为 | 否 | 无（只读，审查期间不改码） |
 | Bug Investigator | 发现、复现描述和根因归因 | 否 | 无（只读） |
 | Bug Fixer | 在候选工作区实施单个 Bug 修复 | 是 | 候选工作区内指派的文件范围 |
-| Bug Recorder | 保存脱敏 Bug 记录和适用边界 | 只写记录 | Supervisor 显式指定的 `records/bugs/<日期>/` 单一 md 文件 |
-| Plan Architect | 汇总专业意见并生成可执行计划 | 只写计划 | Supervisor 显式指定的 `records/plans/` 单一路径 |
-| Test Planner | 设计测试用例库：级别分级、可执行步骤表、边界覆盖、流程疑点 | 否 | Supervisor 显式指定的 `records/tests/<项目>-<功能>/plan-*.md` 单一路径 |
-| Test Executor | 执行已批准的测试计划并产出带证据的执行报告 | 只写执行记录与脚本 | Supervisor 显式指定的 `records/tests/<项目>-<功能>/run-*.md` 单一路径及其同目录脚本 |
+| Bug Recorder | 保存脱敏 Bug 记录和适用边界 | 只写记录 | Supervisor 显式指定的 `issues/` 单一 md 文件 |
+| Plan Architect | 汇总专业意见并生成可执行计划 | 只写计划 | Supervisor 显式指定的 `plans/` 单一路径 |
+| Test Planner | 设计测试用例库：级别分级、可执行步骤表、边界覆盖、流程疑点 | 否 | Supervisor 显式指定的 `features/<批次>/testing/<项目>-<功能>/plan-*.md` 单一路径 |
+| Test Executor | 执行已批准的测试计划并产出带证据的执行报告 | 只写执行记录与脚本 | Supervisor 显式指定的 `features/<批次>/testing/<项目>-<功能>/run-*.md` 单一路径及其同目录脚本 |
 | Feedback Analyst | 证据归一化、聚类与归因 | 否 | 无（只读） |
 | Candidate Engineer | 在候选源实施单个改进假设 | 是 | 指派的候选源码树 |
 | Evaluator | 独立对照评测 Baseline 与 Candidate | 否 | 无（只读，结果记录由隔离 runner 产出） |
@@ -106,19 +106,19 @@ Worker 的回执只是主张，不是验证。Supervisor 接受任何 worker 产
 
 Bug 记录为 Markdown + frontmatter：正文给人读（错误现象、问题代码、原因、修复），
 frontmatter 给机器校验（id、状态、严重性、错误类型 `error_kind`、归因、项目、涉及
-文件、时间戳）。文件按记录日期放 `records/bugs/<YYYY-MM-DD>/`，kebab-case 文件名；
-`rejected` 的记录移入 `records/bugs/archive/`，`verified` 留在原位作为参考。回溯用
+文件、时间戳）。文件平铺在 `issues/`，命名为 `ISS-<YYYY>-<NNN>-<slug>.md`；
+`rejected` 的记录移入 `issues/归档/<日期>/`，`verified` 留在原位作为参考。回溯用
 `python3 tools/lab/validate.py report` 输出时间排序的全量表。
 
-记录语言约定（`records/README.md`）：机器层英文 ASCII——frontmatter 键与枚举值、
+记录语言约定（冻结原文 `_archive/records-2026-10/readmes/records-README.md`）：机器层英文 ASCII——frontmatter 键与枚举值、
 slug/ID/路径、`project` slug；章节标题是固定字面量但为中文——`## 现象`、`## 根因`、
 `## 修复`、`## 问题代码`、`## 审查`，校验器按精确字面量匹配，不随记录翻译；人读层
 （`title` 与正文）一条记录只用一种语言，且 **title 必须与正文同语言**，默认中文（代码、
 命令、技术名词在中文行文里保留原文）。2026-09-16 之前的 6 条记录已于当日统一到该
-形式（title 与章节标题中文化，各自刷新 `updated_at`），`examples/bug-records/` 示例
+形式（title 与章节标题中文化，各自刷新 `updated_at`），`examples/issues/` 示例
 同一约定。
 
-视觉标注（0.7.2，约定见 `records/README.md`）：记录正文可用两类渲染安全的强调——GFM
+视觉标注（0.7.2，约定见 `_archive/records-2026-10/readmes/records-README.md`）：记录正文可用两类渲染安全的强调——GFM
 callout（`> [!IMPORTANT]` 未决分歧/阻塞、`> [!WARNING]` 残余风险/已知缺口、`> [!NOTE]`
 口径澄清；固定字面量前缀可 grep）与 ```` ```diff ```` 围栏（改前/改后或方案 A/B 对照）。
 语义权威层仍是 frontmatter 枚举与固定章节，标注只是视觉层；内联 HTML 颜色与非标准
@@ -137,7 +137,7 @@ alert 类型一律不用（渲染器间不可移植，污染可 grep 层）。
 判定要有依据：归 `agentflow` 时引用覆盖条款 `path:line`，归 `session-artifact` 时写明无条款
 覆盖及理由。过滤：`validate.py report | awk -F'\t' '$7=="agentflow"'`。
 
-再犯类台账（`records/bugs/recurrence/<class_id>.md`，契约 `schemas/recurrence.schema.json`）：
+再犯类台账（`issues/recurrence/<class_id>.md`，契约 `schemas/recurrence.schema.json`）：
 只发生过一次的 bug 不建台账；再犯或已归纳的类一类一个文件。`status` 为
 `unconsolidated`（未归纳升级）/ `consolidated`（已归纳升级，`consolidated_in` 写明吸收该类的
 Agentflow 版本）；`occurrences` 按时间列出记录 id，版本从记录自身的 `agentflow_version`
@@ -216,7 +216,7 @@ Reviewer 的 test-depth 专项里，revert 实验是行为断言不是推演：r
 失败输出，Supervisor 执行并回传原始输出——与其检查协议同一通道，不接受摘要。Fixer
 写的回归检查是下限，不是独立验证。
 
-长编排断点：会话中断后从 `records/plans/` 的版本化计划恢复，而不是靠记忆——每个工作
+长编排断点：会话中断后从 `plans/` 的版本化计划恢复，而不是靠记忆——每个工作
 包的状态先从工作区重新推导（对委派基线的 diff、检查、review 决策），没有观察到证据
 的包视为未开始。持久队列、租约、可恢复并行批次是未来 `execution-coordinator` 的职责；
 今天计划文件 + 仓库状态就是唯一的 checkpoint。
@@ -237,7 +237,7 @@ Reviewer 的 test-depth 专项里，revert 实验是行为断言不是推演：r
 ```
 
 Plan Architect 的产物是执行合同，不是代码变更授权。计划为 **Markdown 融合形态**
-（`records/plans/<plan_id>.md`，0.5.0 起）：frontmatter 机器信封（plan_id/版本/状态/
+（`plans/<plan_id>.md`，0.5.0 起）：frontmatter 机器信封（plan_id/版本/状态/
 目标/时间戳）+ 正文看板——进展概览（三视角概览表）、任务清单（T01… 任务表，状态
 枚举 ☐/◐/☑/⚠/—、证据回写列、`### 未决项`）、接口与共享机制（契约表+异常矩阵+发布
 顺序×回滚点）、验证命令。机器断言：任务 ID 唯一、依赖可解析且无环、状态为固定枚举、
@@ -261,17 +261,17 @@ git：提交/rebase/push 是共享可变状态——并行执行者各自分支�
 负责计划记录，Bug Recorder 负责 Bug 证据；只有出现跨宿主持久控制面需求时，才增加
 统一 Evidence Recorder/Store。
 
-## 外部文档二次评审桥（records/reviews/）
+## 外部文档二次评审桥（reviews/）
 
 实际用法：方案/计划在业务仓（如 `aiwork-workflow-ai`）按它自己的 rule/agent/template 生成
 （对话也在那边），再用 agentflow 做独立二次评审。桥的落点：
 
-- **目录锚是 feature 不是日期**：`records/reviews/<project>-<feature-slug>/` 一个 feature
+- **目录锚是 feature 不是日期**：`reviews/<project>-<feature-slug>/` 一个 feature
   一个目录；同一 feature 反复评审（今天/明天/修完再评）每轮追加一个
   `review-<YYYY-MM-DD>-<NNN>.md`（文件名 = review_id），本轮快照进
   `archive/<日期>-<序号>/`——同名文档跨轮不冲突；`source_revision` 钉业务仓当时 commit，
   后续演变不追溯改变评审对象；再评审聚焦上轮以来的 delta；
-- 评审发现一条一条进 `records/bugs/`，`provenance` 分流升级回路：`external` + 业务仓
+- 评审发现一条一条进 `issues/`，`provenance` 分流升级回路：`external` + 业务仓
   模板/文档引用 = 升级业务仓 rule/template 的证据池；`agentflow` = 本仓 review 契约该抓
   没抓，升级本仓；业务仓落地升级后回填 `fix_revision` 闭环；
 - **引用自包含**（把仓给别人时记录仍可读）：`files` 条目要么是本仓路径（校验器查在盘）、
@@ -279,7 +279,7 @@ git：提交/rebase/push 是共享可变状态——并行执行者各自分支�
   引用）。**含外部引用的记录正文必须内嵌片段**——代码围栏块（`## 问题代码`，注释行标注
   仓限定地址）、文档引用块（关键原文）——且片段旁必须出现仓限定地址原文（均校验器
   强制）；仓限定是地址、内嵌片段才是证据，缺一即 FAIL。评审发现的 `files` 优先指向本仓
-  快照 `records/reviews/<feature>/archive/<轮次>/<doc>.md`（整份 copy 已在 archive），
+  快照 `reviews/<feature>/archive/<轮次>/<doc>.md`（整份 copy 已在 archive），
   原始仓限定地址写正文；`@<revision>` 本身不自检，快照完整性由 `archive/` 承担；
 - **正文引用规则**（校验器强制，bug 记录/评审记录/类台账同适用）：散文里的路径是记录
   自己的主张，必须在盘或仓限定；围栏块与内联代码是**引文**（逐字证据，含历史路径）
@@ -292,16 +292,16 @@ git：提交/rebase/push 是共享可变状态——并行执行者各自分支�
 - 已知边界：跨仓再犯类的 `escalated` 档位暂不能自动推导（`consolidated_in` 绑定本仓
   semver）；跨仓类先用 report 按 `project` + `error_kind` 聚类。
 
-完整工作流与归因表见 `records/reviews/README.md`。
+完整工作流与归因表见 `reviews/README.md`。
 
-## 自动化测试链路（records/tests/）
+## 自动化测试链路（features/<批次>/testing/）
 
 0.7.0 起新增：`Test Planner` 出用例库、`Test Executor` 执行并出报告。宿主浏览器的操作是
 主对话专属能力（子代理加载不了 browser-use/computer-use），因此 UI 步骤的分工是——Executor
 把用例编译成逐步操作脚本 + 断言清单，Supervisor 在主对话照单执行并回传原始证据（截图、
 DOM、网络面板），Executor 只依据原始证据判 pass/fail。落点：
 
-- **目录锚是 feature**：`records/tests/<project>-<feature-slug>/` 一个 feature 一个目录；
+- **目录锚是 feature**：`features/<批次>/testing/<project>-<feature-slug>/` 一个 feature 一个目录；
   用例库 `plan-*.md` 就地修订（`test_version` 递增），执行报告每轮一个
   `run-<YYYY-MM-DD>-<NNN>.md`（文件名 = `test_run_id`），并钉住所依据的 plan id/版本与
   被测仓 `target_revision`；
@@ -309,7 +309,7 @@ DOM、网络面板），Executor 只依据原始证据判 pass/fail。落点：
   矩阵把空输入、非法格式、超长、特殊字符、重复提交、过期登录态等默认边界类逐条映射到
   用例，未覆盖的显式声明；`## 流程疑点` 登记 spec 未定义的行为，交 Reviewer 的
   流程合理性模式终审——「该失败而没失败」也是 finding；
-- **失败即立案**：`findings` / `flow_findings` 引用 `records/bugs/` 的 bug_id（校验器
+- **失败即立案**：`findings` / `flow_findings` 引用 `issues/` 的 bug_id（校验器
   强制存在），失败行自带复现步骤，Supervisor 不必重新推导；执行报告的原始证据同时充当
   评审门（SKILL 第 8 步）的端到端路径证据；
 - **凭据不落盘**：`credentials` 字段只声明注入方式（会话注入 / env / gitignored 文件），
@@ -319,7 +319,7 @@ DOM、网络面板），Executor 只依据原始证据判 pass/fail。落点：
   引擎词汇书写（注册表别名、操作/断言分离、复用 flow、环境走变量，文件名由目标项目自己
   声明）；执行先做收集校验（collect-only，避免"目录存在但未登记"的静默不收集）；失败
   先分三类再出口——产品缺陷进 bug 链、元素/注册表漂移改注册表重跑、环境/数据问题标
-  blocked，每个失败给出建议修复落点（对齐链见 [records/tests/README.md](../records/tests/README.md)）。
+  blocked，每个失败给出建议修复落点（对齐链见 [_archive/records-2026-10/tests/README.md](../_archive/records-2026-10/tests/README.md)）。
 
 ## 业务评测切片（evals/business/）
 
@@ -358,7 +358,7 @@ Bug 记录是 Episode 的一种来源，不是生产 Memory。只有经过归因
 
 Episode 的落盘从「喂改进环才写」收紧为 **material 改动一律写**（0.7.2）：final decision
 record 默认是会话级产物，宿主对话历史一旦消失它就不可恢复——凡开过独立评审门的改动，
-Supervisor 在会话结束前都要把它落成 `records/episodes/<日期>/<EP-id>.json`（复用 improve 环
+Supervisor 在会话结束前都要把它落成 `episodes/<日期>/<EP-id>.json`（复用 improve 环
 的 episode.schema.json，文件名 = episode_id，`validate.py artifacts` 强制）。评审**每一轮**
 （含 `changes_requested`、分歧是什么、如何收场）写进 episode 的 `review_roundtrips[]`
 （schema 新增可选字段；episode.schema.json 在保护门内，本次为人工批准的门变更）——中途评审
@@ -366,7 +366,7 @@ Supervisor 在会话结束前都要把它落成 `records/episodes/<日期>/<EP-i
 承载缺陷证据，episode 承载任务级证据，两者共同构成 feedback-analyst 的输入。
 
 `bug-recorder`、`plan-architect` 和其他角色的写入边界以角色文件内的「产物所有权矩阵」
-为准；`records/`（`bugs/`、`plans/` 及后续同类产物）下的记录已纳入确定性校验
+为准；各记录根（`issues/`、`plans/` 及后续同类产物）下的记录已纳入确定性校验
 （`python3 tools/lab/validate.py artifacts`，`all` 已包含），Supervisor 接受产物前必须对实际
 文件运行该检查，失败按编译错误退回。宿主仍未提供任意路径强制，矩阵 + 校验器共同构成
 当前的可执行边界；路径越界最终仍由 Supervisor 的 diff 检查兜底。

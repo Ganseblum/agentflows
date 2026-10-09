@@ -34,7 +34,7 @@ updated_at: 2026-09-17T03:30:00Z
 
 > [!WARNING]
 > T05 的关闭时间由外部仓的评审节奏决定，不受本计划控制——外部依赖的残余风险，转入下期时
-> 需重估发布顺序（视觉标注约定见 `records/README.md`）。
+> 需重估发布顺序（视觉标注约定见 `_archive/records-2026-10/readmes/records-README.md`）。
 
 ## 任务清单
 

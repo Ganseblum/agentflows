@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/test-plan.schema.json",
   "title": "Agentflow test plan frontmatter",
-  "description": "Contract for the YAML frontmatter of a test plan at records/tests/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md — the case catalog a test executor runs against one feature. The directory is anchored on the tested feature, not the date. The plan is revised in place (bump test_version); run records pin the version they executed. Credentials are declared as an injection method, never as values.",
+  "description": "Contract for the YAML frontmatter of a test plan at features/<batch>/testing/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md — the case catalog a test executor runs against one feature. The directory is anchored on the tested feature, not the date. The plan is revised in place (bump test_version); run records pin the version they executed. Credentials are declared as an injection method, never as values.",
   "type": "object",
   "additionalProperties": false,
   "required": [

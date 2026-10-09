@@ -11,7 +11,9 @@ Run the deterministic checks against the actual files — not against a summary:
 python3 tools/lab/validate.py all
 ```
 
-`all` covers the schemas, the examples, the public evaluation cases, the records under `records/`,
+`all` covers the schemas, the examples, the public evaluation cases, the record artifacts under
+the live record roots (`issues/`, `episodes/`, `plans/`, `improvements/`, `releases/`,
+`reviews/`),
 the mock fixtures under `mock/` (compiled by merging them into a throwaway repository copy), the
 role/document surface including the version-in-prose guard, the integrity of the protected gate
 list, the doc-chain linter's discrimination self-test, manifest name/version agreement across the
@@ -74,17 +76,24 @@ in `validate.py` and protecting it in `protected-paths.txt` in the same change.
 
 ## Working in this repository
 
-- Records live under `records/`; see [records/README.md](records/README.md) for layout and queries.
-- Bug records and plans are Markdown with validated YAML frontmatter. A plan file is named
-  exactly `<plan_id>.md` (shape: `records/plans/README.md`); a bug record file is a kebab-case
-  slug under `records/bugs/<YYYY-MM-DD>/`. The supervisor assigns every record path explicitly.
+- Records live under the live record roots: `issues/` (defect records, `recurrence/` ledgers,
+  `归档/` for rejected records), `episodes/`, `plans/`, `improvements/`, `releases/`, and
+  `reviews/`; see [index.md](index.md) for layout and queries.
+- Issue records and plans are Markdown with validated YAML frontmatter. A plan file is named
+  exactly `<plan_id>.md` (shape: `plans/README.md`); an issue record file is named
+  `ISS-<YYYY>-<NNN>-<slug>.md` under `issues/`, and a rejected record moves to
+  `issues/归档/<YYYY-MM-DD>/`. The supervisor assigns every record path explicitly.
+- Adding, moving, or deleting a document updates [`index.md`](index.md) in the same change; a new
+  top-level directory or a new document type needs the user's confirmation first — do not create
+  one on your own.
 - Do not commit, push, or publish unless the user asks. Do not claim a walkthrough of host behavior
   you have not observed — record it in [docs/host-platform-facts.md](docs/host-platform-facts.md)
   with its evidence, scope, and a re-verification method instead.
 
 ## Experiments and recovery
 
-These rules came from BUG-20260915-002; they are process controls, not suggestions.
+These rules came from ISS-2026-005 (fault injection on the real tree, then a checkout-based
+"revert" that discarded uncommitted work); they are process controls, not suggestions.
 
 - Fault injection and mutation testing run only on a throwaway copy (`cp -r` the checkout to
   `/tmp`), never on the working tree.

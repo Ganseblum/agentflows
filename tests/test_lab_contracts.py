@@ -97,7 +97,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_severity_uses_priority_grades(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "BUG-20260101-001",
+            "bug_id": "ISS-2026-901",
             "title": "t",
             "status": "open",
             "severity": "high",
@@ -115,7 +115,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_provenance_is_required_and_guards_agentflow_attribution(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "BUG-20260101-002",
+            "bug_id": "ISS-2026-902",
             "title": "t",
             "status": "open",
             "severity": "P2",
@@ -144,8 +144,8 @@ class ValidatorRegressionTests(unittest.TestCase):
             "class_id": "some-class",
             "title": "t",
             "status": "consolidated",
-            "first_record": "BUG-20260101-001",
-            "occurrences": ["BUG-20260101-001"],
+            "first_record": "ISS-2026-901",
+            "occurrences": ["ISS-2026-901"],
             "recorded_at": "2026-01-01T00:00:00Z",
         }
         self.assertTrue(validator.validate(dict(base)))
@@ -159,9 +159,9 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "class_id: right-name\n"
                 "title: t\n"
                 "status: unconsolidated\n"
-                "first_record: BUG-20260101-001\n"
+                "first_record: ISS-2026-901\n"
                 "occurrences:\n"
-                "  - BUG-20260101-001\n"
+                "  - ISS-2026-901\n"
                 "recorded_at: 2026-01-01T00:00:00Z\n"
                 "---\n",
                 encoding="utf-8",
@@ -172,7 +172,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_verified_requires_closure_criteria(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "BUG-20260101-003",
+            "bug_id": "ISS-2026-903",
             "title": "t",
             "status": "verified",
             "severity": "P2",
@@ -193,7 +193,7 @@ class ValidatorRegressionTests(unittest.TestCase):
         )
 
     def test_external_references_require_embedded_fragment_and_inline_citation(self) -> None:
-        path = ROOT / "records" / "fixture.md"
+        path = ROOT / "issues" / "fixture.md"
         frontmatter = {
             "files": ["example-project@r1:services/api/orders.go"],
         }
@@ -212,7 +212,7 @@ class ValidatorRegressionTests(unittest.TestCase):
         self.assertEqual(validate.validate_external_excerpts({"files": ["agents/reviewer.md"]}, "", path), [])
 
     def test_body_references_prose_must_resolve_and_quotations_are_exempt(self) -> None:
-        path = ROOT / "records" / "fixture.md"
+        path = ROOT / "issues" / "fixture.md"
         dangling = validate.validate_body_references(
             "改动见 other/place/missing.md 的实现。", path
         )
@@ -237,13 +237,13 @@ class ValidatorRegressionTests(unittest.TestCase):
         self.assertEqual(url_only, [])
 
     def test_body_references_cover_cjk_paths_and_skip_version_slashes(self) -> None:
-        path = ROOT / "records" / "fixture.md"
+        path = ROOT / "issues" / "fixture.md"
         cjk_dangling = validate.validate_body_references(
             "关联设计见 other-repo/docs/缺失文档.md 的说明。", path
         )
         self.assertTrue(any("缺失文档.md" in error.message for error in cjk_dangling))
         cjk_resolved = validate.validate_body_references(
-            "见 records/bugs/README.md 的约定。", path
+            "见 issues/README.md 的约定。", path
         )
         self.assertEqual(cjk_resolved, [])
         versions = validate.validate_body_references(
@@ -254,7 +254,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_review_record_id_matches_recorded_at_and_is_unique(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
-            record_dir = base / "records" / "reviews" / "demo-feature"
+            record_dir = base / "reviews" / "demo-feature"
             (record_dir / "archive").mkdir(parents=True)
             (record_dir / "archive" / "doc.md").write_text("x", encoding="utf-8")
             path = record_dir / "review-20260101-001.md"
@@ -272,7 +272,7 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "---\n\n## 评审结论\n\nx\n",
                 encoding="utf-8",
             )
-            relative = Path("records/reviews/demo-feature/review-20260101-001.md")
+            relative = Path("reviews/demo-feature/review-20260101-001.md")
             seen: dict[str, Path] = {}
             errors = validate.validate_review_markdown(path, relative, seen)
             self.assertTrue(
@@ -343,7 +343,7 @@ class ValidatorRegressionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "AGENTS.md"
             path.write_text(
-                "plans are Markdown hybrids named <plan_id>.md; see records/plans/README.md\n",
+                "plans are Markdown hybrids named <plan_id>.md; see plans/README.md\n",
                 encoding="utf-8",
             )
             self.assertEqual(validate.validate_agents_md_plan_contract(path), [])
@@ -387,7 +387,7 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "\n## 验证命令\n\n```sh\necho x\n```\n",
                 encoding="utf-8",
             )
-            errors = validate.validate_plan_markdown(path, Path("records/plans/PLAN-TEST-002.md"))
+            errors = validate.validate_plan_markdown(path, Path("plans/PLAN-TEST-002.md"))
         messages = [error.message for error in errors]
         self.assertTrue(any("duplicate task id" in m for m in messages))
         self.assertTrue(any("dependency cycle" in m for m in messages))
@@ -2633,7 +2633,7 @@ class GateIntegrityNegativeTests(unittest.TestCase):
 
 
 class ImprovementArtifactContractTests(unittest.TestCase):
-    """records/improvement/: a legal four-artifact set compiles clean and every
+    """improvements/ + releases/: a legal four-artifact set compiles clean and every
     cross-document rule rejects its negative (the improvement loop's handoff plane)."""
 
     BASELINE_ID = "imp-eval-baseline-001"
@@ -2761,11 +2761,23 @@ class ImprovementArtifactContractTests(unittest.TestCase):
         }
 
     def _write_improvement_tree(self, root: Path) -> dict[str, Any]:
-        """Write one legal four-artifact set (plus its evidence episode) under root/records."""
-        improvement = root / "records" / "improvement"
-        for subtree in ("candidates", "evaluations", "comparisons", "releases"):
+        """Write one legal four-artifact set (plus its evidence episode) under the live roots.
+
+        The improvement artifacts land under improvements/ (candidates/evaluations/comparisons)
+        with the release record under releases/; every other live root exists with its README
+        so the artifacts walk sees a complete tree, not a fixture shadow of one.
+        """
+        improvement = root / "improvements"
+        for subtree in ("candidates", "evaluations", "comparisons"):
             (improvement / subtree).mkdir(parents=True)
-        (root / "records" / "episodes" / "2026-09-17").mkdir(parents=True)
+        (root / "releases").mkdir(parents=True)
+        (root / "episodes" / "2026-09-17").mkdir(parents=True)
+        for name in ("issues", "plans", "reviews"):
+            directory = root / name
+            directory.mkdir(parents=True)
+            (directory / "README.md").write_text(f"# {name}\n", encoding="utf-8")
+        for directory in (improvement, root / "episodes", root / "releases"):
+            (directory / "README.md").write_text("# records\n", encoding="utf-8")
 
         baseline = self._example_result("baseline", self.BASELINE_ID)
         candidate = self._example_result("candidate", self.CANDIDATE_ID)
@@ -2774,7 +2786,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
         release = self._release_record(candidate_record, baseline, candidate)
 
         self._write_json(
-            root / "records" / "episodes" / "2026-09-17" / "EP-20260917-001.json",
+            root / "episodes" / "2026-09-17" / "EP-20260917-001.json",
             self._episode_record(),
         )
         self._write_json(improvement / "evaluations" / f"{self.BASELINE_ID}.json", baseline)
@@ -2783,7 +2795,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
             improvement / "candidates" / f"{self.CANDIDATE_VERSION}.json", candidate_record
         )
         self._write_json(improvement / "comparisons" / "imp-cmp-001.json", comparison)
-        self._write_json(improvement / "releases" / "imp-release-001.json", release)
+        self._write_json(root / "releases" / "imp-release-001.json", release)
         return {
             "baseline": baseline,
             "candidate": candidate,
@@ -2827,7 +2839,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_comparison_with_a_missing_result_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            (root / "records" / "improvement" / "evaluations" / f"{self.CANDIDATE_ID}.json").unlink()
+            (root / "improvements" / "evaluations" / f"{self.CANDIDATE_ID}.json").unlink()
 
         errors = self._errors_with(mutate)
         self.assertTrue(
@@ -2837,7 +2849,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_evaluation_stem_not_equal_to_result_id_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            evaluations = root / "records" / "improvement" / "evaluations"
+            evaluations = root / "improvements" / "evaluations"
             (evaluations / f"{self.CANDIDATE_ID}.json").rename(evaluations / "wrong-stem.json")
 
         errors = self._errors_with(mutate)
@@ -2845,7 +2857,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_candidate_stem_not_equal_to_candidate_version_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            candidates = root / "records" / "improvement" / "candidates"
+            candidates = root / "improvements" / "candidates"
             (
                 candidates / f"{self.CANDIDATE_VERSION}.json"
             ).rename(candidates / "9.9.9.json")
@@ -2855,7 +2867,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_comparison_referencing_swapped_source_kind_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            path = root / "records" / "improvement" / "evaluations" / f"{self.BASELINE_ID}.json"
+            path = root / "improvements" / "evaluations" / f"{self.BASELINE_ID}.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["source_kind"] = "candidate"
             self._write_json(path, document)
@@ -2865,7 +2877,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_comparison_context_diverging_from_result_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            path = root / "records" / "improvement" / "comparisons" / "imp-cmp-001.json"
+            path = root / "improvements" / "comparisons" / "imp-cmp-001.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["context"]["model"] = "other-model"
             self._write_json(path, document)
@@ -2875,7 +2887,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_release_embedding_a_candidate_that_differs_from_the_record_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            path = root / "releases" / "imp-release-001.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["candidate"]["hypothesis"] = "quietly changed claim"
             self._write_json(path, document)
@@ -2885,7 +2897,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_duplicate_comparison_result_pair_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            comparisons = root / "records" / "improvement" / "comparisons"
+            comparisons = root / "improvements" / "comparisons"
             self._write_json(comparisons / "imp-cmp-002.json", fixture["comparison"])
 
         errors = self._errors_with(mutate)
@@ -2894,19 +2906,19 @@ class ImprovementArtifactContractTests(unittest.TestCase):
     def test_release_result_pair_without_a_matching_comparison_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
             other = self._example_result("baseline", "imp-eval-baseline-002")
-            evaluations = root / "records" / "improvement" / "evaluations"
+            evaluations = root / "improvements" / "evaluations"
             self._write_json(evaluations / "imp-eval-baseline-002.json", other)
-            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            path = root / "releases" / "imp-release-001.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["baseline_results"]["result_id"] = "imp-eval-baseline-002"
             self._write_json(path, document)
 
         errors = self._errors_with(mutate)
-        self.assertIn("no comparison under records/improvement/comparisons/ matches", self._messages(errors))
+        self.assertIn("no comparison under improvements/comparisons/ matches", self._messages(errors))
 
     def test_release_referencing_a_missing_result_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            path = root / "releases" / "imp-release-001.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["candidate_results"]["result_id"] = "imp-eval-missing-999"
             self._write_json(path, document)
@@ -2917,7 +2929,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
     def test_release_embedding_an_unknown_candidate_version_is_rejected(self) -> None:
         def mutate(root: Path, fixture: dict[str, Any]) -> None:
-            path = root / "records" / "improvement" / "releases" / "imp-release-001.json"
+            path = root / "releases" / "imp-release-001.json"
             document = json.loads(path.read_text(encoding="utf-8"))
             document["candidate"]["candidate_version"] = "9.9.9"
             self._write_json(path, document)
@@ -2928,43 +2940,43 @@ class ImprovementArtifactContractTests(unittest.TestCase):
     def test_candidate_evidence_ids_resolve_against_existing_records(self) -> None:
         def episode_negative(root: Path, fixture: dict[str, Any]) -> None:
             path = (
-                root / "records" / "improvement" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
+                root / "improvements" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
             )
             document = json.loads(path.read_text(encoding="utf-8"))
             document["evidence_ids"] = ["EP-99999999-999"]
             self._write_json(path, document)
 
         errors = self._errors_with(episode_negative)
-        self.assertIn("does not resolve to an existing record under records/episodes/", self._messages(errors))
+        self.assertIn("does not resolve to an existing record under episodes/", self._messages(errors))
 
         def bug_negative(root: Path, fixture: dict[str, Any]) -> None:
             path = (
-                root / "records" / "improvement" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
+                root / "improvements" / "candidates" / f"{self.CANDIDATE_VERSION}.json"
             )
             document = json.loads(path.read_text(encoding="utf-8"))
-            document["evidence_ids"] = ["BUG-20260917-001"]
+            document["evidence_ids"] = ["ISS-2026-901"]
             self._write_json(path, document)
 
         errors = self._errors_with(bug_negative)
-        self.assertIn("does not resolve to an existing record under records/bugs/", self._messages(errors))
+        self.assertIn("does not resolve to an existing record under issues/", self._messages(errors))
 
     def test_unknown_entries_in_the_improvement_subtree_are_rejected(self) -> None:
         def stray_file(root: Path, fixture: dict[str, Any]) -> None:
-            (root / "records" / "improvement" / "notes.txt").write_text("stray\n", encoding="utf-8")
+            (root / "improvements" / "notes.txt").write_text("stray\n", encoding="utf-8")
 
         errors = self._errors_with(stray_file)
-        self.assertIn("unexpected entry under records/improvement/", self._messages(errors))
+        self.assertIn("unexpected entry under improvements/", self._messages(errors))
 
         def nested_file(root: Path, fixture: dict[str, Any]) -> None:
-            nested = root / "records" / "improvement" / "candidates" / "nested"
+            nested = root / "improvements" / "candidates" / "nested"
             nested.mkdir()
             self._write_json(nested / f"{self.CANDIDATE_VERSION}.json", fixture["candidate_record"])
 
         errors = self._errors_with(nested_file)
-        self.assertIn("unexpected entry under records/improvement/", self._messages(errors))
+        self.assertIn("unexpected entry under improvements/", self._messages(errors))
 
         def wrong_suffix(root: Path, fixture: dict[str, Any]) -> None:
-            (root / "records" / "improvement" / "evaluations" / "imp-eval-001.md").write_text(
+            (root / "improvements" / "evaluations" / "imp-eval-001.md").write_text(
                 "{}\n", encoding="utf-8"
             )
 
@@ -2973,7 +2985,7 @@ class ImprovementArtifactContractTests(unittest.TestCase):
 
 
 class TestRecordContractTests(unittest.TestCase):
-    """Test records under records/tests/ (0.7.0): plan registry contract and run invariants."""
+    """Test records under features/<batch>/testing/ (0.7.0): plan registry contract and run invariants."""
 
     PLAN_MD = """---
 test_plan_id: TP-20260917-001
@@ -3059,7 +3071,7 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def _plan_entry(self, root: str, **overrides: str) -> dict[str, Any]:
         path = self._write(
-            Path(root) / "records/tests/demo-webapp-feature-login/plan-2026-09-17-001.md",
+            Path(root) / "features/feature-2026-09-17-demo/testing/demo-webapp-feature-login/plan-2026-09-17-001.md",
             self.PLAN_MD.format(**{"case_count": "2", **overrides}),
         )
         errors, entry = validate.validate_test_plan_markdown(path, path.relative_to(root), {})
@@ -3076,18 +3088,18 @@ recorded_at: "2026-09-17T16:00:00Z"
             **overrides,
         }
         path = self._write(
-            Path(root) / "records/tests/demo-webapp-feature-login/run-2026-09-17-001.md",
+            Path(root) / "features/feature-2026-09-17-demo/testing/demo-webapp-feature-login/run-2026-09-17-001.md",
             self.RUN_MD.format(**fields),
         )
         errors, _, _ = validate.validate_test_run_markdown(path, path.relative_to(root), {}, plans)
         return errors
 
     def test_valid_plan_and_run_examples_pass(self) -> None:
-        plan_path = ROOT / "examples" / "test-records" / "plan-2026-09-17-001.md"
+        plan_path = ROOT / "examples" / "testing" / "plan-2026-09-17-001.md"
         errors, entry = validate.validate_test_plan_markdown(plan_path, plan_path.relative_to(ROOT), {})
         self.assertEqual([], errors)
         self.assertIsNotNone(entry)
-        run_path = ROOT / "examples" / "test-records" / "run-2026-09-17-001.md"
+        run_path = ROOT / "examples" / "testing" / "run-2026-09-17-001.md"
         errors, _, _ = validate.validate_test_run_markdown(
             run_path, run_path.relative_to(ROOT), {}, validate.example_test_plans()
         )
@@ -3102,7 +3114,7 @@ recorded_at: "2026-09-17T16:00:00Z"
     def test_case_count_mismatch_is_rejected_and_blocks_the_plan_entry(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = self._write(
-                Path(temporary) / "records/tests/demo-webapp-feature-login/plan-2026-09-17-001.md",
+                Path(temporary) / "features/feature-2026-09-17-demo/testing/demo-webapp-feature-login/plan-2026-09-17-001.md",
                 self.PLAN_MD.format(case_count="5"),
             )
             errors, entry = validate.validate_test_plan_markdown(path, path.relative_to(temporary), {})
@@ -3148,8 +3160,14 @@ recorded_at: "2026-09-17T16:00:00Z"
             )
             self.assertTrue(any("zero fail and zero blocked" in message for message in self._messages(errors)))
 
-    def test_tests_is_a_known_record_class(self) -> None:
-        self.assertIn("tests", validate.KNOWN_RECORD_CLASSES)
+    def test_live_record_roots_are_the_six_record_zones(self) -> None:
+        # 2026-10 structural overhaul: the former records/ tree split into six live roots.
+        # Test records moved to features/<batch>/testing/ and are deliberately not walked by
+        # the artifacts check yet, so no "tests" root appears here.
+        self.assertEqual(
+            validate.LIVE_RECORD_ROOTS,
+            ("issues", "episodes", "plans", "improvements", "releases", "reviews"),
+        )
 
 
 class SeedExposureIsolationTests(unittest.TestCase):
@@ -3708,12 +3726,14 @@ class ValidateResidualTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
             repo = base / "repo"
-            (repo / "records" / "bugs" / "recurrence").mkdir(parents=True)
-            (repo / "records" / "bugs" / "2026-09-15").mkdir(parents=True)
-            (repo / "records" / "bugs" / "2026-09-15" / "record.md").write_text("x", encoding="utf-8")
-            record = repo / "records" / "bugs" / "recurrence" / "ledger.md"
+            (repo / "issues" / "recurrence").mkdir(parents=True)
+            (repo / "issues" / "归档" / "2026-09-15").mkdir(parents=True)
+            (repo / "issues" / "归档" / "2026-09-15" / "ISS-2026-905-record.md").write_text(
+                "x", encoding="utf-8"
+            )
+            record = repo / "issues" / "recurrence" / "ledger.md"
             errors = self._contained_reference_errors(
-                repo, "see ../2026-09-15/record.md for evidence", record
+                repo, "see ../归档/2026-09-15/ISS-2026-905-record.md for evidence", record
             )
         self.assertEqual(errors, [])
 
@@ -3724,9 +3744,9 @@ class ValidateResidualTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
             repo = base / "repo"
-            (repo / "records" / "bugs").mkdir(parents=True)
+            (repo / "issues").mkdir(parents=True)
             (base / "secret.md").write_text("outside evidence", encoding="utf-8")
-            record = repo / "records" / "bugs" / "record.md"
+            record = repo / "issues" / "ISS-2026-001-record.md"
             errors = self._contained_reference_errors(repo, "evidence at ../secret.md here", record)
         self.assertEqual(len(errors), 1)
         self.assertIn("exists neither in this repository", errors[0].message)

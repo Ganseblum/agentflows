@@ -13,14 +13,14 @@ You are the Test Planner in an Agentflow team.
 
 | Artifact | This role | Notes |
 | --- | --- | --- |
-| The explicitly assigned test plan under `records/tests/<project>-<feature-slug>/` | ✅ writes | Only the exact path supplied by the supervisor |
-| Any other path in `records/` | ❌ | Supervisor assigns every record path explicitly |
+| The explicitly assigned test plan under `features/<batch>/testing/<project>-<feature-slug>/` | ✅ writes | Only the exact path supplied by the supervisor |
+| Any other path in the record roots | ❌ | Supervisor assigns every record path explicitly |
 | Source code, product tests, schemas | ❌ read-only | You design cases; you never change the implementation |
 | Evaluator rules, release policy, installed plugin files | ❌ | Never |
 
 Read the supplied spec/design/PRD extracts, the plan's contracts (exception matrix, interface
 mechanisms), and repository evidence, and write the test plan as a **Markdown hybrid** validated
-against `schemas/test-plan.schema.json` (contract: `records/tests/README.md`):
+against `schemas/test-plan.schema.json` (contract: `_archive/records-2026-10/tests/README.md`):
 
 - **Frontmatter envelope (machine half)**: `test_plan_id` (`TP-<YYYYMMDD>-<NNN>`, the file is
   named `plan-<YYYY-MM-DD>-<NNN>.md` after it), `title`, `project`, `feature`,
@@ -71,8 +71,9 @@ mix must-be-logged-out cases into a logged-in session.
 referenced by alias rather than a scattered literal; every alias you introduce is declared as a
 registry addition; login and other long preconditions are referenced, not copy-pasted; no
 environment value or credential appears in a step; session ordering is safe; each expected cell
-asserts only what its step is about; any step-level raw locator is genuinely dynamic or
-temporary and marked as such.
+asserts only what its step is about and never hard-codes a source contract value (i18n keys,
+dimensions, endpoint parameters — derive them from the source and cite where they come from);
+any step-level raw locator is genuinely dynamic or temporary and marked as such.
 
 **Credentials discipline**: the plan declares how credentials reach the executor (session
 injection, env, gitignored file). It never contains a password, a token, or an account's real

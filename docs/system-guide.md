@@ -12,7 +12,7 @@
 ## 1. 一张图看懂体系
 
 体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（14 个角色文件，宿主从安装快照加载）、
-**证据层**（`records/` 里人和机器都能校验的记录）、**门**（确定性工具，判定产物合不合格）。
+**证据层**（`issues/`、`episodes/`、`plans/`、`improvements/`、`releases/`、`reviews/` 里人和机器都能校验的记录）、**门**（确定性工具，判定产物合不合格）。
 
 ```mermaid
 flowchart TB
@@ -30,13 +30,13 @@ flowchart TB
         DECIDE["分解 / 授权 / 集成 / 终判"]
     end
 
-    subgraph EVIDENCE["证据层 records/"]
-        BUGS["bugs/ 缺陷记录 + recurrence/ 类台账"]
+    subgraph EVIDENCE["证据层 记录根"]
+        BUGS["issues/ 缺陷记录 + recurrence/ 类台账 + 归档/"]
         PLANS["plans/ 版本化计划（看板）"]
         EPIS["episodes/ 任务级决策（JSON）"]
         REVIEWS["reviews/ 评审桥"]
-        IMPR["improvement/ 候选·评测·比较·发布"]
-        TESTS["tests/ 测试计划与执行记录"]
+        IMPR["improvements/ 候选·评测·比较 + releases/ 发布"]
+        TESTS["features/<批次>/testing/ 测试计划与执行记录"]
     end
 
     subgraph GATE["确定性门 tools/lab/（保护区）"]
@@ -72,12 +72,12 @@ flowchart TB
 | 单层小修、复现明确 | Supervisor 自己做（**自己写的代码评审门不可豁免**） | 代码 + 必要时 bug 记录 |
 | 前端/后端有界实现 | 一名工程师（+ 评审，改动成规模时） | 代码 + worker result |
 | 跨层功能 / 契约变更 | Technical Director → 双工程师并行 → Reviewer | 决策 + 代码 + 计划 |
-| Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `records/bugs/<日期>/<slug>.md` |
+| Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `issues/ISS-<YYYY>-<NNN>-<slug>.md` |
 | 小 Bug 有验证复现 | Supervisor 合并诊断/修复，Recorder 视沉淀价值 | 同上 |
-| 纯规划 | 专家并行 → Plan Architect | `records/plans/<plan_id>.md` |
-| 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `records/tests/<项目>-<功能>/` |
-| 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `records/reviews/<项目>-<功能>/` |
-| 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | `records/improvement/` + episode |
+| 纯规划 | 专家并行 → Plan Architect | `plans/<plan_id>.md` |
+| 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `features/<批次>/testing/<项目>-<功能>/` |
+| 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `reviews/<项目>-<功能>/` |
+| 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | `improvements/` + `releases/` + episode |
 
 三个只读角色（Investigator / Feedback Analyst / Technical Director）与 Reviewer 同构但**有意不合并**——
 输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策），合并是保留的产品决策（0.8.1 注记）。
@@ -89,7 +89,7 @@ flowchart TB
 ```mermaid
 flowchart TB
     A["1 Intake 接案<br/>仓库指令+diff+状态结论必须 git fetch 校准"] --> B["2 架构门<br/>跨层/高风险才请 Technical Director"]
-    B --> C["3 计划<br/>Plan Architect 写 records/plans（人读看板+机器断言）"]
+    B --> C["3 计划<br/>Plan Architect 写 plans/（人读看板+机器断言）"]
     C --> D["4 委派<br/>brief 带 write_scope/read_scope/task_id/baseline_revision<br/>并行只并行『写』，永远不并行『理解』"]
     D --> E["5 实现<br/>工程师只动自己的范围"]
     E --> F["6 集成<br/>Supervisor 看真实共享工作区，解冲突"]
@@ -100,7 +100,7 @@ flowchart TB
     I --> J{"8 评审门（独立 Reviewer）<br/>Supervisor 自己写的代码：强制、不可豁免"}
     J -- changes_requested --> K["9 修复一轮（有界）"] --> J
     J -- approved --> L["10 终判<br/>claims 台账：每条用户可见主张对应一个会失败的检查<br/>有未验证主张 ⇒ partial 不是 complete"]
-    L --> M["episode 落盘 records/episodes/<日期>/<EP-id>.json<br/>含 review_roundtrips 逐轮记录"]
+    L --> M["episode 落盘 episodes/<日期>/<EP-id>.json<br/>含 review_roundtrips 逐轮记录"]
 ```
 
 关键纪律（都是硬边界，全文见 contracts.md）：
@@ -124,9 +124,9 @@ flowchart TB
     S --> REC
     CH1 --> REC
     CH2 --> REC
-    REC["Recorder 写 records/bugs/<日期>/<slug>.md<br/>frontmatter：状态/严重度P0-P3/error_kind/归因/provenance/class_id"] --> LED{"属于已归纳的类？"}
+    REC["Recorder 写 issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>frontmatter：状态/严重度P0-P3/error_kind/归因/provenance/class_id"] --> LED{"属于已归纳的类？"}
     LED -- 是 --> OCC["记为该类新 occurrence（class_id + occurrence 序号）"]
-    LED -- 否 --> NEW["新建记录；同类第二次出现时由 Recorder 建类台账 records/bugs/recurrence/<class_id>.md"]
+    LED -- 否 --> NEW["新建记录；同类第二次出现时由 Recorder 建类台账 issues/recurrence/<class_id>.md"]
     OCC --> TIER["档位由校验器推导，不手写：<br/>single（未再犯）/ recurred（归纳后再犯）/ escalated（版本超过 consolidated_in）"]
     NEW --> TIER
 ```
@@ -224,7 +224,7 @@ flowchart LR
 | `schemas` | 契约文件本身合法 | 看报错改 schema（gate change，需人审） |
 | `examples` | 正反例与契约同步 | 反例必须真的能被拒 |
 | `evals` | 公共+业务用例结构、种子可解析 | 修用例文件 |
-| `artifacts` | `records/` 实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
+| `artifacts` | 各记录根实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
 | `mock` | 样板 fixture 合并进临时仓库副本后仍编译 | fixture 跟上契约，或改契约（人审） |
 | `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
 | `manifests` | 五份 manifest 名字版本一致 | 补 bump |
@@ -258,11 +258,11 @@ python3 tools/lab/policy.py --candidate-record ... --baseline-result ... --candi
 | --- | --- | --- | --- |
 | 1 | 你 | "全局导航自动登录复用了 login()，方法没问题，但 401 拦截器跳登录页，忘记密码页合法未登录态被打断" | ——（任务文本按数据处理，进简报前会核实） |
 | 2 | Supervisor | Intake：读 diff/架构/测试；定性为跨切面行为 → 触发**隐式行为检查** | —— |
-| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `records/bugs/2026-09-15/axios-interceptor-401-redirect-conflict.md` |
+| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `issues/ISS-2026-004-axios-interceptor-401-redirect-conflict.md` |
 | 4 | Bug Fixer | 候选树内最小修复 + 回归检查（`regression_status` 先标 not-run） | 代码 + 记录转 `fixed-pending-review` |
 | 5 | Reviewer（独立） | 指定检查命令与预期，只认原始输出；验证全局导航/登录页/忘记密码三场景 | 评审结论写回记录 |
 | 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |
-| 7 | Supervisor 收口 | episode：目标/claims 台账/评审轮次/成本 | `records/episodes/<日期>/EP-*.json` |
+| 7 | Supervisor 收口 | episode：目标/claims 台账/评审轮次/成本 | `episodes/<日期>/EP-*.json` |
 
 如果这类"横切机制漏检"以后**再犯**，Recorder 会把它挂到类台账 → 校验器推导 `recurred/escalated`
 → 下次按改进环升格为评测用例（AF-011~015 就是这么来的）。
@@ -285,7 +285,7 @@ python3 tools/lab/policy.py --candidate-record ... --baseline-result ... --candi
 
 ### 例 4：你给一份外部 spec 要"第二道评审"
 
-Supervisor 在 `records/reviews/<项目>-<功能>/` 建 feature 锚目录，**逐字快照**被评审文档进
+Supervisor 在 `reviews/<项目>-<功能>/` 建 feature 锚目录，**逐字快照**被评审文档进
 `archive/<轮次>/`；Reviewer 按 spec 模式清单评（语义冻结/边界/降级/异常矩阵…每条引用原文句）；
 findings 按严重度落 bug 记录（`provenance: external`，注明是业务仓的问题还是方法的问题）；
 评审记录写 `review-<日期>-<NNN>.md`。二轮复审再开新轮次文件，快照不覆盖。

@@ -25,22 +25,39 @@ quality clauses, and record the trim as a one-line 「结构性裁剪声明」 i
 
 When NOT to use: the target repository already has a template system its teams follow — use
 theirs, and apply this contract's **gates and quality criteria** on top; a single-doc quick
-answer; documents that are evidence records (those follow `records/` contracts in this repo).
+answer; documents that are evidence records (those follow the record contracts; their landing
+spots are the batch directories, `issues/` and `releases/`).
 
 ## Directory layout (target repository, when no convention exists)
 
+Two shapes, chosen by the target repository:
+
+- **Document hub repository** — a standalone docs/meta repository (the `<project>-workflow-ai`
+  pattern). The stages sit at the hub root, one directory per feature, next to the defect stream,
+  the release records, the templates and the frozen archive:
+
 ```text
-docs/features/feature-<slug>/
+features/feature-<date>-<topic>/
   README.md          single entry: meta + progress board with stage gates
   proposal/          why: background, goals, scope (incl. NOT doing), principles, open questions
-  spec/              what it must finally behave like (+ re-audit checklist of the proposal)
-  design/            how: decision table, challenges, architecture, impact assessment, verification
-  plan/              execution contract (follow the target repo's plan convention if any)
+  spec/{be,fe,qa}/   what it must finally behave like (+ re-audit checklist of the proposal)
+  design/{be,fe,qa}/ how: decision table, challenges, architecture, impact assessment, verification
+  plan/{be,fe,qa}/   execution contract (follow the target repo's plan convention if any)
+issues/              defects and items (numbered, board README, archive/)
+releases/            release records (todo + pending-test)
+templates/           copy-first skeletons
+_archive/            frozen history (read-only)
+index.md             the single document index
 ```
+
+- **Ordinary business repository** (no separate hub): the chain stays inside the repository —
+  default `docs/features/feature-<slug>/`, with the same stage skeleton.
 
 One directory per feature. The README is the only entry point and carries the progress board
 with stage gates — checkboxes move only with a document link, `N/A: reason` for skips, and
-review gates checked only by the independent reviewer.
+review gates checked only by the independent reviewer. A batch that needs only the entry
+document and a proposal (no separate spec or design tracks) declares it in the README meta
+line (`轻量模式：无 spec/design 轨`); undeclared batches keep the full-chain requirement.
 
 File naming inside the chain: each role track is a directory at both stages, mirroring each
 other — `spec/be/backend.md` ↔ `design/be/backend.md`, `spec/fe/frontend.md` ↔
@@ -53,8 +70,9 @@ double-write is a naming defect — fix it before the closure pass, not in revie
 ## Stage skeletons
 
 Fill-in templates with **fixed heading literals** live in
-[document-chain-templates.md](document-chain-templates.md) — copy the template, fill the
-placeholders, do not rename or drop sections (the records contract's fixed-heading approach,
+[`../templates/README.md`](../templates/README.md) — one file per stage, listed in the
+manifest; copy the template, fill the
+placeholders, do not rename or drop sections (the record contracts' fixed-heading approach,
 applied to doc chains). Adding domain-specific sections is allowed; the template core is not
 optional. A chain that declares itself in its README with the marker line 「本 feature 文档链
 由 agentflow 文档链方法生成（<日期>）」 opts into the linter's structure check (C11: the
@@ -98,7 +116,7 @@ a section with no content says "N/A: reason".
   存放位置留作证据，不作为文档链的交付物，也不在结论落账后删除。
 - **plan**: the target repo's execution-plan contract; when none exists, reuse this repo's
   hybrid shape (envelope + progress overview + task table with status/evidence write-back +
-  interfaces and shared mechanisms + verification commands) per `records/plans/README.md`.
+  interfaces and shared mechanisms + verification commands) per `plans/README.md`.
 
 ## Intake interview (proposal stage)
 
@@ -187,6 +205,12 @@ never sharpened by guesswork.
    C13 会话角色词, C14 代号裸用) and fix or explicitly gate every finding; a standalone session
    deliverable gets the same text-form pass via `python3 tools/lab/doc_chain.py --file <路径>`.
 
+7. **Review landing and acceptance vocabulary** — every review round's conclusion lands as a
+   record file in the batch's `reviews/` (or `reviews/<project>-<feature-slug>/` when this repo
+   reviews another repository's documents); a conclusion that exists only in a plan's prose is a
+   defect. A release carries a 待验证清单 (pending-test) that separates "code landed" from
+   "verified"; marking 已实现 as 已验证 without the verification evidence is a defect.
+
 ## Quality density floor (machine-checked)
 
 Born from the 2026-09-20 failure: a full chain was produced where every stage "existed" but
@@ -223,7 +247,7 @@ defers precision, it never substitutes for a contract's existence.
 
 The author is not the verifier (hard boundary 1): whoever wrote a stage document never checks
 its gate. When the target repository is external to this one, review evidence lands through the
-second-pass review bridge (feature-anchored `records/reviews/<project>-<feature-slug>/`
+second-pass review bridge (feature-anchored `reviews/<project>-<feature-slug>/`
 directory, verbatim archive per round, findings as bug records with provenance/attribution).
 
 ## Quality criteria (checkable, per document)
@@ -301,7 +325,7 @@ directory, verbatim archive per round, findings as bug records with provenance/a
 - The independent `reviewer` owns all three review gates, using this repo's document review
   modes with citations to the reviewed text.
 - Evidence for every round lands in the target repository when it owns the documents, and
-  through the review bridge into `records/reviews/` when this repo is the second-pass reviewer.
+  through the review bridge into `reviews/` when this repo is the second-pass reviewer.
 - **Brief hygiene**: the delegation brief is upstream of document wording and follows the same
   expression discipline — no session-bound process words (supervisor / TD / 本轮 / 本次会话 …);
   any decision or fact material a brief cites is given as a path already archived inside the

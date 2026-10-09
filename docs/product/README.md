@@ -11,7 +11,7 @@
 
 推荐阅读顺序：
 
-`proposal -> spec -> design -> records/plans/`
+`proposal -> spec -> design -> plans/`
 
 ## 元信息
 
@@ -50,16 +50,16 @@
 
 ### 5. Plan [执行契约]
 
-- ☑ 方法改进线：`records/plans/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环，live 对照阻塞于 U-01）
-- ☑ 业务评测线：`records/plans/PLAN-BUSINESS-EVAL-001.md`（业务尺子，仪器就绪）
-- ☑ 打包线：`records/plans/PLAN-PRODUCT-001.md`（产品线四步总账）
-- ☑ 工具守卫线：`records/plans/PLAN-PY-GUARD-001.md`（解释器下限 fail-closed，已完成）
+- ☑ 方法改进线：`plans/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环，live 对照阻塞于 U-01）
+- ☑ 业务评测线：`plans/PLAN-BUSINESS-EVAL-001.md`（业务尺子，仪器就绪）
+- ☑ 打包线：`plans/PLAN-PRODUCT-001.md`（产品线四步总账）
+- ☑ 工具守卫线：`plans/PLAN-PY-GUARD-001.md`（解释器下限 fail-closed，已完成）
 
 ## 门禁语义
 
 1. **Spec 反审门**：spec §0 checklist 里标「阻塞」的缺口未全部关闭前，不得进入 Design。
 2. **需求评审门**：独立评审以文档模式 review proposal 与 spec，给出 `approved` /
-   `changes_requested` / `blocked`；评审记录落 `records/reviews/`。
+   `changes_requested` / `blocked`；评审记录落 `reviews/`。
 3. **技术方案评审门**：同上，对象为 design；通过后 Design 冻结，后续改动走设计变更记录
    （同 aiwork 决策表翻案格式：改结论须留推翻过程与理由）。
 4. **Plan 前置门**：执行计划引用的设计结论以**冻结后的 design** 为准；冻结前的 plan 条目

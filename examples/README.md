@@ -1,6 +1,6 @@
 # Contract examples
 
-`bug-records/`, `plans/`, and `test-records/` contain structurally valid, sanitized examples.
+`issues/`, `plans/`, and `testing/` contain structurally valid, sanitized examples.
 Files under `invalid/` are intentionally rejected: the validator checks both their JSON Schema
 and the cross-document invariants that the schemas cannot express alone.
 

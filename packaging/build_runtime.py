@@ -3,7 +3,8 @@
 
 The source of truth stays at the repository root (agents/, skills/, manifests). This
 script copies that surface into a generated directory so a local-directory marketplace
-can snapshot it without records/, tests/, tools/, docs/, evals/, or mock/.
+can snapshot it without the record roots (issues/, episodes/, plans/, improvements/,
+releases/, reviews/, _archive/), tests/, tools/, docs/, evals/, or mock/.
 
 The copy is regular files only. Symlinks are refused so a generated tree cannot point
 outside the declared surface (same rule as tools/lab/artifact_digest.py).
@@ -36,7 +37,13 @@ RUNTIME_FILES = (
 )
 FORBIDDEN_TOP_LEVEL = frozenset(
     {
-        "records",
+        "issues",
+        "episodes",
+        "plans",
+        "improvements",
+        "releases",
+        "reviews",
+        "_archive",
         "tests",
         "tools",
         "docs",

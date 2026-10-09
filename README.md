@@ -37,8 +37,8 @@ Implementation roles declare an explicit tool allowlist (`Read, Glob, Grep, Writ
 a worker does not receive the host's native delegation or MCP tools through that allowlist. Bash
 still follows the host's sandbox and may have capabilities that are not implied by the tool names;
 network isolation must be verified from the host, not inferred from this list.
-`bug-recorder` writes only the explicitly assigned sanitized record under `records/bugs/`, and
-`plan-architect` writes only the explicitly assigned plan under `records/plans/`. Neither role can
+`bug-recorder` writes only the explicitly assigned sanitized record under `issues/`, and
+`plan-architect` writes only the explicitly assigned plan under `plans/`. Neither role can
 close a bug, authorize code execution, or publish a Plugin. The supervisor must inspect the
 resulting paths and verification evidence because the host does not enforce arbitrary path
 constraints on the `Write` tool; see [AGENTS.md](AGENTS.md).
@@ -87,16 +87,24 @@ are still intentionally pending.
 | `evals/` | `public/` workflow-decision cases; `business/` instrumented method-measurement cases (protected) |
 | `tools/lab/` | Deterministic gate and measurement tooling: `validate.py`, `eval_runner.py`, `host_adapter.py`, `isolation.py`, `policy.py`, `seed_grader.py`, `record_store.py`, `artifact_digest.py` (protected) |
 | `tests/` | Pinned regression tests for the gate tools (protected) |
-| `records/` | Live evidence: bugs, recurrence ledgers, plans, episodes, reviews, tests, improvement artifacts |
+| `index.md` | The single document index: scenario → entry, maintenance discipline, migration list |
+| `features/` | Per-batch document chains: `feature-<date>-<topic>/{README, proposal, spec, design, plan, reviews, testing, episodes, improvement}` |
+| `issues/` | Defect and item stream: flat `ISS-<YYYY>-<NNN>-<slug>.md` records, `recurrence/` ledgers, `归档/` for rejected records; board and rules in `issues/README.md` |
+| `episodes/` | Task-level decision records (`EP-*.json`) — the improve loop's fuel (rules in `episodes/README.md`) |
+| `plans/` | Versioned execution plans (`<plan_id>.md` hybrid contract; rules in `plans/README.md`) |
+| `improvements/` | Improve-loop handoff artifacts: `candidates/`, `evaluations/`, `comparisons/` (rules in `improvements/README.md`) |
+| `releases/` | Release records (`<version>.json`) and the pending-test list (rules in `releases/README.md`) |
+| `reviews/` | Review records for external repositories (`<project>-<feature-slug>/review-<date>-<NNN>.md` plus archive snapshots; rules in `reviews/README.md`) |
+| `_archive/` | Frozen history, read-only; freeze rules in `_archive/README.md` |
 | `examples/` | Validator fixtures — positive, negative, and worked examples |
 | `mock/` | Demo record fixtures compiled by `validate.py mock`; never production evidence |
-| `docs/` | Design and operations documents; `docs/audit-2026-09-18/` archives the 2026-09-18 audit evidence |
+| `docs/` | Design, guide and fact documents: the product design chain, the system guide, the role mirror, host-platform facts, the iteration log; the 2026-09-18 audit evidence moved to `_archive/` with the migration |
 | `packaging/` | Generated ZCode install surface (`build_runtime.py` → `runtime/`); marketplace `source` points here |
 | `protected-paths.txt` | The candidate gate surface, declared once |
 | manifests | `plugin.json`, `marketplace.json`, `.zcode-plugin/`, `.claude-plugin/`, `.codex-plugin/` |
 
-`docs/audit-2026-09-18/` holds frozen evidence and is not edited; the living ledger for that
-audit stays at [`docs/audit-2026-09-18-followups.md`](docs/audit-2026-09-18-followups.md).
+The 2026-09-18 audit evidence and its follow-ups ledger are frozen under `_archive/audit-2026-09/`
+and are not edited; freeze rules are in [`_archive/README.md`](_archive/README.md).
 
 ## Business evaluation slice
 

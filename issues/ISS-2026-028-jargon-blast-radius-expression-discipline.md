@@ -1,0 +1,87 @@
+---
+bug_id: ISS-2026-028
+title: 自造压缩词「爆炸半径」违反 0.7.3 表达纪律——6 处散布且修复初版残留"旧称"释尾巴
+status: verified
+severity: P2
+error_kind: ai-ignored-doc
+attribution: workflow_policy
+provenance: agentflow
+project: agentflows
+files:
+  - skills/agentflow/references/document-chain.md
+  - docs/product/README.md
+  - docs/product/design/product-design.md
+  - aiwork-workflow-ai@worktree-2026-09-20:docs/features/feature-2026-09-18-定时任务/design/be/定时任务-后端技术方案.md
+affected_slices:
+  - expression-discipline
+  - document-chain
+recorded_at: 2026-09-20T06:00:00Z
+updated_at: 2026-09-20T07:05:00Z
+source_revision: agentflows@5da90f2
+agentflow_version: 0.8.2
+regression_status: pass
+reviewer: agentflow:reviewer
+review_decision: approved
+closure_criteria: grep -rn '爆炸半径\|blast radius' skills/ docs/ 与 aiwork 定时任务链 → 0 命中；validate.py installed → PASS（0.8.2 快照含表达纪律条款）
+fix_revision: agentflow 0.8.3
+class_id: expression-discipline-jargon
+occurrence: "1"
+---
+
+## 现象
+
+用户两次追问："爆炸半径 文档里面这个是什么意思"；随后指出"我记得 agentflow 之前
+改过不让说这些难理解的、黑话之类的 你没遵从"。核查确认：
+
+1. 「爆炸半径」为本次会话自造的压缩词，散布 6 处（document-chain.md 骨架与质量判据、
+   docs/product README 与 design 头/列头、定时任务 design/be 章节名），无一处就地
+   说明，首问才解释；
+2. 修复初版只换了大标题，**残留"旧称「爆炸半径」"过度讲解尾巴**（释的用法），且
+   README/D 表列头漏换；
+3. 既有纪律明确在案：0.7.3 批（EP-20260918-003）判据=黑话主形态是惯性压缩词（指代
+   因人因时而异）、修复优先级「换 > 释 > 删」、反过度讲解；PLAN-BUSINESS-EVAL-001
+   T03 把「术语歧义（行话未就地说明）」列为强制种子类别——"只有作者知道含义的，算问题"。
+
+## 根因
+
+1. **纪律未沉淀进生成契约**（attribution=workflow_policy）：表达纪律只存在于改进环的
+   测量面（业务评测种子类别）与 episode 记录，`document-chain.md` 生成契约没有该条款，
+   生成时上下文不含此纪律，作者自然违规——改进环产出的知识没有回流到方法文件。
+2. **修复执行未对照优先级**：初版按"释"处理（旧称注记）且换面不全，违反「换 > 释」。
+
+## 问题代码
+
+修复前 `document-chain.md` 两处（现均已换）：
+- 目录树行 `design/ how: decision table, challenges, architecture, blast radius, verification`
+- 质量判据 `- Impact assessment is explicit (旧称「爆炸半径」): rated L0–L3 …`；
+  `docs/product/README.md:48`、`design/product-design.md:6,100` 同词散布。
+
+## 修复
+
+1. 按「换」全量替换为「影响面评估」/impact assessment，删除全部"旧称"注记；
+   全仓 + 生成链 grep `爆炸半径|blast radius` = 0（本记录回归检查 S1）。
+2. **系统性修复**：`document-chain.md` 质量判据新增**表达纪律条款**——禁止发明行话与
+   指代依赖读者的压缩词，换>释>删，过度讲解本身计阅读负担缺陷，"只有作者能解的词
+   即为 finding"；该批随 0.8.2 快照重装生效（installed PASS）。
+3. 术语已被语料通名替代：影响面评估（L0–L3 定级 + 兼容性分类 + 消费方清单，与
+   沙箱熔断 feature §2.9 同构）。
+
+外部引用现状片段（换词后，节选自引用文件）：
+
+> aiwork-workflow-ai@worktree-2026-09-20:docs/features/feature-2026-09-18-定时任务/design/be/定时任务-后端技术方案.md §1.6
+>
+> 「影响面」= 本次改动波及的系统、数据、行为与消费方清单。定级依据仓内 `templates/feature/design/be/impact-assessment-checklist.md`。
+
+**回归证据**：grep 复核 0 命中（2026-09-20）；`validate.py all` 9×PASS（docs 检查含
+新判据文本的 schema 引用核对）；快照 `PASS installed`。
+
+## 变更记录
+
+- 2026-09-20 初版立账。
+
+## 审查
+
+- [x] 换优先级执行完整（grep 0）；表达纪律条款已入生成契约并重装
+- [x] 本记录类与 PLAN-BUSINESS-EVAL-001 术语歧义种子类别同源（改进环测量面已就绪，
+      待 U-01 端点解除后可入对照用例）
+- [x] 独立评审核对通过（agentflow:reviewer approved，2026-09-20 终裁）

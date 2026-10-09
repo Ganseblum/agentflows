@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/recurrence.schema.json",
   "title": "Agentflow bug recurrence ledger frontmatter",
-  "description": "Contract for the YAML frontmatter of a class ledger under records/bugs/recurrence/. One file per failure class that recurred or was consolidated; plain single-occurrence bugs do not get a ledger. The occurrence list holds bug_ids only — versions live on the referenced records so there is a single source of truth.",
+  "description": "Contract for the YAML frontmatter of a class ledger under issues/recurrence/. One file per failure class that recurred or was consolidated; plain single-occurrence bugs do not get a ledger. The occurrence list holds bug_ids only — versions live on the referenced records so there is a single source of truth.",
   "type": "object",
   "additionalProperties": false,
   "required": ["class_id", "title", "status", "first_record", "occurrences", "recorded_at"],
@@ -24,14 +24,14 @@
     "first_record": {
       "description": "bug_id of the record where the class first appeared.",
       "type": "string",
-      "pattern": "^BUG-[A-Z0-9][A-Z0-9._-]*$"
+      "pattern": "^ISS-\\d{4}-\\d{3,}$"
     },
     "occurrences": {
       "description": "bug_ids belonging to this class, in chronological order.",
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^BUG-[A-Z0-9][A-Z0-9._-]*$" }
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
     },
     "recorded_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" }

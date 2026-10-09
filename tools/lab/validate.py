@@ -95,6 +95,24 @@ BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 # test file is a human-authored change to this list plus the protection entry above.
 EXPECTED_TEST_FILES = ("test_lab_contracts.py", "test_record_store.py")
 
+# Live record roots (2026-10 structural overhaul): the six zones that replaced the former
+# `records/` tree. `validate_workspace_artifacts` walks each root and compiles what it holds —
+# issues/ (issue records, recurrence ledgers, the 归档 archive), episodes/ (decision records),
+# plans/ (execution plans), improvements/ (candidates, evaluations, comparisons), releases/
+# (release records), reviews/ (review records with their archive snapshots).
+LIVE_RECORD_ROOTS = ("issues", "episodes", "plans", "improvements", "releases", "reviews")
+
+# `_archive/` is the frozen archive: documents inside are verbatim historical originals
+# (pre-migration audit/handoff material, retired class READMEs) whose paths and cross-references
+# reflect the trees they were written in. They are deliberately neither rewritten nor
+# path/reference-checked here — this constant is the single, explicit exemption, referenced
+# wherever a scan could otherwise reach into the archive. Do not add further exemptions.
+FROZEN_ARCHIVE_ROOT = ROOT / "_archive"
+
+# The live roots mock/ carries demo fixtures for. mock/README.md declares these contents and
+# `validate_mock_fixtures` overlays each of them onto the throwaway repository copy.
+MOCK_RECORD_ROOTS = ("issues", "episodes", "plans", "reviews")
+
 # Floor for the regression suite size, parsed from the unittest "Ran N tests" summary. The
 # floor is set far below the suite's steady state but far above a trivial suite, so deleting
 # or gutting the tests cannot yield a green gate — shrinking the suite becomes a deliberate
@@ -120,7 +138,7 @@ MANIFEST_POINTERS = (
 )
 
 # Components whose content decides installed plugin behavior. Anything outside this list
-# (docs, records, evals) may legitimately differ between a source checkout and a snapshot.
+# (docs, record artifacts, evals) may legitimately differ between a source checkout and a snapshot.
 INSTALLED_COMPONENTS = ("agents", "skills")
 INSTALLED_FILES = (
     "plugin.json",
@@ -509,9 +527,11 @@ def validate_timestamp_order(document: dict[str, Any], path: Path) -> list[Valid
 
 
 BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
-BUG_ARCHIVE_DIR = "archive"
+# Issue records are flat: issues/ISS-<YYYY>-<NNN>-<slug>.md. Only rejected records live under
+# issues/归档/<YYYY-MM-DD>/; recurrence ledgers live under issues/recurrence/.
+BUG_ARCHIVE_DIR = "归档"
 RECURRENCE_DIR = "recurrence"
-BUG_SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+BUG_FILENAME_PATTERN = re.compile(r"^ISS-\d{4}-\d{3,}-[a-z0-9][a-z0-9-]*$")
 
 PLAN_REQUIRED_HEADINGS = (
     "## 进展概览",
@@ -849,7 +869,7 @@ def validate_review_markdown(
 ) -> list[ValidationError]:
     """Validate one review record: schema, timestamp order, layout, archived-doc existence.
 
-    Layout: records/reviews/<project>-<feature-slug>/review-<YYYY-MM-DD>-<NNN>.md — the
+    Layout: reviews/<project>-<feature-slug>/review-<YYYY-MM-DD>-<NNN>.md — the
     directory is anchored on the reviewed feature (the same feature may be reviewed many
     times), and the filename must equal the review_id so rounds sort chronologically.
     """
@@ -876,13 +896,13 @@ def validate_review_markdown(
             )
         else:
             seen_review_ids[review_id] = path
-    parts = relative.parts  # ("records", "reviews", "<project>-<feature-slug>", "review-<date>-<NNN>.md")
-    if len(parts) != 4:
+    parts = relative.parts  # ("reviews", "<project>-<feature-slug>", "review-<date>-<NNN>.md")
+    if len(parts) != 3:
         errors.append(
-            ValidationError(str(path), "review records live in records/reviews/<project>-<feature-slug>/")
+            ValidationError(str(path), "review records live in reviews/<project>-<feature-slug>/")
         )
     else:
-        if "-" not in parts[2] or parts[2].startswith("-") or parts[2].endswith("-"):
+        if "-" not in parts[1] or parts[1].startswith("-") or parts[1].endswith("-"):
             errors.append(
                 ValidationError(str(path), "review directory must be named <project>-<feature-slug>")
             )
@@ -985,10 +1005,13 @@ def validate_test_plan_markdown(
 ) -> tuple[list[ValidationError], dict[str, Any] | None]:
     """Validate one test plan and return (errors, plan entry) for run-record cross-checks.
 
-    Layout: records/tests/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md — feature-anchored
-    directory, filename matches test_plan_id, revised in place (test_version bump). Body
-    contract: the 用例 registry table (unique TC ids, level/priority enums, case_count equality,
-    one detail heading per case) plus the 边界覆盖 and 流程疑点 sections.
+    Home (2026-10 structural overhaul): features/<batch>/testing/<project>-<feature-slug>/
+    plan-<YYYY-MM-DD>-<NNN>.md — feature-anchored directory, filename matches test_plan_id,
+    revised in place (test_version bump). The artifacts walk deliberately does not patrol the
+    feature batch directories yet, so callers in examples/ still exercise this function while
+    the layout check stays deferred to that separately reviewed change. Body contract: the
+    用例 registry table (unique TC ids, level/priority enums, case_count equality, one detail
+    heading per case) plus the 边界覆盖 and 流程疑点 sections.
     """
     frontmatter, body, errors = load_bug_markdown(path)
     if errors or frontmatter is None:
@@ -1043,17 +1066,11 @@ def validate_test_plan_markdown(
             errors.append(
                 ValidationError(str(path), "plan record filename must match its test_plan_id date and seq")
             )
-    parts = relative.parts
-    if parts[0] == "records":
-        # Example instances live under examples/ and are not layout-checked.
-        if len(parts) != 4:
-            errors.append(
-                ValidationError(str(path), "test plans live in records/tests/<project>-<feature-slug>/")
-            )
-        elif "-" not in parts[2] or parts[2].startswith("-") or parts[2].endswith("-"):
-            errors.append(
-                ValidationError(str(path), "test directory must be named <project>-<feature-slug>")
-            )
+    # Layout note (deferred): test plans now land in the feature batch directory
+    # (features/<batch>/testing/<project>-<feature-slug>/plan-<date>-<seq>.md). The artifacts
+    # walk does not patrol features/ yet — that patrol is a separately reviewed change — so no
+    # directory-shape check is applied here; this function validates the frontmatter/body
+    # contract only.
     for heading in TEST_PLAN_REQUIRED_HEADINGS:
         if not heading_present(body, heading):
             errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
@@ -1102,7 +1119,7 @@ def validate_test_run_markdown(
     test_plans: dict[str, dict[str, Any]],
 ) -> tuple[list[ValidationError], list[str], list[str]]:
     """Validate one test run record; return (errors, findings, flow_findings) so the caller can
-    cross-check the bug-id pools after the whole records tree has been walked.
+    cross-check the bug-id pools after the whole tree has been walked.
 
     Body contract: the 结果 table (unique case ids from the referenced plan's registry, fixed
     result enum, evidence required on fail/blocked rows), summary counts equal to the table,
@@ -1161,11 +1178,10 @@ def validate_test_run_markdown(
             errors.append(
                 ValidationError(str(path), "run record filename must match its test_run_id date and seq")
             )
-    parts = relative.parts
-    if parts[0] == "records" and len(parts) != 4:
-        errors.append(
-            ValidationError(str(path), "test runs live in records/tests/<project>-<feature-slug>/")
-        )
+    # Layout note (deferred): test runs now land in the feature batch directory
+    # (features/<batch>/testing/<project>-<feature-slug>/run-<date>-<seq>.md). As with test
+    # plans, the artifacts walk does not patrol features/ yet, so no directory-shape check is
+    # applied here; this function validates the frontmatter/body contract only.
     for heading in TEST_RUN_REQUIRED_HEADINGS:
         if not heading_present(body, heading):
             errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
@@ -1306,7 +1322,11 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
 
 
 def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path, seen_ids: dict[str, Path]) -> list[ValidationError]:
-    """Validate date directory, filename slug, and bug_id uniqueness for one record."""
+    """Validate filename shape and bug_id uniqueness for one record.
+
+    Live records are flat: issues/ISS-<YYYY>-<NNN>-<slug>.md. Archived (rejected) records keep
+    a date directory: issues/归档/<YYYY-MM-DD>/ISS-<YYYY>-<NNN>-<slug>.md.
+    """
     errors: list[ValidationError] = []
     bug_id = frontmatter.get("bug_id")
     if isinstance(bug_id, str):
@@ -1316,27 +1336,40 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
             )
         else:
             seen_ids[bug_id] = path
-    if not BUG_SLUG_PATTERN.match(path.stem):
-        errors.append(ValidationError(str(path), "filename must be a kebab-case slug (lowercase letters, digits, hyphens)"))
-
-    parts = relative.parts  # e.g. ("records", "bugs", "2026-09-14", "slug.md") or (..., "archive", "2026-09-14", ...)
-    date_parts = [p for p in parts[2:] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", p)]
-    if not date_parts:
-        errors.append(ValidationError(str(path), "record must live in a YYYY-MM-DD directory under records/bugs/"))
-        return errors
-    recorded = frontmatter.get("recorded_at")
-    if isinstance(recorded, str):
-        try:
-            recorded_date = dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()
-        except ValueError:
-            recorded_date = None
-        if recorded_date is not None and date_parts[-1] != recorded_date.isoformat():
-            errors.append(
-                ValidationError(
-                    str(path),
-                    f"date directory {date_parts[-1]!r} does not match recorded_at date {recorded_date.isoformat()}",
-                )
+    if not BUG_FILENAME_PATTERN.match(path.stem):
+        errors.append(
+            ValidationError(
+                str(path),
+                "filename must be ISS-<YYYY>-<NNN>-<kebab-case-slug> "
+                "(lowercase letters, digits, hyphens) — e.g. ISS-2026-001-claude-json-schema-rejected.md",
             )
+        )
+
+    parts = relative.parts  # ("issues", "ISS-…-slug.md") or ("issues", "归档", "YYYY-MM-DD", "ISS-…-slug.md")
+    if BUG_ARCHIVE_DIR in parts:
+        date_parts = [part for part in parts[2:] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", part)]
+        if not date_parts:
+            errors.append(
+                ValidationError(str(path), "archived records live in a YYYY-MM-DD directory under issues/归档/")
+            )
+            return errors
+        recorded = frontmatter.get("recorded_at")
+        if isinstance(recorded, str):
+            try:
+                recorded_date = dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()
+            except ValueError:
+                recorded_date = None
+            if recorded_date is not None and date_parts[-1] != recorded_date.isoformat():
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"date directory {date_parts[-1]!r} does not match recorded_at date {recorded_date.isoformat()}",
+                    )
+                )
+    elif len(parts) != 2:
+        errors.append(
+            ValidationError(str(path), "live issue records live directly under issues/ (issues/ISS-<YYYY>-<NNN>-<slug>.md)")
+        )
     return errors
 
 
@@ -1442,9 +1475,9 @@ def validate_invalid_plan_example(path: Path) -> list[ValidationError]:
 
 
 def example_test_plans() -> dict[str, dict[str, Any]]:
-    """Test plan entries parsed from examples/test-records for standalone run-example validation."""
+    """Test plan entries parsed from examples/testing for standalone run-example validation."""
     plans: dict[str, dict[str, Any]] = {}
-    for plan_path in sorted((ROOT / "examples" / "test-records").glob("plan-*.md")):
+    for plan_path in sorted((ROOT / "examples" / "testing").glob("plan-*.md")):
         frontmatter, body, load_errors = load_bug_markdown(plan_path)
         if load_errors or frontmatter is None or not isinstance(frontmatter.get("test_plan_id"), str):
             continue
@@ -1478,10 +1511,10 @@ INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
 
 def validate_examples() -> list[ValidationError]:
     errors: list[ValidationError] = []
-    bug_paths = sorted((ROOT / "examples" / "bug-records").glob("*.md"))
+    bug_paths = sorted((ROOT / "examples" / "issues").glob("*.md"))
     plan_paths = sorted((ROOT / "examples" / "plans").glob("*.md"))
     result_paths = sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
-    test_paths = sorted((ROOT / "examples" / "test-records").glob("*.md"))
+    test_paths = sorted((ROOT / "examples" / "testing").glob("*.md"))
     test_plan_paths = [path for path in test_paths if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
     test_run_paths = [path for path in test_paths if re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
     valid_paths = plan_paths + result_paths
@@ -1747,11 +1780,13 @@ def validate_evals_suite() -> list[ValidationError]:
     return validate_evals() + validate_business_evals()
 
 
-# The improvement loop's JSON handoff plane (records/improvement/): each subtree has its own
-# schema and its own identity rule, compiled by validate_workspace_artifacts. The schema split
-# is deliberate — schemas/ holds the deterministic tool-output contracts (evaluation result,
-# comparison), skills/improve/references/ holds the improve-loop rulebook contracts (candidate,
-# release record) — see records/improvement/README.md.
+# The improvement loop's JSON handoff plane: each artifact class has its own schema and its own
+# identity rule, compiled by validate_workspace_artifacts. Candidates, evaluations, and
+# comparisons live under improvements/; release records live under the repository-root
+# releases/ (split out by the 2026-10 structural overhaul). The schema split is deliberate —
+# schemas/ holds the deterministic tool-output contracts (evaluation result, comparison),
+# skills/improve/references/ holds the improve-loop rulebook contracts (candidate,
+# release record) — see improvements/README.md and releases/README.md.
 EVALUATION_RESULT_SCHEMA = ROOT / "schemas" / "evaluation-result.schema.json"
 COMPARISON_SCHEMA = ROOT / "schemas" / "comparison.schema.json"
 CANDIDATE_SCHEMA = ROOT / "skills" / "improve" / "references" / "candidate.schema.json"
@@ -1762,6 +1797,8 @@ IMPROVEMENT_SCHEMA_BY_SUBTREE = {
     "comparisons": COMPARISON_SCHEMA,
     "releases": RELEASE_RECORD_SCHEMA,
 }
+# The subtrees that live under improvements/; release records moved to the root releases/.
+IMPROVEMENT_ARTIFACT_SUBTREES = ("candidates", "evaluations", "comparisons")
 # The seven execution-context fields the runner compares on (eval_runner.py compare) and that
 # every improvement cross-check treats as one unit.
 COMPARISON_CONTEXT_FIELDS = (
@@ -1774,15 +1811,13 @@ COMPARISON_CONTEXT_FIELDS = (
     "suite_case_count",
 )
 
-# Every path under records/ is a stray file or an unknown subdirectory and must fail the
-# artifacts check explicitly instead of falling through the parts[0:2] dispatch silently.
-KNOWN_RECORD_CLASSES = ("bugs", "episodes", "reviews", "plans", "improvement", "tests")
-
+# Every path under a live record root is a stray file or an unknown subdirectory and must fail
+# the artifacts check explicitly instead of falling through the root dispatch silently.
 
 def validate_improvement_document(
     path: Path, subtree: str
 ) -> tuple[dict[str, Any] | None, list[ValidationError]]:
-    """Validate one JSON artifact under records/improvement/<subtree>/ against its own schema.
+    """Validate one JSON artifact under improvements/<subtree>/ (or releases/) against its schema.
 
     Improvement artifacts are exchanged between loop roles, so identity is the filename: a
     candidate record's stem must equal its ``candidate_version`` and an evaluation result's
@@ -1846,7 +1881,7 @@ def validate_improvement_cross_references(
                     ValidationError(
                         str(path),
                         f"{role}_result_id {result_id!r} does not resolve to an evaluation "
-                        "result under records/improvement/evaluations/",
+                        "result under improvements/evaluations/",
                     )
                 )
                 continue
@@ -1879,7 +1914,7 @@ def validate_improvement_cross_references(
                 ValidationError(
                     str(path),
                     f"embedded candidate_version {version!r} does not resolve to a candidate "
-                    "record under records/improvement/candidates/",
+                    "record under improvements/candidates/",
                 )
             )
         else:
@@ -1911,7 +1946,7 @@ def validate_improvement_cross_references(
                     ValidationError(
                         str(path),
                         f"{role}.result_id {result_id!r} does not resolve to an evaluation "
-                        "result under records/improvement/evaluations/",
+                        "result under improvements/evaluations/",
                     )
                 )
         pair = (referenced["baseline_results"], referenced["candidate_results"])
@@ -1919,7 +1954,7 @@ def validate_improvement_cross_references(
             errors.append(
                 ValidationError(
                     str(path),
-                    "no comparison under records/improvement/comparisons/ matches this "
+                    "no comparison under improvements/comparisons/ matches this "
                     f"release's result pair ({pair[0]!r}, {pair[1]!r})",
                 )
             )
@@ -1928,9 +1963,9 @@ def validate_improvement_cross_references(
             if not isinstance(evidence_id, str):
                 continue
             if evidence_id.startswith("EP-"):
-                pool, location = seen_episode_ids, "records/episodes/"
-            elif evidence_id.startswith("BUG-"):
-                pool, location = seen_bug_ids, "records/bugs/"
+                pool, location = seen_episode_ids, "episodes/"
+            elif evidence_id.startswith("ISS-"):
+                pool, location = seen_bug_ids, "issues/"
             else:
                 continue  # other evidence shapes are outside this tree's resolver
             if evidence_id not in pool:
@@ -1945,11 +1980,14 @@ def validate_improvement_cross_references(
 
 
 def validate_workspace_artifacts() -> list[ValidationError]:
-    """Validate record instances under records/ (Markdown bug records, JSON plans)."""
+    """Validate record instances under the live record roots.
+
+    Issue records (with their recurrence ledgers and rejected-record archive under issues/),
+    JSON episodes, Markdown plans, the improvement artifact subtrees under improvements/ plus
+    release records under releases/, and review records with their archive snapshots. The
+    `_archive/` tree is frozen history and is deliberately not patrolled (FROZEN_ARCHIVE_ROOT).
+    """
     errors: list[ValidationError] = []
-    records_root = ROOT / "records"
-    if not records_root.is_dir():
-        return [ValidationError(str(records_root), "records directory is missing; artifacts are required")]
     seen_bug_ids: dict[str, Path] = {}
     seen_review_ids: dict[str, Path] = {}
     seen_episode_ids: dict[str, Path] = {}
@@ -1957,230 +1995,265 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     ledgers: dict[str, dict[str, Any]] = {}
     class_records: list[tuple[str, Any, str, Path]] = []
     review_findings: list[tuple[list, Path]] = []
-    seen_test_plan_ids: dict[str, Path] = {}
-    seen_test_run_ids: dict[str, Path] = {}
-    test_plans: dict[str, dict[str, Any]] = {}
-    deferred_test_runs: list[tuple[Path, Path]] = []
     improvement_candidates: dict[str, tuple[Path, dict[str, Any]]] = {}
     improvement_results: dict[str, tuple[Path, dict[str, Any]]] = {}
     improvement_comparisons: list[tuple[Path, dict[str, Any]]] = []
     improvement_releases: list[tuple[Path, dict[str, Any]]] = []
-    if not any(path for path in records_root.iterdir() if not path.name.startswith(".")):
-        errors.append(ValidationError(str(records_root), "records directory is empty; artifacts are required"))
-    for path in sorted(records_root.rglob("*")):
-        relative = path.relative_to(ROOT)
-        parts = relative.parts
-        if any(part.startswith(".") for part in parts[1:]):
-            if path.name == ".DS_Store":
-                continue
-            errors.append(ValidationError(str(path), "hidden record entry is not allowed"))
-            continue
-        if len(parts) < 2 or parts[1] not in KNOWN_RECORD_CLASSES:
-            # A stray file at the top of records/ or an unknown subdirectory used to fall
-            # through the parts[0:2] dispatch without any check; report it by path instead.
-            if len(parts) == 2 and path.is_file() and path.name == "README.md":
-                continue  # the top-level records/README.md documents the record classes
+    live_roots: list[str] = []
+    for root_name in LIVE_RECORD_ROOTS:
+        root = ROOT / root_name
+        if not root.is_dir():
             errors.append(
-                ValidationError(
-                    str(path),
-                    "unexpected entry under records/; record classes are bugs/, episodes/, "
-                    "reviews/, plans/, improvement/, and tests/ (plus records/README.md)",
-                )
+                ValidationError(str(root), f"{root_name} directory is missing; artifacts are required")
             )
             continue
-        if not path.is_file():
-            continue
-        if parts[0:2] == ("records", "bugs"):
-            if path.name == "README.md":
+        live_roots.append(root_name)
+        if not any(entry for entry in root.iterdir() if not entry.name.startswith(".")):
+            errors.append(
+                ValidationError(str(root), f"{root_name} directory is empty; artifacts are required")
+            )
+    for root_name in live_roots:
+        root = ROOT / root_name
+        for path in sorted(root.rglob("*")):
+            relative = path.relative_to(ROOT)
+            parts = relative.parts
+            if any(part.startswith(".") for part in parts[1:]):
+                if path.name == ".DS_Store":
+                    continue
+                errors.append(ValidationError(str(path), "hidden record entry is not allowed"))
                 continue
-            if parts[2:3] == (RECURRENCE_DIR,):
-                if path.suffix != ".md":
+            if root_name == "issues":
+                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                    continue  # the class README documents the numbering and archive rules
+                if (
+                    len(parts) == 2
+                    and not path.is_file()
+                    and parts[1] not in (RECURRENCE_DIR, BUG_ARCHIVE_DIR)
+                ):
                     errors.append(
-                        ValidationError(str(path), "recurrence ledgers are Markdown files; unexpected non-md file")
+                        ValidationError(
+                            str(path),
+                            "unexpected entry under issues/; live issue records are "
+                            "ISS-<YYYY>-<NNN>-<slug>.md directly under issues/, with 归档/ and "
+                            "recurrence/ the only subdirectories — see issues/README.md",
+                        )
                     )
                     continue
-                ledger_errors = validate_recurrence_markdown(path)
-                errors.extend(ledger_errors)
-                if ledger_errors:
-                    continue
-                frontmatter, _, _ = load_bug_markdown(path)
-                class_id = frontmatter.get("class_id") if frontmatter else None
-                if isinstance(class_id, str):
-                    if class_id in ledgers:
+                if parts[1] == RECURRENCE_DIR:
+                    if not path.is_file():
+                        continue
+                    if path.suffix != ".md":
                         errors.append(
-                            ValidationError(str(path), f"duplicate class_id {class_id!r} already declared in {ledgers[class_id]['path']}")
+                            ValidationError(str(path), "recurrence ledgers are Markdown files; unexpected non-md file")
+                        )
+                        continue
+                    ledger_errors = validate_recurrence_markdown(path)
+                    errors.extend(ledger_errors)
+                    if ledger_errors:
+                        continue
+                    frontmatter, _, _ = load_bug_markdown(path)
+                    class_id = frontmatter.get("class_id") if frontmatter else None
+                    if isinstance(class_id, str):
+                        if class_id in ledgers:
+                            errors.append(
+                                ValidationError(str(path), f"duplicate class_id {class_id!r} already declared in {ledgers[class_id]['path']}")
+                            )
+                        else:
+                            ledgers[class_id] = {"path": path, "frontmatter": frontmatter}
+                    continue
+                archived = parts[1] == BUG_ARCHIVE_DIR
+                if len(parts) > 2 and not archived:
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            "unexpected entry under issues/; only issues/<ISS-…>.md, "
+                            "issues/归档/<YYYY-MM-DD>/ and issues/recurrence/ are record locations "
+                            "— see issues/README.md",
+                        )
+                    )
+                    continue
+                if not path.is_file():
+                    continue
+                if path.suffix != ".md":
+                    errors.append(ValidationError(str(path), "issue records are Markdown files; unexpected non-md file"))
+                    continue
+                frontmatter, body, load_errors = load_bug_markdown(path)
+                if load_errors or frontmatter is None:
+                    errors.extend(load_errors)
+                    continue
+                errors.extend(validate_bug_markdown(path))
+                errors.extend(validate_bug_layout(frontmatter, path, relative, seen_bug_ids))
+                errors.extend(validate_external_excerpts(frontmatter, body, path))
+                errors.extend(validate_body_references(body, path))
+                for entry in frontmatter.get("files") or []:
+                    # Self-contained evidence: a reference either resolves inside this repository
+                    # or is explicitly repo-qualified (<repo>@<revision>:<path>) — a bare path that
+                    # exists nowhere dangles for anyone who receives the records without the
+                    # other repository.
+                    if not isinstance(entry, str):
+                        continue
+                    head, sep, _ = entry.partition(":")
+                    if sep and "@" in head:
+                        continue
+                    if not (ROOT / entry).is_file():
+                        errors.append(
+                            ValidationError(
+                                str(path),
+                                f"files entry {entry!r} exists neither in this repository nor as a "
+                                "repo-qualified reference (<repo>@<revision>:<path>)",
+                            )
+                        )
+                status = frontmatter.get("status")
+                if archived:
+                    if status != "rejected":
+                        errors.append(
+                            ValidationError(str(path), "only rejected records may be archived; verified records stay in place")
+                        )
+                elif status == "rejected":
+                    errors.append(
+                        ValidationError(str(path), "a rejected record must be moved into issues/归档/")
+                    )
+                bug_id = frontmatter.get("bug_id")
+                version = frontmatter.get("agentflow_version")
+                if isinstance(bug_id, str) and isinstance(version, str):
+                    record_versions[bug_id] = version
+                class_id = frontmatter.get("class_id")
+                if isinstance(class_id, str):
+                    class_records.append((class_id, frontmatter.get("occurrence"), str(bug_id or ""), path))
+            elif root_name == "episodes":
+                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                    continue
+                if not path.is_file():
+                    continue
+                if path.suffix != ".json":
+                    errors.append(ValidationError(str(path), "episode records are JSON files; unexpected non-json file"))
+                    continue
+                episode_errors = validate_episode_document(path)
+                errors.extend(episode_errors)
+                if episode_errors:
+                    continue
+                document, _ = load_json(path)
+                episode_id = document.get("episode_id") if isinstance(document, dict) else None
+                if isinstance(episode_id, str):
+                    if episode_id in seen_episode_ids:
+                        errors.append(
+                            ValidationError(str(path), f"duplicate episode_id {episode_id!r} already declared in {seen_episode_ids[episode_id]}")
                         )
                     else:
-                        ledgers[class_id] = {"path": path, "frontmatter": frontmatter}
-                continue
-            if path.suffix != ".md":
-                errors.append(ValidationError(str(path), "bug records are Markdown files; unexpected non-md file"))
-                continue
-            frontmatter, body, load_errors = load_bug_markdown(path)
-            if load_errors or frontmatter is None:
-                errors.extend(load_errors)
-                continue
-            errors.extend(validate_bug_markdown(path))
-            errors.extend(validate_bug_layout(frontmatter, path, relative, seen_bug_ids))
-            errors.extend(validate_external_excerpts(frontmatter, body, path))
-            errors.extend(validate_body_references(body, path))
-            for entry in frontmatter.get("files") or []:
-                # Self-contained evidence: a reference either resolves inside this repository
-                # or is explicitly repo-qualified (<repo>@<revision>:<path>) — a bare path that
-                # exists nowhere dangles for anyone who receives the records without the
-                # other repository.
-                if not isinstance(entry, str):
+                        seen_episode_ids[episode_id] = path
+            elif root_name == "reviews":
+                if len(parts) != 3 or not path.is_file() or not re.fullmatch(
+                    r"review-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name
+                ):
+                    # Only feature-directory-level review-*.md files are records; README, archived
+                    # evidence copies, and anything nested deeper (archive/...) are not.
                     continue
-                head, sep, _ = entry.partition(":")
-                if sep and "@" in head:
+                review_errors = validate_review_markdown(path, relative, seen_review_ids)
+                errors.extend(review_errors)
+                if review_errors:
                     continue
-                if not (ROOT / entry).is_file():
+                frontmatter, _, _ = load_bug_markdown(path)
+                if frontmatter:
+                    review_findings.append((frontmatter.get("findings") or [], path))
+            elif root_name == "plans":
+                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                    continue
+                if not path.is_file():
+                    continue
+                if path.suffix != ".md":
+                    errors.append(ValidationError(str(path), "plans are Markdown files; unexpected non-md file"))
+                    continue
+                errors.extend(validate_plan_markdown(path, relative))
+            elif root_name == "improvements":
+                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                    continue  # the subtree README documents the artifact contracts
+                if not path.is_file():
+                    if len(parts) == 2 and parts[1] in IMPROVEMENT_ARTIFACT_SUBTREES:
+                        continue  # the artifact subtree container
                     errors.append(
                         ValidationError(
                             str(path),
-                            f"files entry {entry!r} exists neither in this repository nor as a "
-                            "repo-qualified reference (<repo>@<revision>:<path>)",
+                            "unexpected entry under improvements/; artifacts live directly "
+                            "in candidates/, evaluations/, or comparisons/ (plus README.md) — "
+                            "release records live under releases/ — see improvements/README.md",
                         )
                     )
-            status = frontmatter.get("status")
-            if parts[2:3] == (BUG_ARCHIVE_DIR,):
-                if status != "rejected":
-                    errors.append(
-                        ValidationError(str(path), "only rejected records may be archived; verified records stay in place")
-                    )
-            elif status == "rejected":
-                errors.append(
-                    ValidationError(str(path), "a rejected record must be moved into records/bugs/archive/")
-                )
-            bug_id = frontmatter.get("bug_id")
-            version = frontmatter.get("agentflow_version")
-            if isinstance(bug_id, str) and isinstance(version, str):
-                record_versions[bug_id] = version
-            class_id = frontmatter.get("class_id")
-            if isinstance(class_id, str):
-                class_records.append((class_id, frontmatter.get("occurrence"), str(bug_id or ""), path))
-        elif parts[0:2] == ("records", "episodes"):
-            if path.name == "README.md":
-                continue
-            if path.suffix != ".json":
-                errors.append(ValidationError(str(path), "episode records are JSON files; unexpected non-json file"))
-                continue
-            episode_errors = validate_episode_document(path)
-            errors.extend(episode_errors)
-            if episode_errors:
-                continue
-            document, _ = load_json(path)
-            episode_id = document.get("episode_id") if isinstance(document, dict) else None
-            if isinstance(episode_id, str):
-                if episode_id in seen_episode_ids:
-                    errors.append(
-                        ValidationError(str(path), f"duplicate episode_id {episode_id!r} already declared in {seen_episode_ids[episode_id]}")
-                    )
-                else:
-                    seen_episode_ids[episode_id] = path
-        elif parts[0:2] == ("records", "reviews"):
-            if len(parts) != 4 or not re.fullmatch(
-                r"review-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name
-            ):
-                # Only feature-directory-level review-*.md files are records; README, archived
-                # evidence copies, and anything nested deeper (archive/...) are not.
-                continue
-            review_errors = validate_review_markdown(path, relative, seen_review_ids)
-            errors.extend(review_errors)
-            if review_errors:
-                continue
-            frontmatter, _, _ = load_bug_markdown(path)
-            if frontmatter:
-                review_findings.append((frontmatter.get("findings") or [], path))
-        elif parts[0:2] == ("records", "tests"):
-            if path.name == "README.md":
-                continue
-            if len(parts) != 4 or not path.is_file():
-                # Evidence files and other non-record artifacts (e.g. evidence/<run-id>/…)
-                # are exempt, like the review archive snapshots.
-                continue
-            if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):
-                plan_errors, entry = validate_test_plan_markdown(path, relative, seen_test_plan_ids)
-                errors.extend(plan_errors)
-                if entry is not None:
-                    test_plans[entry["frontmatter"]["test_plan_id"]] = entry
-            elif re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):
-                # Deferred: the referenced plan may be validated later in the same sorted pass.
-                deferred_test_runs.append((path, relative))
-            else:
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        "unexpected file in a records/tests/ feature directory; records are "
-                        "plan-*.md and run-*.md (plus README.md and evidence/ subdirectories) "
-                        "— see records/tests/README.md",
-                    )
-                )
-        elif parts[0:2] == ("records", "plans"):
-            if path.name == "README.md":
-                continue
-            if path.suffix != ".md":
-                errors.append(ValidationError(str(path), "plans are Markdown files; unexpected non-md file"))
-                continue
-            errors.extend(validate_plan_markdown(path, relative))
-        elif parts[0:2] == ("records", "improvement"):
-            if path.name == "README.md":
-                continue  # the subtree README documents the artifact contracts
-            if len(parts) != 4 or parts[2] not in IMPROVEMENT_SCHEMA_BY_SUBTREE:
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        "unexpected entry under records/improvement/; artifacts live directly "
-                        "in candidates/, evaluations/, comparisons/, or releases/ (plus "
-                        "README.md) — see records/improvement/README.md",
-                    )
-                )
-                continue
-            if path.suffix != ".json":
-                errors.append(
-                    ValidationError(str(path), f"{parts[2]} artifacts are JSON files; unexpected non-json file")
-                )
-                continue
-            document, artifact_errors = validate_improvement_document(path, parts[2])
-            errors.extend(artifact_errors)
-            if document is None or artifact_errors:
-                continue
-            if parts[2] == "candidates":
-                version = document["candidate_version"]
-                if version in improvement_candidates:
+                    continue
+                if len(parts) != 3 or parts[1] not in IMPROVEMENT_ARTIFACT_SUBTREES:
                     errors.append(
                         ValidationError(
                             str(path),
-                            f"duplicate candidate_version {version!r} already declared in "
-                            f"{improvement_candidates[version][0]}",
+                            "unexpected entry under improvements/; artifacts live directly "
+                            "in candidates/, evaluations/, or comparisons/ (plus README.md) — "
+                            "release records live under releases/ — see improvements/README.md",
                         )
                     )
-                else:
-                    improvement_candidates[version] = (path, document)
-            elif parts[2] == "evaluations":
-                result_id = document["result_id"]
-                if result_id in improvement_results:
+                    continue
+                if path.suffix != ".json":
+                    errors.append(
+                        ValidationError(str(path), f"{parts[1]} artifacts are JSON files; unexpected non-json file")
+                    )
+                    continue
+                document, artifact_errors = validate_improvement_document(path, parts[1])
+                errors.extend(artifact_errors)
+                if document is None or artifact_errors:
+                    continue
+                if parts[1] == "candidates":
+                    version = document["candidate_version"]
+                    if version in improvement_candidates:
+                        errors.append(
+                            ValidationError(
+                                str(path),
+                                f"duplicate candidate_version {version!r} already declared in "
+                                f"{improvement_candidates[version][0]}",
+                            )
+                        )
+                    else:
+                        improvement_candidates[version] = (path, document)
+                elif parts[1] == "evaluations":
+                    result_id = document["result_id"]
+                    if result_id in improvement_results:
+                        errors.append(
+                            ValidationError(
+                                str(path),
+                                f"duplicate result_id {result_id!r} already declared in "
+                                f"{improvement_results[result_id][0]}",
+                            )
+                        )
+                    else:
+                        improvement_results[result_id] = (path, document)
+                elif parts[1] == "comparisons":
+                    pair = (document["baseline_result_id"], document["candidate_result_id"])
+                    if pair in {(c["baseline_result_id"], c["candidate_result_id"]) for _, c in improvement_comparisons}:
+                        errors.append(
+                            ValidationError(
+                                str(path),
+                                f"duplicate comparison result pair ({pair[0]!r}, {pair[1]!r})",
+                            )
+                        )
+                    else:
+                        improvement_comparisons.append((path, document))
+            elif root_name == "releases":
+                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                    continue  # the class README documents the release-record contract
+                if len(parts) != 2 or not path.is_file():
                     errors.append(
                         ValidationError(
                             str(path),
-                            f"duplicate result_id {result_id!r} already declared in "
-                            f"{improvement_results[result_id][0]}",
+                            "unexpected entry under releases/; release records live directly in "
+                            "releases/ as <version>.json (plus README.md) — see releases/README.md",
                         )
                     )
-                else:
-                    improvement_results[result_id] = (path, document)
-            elif parts[2] == "comparisons":
-                pair = (document["baseline_result_id"], document["candidate_result_id"])
-                if pair in {(c["baseline_result_id"], c["candidate_result_id"]) for _, c in improvement_comparisons}:
+                    continue
+                if path.suffix != ".json":
                     errors.append(
-                        ValidationError(
-                            str(path),
-                            f"duplicate comparison result pair ({pair[0]!r}, {pair[1]!r})",
-                        )
+                        ValidationError(str(path), "release artifacts are JSON files; unexpected non-json file")
                     )
-                else:
-                    improvement_comparisons.append((path, document))
-            elif parts[2] == "releases":
+                    continue
+                document, artifact_errors = validate_improvement_document(path, "releases")
+                errors.extend(artifact_errors)
+                if document is None or artifact_errors:
+                    continue
                 improvement_releases.append((path, document))
 
     # Cross-check recurrence ledgers against the records they claim.
@@ -2208,7 +2281,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     for class_id, occurrence, bug_id, path in class_records:
         if class_id not in ledgers:
             errors.append(
-                ValidationError(str(path), f"class_id {class_id!r} has no ledger under records/bugs/recurrence/")
+                ValidationError(str(path), f"class_id {class_id!r} has no ledger under issues/recurrence/")
             )
             continue
         if not (isinstance(occurrence, str) and occurrence.isdigit() and int(occurrence) >= 1):
@@ -2235,21 +2308,11 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(
                     ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
-    for run_path, run_relative in deferred_test_runs:
-        run_errors, run_findings, run_flow_findings = validate_test_run_markdown(
-            run_path, run_relative, seen_test_run_ids, test_plans
-        )
-        errors.extend(run_errors)
-        for bug_id in run_findings:
-            if bug_id not in seen_bug_ids:
-                errors.append(
-                    ValidationError(str(run_path), f"run findings reference unknown bug_id {bug_id!r}")
-                )
-        for bug_id in run_flow_findings:
-            if bug_id not in seen_bug_ids:
-                errors.append(
-                    ValidationError(str(run_path), f"run flow_findings reference unknown bug_id {bug_id!r}")
-                )
+    # Test records (test plans and runs) moved to features/<batch>/testing/ with the 2026-10
+    # structural overhaul. The artifacts walk does not patrol the feature batch directories yet
+    # — that patrol, including the run-findings bug-id cross-check below, is deferred to a
+    # separately reviewed change; validate_test_plan_markdown / validate_test_run_markdown stay
+    # exercised through the example fixtures.
     # Cross-check the improvement artifacts against each other (second pass — a comparison may
     # reference a result collected later in the same sorted rglob pass).
     errors.extend(
@@ -2268,7 +2331,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
 ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.M)
 SKILL_ROLE_PATTERN = re.compile(r"agentflow:([a-z0-9-]+)")
 
-# 0.5.0 switched plans from JSON to Markdown hybrids (records/plans/README.md); either
+# 0.5.0 switched plans from JSON to Markdown hybrids (plans/README.md); either
 # stale marker in AGENTS.md signals the pre-0.5.0 contract and must fail the docs check.
 PRE_050_PLAN_CONTRACT_MARKERS = ("plans are JSON", "<plan_id>.json")
 
@@ -2284,7 +2347,7 @@ def validate_agents_md_plan_contract(agents_md: Path) -> list[ValidationError]:
             ValidationError(
                 str(agents_md),
                 "AGENTS.md carries the pre-0.5.0 JSON plan contract; plans are Markdown "
-                "hybrids named <plan_id>.md — see records/plans/README.md",
+                "hybrids named <plan_id>.md — see plans/README.md",
             )
         )
     return errors
@@ -2306,12 +2369,14 @@ def validate_doc_consistency() -> list[ValidationError]:
     """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
 
     The role/doc surface is synced by hand across twelve agent files, two SKILLs, the roles
-    reference, the records READMEs, and the root AGENTS.md — the same failure class as the
-    missed manifest bump. Five assertion groups: every agent file's frontmatter name equals
-    its filename; every `agentflow:<role>` referenced by a SKILL resolves to an agent file;
-    every `schemas/*.schema.json` path named anywhere in the docs/records/skills/agents
-    surface or in AGENTS.md exists; AGENTS.md carries no pre-0.5.0 JSON plan contract
-    markers; the Chinese mirror keeps section parity with its English contract documents.
+    reference, the class READMEs under the live record roots, and the root AGENTS.md — the same
+    failure class as the missed manifest bump. Five assertion groups: every agent file's
+    frontmatter name equals its filename; every `agentflow:<role>` referenced by a SKILL
+    resolves to an agent file; every `schemas/*.schema.json` path named anywhere in the
+    docs/live-roots/skills/agents surface or in AGENTS.md exists; AGENTS.md carries no
+    pre-0.5.0 JSON plan contract markers; the Chinese mirror keeps section parity with its
+    English contract documents. `_archive/` is frozen history and stays outside the surface
+    (FROZEN_ARCHIVE_ROOT).
     """
     errors: list[ValidationError] = []
     agents_dir = ROOT / "agents"
@@ -2342,12 +2407,14 @@ def validate_doc_consistency() -> list[ValidationError]:
 
     reference_surface = [
         ROOT / "docs",
-        ROOT / "records",
+        *(ROOT / name for name in LIVE_RECORD_ROOTS),
         ROOT / "skills",
         ROOT / "agents",
         ROOT / "README.md",
         ROOT / "AGENTS.md",
     ]
+    # `_archive/` is deliberately absent from the surface above: frozen originals keep their
+    # historical paths and references unchecked (see FROZEN_ARCHIVE_ROOT).
     schema_ref_pattern = re.compile(r"schemas/([a-z0-9-]+\.schema\.json)")
     schema_dir = ROOT / "schemas"
     for base in reference_surface:
@@ -2413,25 +2480,32 @@ def validate_mock_fixtures() -> list[ValidationError]:
     sync with the record contracts. Until 0.8.0 nothing enforced that: no check walked
     mock/, so a contract change could silently invalidate every fixture. This check
     performs exactly the merge the README describes — the repository tree is copied to a
-    temporary directory (never mutated in place), mock/records is overlaid onto the
-    copy's records/, and the full artifacts compile runs against the copy, where ROOT
-    resolves to the copy. A fixture that no longer compiles, an id that collides with a
-    real record, or a cross-reference the demo ledger declares but cannot satisfy now
-    fails the gate instead of surviving until someone re-runs the manual experiment.
+    temporary directory (never mutated in place), each mock record root (issues/,
+    episodes/, plans/, reviews/) is overlaid onto the same-named root of the copy, and the
+    full artifacts compile runs against the copy, where ROOT resolves to the copy. A
+    fixture that no longer compiles, an id that collides with a real record, or a
+    cross-reference the demo ledger declares but cannot satisfy now fails the gate instead
+    of surviving until someone re-runs the manual experiment.
     """
     errors: list[ValidationError] = []
     mock_root = ROOT / "mock"
-    mock_records = mock_root / "records"
-    if not mock_records.is_dir():
-        return [ValidationError(str(mock_records), "mock records directory is missing")]
+    if not mock_root.is_dir():
+        return [ValidationError(str(mock_root), "mock directory is missing; fixtures are required")]
+    for name in MOCK_RECORD_ROOTS:
+        if not (mock_root / name).is_dir():
+            errors.append(ValidationError(f"mock/{name}", "mock records directory is missing"))
     errors.extend(
         ValidationError(
             f"mock/{entry.name}",
-            "unexpected entry under mock/; declared contents are records/ and README.md",
+            "unexpected entry under mock/; declared contents are "
+            + ", ".join(f"{name}/" for name in MOCK_RECORD_ROOTS)
+            + " and README.md",
         )
         for entry in sorted(mock_root.iterdir())
-        if entry.name not in {"records", "README.md"}
+        if entry.name not in {*MOCK_RECORD_ROOTS, "README.md"}
     )
+    if errors:
+        return errors
     try:
         with tempfile.TemporaryDirectory(prefix="agentflow-mock-") as tmp:
             copy_root = Path(tmp) / "repo"
@@ -2442,7 +2516,8 @@ def validate_mock_fixtures() -> list[ValidationError]:
                 # the disposable record-store database are regenerated artifacts.
                 ignore=shutil.ignore_patterns(".git", "__pycache__", ".agentflow-records.sqlite3*"),
             )
-            shutil.copytree(mock_records, copy_root / "records", dirs_exist_ok=True)
+            for name in MOCK_RECORD_ROOTS:
+                shutil.copytree(mock_root / name, copy_root / name, dirs_exist_ok=True)
             completed = subprocess.run(
                 [sys.executable, str(copy_root / "tools" / "lab" / "validate.py"), "artifacts"],
                 cwd=str(copy_root),
@@ -2844,10 +2919,10 @@ def bug_report(
     the equivalent of piping through `awk -F'\\t'`, without remembering column numbers.
     """
     rows: list[tuple[str, str, str, str, str, str, str]] = []
-    bugs_root = ROOT / "records" / "bugs"
-    if bugs_root.is_dir():
-        for path in sorted(bugs_root.rglob("*.md")):
-            if path.name == "README.md" or path.parent.name == RECURRENCE_DIR:
+    issues_root = ROOT / "issues"
+    if issues_root.is_dir():
+        for path in sorted(issues_root.rglob("*.md")):
+            if path.name == "README.md" or RECURRENCE_DIR in path.relative_to(issues_root).parts:
                 continue
             frontmatter, _, errors = load_bug_markdown(path)
             if errors or not frontmatter:
@@ -2882,9 +2957,11 @@ def recurrence_report() -> list[ValidationError]:
     occurrences), `escalated` (at least one occurrence recorded on a version newer than the
     consolidation version). Counts use the referenced records' `agentflow_version`.
     """
-    records_root = ROOT / "records" / "bugs"
+    issues_root = ROOT / "issues"
     versions: dict[str, str] = {}
-    for path in sorted(records_root.glob("*/*.md")):
+    for path in sorted(issues_root.rglob("*.md")):
+        if path.name == "README.md" or RECURRENCE_DIR in path.relative_to(issues_root).parts:
+            continue
         frontmatter, _, load_errors = load_bug_markdown(path)
         if load_errors or not frontmatter:
             continue
@@ -2893,7 +2970,7 @@ def recurrence_report() -> list[ValidationError]:
         if isinstance(bug_id, str) and isinstance(version, str):
             versions[bug_id] = version
     rows: list[tuple[str, str, str, int, int, str]] = []
-    ledger_dir = records_root / RECURRENCE_DIR
+    ledger_dir = issues_root / RECURRENCE_DIR
     if ledger_dir.is_dir():
         for path in sorted(ledger_dir.glob("*.md")):
             if path.name == "README.md":

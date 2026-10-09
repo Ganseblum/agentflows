@@ -13,17 +13,22 @@ python3 tools/lab/validate.py all
 It validates the Draft 2020-12 vocabulary used by this repository, then checks record status
 rules, plan dependency graphs and public fixture references. A failing check returns exit code 1.
 
-`validate.py artifacts` additionally validates the record instances actually written under
-`records/` (recursive) — bug records, recurrence ledgers, review records, episodes, and
-plans — against the same schemas and body assertions; `all` includes it.
+`validate.py artifacts` additionally validates the record instances actually written under the
+live record roots (`issues/`, `episodes/`, `plans/`, `improvements/`, `releases/`, `reviews/`,
+recursive) — issue records with their recurrence ledgers and rejected-record archive, review
+records, episodes, plans, and the improvement/release artifacts — against the same schemas and
+body assertions; `all` includes it.
 This is the compile step for supervisor artifact acceptance: run it against the real files
-before accepting a worker's record, and treat failures as compile errors.
+before accepting a worker's record, and treat failures as compile errors. `_archive/` is the
+frozen archive and is deliberately not patrolled; test records now live in the feature batch
+directories (`features/<batch>/testing/`), which this walk does not patrol yet.
 
-`validate.py mock` (in `all` since 0.8.0) compiles the demo fixtures under `mock/records/` the
-same way: it copies the repository tree into a temporary directory, overlays `mock/records/`
-onto the copy's `records/`, and runs the full artifacts check there — so a fixture that drifts
+`validate.py mock` (in `all` since 0.8.0) compiles the demo fixtures under `mock/` the
+same way: it copies the repository tree into a temporary directory, overlays `mock/issues/`,
+`mock/episodes/`, `mock/plans/`, and `mock/reviews/` onto the same-named roots of the copy,
+and runs the full artifacts check there — so a fixture that drifts
 from a contract, or an id that collides with a real record, fails the gate instead of waiting
-for someone to redo the manual merge experiment. The real `records/` tree is never mutated.
+for someone to redo the manual merge experiment. The real record roots are never mutated.
 
 `validate.py protected` checks that [`protected-paths.txt`](../../protected-paths.txt) still covers
 every required gate path — the evaluator and governor roles, the evaluation suite, the measurement
@@ -50,8 +55,8 @@ check includes ignored files; they are listed, not blocked.
 
 `validate.py docs` asserts the hand-synced role/document surface: every agent file's
 frontmatter name equals its filename, every `agentflow:<role>` referenced by a SKILL
-resolves to an agent file, every `schemas/*.schema.json` path named in the docs/records/
-skills/agents surface exists, and the Chinese mirror's schema-reference set matches
+resolves to an agent file, every `schemas/*.schema.json` path named in the docs/live-record-
+roots/skills/agents surface exists, and the Chinese mirror's schema-reference set matches
 `contracts.md`'s. `all` includes it.
 
 Two read-only retrospective tables print and exit without validating: `validate.py report

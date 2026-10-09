@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.9.0 — 2026-10-09
+
+Repository structure generation change, user-directed ("不要 records 了…全部改成类似
+youc-workflow-ai 的结构" + "全部完成，然后把没用、过期的都删除"): the `records/` tree is
+retired, the record surface moves to root-level live areas, templates become real files, and the
+document chain, roles, and checks are re-pointed. Structure and method-level change;
+`measurement: none`.
+
+- **Structure**: `index.md` (single index: scenario → entry, maintenance discipline, migration
+  list); live areas — `issues/` (defects & items in one `ISS-<YYYY>-<NNN>` family; recurrence
+  ledger; rejected-only `归档/`), `episodes/`, `plans/`, `improvements/`
+  (candidates/evaluations/comparisons), `releases/`, `reviews/`; `_archive/` freeze buckets per
+  the three-level freeze rule (freeze, not delete; frozen originals keep historical references —
+  single-point exemption in the validator); `docs/` narrowed to design / guide / fact documents;
+  `AGENTS.md` gains two rules (index sync; no new top-level directory without confirmation).
+- **Templates**: the 12-template monolith split into real files under
+  `skills/agentflow/templates/{feature,issue,releases}/` with a manifest; new issue, release
+  (`todo` + `pending-test`) and root-index skeletons; the feature README template gains the
+  light-mode declaration; the old monolith path remains as a pointer so historical references
+  stay resolvable.
+- **Method texts**: `document-chain.md` — layout now has two shapes (document hub vs business
+  repository), light mode, evidence landing spots, new gate 7 (review landing + acceptance
+  vocabulary), review bridge lands in `reviews/`; `contracts.md` — "Asking before assuming",
+  boundary report for out-of-scope intent, "Record freezing and archive"; roles and role files —
+  FE four-phase clause (browser verification, no parallel directories, split signals), BE
+  contract-verify-first, reviewer finding severity, test-planner assertion discipline,
+  test-executor real-red/flaky classification.
+- **Migration**: 107 files moved out of `records/`; 40 defect records renumbered
+  `BUG-… → ISS-2026-001…040` (file names, `bug_id`, ledgers, cross-references — mapping table at
+  `features/feature-2026-10-09-结构改造/plan/migration-mapping.md`); 273 mechanical path
+  re-points inside moved files; the `records/` shell and OS junk removed; the audit and handoff
+  documents frozen into `_archive/`; validator, tests, fixtures, schemas, roles and evals
+  re-pointed without loosening any check; `record_store.py` indexes the six live roots (94
+  records rebuilt); runtime rebuilt.
+- **Verification**: `validate.py all` 10×PASS; `doc_chain.py --self-test` 38/38; plan review
+  before execution two rounds (F1–F9 `changes_requested` → repaired; R1–R2 + R3–R10
+  `changes_requested` → all repaired, reviewer: releasable); post-migration re-validation green;
+  `validate.py installed` reports the expected drift (source ahead of the installed 0.8.7
+  snapshot — marketplace refresh + reinstall is user-side and pending).
+- **Governance lane**: direct user-directed structure change (same lane as 0.8.2 / 0.8.7). The
+  protected-path edits (validator, tests, schemas, evaluator/governor texts, evals) were made
+  under the user's explicit instruction and are recorded in this batch's episode for
+  retrospective review; no candidate/evaluation/comparison set; not described as a verified
+  improvement.
+- **measurement: none** (method-level change, no instrumented business task).
+
 ## 0.8.7 — 2026-10-08
 
 Execution-side wiring + proposal-stage questioning procedure, user-directed ("实现和执行的时候

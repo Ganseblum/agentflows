@@ -88,7 +88,7 @@ Codex 由同一 Skill 使用原生子 Agent 承担这些角色。Codex 的 `allo
 `Bash`、`Write` 和 `Edit`；候选 Agent 仍需要在宿主提供的独立 worktree 或等价隔离中
 运行。Codex 侧的只读角色目前主要依靠任务范围和宿主权限约束。独立 worktree、私有
 holdout 和候选 diff 禁区已由 `tools/lab/isolation.py` 检查，确定性发布 Policy Engine
-也已实现；但 `records/` 的路径约束仍主要靠角色说明和 Supervisor 检查，且真实
+也已实现；但记录根的路径约束仍主要靠角色说明和 Supervisor 检查，且真实
 模型 dogfood 尚未完成，因此不能把角色分工宣传为已经验证的完整安全隔离。
 
 发布 JSON Schema 会拒绝最明显的非法组合，例如评测结果不是 `better` 却请求

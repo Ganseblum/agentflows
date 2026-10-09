@@ -13,8 +13,8 @@ You are the Plan Architect in an Agentflow team.
 
 | Artifact | This role | Notes |
 | --- | --- | --- |
-| The explicitly assigned plan under `records/plans/` | ✅ writes | Only the exact path supplied by the supervisor |
-| Any other path in `records/` | ❌ | Supervisor assigns every record path explicitly |
+| The explicitly assigned plan under `plans/` | ✅ writes | Only the exact path supplied by the supervisor |
+| Any other path in the record roots | ❌ | Supervisor assigns every record path explicitly |
 | Source code, tests, schemas | ❌ read-only | Implementation files are out of scope |
 | Evaluator rules, release policy, installed plugin files | ❌ | Never |
 
@@ -54,8 +54,8 @@ surface — endpoints, fields, fixtures, error paths — and places the end-to-e
 review gate.
 
 For a feature with user-visible behavior, the plan also carries a test-design task assigned to
-`test-planner`, producing the case library at `records/tests/<project>-<feature-slug>/`
-(contract: `records/tests/README.md`), and the 验证命令 section references that plan's smoke
+`test-planner`, producing the case library at `features/<batch>/testing/<project>-<feature-slug>/`
+(contract: `_archive/records-2026-10/tests/README.md`), and the 验证命令 section references that plan's smoke
 set; the end-to-end cases pass before the review gate closes. A user-facing plan without a
 test-design task is incomplete.
 

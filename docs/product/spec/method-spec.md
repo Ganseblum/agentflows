@@ -13,7 +13,7 @@
 | # | 缺口（对照 proposal 原文） | 阻塞 | 关闭方式 |
 | --- | --- | --- | --- |
 | C-1 | §1.3「宿主认证矩阵」承诺了"按宿主发测量证书"，但通篇未定义**什么是一份证书**、验收口径是什么 | 阻塞 | 由本 spec **S12** 承接：定义证书的构成与验收 |
-| C-2 | §1.3「产品文档链」说四层，但没说产品线的 **plan 层放哪**（本仓 plan 契约在 `records/plans/`，业务仓在目标仓约定位置） | 阻塞 | 由本 spec **S13** 承接：定义链条的目录映射 |
+| C-2 | §1.3「产品文档链」说四层，但没说产品线的 **plan 层放哪**（本仓 plan 契约在 `plans/`，业务仓在目标仓约定位置） | 阻塞 | 由本 spec **S13** 承接：定义链条的目录映射 |
 | C-3 | 旧设计文档与本链的内容冲突裁决规则写在 `README.md` 而不在 proposal | 非阻塞 | 已在 `README.md` 声明，接受现状；若评审认为应上收，回填 proposal |
 | C-4 | §三 用户场景缺用户侧收益量化口径（OQ-1） | 非阻塞 | 已登记 proposal §五台账（OQ-1），待业务尺子跑通后定 |
 | C-5 | §五台账 U-02「调用授权与预算」没有授权粒度定义（按次/按批/按预算上限） | 非阻塞 | 属执行期用户决策，不属产品规格；保留在台账，由 `PLAN-LOOP-SMOKE-001` T09 人批门实操时定 |
@@ -81,9 +81,10 @@
 
 ### S6 记录体系
 
-- **陈述**：九类记录各有 schema 与目录——bug（`records/bugs/`）、plan（`records/plans/`）、
-  review（`records/reviews/`）、episode（`records/episodes/`）、test-plan / test-run
-  （`records/tests/`）、evaluation / comparison / candidate / release（`records/improvement/`）。
+- **陈述**：九类记录各有 schema 与目录——bug（`issues/`）、plan（`plans/`）、
+  review（`reviews/`）、episode（`episodes/`）、test-plan / test-run
+  （`features/<批次>/testing/`）、evaluation / comparison / candidate（`improvements/`）
+  与 release（`releases/`）。
   记录是 Markdown+YAML 或 JSON，过编译门才存在。
 - **验收口径**：任何新记录落盘即可被检索与校验；失效记录不删除只改状态。
 - **标尺**：`validate.py schemas` + `validate.py artifacts` + `record_store`（FTS5 读侧）。
@@ -141,14 +142,14 @@
 - **验收口径**：一次文档交付能指出四层文件、反审 checklist、评审记录（评审桥或目标仓
   约定位置）；跳门即违约。
 - **标尺**：`references/document-chain.md`（本文 S11 的契约源）+ 评审桥
-  `records/reviews/`（跨仓评审时）。
+  `reviews/`（跨仓评审时）。
 - **状态**：生效（本批建立；骨架由内部链自举验证——本目录即第一个完整样例）。
 
 ### S12 宿主认证证书（承接 C-1）
 
 - **陈述**：一份"宿主测量证书"= 针对单一宿主的一次公开套件实跑记录：声明宿主与适配器、
   套件 revision、用例集、每用例结果与原始证据、guardrail 观测值，落在
-  `records/improvement/evaluations/` 并过编译门。方法文本全宿主通用；**证书按宿主逐个发**，
+  `improvements/evaluations/` 并过编译门。方法文本全宿主通用；**证书按宿主逐个发**，
   未发证书的宿主只声明"骨架兼容"，不声明行为等价。顺序：Claude 先、ZCode 次、Codex 基线证。
 - **验收口径**：每个声称"已在宿主 X 验证"的结论能指到一份该宿主的 evaluation 记录；
   指不出的按未验证处理。
@@ -158,9 +159,9 @@
 ### S13 产品文档链条目映射（承接 C-2）
 
 - **陈述**：产品线的文档链落在本目录（`docs/product/`）；执行契约层不另建，复用
-  `records/plans/`（机器校验契约不变）；业务仓的文档链落目标仓约定位置（无约定时
-  `docs/features/feature-*/`），其评审证据经评审桥落回本仓 `records/reviews/`。
-- **验收口径**：任一产品线任务能在本链找到设计出处、在 `records/plans/` 找到执行契约；
+  `plans/`（机器校验契约不变）；业务仓的文档链落目标仓约定位置（无约定时
+  `docs/features/feature-*/`），其评审证据经评审桥落回本仓 `reviews/`。
+- **验收口径**：任一产品线任务能在本链找到设计出处、在 `plans/` 找到执行契约；
   链内引用不断链。
 - **标尺**：`validate.py docs`（引用/schema 引用存在性）。
 - **状态**：生效。
@@ -168,8 +169,8 @@
 ### S14 外部文档评审桥
 
 - **陈述**：对外部系统产出的文档做第二道评审时，按 feature 锚定目录
-  `records/reviews/<project>-<feature-slug>/` 归档逐字快照（每轮一个 archive 子目录）、
-  记录 source_revision、发现以 bug 记录落 `records/bugs/` 并按 provenance/attribution
+  `reviews/<project>-<feature-slug>/` 归档逐字快照（每轮一个 archive 子目录）、
+  记录 source_revision、发现以 bug 记录落 `issues/` 并按 provenance/attribution
   双维归因。
 - **验收口径**：评审记录与全部归档文件存在且交叉引用可解析。
 - **标尺**：`validate.py artifacts`（快照与发现存在性交叉检查）。

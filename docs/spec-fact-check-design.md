@@ -21,8 +21,8 @@
 1. 缺少显式的"文档断言 vs 代码事实"核对步骤与输出契约。现有 planning 流程
    （[SKILL.md](../skills/agentflow/SKILL.md) 计划段）从专家结论直接进 plan-architect，
    没有"断言核验"这一环。
-2. findings 没有 artifact 归宿：`records/` 目前只有 `bugs/` 与 `plans/` 两类
-   （[records/README.md](../records/README.md)）。
+2. findings 没有 artifact 归宿：原记录树当时只有 `bugs/` 与 `plans/` 两个子树
+   （原说明已冻结，见 [_archive/records-2026-10/readmes/records-README.md](../_archive/records-2026-10/readmes/records-README.md)）。
 3. reviewer 被借来审文档是错配：它的契约是**实现之后**的独立判定
    （[reviewer.md](../agents/reviewer.md):3），输出 `approved / changes_requested /
    blocked` 决策而非发现清单（:27），且它不能运行命令，只能指定命令由 Supervisor 执行
@@ -129,8 +129,8 @@ disallowedTools: Bash, Write, Edit
 ### 4.3 artifact 决策点（未定）
 
 - 选项 1：不新增记录类型，findings 作为 brief 结果进入 plan 的 `input_evidence`。
-- 选项 2：新增 `records/findings/` + schema，供跨任务回溯。新增 schema 不在 protected
-  列表内，但属于新的契约面，需要人工评审；并与 `records/README.md` 同步。
+- 选项 2：新增 findings 记录类（落点未定）+ schema，供跨任务回溯。新增 schema 不在 protected
+  列表内，但属于新的契约面，需要人工评审；并与记录树说明同步。
 - 倾向：先选项 1，等出现"同一文档被多次核对""findings 需要跨会话引用"的真实需求再升级。
 
 ### 4.4 落地与治理
@@ -159,7 +159,7 @@ disallowedTools: Bash, Write, Edit
 ## 6. 未决问题（待人工确认）
 
 1. findings 是否要持久化为仓库 artifact？复用 plan `input_evidence` 还是新开
-   `records/findings/`？
+   findings 记录类？
 2. reviewer 是否仍允许用于纯文档独立门，还是文档类审查一律走新流程？
 3. 新角色命名：`spec-auditor` / `doc-auditor` / `design-fact-auditor`？
 4. 多仓库场景中 brief 的仓库边界是否需要宿主级路径权限（当前仅有提示词约束，C7）？
@@ -226,15 +226,15 @@ disallowedTools: Bash, Write, Edit
    强制——是"白名单挡住"，不是"宿主无通道"。推论：任何新增角色漏写 `tools:` 即破界，
    方案 B 的角色文件必须把工具白名单列为硬性要求，并在注册清单中加"frontmatter 审查"项。
 2. "写权限靠提示词"不准确。工具级白名单是宿主强制的（Z4 实测）；不可强制的只是路径级
-   边界（C7，`records/` 等路径约束靠角色文本 + Supervisor diff，self-improvement-design.md:91）。
+   边界（C7，记录根等路径约束靠角色文本 + Supervisor diff，self-improvement-design.md:91）。
    纯提示词的只有预算纪律（Z6 `maxTurns` 未验证）。
 
 **补充遗漏的问题：**
 
 - **评测执行不可行（当前最高优先）**：C2 使 plan-architect 在 `--print` 下写 `plans/` 被拒，
-  该类用例结果无意义（records/bugs/2026-09-14/print-mode-plan-write-blocked.md）；C5 使单用例
+  该类用例结果无意义（issues/ISS-2026-003-print-mode-plan-write-blocked.md）；C5 使单用例
   最长 ~24 分钟、~$4，默认 900 秒超时不足，且 adapter 修复后仍丢弃内存中已完成结果、断点
-  续跑未实现（records/bugs/2026-09-14/eval-run-all-or-nothing.md）——完整 baseline 目前
+  续跑未实现（issues/ISS-2026-002-eval-run-all-or-nothing.md）——完整 baseline 目前
   跑不完也跑不起。
 - **可复现性污染**：C3，print 模式继承用户 MCP 与全局 slash commands，隔离 flag 未验证。
 - **评测覆盖单宿主**：X2，Codex 对 candidate 源 fail-closed，候选对照目前只能 Claude。
@@ -282,7 +282,7 @@ Agentflow 是跨项目方法论插件（host-native-plugin-design.md:11），两
   AGENTS.md/审查清单，不动 Agentflow。
 - **跨项目通用项**（幂等性、接口演进/扩展性、并发语义、事务边界）→ 进角色契约。
   先例：error contract 漏检被写死进 reviewer 契约 + AF-007 用例
-  （examples/bug-records/reviewer-missed-error-contract.md:41-47）。
+  （examples/issues/ISS-2026-906-reviewer-missed-error-contract.md:41-47）。
 
 ### 9.4 拟议条款草稿（未写入角色文件）
 

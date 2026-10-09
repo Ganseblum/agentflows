@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261009-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（结构改造批：索引与六个活区、模板拆分、方法文本与角色条款、记录树迁移 107 件、校验器/测试/夹具/引用改指、五清单 0.9.0 + CHANGELOG），base c015c3b7a501876328d9e71781e2d015f66c3bff",
+    "base": "c015c3b7a501876328d9e71781e2d015f66c3bff"
+  },
+  "run": {
+    "run_id": "session-20261009-agentflow-0.9.0",
+    "started_at": "2026-10-09T15:55:00+08:00",
+    "ended_at": "2026-10-09T21:30:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户指令驱动的结构改造：①「不要 records 了，全部改成 youc-workflow-ai 同族结构（命名照家族）」；②「全部完成，然后把没用、过期的都删除」；③四项决定（都做 / 统一 ISS- 编号 / 模板就地 / docs 保留名）与能力清单（先问不猜、越界先报、FE 四段时序、BE 契约先核实、reviewer 判级、测试分诊与断言纪律）。产出批 0–5 全量执行：索引与六个活区（issues/episodes/plans/improvements/releases/reviews）+ _archive 冻结体系、模板真文件化、方法文本与角色条款、记录树迁移与 ISS 重编号、版本 0.9.0 收口。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_feedback_quote",
+      "value": "不要 records 了，全部改成类似 youc-workflow-ai 的结构；具体的命名看看 xxx-workflow-ai 这样"
+    },
+    {
+      "kind": "user_feedback_quote",
+      "value": "全部完成，然后把没用、过期的都删除"
+    },
+    {
+      "kind": "gap_evidence",
+      "value": "records/ 树与目标形态冲突（六子树 vs 单索引 + 编号制 + 冻结分桶）；模板单体不可按件复制且无清单可核；docs/ 无索引、历史件平铺；评审落档与验收口径无成文门——逐项实证于仓内检查（doc_chain、validate、结构清点）"
+    },
+    {
+      "kind": "coverage_check",
+      "value": "三段验证：批 2 后 validate all 10×PASS + self-test 38/38；迁移后复验全绿；检索库重建 94 条并 query 冒烟通过；迁移扫描：活区旧编号零残留，records 引用仅剩冻结原文与历史记录"
+    },
+    {
+      "kind": "installed_state",
+      "value": "validate.py installed 报 38 处预期漂移（源树领先本机 0.8.7 快照）；marketplace 刷新 + 重装属用户侧、待做"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (method-level change, no instrumented business task)",
+      "evidence_ref": "CHANGELOG.md 0.9.0"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "结构落地：index.md + 六个活区 + _archive 三级冻结体系 + 模板真文件（13+4 件 + 清单）+ AGENTS/README 纪律",
+      "status": "verified",
+      "check": "validate.py all 10×PASS（含 docs/manifests）；目录清点与索引核对",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "记录树迁移完成：107 件移动、40 件重编号 ISS-2026-001…040、273 处机械改指、records/ 空壳删除",
+      "status": "verified",
+      "check": "映射表行数=移动数；活区旧编号 grep 零残留；find records 为空后删除",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "全仓引用改指与校验适配未放松任何检查语义（_archive 为唯一单点豁免）",
+      "status": "verified",
+      "check": "validate all 10×PASS + self-test 38/38；受保护文件改动汇总（行数表）见本 episode 附注",
+      "evidence_ref": "E3"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "版本 0.9.0 五清单一致 + CHANGELOG 记录",
+      "status": "verified",
+      "check": "validate.py manifests PASS（五清单版本一致）",
+      "evidence_ref": "E4"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "migration_mapping",
+      "ref": "features/feature-2026-10-09-结构改造/plan/migration-mapping.md（表 1 40 行 / 表 2 107 行 / 表 3 85 行 / 表 4 删除清单）；规格 migration-spec.md"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "acceptance_output",
+      "ref": "validate.py all 逐行输出（10×PASS）与 doc_chain --self-test（38/38）——逐行清单内嵌本 episode claims C1/C3 的 check 字段，并见 CHANGELOG 0.9.0 Verification 节"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "protected_changes_summary",
+      "ref": "受保护文件改动汇总：validate.py +381/-304、test_lab_contracts.py +79/-59、test_record_store.py +28/-0、schemas 六件各 1-5 行、evaluator.md 1 行、release-governor.md 2 行、evals 两件各 1 行——行数表存于会话报告（本 episode 不另存数字副本）"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "release_record",
+      "ref": "CHANGELOG.md 0.9.0 节 + 五清单（0.9.0）"
+    },
+    {
+      "evidence_id": "E5",
+      "kind": "plan_review_outputs",
+      "ref": "改造方案两轮评审（会话内 reviewer 子代理）：round 1 changes_requested（F1–F9）；round 2 changes_requested（R1–R2 + R3–R10，判词「修完即可放行」）——逐条见本 episode review_roundtrips"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-09T16:15:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "F1 门清单漏 schemas/ 六件与两个受保护角色文件；F2 范围声明与执行清单矛盾；F3 非门同步清单漏 mock/examples/docs 引用面；F4 记录引用处置未定；F5 首桶会误冻在途文档；F6 对策误用 isolation check-diff、批间红窗未定；F7 两行理由无据；F8 类级 README 无去处；F9 表达纪律压缩词与事实性偏差",
+      "resolution": "F1–F9 全部修复（方案文档整体修订 + 复跑机检）；复核确认 F1–F9 闭环、54 文件覆盖映射成立",
+      "evidence_ref": "E5"
+    },
+    {
+      "at": "2026-10-09T16:45:00+08:00",
+      "reviewer": "agentflow:reviewer（同一独立子代理，聚焦复核）",
+      "decision": "changes_requested",
+      "finding": "R1 修订丢失审计目录去向（三条断链无人负责）；R2 迁移扫描命令不可复现（排除集与冻结原文规则未写）；R3–R10 低severity 收尾项",
+      "resolution": "R1–R10 全部修复（同桶保相对布局 + 入链点名 + 扫描口径含排除集与冻结原文规则 + 就地修订）；判词「修完即可放行，无需再开一轮」——满足后进入执行",
+      "evidence_ref": "E5"
+    }
+  ],
+  "feedback_summary": "用户三组指令（结构改造方向 + 全部完成与清理 + 四项决定与能力清单）驱动 0.9.0 全量落地：批 0–5 执行（索引/六活区/冻结体系/模板真文件/方法文本与角色能力/记录迁移与 ISS 重编号/校验适配/版本收口）；方案评审两轮全修后放行；终态 validate all 10×PASS、self-test 38/38；installed 漂移为预期（重装属用户侧）；measurement: none",
+  "agentflow_version": "0.8.7",
+  "host": "other",
+  "provenance": {
+    "carrier": "ZCode 会话（supervisor 主对话 + 两个执行子代理 + reviewer 子代理两轮）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-09T16:00:00+08:00"
+}

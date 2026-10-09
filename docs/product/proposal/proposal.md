@@ -5,7 +5,7 @@
 - 需求名称：Agentflow 产品化（宿主原生多角色协作方法插件）
 - 所属阶段：`proposal`
 - 目标阶段：`proposal -> spec -> design -> plan`
-- 原文出处：用户 2026-09-19 拍板记录（`records/plans/PLAN-PRODUCT-001.md`「已拍板」表）、
+- 原文出处：用户 2026-09-19 拍板记录（`plans/PLAN-PRODUCT-001.md`「已拍板」表）、
   产品边界决策（`docs/agent-product-boundary.md`）、迭代台账（`docs/iteration-log.md`）
 - 状态：历史原文结论收口；当前实施口径以 `spec/`、`design/` 为准
 

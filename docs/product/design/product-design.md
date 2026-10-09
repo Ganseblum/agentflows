@@ -15,7 +15,7 @@
 | D3 | 自迭代形态 | 受治理的人工闭环，不是自动学习系统 | 执行者发现并生成候选，独立评测验证，人按预声明门槛发布 | `docs/self-improvement-design.md` |
 | D4 | 评判门归属 | 保护门清单单点声明（`protected-paths.txt`），候选不可触碰 | 工具改自己时不能改评分规则；门变更=人工评审 | spec S8 |
 | D5 | 记录形态 | 九类记录各有 schema，落盘即过编译门 | 摘要不算验证；不可复现的检查视同没跑 | spec S6 |
-| D6 | 计划形态 | Markdown 融合契约（信封 + 看板任务表 + 机器断言） | 人读性与机器校验合一；plan 是执行契约不是改码授权 | `records/plans/README.md` |
+| D6 | 计划形态 | Markdown 融合契约（信封 + 看板任务表 + 机器断言） | 人读性与机器校验合一；plan 是执行契约不是改码授权 | `plans/README.md` |
 | D7 | 失败语义 | crash/timeout/empty 三类成文，编排层不做保底 | 降级=结果降级+丢弃在途；产品级 fallback 归异常矩阵 | spec S5 |
 | D8 | 打包 | 瘦快照：`build_runtime.py` 生成，marketplace 源指向生成树 | 用户装的不是整仓死重；运行时面与实验室控制面分开 | spec S9 |
 | D9 | 版本事实源 | 五份 manifest + CHANGELOG 唯一；文档禁复述版本号 | 版本散文化曾三次漂移，守卫检查执行 | spec S9、`validate.py docs` |
@@ -54,7 +54,7 @@ flowchart TB
     Roles --> Out["工件 + worker 结果契约"]
     Sup --> Gate1["独立评审门<br/>(reviewer)"]
     Gate1 --> Decide["决定记录 + claims ledger"]
-    Decide --> Ep["records/: episode / bug / plan / review / tests"]
+    Decide --> Ep["记录根: issues/ · episodes/ · plans/ · improvements/ · releases/ · reviews/"]
     Ep --> Inst["实验室仪器层（不入快照）<br/>validate / eval_runner / host_adapter / policy / isolation / record_store"]
     Inst --> Loop["改进环: episode→假设→候选→独立评测→policy→人批门"]
     Loop -->|"候选树 + check-diff"| Gate2["保护门 protected-paths"]
@@ -66,9 +66,9 @@ flowchart TB
 | Skill（SKILL.md） | 触发、十步骨架、门禁接线 | 具体角色指令（在角色文件） |
 | 角色文件（agents/*.md） | 单角色能力、产物归属、工具白名单 | 跨角色编排（在 Skill/Supervisor） |
 | Supervisor（主会话） | 收口、委派、集成、决定、失败分类 | 替评审者下结论；豁免自己参与的评审门 |
-| records/ | 证据落盘与检索 | 承载产品叙事（在 docs/） |
+| `issues/` 等记录根 | 证据落盘与检索 | 承载产品叙事（在 docs/） |
 | 实验室（tools/lab/） | 编译门、评测、隔离、策略、检索 | 进入宿主瘦快照 |
-| docs/product/ | 产品四层文档链 | 取代 records（执行契约仍在 plans） |
+| docs/product/ | 产品四层文档链 | 取代原记录树中的产品叙事（执行契约仍在 `plans/`） |
 | 保护门（protected-paths.txt） | 候选禁区单点声明 | 保护"怎么干活"的角色提示词（那是改进环的对象） |
 
 ### 1.3 文档链与角色/记录的接线
@@ -83,7 +83,7 @@ flowchart LR
     D -->|"技术方案评审门<br/>(独立评审)"| RV2["冻结"]
     RV2 --> PL["plan<br/>执行契约(分支/落点/回滚)"]
     PL --> IMPL["开工"]
-    P -.证据.-> REV["records/reviews/<br/>(跨仓走评审桥)"]
+    P -.证据.-> REV["reviews/<br/>(跨仓走评审桥)"]
     S -.证据.-> REV
     D -.证据.-> REV
 ```
@@ -91,9 +91,9 @@ flowchart LR
 | 链层 | 谁产出 | 谁把关 | 证据落点 |
 | --- | --- | --- | --- |
 | proposal | Supervisor 与用户收口（原文逐字保留） | spec 反审（blocking checklist） | 目标链目录 |
-| spec | Supervisor 或 plan-architect 起；承接口登记缺口 | 需求评审门（独立评审，文档模式） | `records/reviews/`（跨仓）或目标仓约定 |
+| spec | Supervisor 或 plan-architect 起；承接口登记缺口 | 需求评审门（独立评审，文档模式） | `reviews/`（跨仓）或目标仓约定 |
 | design | 相应角色（跨层时 technical-director 定边界） | 技术方案评审门（独立评审） | 同上 |
-| plan | plan-architect（只写不改码） | plan 前置门=design 冻结 | `records/plans/`（本仓）或目标仓计划契约 |
+| plan | plan-architect（只写不改码） | plan 前置门=design 冻结 | `plans/`（本仓）或目标仓计划契约 |
 
 ### 1.4 本批改动与影响面评估
 
@@ -105,7 +105,7 @@ flowchart LR
 | 重装 | `packaging/runtime` 重新生成 + marketplace 刷新 + 重装 | 宿主行为在重装后切换 | 不适用（幂等构建） |
 
 **不改动**：`agents/*.md`（角色面零变化）、`schemas/` 与一切保护门路径、`tools/lab/`、
-`records/`（不新增计划记录——本批以本链代替，理由见 §1.3 门禁设计）。
+`issues/` 等记录根（不新增计划记录——本批以本链代替，理由见 §1.3 门禁设计）。
 
 ### 2. 验证与灰度
 
@@ -114,7 +114,7 @@ flowchart LR
 2. 安装面：`build_runtime.py` 重新生成 → marketplace 刷新 → 重装 → `validate.py installed`
    逐文件 PASS。
 3. 自举验证：本链自身走一遍 S13 的验收口径（出处可溯、引用不断）。
-4. 独立评审：需求评审门 + 技术方案评审门各一轮，文档模式，记录落 `records/reviews/`。
+4. 独立评审：需求评审门 + 技术方案评审门各一轮，文档模式，记录落 `reviews/`。
    **未过门前本链状态是"成稿待评审"，不得当作已冻结引用。**
 5. 注入演练（S5 缺口）：crash/timeout 语义在 `/tmp` 一次性副本上做故障注入，证据落台账
    （不阻塞本设计评审，列为待建标尺）。
