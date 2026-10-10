@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261010-003",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（清理与归档批：待拍板清单收敛、发布面核销、PLAN-BUSINESS-EVAL-001 过期点同步〔v0.2.6〕、本地垃圾清扫；随本批提交）",
+    "base": "6d10b1483af6981e6fbbfb18793ab1af9f40ee68"
+  },
+  "run": {
+    "run_id": "session-20261010-agentflow-cleanup",
+    "started_at": "2026-10-10T15:40:00+08:00",
+    "ended_at": "2026-10-10T15:43:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户指示「把过期的没用的完成的该归档的归档 记录的记录」：对全仓做一次核销与归档核对——完成的收敛移出、过期的状态同步、垃圾清扫；按冻结规则核对无可搬内容时如实记录。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_feedback_quote",
+      "value": "把过期的没用的完成的该归档的归档 记录的记录"
+    },
+    {
+      "kind": "archive_audit",
+      "value": "按冻结规则逐面核对：features/ 两个批次与已完成计划带活引用（validate.py MIGRATION_RECORD_DIRS、多处记录证据 refs）不搬；issues/归档/ 当前为空（无被拒记录）；_archive/ 现有三桶已就位；docs/ 遗留决策文档按声明保留原位；结论＝仓内无新的应归档目标（本批的归档性动作＝产品链评审快照 archive/2026-10-10-001，已在 6d10b14）"
+    },
+    {
+      "kind": "reconciliation",
+      "value": "待拍板清单十项关闭移出（只留 4 条未决）；releases/todo 批次表收敛为在途两条；PLAN-BUSINESS-EVAL-001 U-01 关闭 + S02/S03 剩余门更新（修订 v0.2.6）；三处编号引用改按条目名引用"
+    },
+    {
+      "kind": "cleanup",
+      "value": "本地垃圾清扫：3 个 __pycache__ 删除；本会话 /tmp 草稿 14 项删除（保留试水产物 /tmp/agentflow-trial，其路径被 releases/pending-test.md 引用）"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (method-level change, no instrumented business task)"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "书面收口：待拍板清单按自身规则收敛（十项移出、4 条未决）；releases 两件核销与同步；PLAN-BUSINESS U-01 关闭且 S 阶段门同步",
+      "status": "verified",
+      "check": "三处文件复核 + validate.py all（artifacts/docs 对全部改动文件过检）",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "归档核对：仓内无新增应归档内容；判定依据与豁免面见 signals.archive_audit",
+      "status": "verified",
+      "check": "按 _archive/ 三桶、features/ 活引用、issues/归档 空、docs 保留声明逐面核对；未搬动任何文件",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "本地垃圾清扫完成且试水证据保留：pycache ×3、/tmp 草稿 ×14 删除；/tmp/agentflow-trial 保留",
+      "status": "verified",
+      "check": "删除命令原始输出（本会话）；/tmp 清点",
+      "evidence_ref": "E3"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "books",
+      "ref": "plans/PENDING-DECISIONS.md（收敛后）、releases/todo.md、releases/pending-test.md、plans/PLAN-BUSINESS-EVAL-001.md（修订 v0.2.6）、plans/PLAN-LOOP-SMOKE-001.md 与 docs/host-platform-facts.md 的引用对齐"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "archive_audit",
+      "ref": "核对清单见 signals.archive_audit；本轮归档性动作＝reviews/agentflow-product-chain/archive/2026-10-10-001/（已在 6d10b14）"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "cleanup_output",
+      "ref": "会话内删除命令输出；保留 /tmp/agentflow-trial（{run-trial.sh,workspace,holdout,progress.jsonl,result.json}）"
+    }
+  ],
+  "review_roundtrips": [],
+  "feedback_summary": "用户「清理与归档」指示驱动：待拍板清单收敛（十项移出）、发布面核销、PLAN-BUSINESS 过期点同步（U-01 关闭）、归档核对（无新仓内目标）、本地垃圾清扫；随本批提交；measurement: none",
+  "agentflow_version": "0.10.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "ZCode 会话（supervisor 主对话）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-10T15:43:00+08:00"
+}

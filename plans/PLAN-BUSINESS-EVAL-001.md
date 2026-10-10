@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-BUSINESS-EVAL-001
-plan_version: 0.2.5
+plan_version: 0.2.6
 status: approved
 objective: 以 aiwork 文档审查三用例与种子缺陷确定性评分建立方法级改动的业务任务度量切片，替换 measurement: none 过渡态，首次产出 better/neutral/worse（smoke 级）
 recorded_at: 2026-09-17T04:00:00Z
-updated_at: 2026-09-18T08:07:13Z
+updated_at: 2026-10-10T15:43:00+08:00
 ---
 
 # 方法级改动的业务任务度量切片 — 实施计划
@@ -29,11 +29,12 @@ updated_at: 2026-09-18T08:07:13Z
 > 修订 v0.2.3（2026-09-17）：独立评审（changes_requested）后的修复轮——F1 计划脱敏（去内部 remote/个人路径）、F2 评分覆盖 fail-open→fail-closed、F3 业务身份绕过口关闭、F4 简报归属规则补齐、F5 快照 diff 摘要复检（强化实现）、F6 测试补齐、F7 锚点跨字段拼接关闭、F8 看板状态、F9 文档面。
 > 修订 v0.2.4（2026-09-17）：S01 置 ☑（物化与校验证据）；S02 置 ◐（三次尝试留痕，根因＝宿主 cwd 文件访问限制）；U-02 已测量关闭、U-03 已决关闭、U-06/U-07 已关闭；新增 U-08（业务跑须 `--add-dir`，修复落地待重跑验证）；同步进展概览与阻塞描述。
 > 修订 v0.2.5（2026-09-18）：术语歧义类别判据放宽（用户反馈）——除发明词未定义外，覆盖惯性压缩词（基线/现网类）指代悬空变体；表达纪律候选择优级定为「换 > 释 > 删」，过度讲解按阅读负担计缺陷；打种约定补该变体锚点取法（既有原文唯一片段，不引入）。用例与种子清单文件不变；新变体种子待 U-01 解除后随 S 阶段补。S 阶段同步项：三份简报的计数句（inputs/BT-001.md、BT-002.md、BT-003.md「只有作者知道含义的，算问题」）须扩为两变体口径，否则压缩词变体的召回被简报结构性抑制——该编辑在受保护 evals/ 内，届时按门变更人工评审；本批不改简报。见 evals/business/README.md。
+> 修订 v0.2.6（2026-10-10）：U-01 按复测结果关闭（端点 3/3 通过，host-platform-facts C12；公开切片试水 AF-001×3 已完成，见 releases/pending-test.md）；S02 剩余门更新为 U-08 重跑验证与用户预算授权；同步进展概览与阻塞描述。
 
 ## 进展概览
 
 **本期进度**：**14 / 16 已完成** · **1 进行中** · **1 阻塞** · **0 未开始**
-**统计口径**：T01–T13 计入仪器就绪阶段（离线可判定）；S01–S03 计入 smoke 实跑阶段（挂 P0 未决项，见未决项表）。
+**统计口径**：T01–T13 计入仪器就绪阶段（离线可判定）；S01–S03 计入 smoke 实跑阶段（S02 待 U-08 重跑验证与预算授权；S03 传导）。
 
 | 序号 | 业务侧解读 | 技术侧解读 | 交付效果（完成后可验证） | 状态 |
 | --- | --- | --- | --- | --- |
@@ -41,11 +42,11 @@ updated_at: 2026-09-18T08:07:13Z
 | 2 | 好坏判定不再靠模型自报，可复算 | seed_grader 对 findings 工件确定性匹配：hits/missed/unmatched；accepted＝种子命中率≥阈值；escaped_defects＝漏检数 | golden 测试全绿；unmatched 只记录不扣分（T09） | ☑ |
 | 3 | 企业仓可用而不泄漏 | 本地 pin 快照（全 sha）＋ isolation 第四位置 ＋ 脱敏边界 | validate-layout 四参通过（C5）；公开面零泄漏（真实名 grep 0 命中、九个锚点在目标文档全 0） | ☑ |
 | 4 | 门面不蔓延，现有契约零改动 | 9 字段/8 指标/schema/policy 字节不变，只新增不改 | 字节不变断言全过（T13，C6） | ☑ |
-| 5 | 首次产出 better/neutral/worse（smoke 级） | 18 次真实模型调用（3 用例 × 3 重复 × 2 源）＋ 评分覆盖 ＋ compare 七字段；本次两侧行为面未变，对照主要价值＝噪声底测量 | smoke 证据落袋（含噪声底记录），不称权威 baseline（S02、S03） | ⚠（挂 U-01、U-08；S02 进行中） |
+| 5 | 首次产出 better/neutral/worse（smoke 级） | 18 次真实模型调用（3 用例 × 3 重复 × 2 源）＋ 评分覆盖 ＋ compare 七字段；本次两侧行为面未变，对照主要价值＝噪声底测量 | smoke 证据落袋（含噪声底记录），不称权威 baseline（S02、S03） | ⚠（挂 U-08 重跑验证与预算授权；U-01 已于 2026-10-10 解除；S02 进行中） |
 
-**我们在哪**：T01–T13 完成、S01 物化完成；S02 进行中（三次尝试留痕，根因＝宿主 cwd 访问限制，修复中）；smoke 定级只挂 U-01。
-**下一步**：用户批准本计划与门变更清单 → T01 对齐清单核对 → 数据面（T02–T04）与 isolation（T06）并行 → 接线（T05–T08）→ 钉死与收口（T09–T13）。
-**阻塞/风险**：只剩 U-01（可信端点）阻塞 smoke 定级；U-02/U-03 已实测/已决，U-08（宿主机 cwd 访问限制）修复待重跑验证——见未决项表。P0 传导、评分器松紧、脱敏泄漏、门面蔓延、快照漂移五条风险与缓解见「接口与共享机制」。
+**我们在哪**：T01–T13 完成、S01 物化完成；S02 进行中（三次尝试留痕；端点 2026-10-10 复测通过＝U-01 解除，公开切片试水已完成）；smoke 定级剩余门＝U-08 重跑验证与预算授权。
+**下一步**：S02 业务 smoke 重跑（先过 U-08 验证与 18 次预算授权——见 plans/PENDING-DECISIONS.md「试水后授权」条）→ S03 评分定级。
+**阻塞/风险**：U-01 已解除；剩余门＝U-08（宿主机 cwd 访问限制）重跑验证与预算授权——见未决项表。P0 传导、评分器松紧、脱敏泄漏、门面蔓延、快照漂移五条风险与缓解见「接口与共享机制」。
 
 **前提与假设**：
 
@@ -73,7 +74,7 @@ updated_at: 2026-09-18T08:07:13Z
 | `T12` | docs 收口：skills/improve/SKILL.md Measured scope 段更新（有匹配业务用例的方法级改动跑 evals/business，无匹配仍 measurement:none；首切片仅覆盖 aiwork 文档审查类、结果定级 smoke）；docs/agent-roles.md 补业务切片条目；docs/agent-product-boundary.md evals 布局加 evals/business 行；_archive/handoff-2026-10/next-session-handoff.md P1 首项收口。验收＝C2 docs 项过 | P1 | skills/improve/SKILL.md、docs/agent-roles.md、docs/agent-product-boundary.md、_archive/handoff-2026-10/next-session-handoff.md | T09 | ☑ 已完成 | SKILL Measured scope 段更新（有匹配业务用例才可产对照、首切片 smoke 定级）；agent-roles 补业务切片节；product-boundary 布局加 business 行并按 0.6.0 重写描述段；handoff P1 首项收口 + 新增 codex 缺陷条目；contracts.md 未触碰（docs parity 检查 PASS） |
 | `T13` | 仪器就绪验收门（离线可判定，不依赖 U-01/U-02/U-03）：validate all 八项全绿；单测全绿；adapter --dry-run 业务请求通过（快照目录用 stand-in：真实存在、互不嵌套的空目录即可，dry-run 不校验 HEAD 与内容）；isolation validate-layout 四参通过；门面字节不变断言通过；证据回写本计划 | P0 | —（验收门，无代码改动；跑「验证命令」C1–C6） | T10、T11、T12 | ☑ 已完成 | 2026-09-17 supervisor 实跑：C1 PASS artifacts；C2 validate all 8/8 + unittest 36 OK；C3 PASS evals；C4 业务 dry-run exit 0（9 次调用计划、prompt 含快照路径）；C5 isolation 四参 exit 0；C6 冻结面零字节差异（exit 0）。仪器就绪，S 阶段待 U-01/U-02/U-03 |
 | `S01` | 本地物化 pin 快照：从本地 clone（路径与 remote 地址只留本地）一次性 clone 到第四位置 → checkout 全 sha 冻结 → 按 seeds 配方确定性打种（脏树式：种子以未提交改动落地，HEAD 保持＝pin；重建＝checkout pin＋重放 patch；开跑前校验 HEAD＝pin 且 patch 可逆重放）→ validate-layout 四参通过；快照本体、打种 diff、打种配方、符号→真实路径映射只留本地 | P1 | —（本地操作，产物不入公开仓） | T13 | ☑ 已完成 | 2026-09-17 物化完成（supervisor 实跑留痕）：全量 clone + checkout pin（HEAD==3b379b84…）；三目录改中性名 feature-A/B/C；9 条种子植入且锚点在各自目标文档恰 1 次、全库无真实 feature 名；`git add -A` 后 `diff HEAD` 生成 seed.patch（`apply --check --reverse` exit 0）；`validate_request(dry_run=False)` 四位置+HEAD+patch 全过；`docs/` chmod 只读（写入实测被拒）；diff 摘要两次计算一致 |
-| `S02` | smoke 实跑：先 dry-run（不调模型）；baseline 侧＝claude host＋安装版，eval_runner run 跑 3 用例 × repeat_count 3＝9 次真实调用；candidate 侧＝重装本计划落库版本（C8 PASS 后）同规格 9 次；总成本 18 次真实模型调用，超预算须回计划修订；权限档 workspace-write（快照 chmod 只读＋调用后状态校验兜底）；progress JSONL 落本地 | P1 | tools/lab/eval_runner.py（运行入口，无代码改动） | S01 | ◐ 进行中 | 三次尝试（本地 progress JSONL 留痕，不入仓）：①启动约 4 分钟后被会话清理杀死；②宿主约 10.4 分钟后非零退出、诊断文本被 stderr 无害警告掩盖（已修 `claude_failure_detail` 并加测试）；③首调用 314s 跑通至宿主返回结果 JSON，但宿主未写 findings.json → 主动停止并做单调用诊断。fail-closed 已在真实工件上免调用验证（ungradable repetitions 报错）。U-02 已实测（acceptEdits 可写）、U-03 已决（快照位置见 S01）；U-01 可信端点仍未决，数字只作 smoke |
+| `S02` | smoke 实跑：先 dry-run（不调模型）；baseline 侧＝claude host＋安装版，eval_runner run 跑 3 用例 × repeat_count 3＝9 次真实调用；candidate 侧＝重装本计划落库版本（C8 PASS 后）同规格 9 次；总成本 18 次真实模型调用，超预算须回计划修订；权限档 workspace-write（快照 chmod 只读＋调用后状态校验兜底）；progress JSONL 落本地 | P1 | tools/lab/eval_runner.py（运行入口，无代码改动） | S01 | ◐ 进行中 | 三次尝试（本地 progress JSONL 留痕，不入仓）：①启动约 4 分钟后被会话清理杀死；②宿主约 10.4 分钟后非零退出、诊断文本被 stderr 无害警告掩盖（已修 `claude_failure_detail` 并加测试）；③首调用 314s 跑通至宿主返回结果 JSON，但宿主未写 findings.json → 主动停止并做单调用诊断。fail-closed 已在真实工件上免调用验证（ungradable repetitions 报错）。U-02 已实测（acceptEdits 可写）、U-03 已决（快照位置见 S01）。2026-10-10：端点复测 3/3 通过（U-01 解除），公开切片试水（AF-001×3）完成（见 releases/pending-test.md）；业务跑重跑待 U-08 验证与预算授权 |
 | `S03` | 评分与定级：seed_grader 对两侧 findings 评分（hits/missed/unmatched）；accepted/escaped_defects 覆盖进结果 manifest；first_pass_review 保留自报并经 evidence_refs 标注；compare 七字段产出 deltas → better/neutral/worse；定级为 smoke 证据、不称权威 baseline；本次两侧行为面未变、delta 应≈0——对照的主要价值是噪声底测量（显著偏离零＝仪器不可信，先修仪器再谈候选）；unmatched 中发现的企业文档真实缺陷经人工确认后可回流评审桥作输入；raw result manifest、progress JSONL、findings 只留本地，公开面只出聚合指标与 repo-qualified 引用（aiwork@<全 sha>:<path>）＋脱敏 blockquote 摘录 | P1 | tools/lab/seed_grader.py（运行入口，无代码改动） | S02 | ⚠ 阻塞 | 传导自 S02（见未决项） |
 | — | 明确不做（范围外，详见「范围外」小节）：业务 holdout；canary/统计（P2）；ZCode 适配；episode store 集成（P1 下一条，依赖本条）；修复类任务与写权限档；ding-dong/infinite-canvas 第二目标仓；多目标混跑；METRIC_NAMES/结果与发布 schema/policy 变更；push/发布 | — | — | — | — 本期不做 | — |
 
@@ -87,7 +88,7 @@ updated_at: 2026-09-18T08:07:13Z
 
 | 编号 | 问题 | 是否阻塞 | 状态 |
 | --- | --- | --- | --- |
-| U-01 | 可信端点：权威评测宿主端点、模型标识与预算未定（本机第三方中转、模型标识不一致，见 handoff「当前风险」） | 阻塞 S02–S03（smoke 实跑与定级）；不阻塞 T01–T13（仪器阶段，离线可判定） | 未关闭（待用户定端点与 18 次预算） |
+| U-01 | 可信端点：权威评测宿主端点、模型标识与预算未定（本机第三方中转、模型标识不一致，见 handoff「当前风险」） | 阻塞 S02–S03（smoke 实跑与定级）；不阻塞 T01–T13（仪器阶段，离线可判定） | 已关闭（2026-10-10 端点复测 3/3 通过，host-platform-facts C12；公开切片试水完成；18 次预算授权见 plans/PENDING-DECISIONS.md「试水后授权」条） |
 | U-02 | 权限档：read-only 档在 claude host 的实际拦截行为待实测（print 模式下 sensitive write 与 Bash 审批） | 阻塞 S02；不阻塞 T01–T13 | 已测量关闭（2026-09-17：acceptEdits 无头写入实测成功（探针文件落盘）；业务档定为 workspace-write。**同时发现读侧约束**：cwd 之外的文件访问被工具层拒绝，见 U-08） |
 | U-03 | 环境隔离：pin 快照放置位置与实跑环境隔离方案未定（第四位置目录约定、打种机） | 阻塞 S01–S03（smoke 阶段）；不阻塞 T01–T13 | 已决关闭（2026-09-17：第四位置＝本机 smoke 根下 `snapshot/`（路径不入仓），与 repository/workspace/holdout 四位置互不嵌套；S01 已按此物化并校验） |
 | U-04 | 版本号：0.6.0（新增能力面，建议）还是 0.5.3 | 不阻塞（T10 合入前确认即可） | 未关闭 |

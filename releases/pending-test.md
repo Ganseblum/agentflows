@@ -16,7 +16,7 @@
 
 ## 未做与残余
 
-- `schemas/*.schema.json` 内部 description 字段未汉化——已拍板不翻（`../plans/PENDING-DECISIONS.md` 第 3 条）。
-- 两批版本 bump 未做——随下次发布批（第 2 条；`CHANGELOG` 待发布节与 episode 已补）。
+- `schemas/*.schema.json` 内部 description 字段未汉化——已拍板关闭：不翻（EP-20261010-002）。
+- 两批版本 bump 未做——随下次发布批（已拍板关闭；`CHANGELOG` 待发布节与 episode 已补）。
 - ~~`check-write-scope.sh` 的「.」缺陷未修~~——已修复并双口径实测（ISS-2026-041，见上表第 6 行）。
-- 试水成本未落盘：`host_adapter` 不记录每次调用 cost（观测缺口；完整对照前建议补记录）。
+- 试水成本未落盘：`host_adapter` 不记录每次调用 cost（观测缺口；随 `../plans/PENDING-DECISIONS.md`「试水后授权」条处置）。

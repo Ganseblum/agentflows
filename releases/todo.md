@@ -5,12 +5,13 @@
 
 ## 批次索引
 
+> 已完成批次（全仓中文化 `4c767eb`、youc 吸收批 `6d10b14`、结构文档、端点复测与试水）见
+> git 历史与 `../CHANGELOG.md`；本表只保留在途与新条目。
+
 | # | 变更 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| 1 | 全仓中文本地化（角色 / 技能 / 文档 / 受保护面 / CHANGELOG） | 已推送 | 提交见 git 历史；客户端重装核对见 `pending-test.md` |
-| 2 | 吸收 youc-workflow-ai 模式：待办 / 待验收 / 待拍板三件 + 首次接入（Init）+ 表达纪律 | 已落地 | 本文件与 `pending-test.md`、`../plans/PENDING-DECISIONS.md`、`skills/agentflow/SKILL.md` 的「首次接入」节 |
-| 3 | 结构文档 `docs/project-structure.md` 与 `index.md` 登记 | 已落盘 | 见 `../docs/project-structure.md`；提交状态随 git 历史 |
-| 4 | 端点复测 + 第一次改善闭环试水（AF-001×3） | 已完成 | 复测 3/3；试水 3 轮 21.7 分钟（时延 540/322/438s、`accepted=false`×3、`tool_failures` 8/0/6、denials 0）；成本未落盘；完整对照待授权（`../plans/PENDING-DECISIONS.md` 第 11 条） |
+| 1 | 清理与归档批（台账收敛 / 计划过期点同步 / 本地垃圾清扫） | 完成（随本批提交） | 记录见 episode `EP-20261010-003` |
+| 2 | 产品链修复轮（REV-20261010-001 的 6 P1 + 6 P2） | 待排 | `../plans/PENDING-DECISIONS.md` |
 
 ## 决策性记录
 
@@ -26,5 +27,6 @@
 - ~~复核 `--case-ids` 门变更有无 `CHANGELOG` 条目~~——已复核：确认无条目，按书面豁免（不改写历史条目）。
 - ~~`check-write-scope.sh` 的「. 全树范围」缺陷~~——已修复（ISS-2026-041 + 双回归用例）。
 - ~~`schemas/*.schema.json` 内部 description 字段是否汉化~~——已拍板：不翻。
-- `host_adapter` 隔离路径认证失败待处置——`../plans/PENDING-DECISIONS.md` 第 12 条。
-- 完整公开切片闭环授权（约 18 次调用）——`../plans/PENDING-DECISIONS.md` 第 11 条。
+- `host_adapter` 隔离路径认证失败待处置——`../plans/PENDING-DECISIONS.md`（隔离路径条）。
+- 完整公开切片闭环授权（约 18 次调用）——`../plans/PENDING-DECISIONS.md`（试水后授权条）。
+- 产品链修复轮（REV-20261010-001）——`../plans/PENDING-DECISIONS.md`（修复轮条）。
