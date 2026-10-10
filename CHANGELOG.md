@@ -2,7 +2,7 @@
 
 ## 待发布 — 2026-10-10
 
-> 本节记录两批尚未定版本号的改动；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
+> 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
 > `measurement: none`（方法级改动，无仪器化业务任务）。
 
 - **全仓中文本地化（用户指示「能改的都改」，推送于 `4c767eb`）**：71 个文件一次性汉化——
@@ -22,6 +22,22 @@
   后，按 `PLAN-LOOP-SMOKE-001` 以 AF-001 × 冻结重复数 3 完成试水实跑（3 轮共 21.7 分钟；
   时延 540/322/438s，`accepted=false`×3，`tool_failures` 8/0/6，denials 0；成本未落盘为已知
   观测缺口）；完整对照的授权待用户裁决；结果回写 `releases/pending-test.md`。
+- **接入与文档链触发修复批（用户指示「按照 youc-workflow-ai 那样」全面改造 + 做典型案例）**：
+  按首次真实新项目运行（test-login 登录功能）的四条反馈修复方法文本——`SKILL` 的「首次接入
+  （Init）」由四项扩为五项（新增「文档与记录落点」，无既有约定时默认推荐文档枢纽仓
+  `<repo>/<name>-workflow-ai/`，不得自创第三形态）；「文档交付链」触发面扩为含「在目标仓实施
+  新 feature（代码工作随行）」，链序写明 接入 → 采集访谈 → 提案 → spec → 设计 → 计划 → 实施，
+  产品语义未决分支一律交用户；新增「目标仓会话不读写插件仓内部记录」条款；episode 条款限定
+  适用会话。模板面按链契约角色目录命名重组（`proposal/prd.md`、`spec/<角色>/`、`design/<角色>/`、
+  单份 `plan/execution.md`）并新增 `templates/hub/` 枢纽骨架三件；`docs/project-structure.md`
+  与 `templates/README.md` 同步。**典型案例**：test-login 建 `test-login-workflow-ai/` 枢纽 +
+  `feature-2026-10-10-登录功能/` 案例链 9 件 + 枢纽 5 件（共 14 件；时序 / 流程图 / 架构图、
+  字段级接口契约、异常矩阵、线框与 data-testid、待冻结问题台账），`doc_chain.py` PASS，负向对照
+  （/tmp 副本注入破坏）FAIL 复现后删除。修复记录 `ISS-2026-043` / `044` / `045`；
+  episode `EP-20261010-004`；`validate.py all` 10×PASS；`packaging/runtime` 重建并与本机
+  `cache/0.10.0` 逐字节同步（客户端重装仍待用户侧，见 `releases/pending-test.md` 第 7 行）；提示词面审计补齐残留（`AGENTS.md` 接入节四项→五项、`agents/reviewer.md` 计划模式指针仓无关化、`SKILL.md` 简报映射句、`plan/execution.md` 模板补节）；
+  独立评审四轮（第 1–3 轮 `changes_requested` 逐轮修复，第 4 轮 `approved`；往返与闭合证据见
+  `EP-20261010-004`）。`measurement: none`。
 
 ## 0.10.0 — 2026-10-09
 

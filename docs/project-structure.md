@@ -39,7 +39,7 @@ agentflows/
 │   │   ├── SKILL.md
 │   │   ├── agents/openai.yaml      Codex 侧展示字段
 │   │   ├── references/            4 份：contracts / roles / document-chain / document-chain-templates
-│   │   ├── templates/             18 份：文档链模板（feature 的 proposal/spec/design/plan、issue、releases、index）
+│   │   ├── templates/             19 份：文档链骨架（feature 四阶段〔角色目录命名〕 · hub 骨架 · issue · releases · index）
 │   │   └── scripts/check-write-scope.sh   硬边界 14 的写范围对照脚本
 │   └── improve/              自迭代 Skill
 │       ├── SKILL.md
@@ -86,7 +86,7 @@ agentflows/
   `.codex-plugin/` 的各 `plugin.json`——名字与版本由 `validate.py manifests` 强制一致。
 - **语言约定**：宿主规范字段（frontmatter 的 `name`/`description`/`tools` 等）保留英文原样；
   正文与人读面为中文。
-- **首次接入**：在目标项目首次使用时，由 [SKILL.md](../skills/agentflow/SKILL.md) 的「首次接入（Init）」节把项目侧约定（语言、术语禁忌、分支纪律、检查命令）写入目标仓 `AGENTS.md`；本仓自身的规则见 [AGENTS.md](../AGENTS.md)。
+- **首次接入**：在目标项目首次使用时，由 [SKILL.md](../skills/agentflow/SKILL.md) 的「首次接入（Init）」节把项目侧约定（语言、术语禁忌、分支纪律、检查命令、文档与记录落点〔默认枢纽仓形态 `<repo>/<name>-workflow-ai/`〕）写入目标仓 `AGENTS.md`；本仓自身的规则见 [AGENTS.md](../AGENTS.md)。
 
 ## 4. 安装与同步链路
 

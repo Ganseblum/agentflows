@@ -10,9 +10,10 @@
 | 1 | 全仓中文本地化（角色 / 技能 / 文档 / CHANGELOG） | ZCode 客户端刷新 marketplace + 重装后：抽查 `agents/reviewer.md`、`skills/agentflow/SKILL.md` 与技能 / 角色描述为中文；随后 `python3 tools/lab/validate.py installed` 应 PASS | 待验证（本机 cache 已同步且 installed PASS；客户端重装未做） |
 | 2 | 结构文档 `docs/project-structure.md` 与 `index.md` 登记 | 打开 `../docs/project-structure.md`，核对目录树 / 五个面 / 安装链路与现行结构一致 | 待验证（待阅读） |
 | 3 | 发布待办 / 待验收 / 待拍板三件启用（`todo.md`、`pending-test.md`、`PENDING-DECISIONS.md`） | `python3 tools/lab/validate.py all` 中 `artifacts` PASS；打开 `../plans/PENDING-DECISIONS.md` 确认拍板口可用 | 待验证 |
-| 4 | 首次接入（Init）章节 + 表达与沉淀纪律（`skills/agentflow/SKILL.md`、`AGENTS.md`） | 阅读两处新增条款：Init 四项约定与「面向人的输出白话优先」；重装后可由用户在新项目试用 | 待验证（待用户阅读） |
+| 4 | 首次接入（Init）章节 + 表达与沉淀纪律（`skills/agentflow/SKILL.md`、`AGENTS.md`） | 阅读两处新增条款：Init 约定（youc 吸收批为四项；本批已扩为五项——见第 7 行）与「面向人的输出白话优先」；重装后可由用户在新项目试用 | 待验证（待用户阅读） |
 | 5 | 端点复测与第一次改善闭环试水（观测） | 复跑一词探测；查看 `/tmp/agentflow-trial/{progress.jsonl,result.json}`（本地） | 已完成（探测 3/3；试水 3 轮 21.7 分钟；成本未落盘——已知观测缺口） |
 | 6 | `check-write-scope.sh` 的「.」修复（ISS-2026-041） | `bash skills/agentflow/scripts/check-write-scope.sh HEAD .` → `OK` exit 0；`HEAD skills` → `FAIL` exit 1 | 待验证（双口径已实测，随本批提交） |
+| 7 | 接入 / 触发面修复 + 模板角色目录化 + 典型案例（随本批） | 重装后（刷新 marketplace + 重装）：在新目标仓发起一个 feature 任务，观察——①先问产品前沿 ②落点建 `<repo>-workflow-ai/` 枢纽 ③对 feature 目录 `doc_chain.py` PASS；另抽查 `templates/feature/` 为角色目录命名 | 待验证（本机 runtime 已重建、`cache/0.10.0` 已同步、`installed` PASS；客户端重装未做） |
 
 ## 未做与残余
 

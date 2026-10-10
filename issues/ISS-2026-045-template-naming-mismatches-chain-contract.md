@@ -1,0 +1,68 @@
+---
+bug_id: ISS-2026-045
+title: 文档链模板的命名与链契约不一致——照抄骨架会踩空 linter 的角色目录要求
+status: verified
+severity: P2
+error_kind: missing-constraint
+attribution: workflow_policy
+provenance: agentflow
+project: agentflow
+files:
+  - skills/agentflow/templates/README.md
+  - skills/agentflow/templates/feature/README.md
+  - skills/agentflow/templates/feature/plan/execution.md
+  - skills/agentflow/templates/hub/README.md
+  - skills/agentflow/references/document-chain.md
+  - docs/project-structure.md
+recorded_at: 2026-10-10T17:45:00+08:00
+source_revision: agentflows@af1ba3d + 本批修复工作树（2026-10-10）
+agentflow_version: 0.10.0
+fix_revision: 随本批提交（agentflows，2026-10-10）
+regression_status: pass
+reviewer: agentflow:reviewer（独立子代理，只读）
+review_decision: approved
+closure_criteria: "python3 tools/lab/validate.py all → 10×PASS；ls skills/agentflow/templates/feature/spec/be/backend.md 存在且 ls skills/agentflow/templates/feature/spec/be.md 不存在；grep -n '接口与共享机制' skills/agentflow/templates/feature/plan/execution.md ≥1 命中"
+updated_at: 2026-10-10T19:05:00+08:00
+---
+
+## 现象
+
+`skills/agentflow/templates/feature/` 的骨架是扁平命名（`proposal.md`、`spec/be.md`、
+`plan/be.md` 等），而链契约「文档链内的文件命名」要求角色目录形态（`spec/be/backend.md` ↔
+`design/be/backend.md` 等互为镜像；单文档阶段 `proposal/prd.md`、`plan/execution.md`），且
+`design/be/` 与 `design/fe/` 作为目录是 linter 的硬性要求。照抄模板把 `design/be.md` 放在
+`design/` 下，链检查（C4 / C8 / C11）会因找不到角色目录文档而判缺；`templates/README.md` 的
+清单同时漏列 `index-template.md`。
+
+## 根因
+
+模板面与链契约各自演进，没有任何检查覆盖二者一致性：`validate.py` 的 mock / examples /
+artifacts 均不巡检 `templates/`（同 ISS-2026-042 的机制），模板命名与契约之间没有机器钉子。
+
+## 修复
+
+- `skills/agentflow/templates/feature/` 重组为角色目录命名：`proposal/prd.md`、
+  `spec/{be/backend.md, fe/frontend.md, qa/acceptance.md, ui/visual.md}`、
+  `design/{be/backend.md, fe/frontend.md, qa/testing.md, ui/visual.md}`、`plan/execution.md`
+  （原三份角色计划合并为单份执行契约）；新增 `templates/hub/`（枢纽仓 README / index /
+  issues 看板三件）。
+- `templates/README.md` 清单与命名说明同步；补 `index-template.md` 行。
+- `docs/project-structure.md` 的 templates 计数与「首次接入」表述同步。
+- `templates/feature/plan/execution.md` 补「落点与真源 / 阶段划分 / 评审门 / 依赖与并行约束」节，
+  向 youc-workflow-ai 的执行契约实样看齐。
+
+## 回归检查
+
+- `python3 tools/lab/validate.py all`：10×PASS。
+- 典型案例目录按新命名搭建，`python3 tools/lab/doc_chain.py <目录>` PASS（结构检查 C1–C11 覆盖
+  角色目录命名）。
+
+## 审查
+
+- 评审：`agentflow:reviewer`（独立子代理，只读；reviewed_revision＝工作树 base `af1ba3dc…` + 案例树）。第 1–3 轮 `changes_requested` 逐轮修复，第 4 轮 `approved`。
+- 回归闭合：`python3 tools/lab/validate.py all` 10×PASS；模板角色目录命名与 hub 骨架存在性核对通过；closure_criteria 闭合（往返与原始输出见 `EP-20261010-004`）。
+
+## 变更记录
+
+- 2026-10-10 · recorded + fixed
+- 2026-10-10 · verified：第 4 轮独立评审 `approved`；往返记录见 `EP-20261010-004`。

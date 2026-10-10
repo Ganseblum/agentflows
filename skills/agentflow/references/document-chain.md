@@ -1,7 +1,9 @@
 # 文档交付链
 
 面向交付物是**文档集**——一个 feature 的需求提案、spec、技术设计与实施计划——而非代码的
-任务的契约。当 feature 从文档起步、代码工作随后跟进时，它同样适用。
+任务的契约。当 feature 从文档起步、代码工作随后跟进时，它同样适用。**当在目标仓实施一个新
+feature（代码工作随行）时，本契约同样适用——约束该 feature 的文档面：先文档（接入 → 采集
+访谈 → proposal → spec → design → plan），后实施（触发情形见「使用时机」）。**
 
 状态说明（如实）：本链取代了早先那次只吸收评审标准、刻意不重建模板体系的取舍。那次取舍把
 文档质量交给逐会话纪律，与本方法其他所有面都受治理的方式不一致。用户于 2026-09-20 推翻了
@@ -17,33 +19,40 @@
   "起文档"。
 - 一个 feature 在代码之前以文档阶段起步（proposal → spec → design → plan → implement），
   且目标仓约定未作其它规定。
+- 在目标仓实施一个新 feature（代码工作随行）——默认走 接入（Init）→ 采集访谈 →
+  proposal → spec → design → plan → implement；只有用户明确选择「轻量/直接做」时才降档，
+  且降档范围在 feature README 声明。
 
 不适用情形：目标仓已有其团队遵循的模板体系——用他们的模板，并在其上叠加本契约的
-**门与质量标准**；单文档的快速回答；作为证据记录的文档（它们遵循记录契约；其落地位置
+**门与质量标准**；单文档的快速回答；用户明确要求轻量且已在 README 声明降档范围的批次；
+作为证据记录的文档（它们遵循记录契约；其落地位置
 是批次目录 `issues/` 和 `releases/`）。
 
 ## 目录布局（目标仓，无约定时）
 
-两种形态，由目标仓选择：
+两种形态，在 Init 时与 owner 确认；**无既有约定时默认推荐①**。两种之外**不得自创落点**
+（例如 `records/plans/`）；落点结论写入目标仓 `AGENTS.md` 的接入约定小节。
 
-- **文档枢纽仓** ——独立的文档/元信息仓库（`<project>-workflow-ai` 模式）。各阶段位于枢纽
-  根目录下，每个 feature 一个目录，与缺陷流、发布记录、模板和冻结归档并列：
+- **① 文档枢纽仓（默认推荐）** ——项目内（或独立）的文档/元信息中枢（`<project>-workflow-ai`
+  模式；骨架见 [`../templates/hub/`](../templates/hub/README.md)）。各阶段位于枢纽根目录下，
+  每个 feature 一个目录，与缺陷流、发布记录并列：
 
 ```text
 features/feature-<date>-<topic>/
-  README.md          single entry: meta + progress board with stage gates
-  proposal/          why: background, goals, scope (incl. NOT doing), principles, open questions
-  spec/{be,fe,qa}/   what it must finally behave like (+ re-audit checklist of the proposal)
-  design/{be,fe,qa}/ how: decision table, challenges, architecture, impact assessment, verification
-  plan/{be,fe,qa}/   execution contract (follow the target repo's plan convention if any)
-issues/              defects and items (numbered, board README, archive/)
-releases/            release records (todo + pending-test)
-templates/           copy-first skeletons
-_archive/            frozen history (read-only)
-index.md             the single document index
+  README.md               single entry: meta + progress board with stage gates
+  proposal/prd.md         why: background, goals, scope (incl. NOT doing), principles, open questions
+  spec/{be,fe,qa}/        what it must finally behave like (+ re-audit checklist of the proposal)
+  design/{be,fe,qa}/      how: decision table, challenges, architecture, impact assessment, verification
+  plan/execution.md       execution contract (single file; follow the target repo's plan convention if any)
+issues/                   defects and items (numbered, board README, archive/)
+releases/                 release records (todo + pending-test)
+index.md                  the single document index
 ```
 
-- **普通业务仓**（无独立枢纽）：文档链留在仓库内部——默认
+可选层（按需启用）：`workflow/` 项目级活规则、`templates/` 复制骨架、
+`user/` 产品使用文档、`api/` 接口规范、`_archive/` 冻结历史（只读）。
+
+- **② 普通业务仓**（无独立枢纽）：文档链留在仓库内部——默认
   `docs/features/feature-<slug>/`，阶段骨架相同。
 
 每个 feature 一个目录。README 是唯一入口，承载带阶段门的进度板——复选框只在附有文档链接时
@@ -62,7 +71,9 @@ proposal（没有独立的 spec 或 design 轨）的批次，在 README 元信�
 ## 阶段骨架
 
 带**固定标题字面量**的填写式模板位于
-[`../templates/README.md`](../templates/README.md) ——每个阶段一个文件，列在清单里；
+[`../templates/README.md`](../templates/README.md)——骨架按角色目录组织（`spec/be/backend.md`
+与 `design/be/backend.md` 等互为镜像；单文档阶段 `proposal/prd.md`、`plan/execution.md`），
+清单列在其 README；枢纽仓骨架见 [`../templates/hub/`](../templates/hub/README.md)。
 复制模板，填写占位符，不得重命名或删减章节（记录契约的固定标题做法，应用于文档链）。
 允许增加领域专属章节；模板核心不是可选项。文档链若在 README 中用标记行
 「本 feature 文档链由 agentflow 文档链方法生成（<日期>）」声明自己，即选择接受 linter 的
@@ -151,7 +162,10 @@ proposal 分多轮采集，而不是一次问完。把待决事项建模为一�
    需求 owner 抉择的语义，例如状态冲突或首次触发时机未定义）作为带推荐默认值的明确问题
    交给 owner——spec 作者绝不单方面填入并宣布关闭——按上面的采集访谈提出（每轮问完整个
    前沿、事实去查而非去问、答案冲突在到达的那一轮裁决）。存在未关闭的阻塞项时，不得开始
-   design 工作。
+   design 工作——唯一的过渡形态是「建议值草案」：阻塞项已登记台账并带建议值时，下游的 design / plan 阶段可
+   先行起草为草案（状态行标注「草案：随建议值」；登记待答的阻塞行状态字建议用 ◐），但不得标冻结、
+   不得过本门、不得开工实施；
+   owner 关闭阻塞项后草案转正式。
 2. **需求评审门** ——独立的 reviewer 对冻结的候选运行文档评审模式（proposal/PRD 与 spec）。
    阻塞性发现在 design 冻结前关闭。
 3. **Design 评审门** ——独立的 reviewer 运行 design 模式。批准后 design 冻结；此后的改动是
