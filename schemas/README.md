@@ -1,16 +1,11 @@
-# Agentflow contracts
+# Agentflow 契约
 
-This directory contains the cross-host contracts that are shared by the Agentflow
-workflow, maintenance tools, and evaluation fixtures.
+本目录存放 Agentflow 工作流、维护工具与评测 fixture 共享的跨宿主契约。
 
-The improvement-specific contracts remain under
-`skills/improve/references/` because the Improve Skill links to them directly. The
-validator loads both locations and checks cross-document invariants where a single
-JSON Schema cannot express them.
+改进环专用契约仍在 `skills/improve/references/` 下，因为 Improve Skill 直接链接到它们。
+校验器加载两处位置，并检查单份 JSON Schema 无法表达的跨文档不变量。
 
-These contracts describe evidence and execution plans. A plan is not, by itself,
-authorization to modify code or release a Plugin.
+这些契约描述证据与执行计划。计划本身不构成修改代码或发布插件的授权。
 
-Evaluation results are bound to an artifact digest, suite cardinality, observed execution
-context, and per-case holdout/repetition metadata. The runner rejects Adapter output that
-does not cover the frozen suite exactly.
+评测结果绑定到产物 digest、套件基数、观测到的执行上下文，以及逐用例的 holdout/重复元数据。
+runner 拒绝不能精确覆盖冻结套件的 adapter 输出。

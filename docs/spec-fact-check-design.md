@@ -25,8 +25,8 @@
    （原说明已冻结，见 [_archive/records-2026-10/readmes/records-README.md](../_archive/records-2026-10/readmes/records-README.md)）。
 3. reviewer 被借来审文档是错配：它的契约是**实现之后**的独立判定
    （[reviewer.md](../agents/reviewer.md):3），输出 `approved / changes_requested /
-   blocked` 决策而非发现清单（:27），且它不能运行命令，只能指定命令由 Supervisor 执行
-   （:14-18）。docs 虽在其只读范围内（:12），但它没有跨仓代码事实核对的职责。
+   blocked` 决策而非发现清单（:106），且它不能运行命令，只能指定命令由 Supervisor 执行
+   （:14-17）。docs 虽在其只读范围内（:12），但它没有跨仓代码事实核对的职责。
 4. FE/BE 工程师具备域知识，但现有角色契约偏实现（frontend-engineer.md:20、
    backend-engineer.md:20），没有可直接复用的只读调查 brief 模板。
 
@@ -34,12 +34,12 @@
 
 | 需求环节 | 现有承载 | 依据 | 缺口 |
 | --- | --- | --- | --- |
-| 核对本仓代码事实 | frontend / backend-engineer（只读 brief 可约束） | contracts.md:34；frontend-engineer.md:20；backend-engineer.md:20 | 无 findings 输出格式 |
-| 跨仓接口矛盾裁决 | technical-director | roles.md:25-27 | 无 |
+| 核对本仓代码事实 | frontend / backend-engineer（只读 brief 可约束） | contracts.md:30；frontend-engineer.md:20；backend-engineer.md:20 | 无 findings 输出格式 |
+| 跨仓接口矛盾裁决 | technical-director | roles.md:51-55 | 无 |
 | 汇总成计划 | plan-architect | plan-architect.md:21-27；plan.schema.json | 计划此前没有核验步骤的输入约定 |
-| 独立审查 | reviewer | reviewer.md:3、:22 | 只审实现，不审提案/文档事实 |
-| 证据输出契约 | Worker result / Review result | contracts.md:38-66 | 无 findings 专用形态（可按 verdict 归类） |
-| 任务文本不可信规则 | Supervisor 步骤 4 | SKILL.md:44；contracts.md:36 | 规则已有，缺"核对产物"的格式约定 |
+| 独立审查 | reviewer | reviewer.md:3、:21 | 只审实现，不审提案/文档事实 |
+| 证据输出契约 | Worker result / Review result | contracts.md:48-148 | 无 findings 专用形态（可按 verdict 归类） |
+| 任务文本不可信规则 | Supervisor 步骤 4 | SKILL.md:48；contracts.md:147 | 规则已有，缺"核对产物"的格式约定 |
 
 ## 3. 方案 A：写成工作流步骤（推荐先行，不加角色）
 
@@ -86,7 +86,7 @@ findings:
 - BE/FE：只读调查 brief，范围写死仓库与目录；不写文件、不接实现任务。
 - technical-director：只处理跨层接口/架构矛盾，不负责核对清单。
 - reviewer：仅在需要独立判定时使用（例如 findings 会直接影响验收）。它指定的检查命令由
-  Supervisor 执行并回传原始输出（reviewer.md:14-18）。
+  Supervisor 执行并回传原始输出（reviewer.md:14-17）。
 - plan-architect：只消费 already-verified 的结论，不承担核对。
 - 已知限制：路径边界仍是提示词 + Supervisor diff 兜底（C7、agent-roles.md:123），brief
   必须显式声明仓库与范围；多仓场景沿用宿主现有工作区权限，不新开权限。
@@ -181,7 +181,7 @@ disallowedTools: Bash, Write, Edit
 
 - **编排单点**：Supervisor 就是主会话，没有持久状态；长任务依赖会话历史，跨进程恢复、
   租约、重试全部空缺，Execution Coordinator 仅为预留（agent-roles.md:106-107、
-  SKILL.md:34-35）。
+  SKILL.md:22）。
 - **流转结构性受限**：worker 默认禁止再委派（contracts.md:12）；在当前角色白名单配置下，
   每一跳由主循环驱动。宿主可以提供 agent→agent 通道，但若未来显式授予该工具，必须重新
   审查流转约束，不能假设为默认能力。
@@ -204,7 +204,7 @@ disallowedTools: Bash, Write, Edit
 
 ### 8.3 角色自动流转的可行形态
 
-- 近期：把序列规则写成技能内的状态机（bug 链、planning 链已有雏形，SKILL.md:21-37），
+- 近期：把序列规则写成技能内的状态机（bug 链、planning 链已有雏形，SKILL.md:20-22），
   补逐跳进入/退出条件与评测用例，让 Supervisor"按规则自动跑"而非自由发挥。
 - 中期：只有出现跨进程/队列刚需才上 Execution Coordinator（管运行状态，不替代决策）。
 - 长期：宿主 Hook/MCP 只承载状态、证据、审批，不跑第二套 Agent 循环
@@ -242,7 +242,7 @@ disallowedTools: Bash, Write, Edit
   必须换工作区。
 - **manifest 同步无源内校验**：5 份 manifest（根、marketplace、.zcode/.claude/.codex-plugin）
   版本号手工同步；`validate.py` 的 `INSTALLED_FILES` 只做 source-vs-snapshot 文件 diff
-  （tools/lab/validate.py:57-65），不检查源内跨 manifest 版本一致——漏 bump 只会在重装后
+  （tools/lab/validate.py:142-148），不检查源内跨 manifest 版本一致——漏 bump 只会在重装后
   以宿主看到旧版本的形式暴露。
 - **无 CI/hook 强制**：全部确定性校验依赖人工运行纪律，无 pre-commit/CI 门。
 - **样本与阈值**：公开 suite 仅 14 例，阈值未冻结，Canary 缺统计基础。
@@ -262,12 +262,12 @@ disallowedTools: Bash, Write, Edit
 
 | 专业维度 | 当前角色契约覆盖 |
 | --- | --- |
-| 前端组件封装判断（何时抽组件） | 无；仅 "follow its local instructions and existing UI patterns"（frontend-engineer.md:20） |
+| 前端组件封装判断（何时抽组件） | 无；仅 "遵循其本地指令与既有 UI 模式"（frontend-engineer.md:20） |
 | React hooks 设计规范 | 无；仓库内所有 "hooks" 均指宿主权限 Hook |
 | API 封装层设计 | 无；仅 description 的 "typed API integration"（:3） |
 | 服务端幂等性 | 无；backend-engineer 只要求声明 request/response/error/authorization/compatibility（backend-engineer.md:20） |
 | 接口扩展性（演进/版本化/additive） | 部分；"compatibility" 有，扩展路径无 |
-| 迁移与外部契约谨慎 | 有（"deliberate decisions"，:20） |
+| 迁移与外部契约谨慎 | 有（"刻意做出的决策"，:20） |
 
 ### 9.2 这是定位使然，不是遗漏
 
@@ -286,11 +286,8 @@ Agentflow 是跨项目方法论插件（host-native-plugin-design.md:11），两
 
 ### 9.4 拟议条款草稿（未写入角色文件）
 
-- backend-engineer 增："State idempotency and retry semantics for every mutating
-  endpoint; declare the extension path (versioning, additive fields) for externally
-  visible contracts."
-- reviewer 增："Check mutating endpoints declare idempotency/retry behavior; check
-  contracts state an extension path."
+- backend-engineer 增："为每个变更类端点声明幂等与重试语义；为对外可见的契约声明扩展路径（版本化、增量字段）。"
+- reviewer 增："检查变更类端点是否声明了幂等/重试行为；检查契约是否声明了扩展路径。"
 - 对应新增一条公开评测用例（AF-007 模式：backend 变更未声明幂等性/扩展路径，断言
   reviewer/worker 必须指出），把检查项变成可回归断言。
 
@@ -298,8 +295,8 @@ Agentflow 是跨项目方法论插件（host-native-plugin-design.md:11），两
 
 条款只强制注意力到位（"必须回答幂等性"），判断对错仍取决于模型 + 仓库证据；角色名
 不是资历。可靠性来自三件套：检查单条款 × 证据强制（path:line / raw output，
-contracts.md:63）× 回归用例。漏检一次按 improve 环沉淀一次；同类候选两轮无效即止损，
-归因到模型或上下文（skills/improve/SKILL.md:58）。此前结论仍然成立：角色分工未经验证
+contracts.md:133）× 回归用例。漏检一次按 improve 环沉淀一次；同类候选两轮无效即止损，
+归因到模型或上下文（skills/improve/SKILL.md:61）。此前结论仍然成立：角色分工未经验证
 （self-improvement-design.md:92），"保证"目前只是机制设计，不是实测事实。
 
 ### 9.6 待确认事项

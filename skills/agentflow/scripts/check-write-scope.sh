@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
-# check-write-scope.sh — verify the workspace's actual change surface against a declared write scope.
+# check-write-scope.sh — 校验工作区的实际改动面是否落在声明的写范围之内。
 #
-# Agentflow supervisors run this at acceptance time (hard boundary 14): a worker's real write
-# surface is what the repository diff shows, not what its summary claims. The script lists every
-# path that changed between a baseline revision and the current working tree — committed, staged,
-# unstaged, deleted, both sides of a rename, and untracked — and fails when any changed path falls
-# outside the declared scope.
+# Agentflow supervisor 在接受产物时运行本脚本（硬边界 14）：worker 的真实写入面以仓库
+# diff 所示为准，而非其摘要所主张的内容。脚本列出基线 revision 与当前工作树之间发生
+# 变更的每个路径——已提交、已暂存、未暂存、已删除、重命名两侧以及未跟踪——当任何变更
+# 路径落在声明的范围之外时以失败退出。
 #
-# Usage:
+# 用法：
 #   scripts/check-write-scope.sh <base-revision> <scope-path>...
 #
-#   <base-revision>  the revision recorded when the work was delegated (HEAD at that moment).
-#                    Everything that changed since is compared against the scope.
-#   <scope-path>...  the write scope: files or directories. A directory covers everything under
-#                    it. Use "." to allow the whole tree.
+#   <base-revision>  委派工作时记录的 revision（即当时的 HEAD）。
+#                    自那时起发生的一切变更都会与范围进行比对。
+#   <scope-path>...  写范围：文件或目录。目录涵盖其下的全部内容。
+#                    用 "." 表示允许整棵树。
 #
-# Notes:
-#   - Paths already dirty at delegation time also appear as changes; either delegate from a
-#     clean tree or subtract the known-dirty paths when reading the report.
-#   - Untracked files are included; ignored files (per .gitignore) are not.
+# 说明：
+#   - 委派时已经 dirty 的路径也会显示为变更；要么从干净的树委派，要么在阅读报告时
+#     减去已知的 dirty 路径。
+#   - 未跟踪文件会计入；被忽略的文件（按 .gitignore）不计入。
 #
-# Exit status: 0 when every changed path is inside the scope, 1 when any path is outside,
-# 2 on a usage error.
+# 退出状态：所有变更路径都在范围内时为 0；任一变更路径在范围之外时为 1；
+# 用法错误时为 2。
 
 set -eu
 
@@ -35,7 +34,7 @@ shift
 scopes=("$@")
 
 if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
-  echo "error: base revision not found: $base" >&2
+  echo "error: 找不到基线 revision: $base" >&2
   exit 2
 fi
 
@@ -47,7 +46,7 @@ while IFS= read -r path; do
   changed+=("$path")
 done < <(git ls-files --others --exclude-standard)
 
-# `case` patterns do not undergo pathname expansion, unlike an unquoted `*` inside `[ ]`.
+# `case` 模式不会进行路径名展开，这与 `[ ]` 内不加引号的 `*` 不同。
 in_scope() {
   path="$1"
   for scope in ${scopes[@]+"${scopes[@]}"}; do
@@ -69,11 +68,11 @@ for path in ${changed[@]+"${changed[@]}"}; do
 done
 
 if [ "${#out_of_scope[@]}" -gt 0 ]; then
-  echo "FAIL: ${#out_of_scope[@]} of $count changed path(s) outside the declared write scope:"
+  echo "FAIL: 共 $count 个变更路径中有 ${#out_of_scope[@]} 个在声明的写范围之外："
   for path in ${out_of_scope[@]+"${out_of_scope[@]}"}; do
     echo "  $path"
   done
   exit 1
 fi
 
-echo "OK: $count changed path(s), all within the declared write scope."
+echo "OK: 共 $count 个变更路径，全部位于声明的写范围之内。"

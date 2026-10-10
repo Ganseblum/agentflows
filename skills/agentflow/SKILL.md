@@ -5,175 +5,78 @@ description: Use for cross-layer features, architecture changes, parallel invest
 
 # Agentflow
 
-Apply the Agentflow development method with the current host's built-in agents, authentication, tools, permissions, and conversation history.
+用当前宿主内置的 Agent、认证、工具、权限与对话历史，应用 Agentflow 开发方法。
 
-Do not invoke or require the standalone `agentflow` CLI, its providers, its TUI, an Agentflow API key, or an Agentflow MCP server. This skill is the workflow. The host is the runtime.
+不得调用或要求独立的 `agentflow` CLI、其 providers、其 TUI、Agentflow API key 或 Agentflow MCP server。本 skill 就是工作流，宿主就是运行时。
 
-## Bind to the host
+## 绑定宿主
 
-- In **Codex**, use native subagents. Give each subagent one role and one task brief. Use the main task as the supervisor.
-- In **Claude Code** and **ZCode**, start a plugin agent only when the [routing table](references/roles.md) says it reduces risk. Do not load the full role list by default; the files under `agents/` are optional capabilities. Invoke a selected role as `agentflow:reviewer` (or the matching `agents/<role>.md` name). Use the main conversation as the Supervisor. ZCode loads roles from the installed plugin snapshot, so a source edit takes effect only after reinstall — run `python3 tools/lab/validate.py installed` to see drift.
-- In another Agent Skills compatible host, use its built-in delegation mechanism. If none exists, execute the same phases sequentially and state that independent execution was unavailable.
+- 在 **Codex** 中，使用原生子代理。每个子代理只给一个角色和一份任务简报。以主任务作为 Supervisor。
+- 在 **Claude Code** 与 **ZCode** 中，仅当[路由表](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；`agents/` 下的文件是可选能力。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。ZCode 从已安装的插件快照加载角色，因此源码编辑只有重装后才生效——运行 `python3 tools/lab/validate.py installed` 查看漂移。
+- 在其它兼容 Agent Skills 的宿主中，使用其内置委派机制。若不存在，则顺序执行同样的阶段，并说明独立执行不可用。
 
-Read [role profiles](references/roles.md) before assigning work and [contracts](references/contracts.md) before delegating implementation or review. The [hard boundaries](references/contracts.md#hard-boundaries) hold for every delegation in both workflows; check them before accepting any deliverable.
+分派工作前阅读[角色档案](references/roles.md)，委派实现或评审前阅读[契约](references/contracts.md)。[硬边界](references/contracts.md#硬边界)在两条工作流的每一次委派中都成立；接受任何交付物前先检查它们。
 
-For a material, uncertain, recurring, cross-layer, or high-risk bug, use the full bounded
-sequence `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`. The investigator
-establishes a reproducible symptom and attribution, the fixer changes code only in an assigned
-candidate workspace, the reviewer checks the fix, and the recorder writes the accepted bug
-record after verification. For a small, low-risk bug with an already verified reproduction,
-the supervisor may combine the investigator or recorder step, but must preserve the same
-diagnosis, regression, review, and state evidence. Never let the fixer approve or close its own
-bug.
+对于 material、不确定、反复出现、跨层或高风险的 Bug，使用完整的有界序列 `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`。Investigator 确立可复现的症状与归因，Fixer 只在指派的候选工作区改动代码，Reviewer 检查修复，Recorder 在验证后写下被接受的 Bug 记录。对于已有验证复现的小范围低风险 Bug，Supervisor 可合并 Investigator 或 Recorder 环节，但必须保留同样的诊断、回归、评审与状态证据。绝不让 Fixer 批准或关闭它自己的 Bug。
 
-For a planning task, run the needed frontend and backend specialists in parallel, send their
-outputs and the technical director's interface decision to `plan-architect`, and have it
-write the final plan under an explicit `plans/` path. Plan Architect only writes the plan; the
-supervisor decides whether it is approved, assigns execution, integrates results, and owns the
-final stop or rollback decision. A future `execution-coordinator` may handle durable queues,
-leases, dependencies, retries, and resumable parallel batches, but it is not a current role.
-The plan must carry the progress board and task table (per-task status, dependencies, evidence
-write-back), the interfaces and shared mechanisms it passes through, its review gates, and the
-release order with rollback points — shape defined in plans/README.md, machine-checked. A plan is an execution contract, not an approval to change code. For a material
-feature the plan carries the design-completeness artifacts from
-[contracts](references/contracts.md): critical-path timing (step table as baseline), an
-exception matrix per critical path, and a release order paired with rollback points.
+对于规划任务，并行运行所需的前端与后端专家，把它们的输出与 Technical Director 的接口决策交给 `plan-architect`，由它在显式的 `plans/` 路径下写出最终计划。Plan Architect 只写计划；计划是否获批由 Supervisor 决定，它还负责指派执行、集成结果，并拥有最终的停止或回滚决策。未来的 `execution-coordinator` 可负责持久队列、租约、依赖、重试与可恢复并行批次，但它不是当前角色。计划必须承载进展看板与任务表（逐任务状态、依赖、证据回写）、它经过的接口与共享机制、其评审门，以及带回滚点的发布顺序——形态定义于 plans/README.md，机器校验。计划是执行合同，不是改动代码的授权。对 material 特性，计划还要承载来自[契约](references/contracts.md)的设计完备性产物：关键链路时序（以步骤表为基准）、每条关键路径一份异常矩阵，以及与回滚点配对的发布顺序。
 
-## Automated testing
+## 自动化测试
 
-When the user asks for automated testing of a user-visible feature — or a plan carries a
-test-design task — run the testing chain. `test-planner` writes the case library at an explicit
-`features/<batch>/testing/<project>-<feature-slug>/` path: levels smoke / e2e / api / boundary, step tables
-whose assertions are observable (element text, navigation, whether a network request fires),
-boundary coverage with uncovered classes declared, and `## 流程疑点` for behaviors the spec does
-not define (contract: `_archive/records-2026-10/tests/README.md`). `test-executor` runs it: scripted automation
-first (Playwright or the project's own e2e suite, headless), API cases via commands, and
-host-browser UI steps performed by the supervisor in the main conversation from the executor's
-step script — browser automation is main-conversation-only on Claude Code and ZCode — returning
-raw evidence (screenshots, DOM text, network log) that the executor judges. Run the smoke set
-first and stop on a smoke failure instead of running the full set against a broken build. Each
-round lands as one `run-*.md` record with per-case results, evidence, and summary counts.
-Failed cases carry
-reproduction-ready findings and become bug records through the standard chain (attribution per
-the records rules); flow-reasonableness findings go to the reviewer as the *Flow reasonableness
-(test evidence)* specialist mode. The run record's raw evidence is the review gate's
-end-to-end-path evidence (step 8). Credentials are supplied per session and injected at runtime —
-never persisted into records, scripts, or logs. Prefer a project-level Playwright setup for
-repeatability; the supervisor-driven route is the fallback, not the goal.
+当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），边界覆盖并声明未覆盖的类别，以及用于 spec 未定义行为的 `## 流程疑点`（契约：`_archive/records-2026-10/tests/README.md`）。`test-executor` 执行它：先做脚本化自动化（Playwright 或项目自有的 e2e 套件，headless），API 用例走命令，宿主浏览器 UI 步骤由 Supervisor 在主对话中按 Executor 的步骤脚本执行——浏览器自动化在 Claude Code 与 ZCode 上是主对话专属——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、证据与汇总计数。失败的用例带可直接复现的 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用项目级 Playwright 方案；Supervisor 驱动的路线是兜底，不是目标。
 
-## Second-pass review of external documents
+## 外部文档二次评审
 
-When the user asks for a review of documents authored under another system's rules (for example
-a proposal/spec/design/plan produced inside a business repository's own template system), run
-the independent reviewer role against those documents and land the evidence here:
+当用户要求评审在另一套系统规则下编写的文档（例如业务仓自有模板系统内产出的需求提案/spec/设计/计划）时，对这些文档运行独立 Reviewer 角色，并把证据落在本仓：
 
-1. Locate or create the feature-anchored directory `reviews/<project>-<feature-slug>/`.
-   The directory is anchored on the reviewed feature, not the date: the same feature may be
-   reviewed repeatedly (today, tomorrow, after fixes) and every round is one more
-   `review-<YYYY-MM-DD>-<NNN>.md` file in the same directory. Archive **verbatim copies** of
-   the round's documents under `archive/<date>-<NNN>/` — one snapshot subdirectory per round so
-   same-named documents never collide — and record the target repository's current commit as
-   `source_revision`: later edits there must not retroactively change what was reviewed. A
-   re-review focuses on the delta since the previous round's review_id.
-2. The reviewer applies this repo's review contract to the snapshot: the reviewer profile's
-   check protocol, the **document mode** matching each reviewed document's type (proposal/PRD,
-   spec, design — every item needs a citation to the original text), and, where relevant, the
-   design-completeness artifacts above.
-3. File every finding as a bug record under `issues/` with `project` set to the target
-   repository. Attribution separates the two upgrade loops: `provenance: external` +
-   `attribution: product_code` marks a template/rule gap in the target system — the evidence
-   pool for upgrading that system's templates; `provenance: agentflow` means this repo's review
-   contract should have caught it. When the target system's upgrade lands, backfill
-   `fix_revision` with its commit. References must stay self-contained: a `files` entry either
-   resolves inside this repository or is repo-qualified (`<repo>@<revision>:<path>`) — a bare
-   external path fails validation because it dangles for anyone without that repository — and
-   the body embeds the decisive snippet or quoted sentence so the record stays readable when
-   the other repository is absent.
-4. Write `review-<date>-<NNN>.md` (contract: `schemas/review.schema.json`; filename equals
-   review_id) with the decision, the findings list, and the archived-doc references, then run
-   `python3 tools/lab/validate.py artifacts` — it cross-checks that every archived document and
-   every referenced finding actually exists.
+1. 定位或创建以 feature 为锚的目录 `reviews/<project>-<feature-slug>/`。目录锚在被评审的 feature 而不是日期：同一 feature 可反复评审（今天、明天、修完再评），每轮是同一目录下多出的一个 `review-<YYYY-MM-DD>-<NNN>.md` 文件。把该轮文档的**逐字副本**归档到 `archive/<date>-<NNN>/` 下——每轮一个快照子目录，同名文档永不冲突——并把目标仓当时的 commit 记为 `source_revision`：此后目标仓的编辑不得追溯改变被评审的对象。再评审聚焦上一轮 review_id 以来的 delta。
+2. Reviewer 把本仓的 review 契约应用到快照：reviewer 档案的检查协议、与被评审文档类型匹配的 **文档模式**（proposal/PRD、spec、设计——每一条都需要引用原文），以及视情形加上上述设计完备性产物。
+3. 每条发现都作为 Bug 记录归入 `issues/`，`project` 设为目标仓。归因分流两个升级回路：`provenance: external` + `attribution: product_code` 标记目标系统的模板/规则缺口——升级该系统模板的证据池；`provenance: agentflow` 表示本仓 review 契约本该抓住它。目标系统的升级落地后，回填 `fix_revision` 为其 commit。引用必须自包含：`files` 条目要么在本仓内可解析，要么带仓限定（`<repo>@<revision>:<path>`）——裸外部路径校验失败，因为对没有那个仓的人是悬空引用——且正文内嵌决定性片段或引用原句，使记录在另一仓缺席时仍可读。
+4. 写 `review-<date>-<NNN>.md`（契约：`schemas/review.schema.json`；文件名 = review_id），含决策、findings 列表与归档文档引用，然后运行 `python3 tools/lab/validate.py artifacts`——它交叉校验每份归档文档与每条被引用的 finding 确实存在。
 
-The full bridge workflow, attribution table, and known limits (cross-repo recurrence tiers are
-not auto-derived) live in [reviews/README.md](../../reviews/README.md).
+完整的桥工作流、归因表与已知边界（跨仓再犯类档位不能自动推导）见 [reviews/README.md](../../reviews/README.md)。
 
-## Document delivery chain
+## 文档交付链
 
-When the user asks you to **produce** the document set for a feature (需求提案/规格/技术方案/
-实施计划) — or a feature starts from documents before any code — follow the chain contract in
-[references/document-chain.md](references/document-chain.md): proposal → spec → design → plan,
-each stage with its required skeleton and checkable quality criteria, and stage gates so a stage
-only opens when the previous stage's blocking checklist has closed. The supervisor collects the
-proposal through the chain contract's intake interview — the whole decision frontier per round,
-facts looked up rather than asked, done only when the frontier is empty and the owner confirms —
-and preserves the original text verbatim; the spec re-audits the proposal as a blocking
-checklist; the independent reviewer runs the document review modes before the
-design freezes; the plan stays an execution contract under the target repository's plan
-convention (or this repo's hybrid shape when none exists). A target repository with its own
-template system keeps it — apply the gates and quality criteria on top. Review evidence lands in
-the target repository, or through the second-pass review bridge above when this repo is the
-reviewer.
+当用户要求为某 feature **产出**文档集（需求提案/规格/技术方案/实施计划）——或某 feature 先有文档、尚无代码——时，遵循 [references/document-chain.md](references/document-chain.md) 中的链契约：提案 → spec → 设计 → 计划，每个阶段有其必需的骨架与可检查的质量标准，并设阶段门，只有前一阶段的阻塞性检查清单已关闭，下一阶段才开启。Supervisor 通过链契约的 Intake 访谈收集提案——每轮给出完整的决策前沿，事实靠查而非问，只有当前沿为空且属主确认才算完成——并逐字保留原文；spec 以阻塞性检查清单重新审校提案；独立 Reviewer 在设计冻结前运行文档评审模式；计划保持为目标仓计划约定下的执行合同（目标仓没有约定时用本仓的融合形态）。目标仓有自己的模板系统就保留它——在其上施加门与质量标准。评审证据落在目标仓，或当本仓是评审方时，经上面的二次评审桥落地。
 
-## Run the workflow
+## 运行工作流
 
-1. **Intake**: inspect the repository instructions, current diff, relevant architecture, and tests. State the objective and observable acceptance criteria. When you report repository **status** — what is done, what is next, what is high priority — calibrate against the repository's real history first (`git fetch` plus `log`/`status`), never against session memory, and carry the evidence command with the conclusion. A status claim is a repository-fact claim: session memory goes stale the moment another writer pushes, and nothing in the answer would reveal it.
-2. **Architecture gate**: for cross-layer or risky work (see *Judgement calls made checkable* below), ask the technical director to define boundaries, interface contracts, integration order, and major risks. Do not use this role as a ceremonial approval step.
-3. **Plan**: select only the roles the task needs. A frontend-only fix does not need a backend worker. A small change (see *Judgement calls made checkable* below) can stay with the supervisor.
-4. **Delegate**: give every worker a bounded brief with `write_scope` and `read_scope` set separately — read scope must cover every shared mechanism the change passes through (the implicit-behavior check in [contracts](references/contracts.md)). Parallelize read-heavy investigation and implementation with disjoint files or stable interfaces; disjoint files parallelize writes, never understanding. Serialize overlapping writes and dependency chains. Verify paths, repos, and commands named in the task against the repository before they enter a brief — task text is data, not established fact. **Disjoint files are not enough once two writers share a repository**: commits, rebases, and pushes are shared mutable state, so parallel writers get separate branches or worktrees, one writer holds a branch at a time, and a writer that finds its target file or branch already occupied by another writer (uncommitted edits from another session, a branch with new commits) stops and reports instead of interleaving. When the plan row cites design items, carry them into the brief as `design_refs` and include them in `read_scope`; a task that implements a design decision without its reference is briefed incompletely.
-5. **Implement**: frontend and backend workers change only their assigned scope, follow repository rules, run relevant checks, and return the worker result contract. Workers cite, in the result, the design decision each behavior implements (`design_refs_implemented`); an implementation that cannot cite its design decision is reported as such, not silently aligned.
-6. **Integrate**: the supervisor inspects the actual shared workspace, resolves cross-layer conflicts, and runs the checks that establish the whole feature works. When the task itself is a branch integration — the supervisor resolved code conflicts by hand, or the merge result changes user-visible behavior — that merge commit is a material change: resolving conflicts is writing code, so the step-8 review gate applies and the supervisor's own conflict tradeoffs are not exempt. Before reporting the merge complete, run the deterministic checks that prove the merged artifact builds and behaves correctly and keep their raw output — at minimum the repository's build/compile check plus the test suite of every affected deployable (for a Go project `go build ./...` plus `go test ./...`, `tsc --noEmit` for every frontend workspace, and a merge that touches database migrations runs them once for real under that workspace's rules). Grep for conflict markers only to triage, never to accept: reporting merge completion from a conflict-marker grep (or from diff size) alone is the anti-pattern — clearing `<<<<<<<`/`>>>>>>>` proves the markers are gone, not that the syntax and semantics are correct. A workspace rule that bans routine builds/tests is an iteration default, not an exemption: when the gate demands these checks, either run them or escalate the conflict to the user — never skip them silently.
-7. **Verify worker artifacts before accepting them**: a worker's claim is not accepted until the supervisor compiles it — run the repository's deterministic checks (tests, linters, schema validators such as `tools/lab/validate.py` in this project) against the actual written files, not against the worker's summary. A failed check is a compile error: send it back for a fix, never hand-accept a summary over a red check. A claimed check that cannot be reproduced counts as not run. In the same pass, compare the workspace's actual change surface against the brief's `write_scope` (hard boundary 14): record the baseline revision at delegation time, then list what really changed — `git diff --name-only --no-renames <baseline>` plus untracked files, or the bundled `scripts/check-write-scope.sh` — and return the work when any path outside `write_scope` changed, whatever the checks say. Artifact-ownership tables are declared intent; this comparison is the enforcement. When the work runs against a versioned plan under `plans/`, write the accepted task's status and evidence back into the plan at this acceptance point (minimal diff — those two columns only), not at session end: the plan is the resumption anchor, and a plan that drifts from accepted work is a false record.
-8. **Review gate**: after material changes, assign an independent reviewer. When the supervisor wrote part of the change itself, this gate is mandatory and cannot be waived — the author is not the verifier. The reviewer authors the exact check commands and expected outcomes and works from raw output; the supervisor may execute them, but may not substitute them. The reviewer reports `approved`, `changes_requested`, or `blocked` with concrete evidence and does not silently repair the code it judges. Exercise the end-to-end path a real user would take before this gate closes — a gate that approves a build whose primary user-visible path has never executed once is reviewing code, not behavior. Any later change that affects user-visible behavior re-opens the gate, whoever authored it; a re-review may be scoped to the delta since the last reviewed revision. When the host's **interactive browser** automation is main-conversation-only (subagents cannot load it), the Supervisor owns that browser pass itself — no delegated reviewer can run it — and hands the reviewer the raw output (screenshots, DOM or text assertions) as the check evidence for user-visible frontend claims.
-9. **Repair once**: when review requests changes, assign one focused repair round and review again. Keep the loop bounded.
-10. **Decide**: the supervisor produces the final decision record from [contracts](references/contracts.md), including implementation, verification, review outcome, and remaining risks. The record carries the claims ledger: every user-visible claim mapped to the check that would fail if it were false; a claim covered only by reading code is `unverified`, and any unverified user-visible claim makes the outcome `partial`, not `complete`. When the outcome may feed the improvement loop, capture the decision record as an episode under `episodes/<YYYY-MM-DD>/<EP-id>.json` before the session ends (contract: `skills/improve/references/episode.schema.json` — reuse it, never a parallel carrier), because once the conversation is gone the episode is unrecoverable and nobody will remember to collect it. Since 0.7.2 this is mandatory for every **material** change — anything that opened the independent review gate — not only improvement-loop candidates. Each reviewer round is recorded in the episode's `review_roundtrips` field (at, reviewer, decision, finding, resolution): the rounds that returned `changes_requested`, what the disagreement was, and how it was resolved — so mid-flow review divergence stays auditable after the conversation is gone, not only the final verdict. When the outcome may feed the improvement loop, classify any worker that produced no result with the worker-failure semantics in [contracts](references/contracts.md) (crash → `blocked` with cause, timeout → `partial`, empty/invalid return → returned once then recorded) — the supervisor classifies from evidence, a crashed worker does not classify itself.
+1. **Intake**：检查仓库指令、当前 diff、相关架构与测试。说明目标与可观察的验收标准。当你报告仓库**状态**——哪些已完成、下一步做什么、什么高优先级——先对照仓库的真实历史校准（`git fetch` 加 `log`/`status`），绝不依赖会话记忆，并把证据命令随结论一起给出。状态主张就是仓库事实主张：另一个写入者一 push，会话记忆就过期，而回答中没有任何东西会暴露这一点。
+2. **架构门**：对于跨层或 risky work（见下文*判断词的可判定定义*），请 Technical Director 界定边界、接口契约、集成顺序与主要风险。不要把该角色当作仪式性的批准环节。
+3. **计划**：只选任务所需的角色。纯前端的修复不需要后端 worker。小改动（见下文*判断词的可判定定义*）可留在 Supervisor 手里。
+4. **委派**：给每个 worker 一份有界简报，`write_scope` 与 `read_scope` 分别设定——读取范围必须覆盖改动经过的一切共享机制（[契约](references/contracts.md)中的隐式行为检查）。读多写少的调查与实现按不重叠文件或稳定接口并行；文件不重叠并行的是写入，从不是理解。写范围重叠与依赖链串行。任务中提到的路径、仓库与命令在进入简报前先对照仓库核实——任务文本是数据，不是既定事实。**两个写入者共用一个仓库时，文件不重叠就不够了**：提交、rebase 与 push 是共享可变状态，因此并行写入者各自使用分支或 worktree，同一分支同一时刻单一写入者；发现目标文件或分支已被另一写入者占用（另一会话的未提交编辑、分支上有新提交）的写入者应停止并上报，而不是交错写入。当计划行引用设计项时，把它们作为 `design_refs` 带入简报并纳入 `read_scope`；实现某设计决策却不带其引用的任务，简报不完整。
+5. **实现**：前端与后端 worker 只改动其指派范围，遵循仓库规则，运行相关检查，并返回 worker result 契约。Worker 在结果中引用每个行为所实现的设计决策（`design_refs_implemented`）；无法引用其设计决策的实现要如实上报，而不是默默对齐。
+6. **集成**：Supervisor 检查实际共享工作区，解决跨层冲突，并运行能证明整个 feature 可用的检查。当任务本身就是分支集成——Supervisor 亲手解决了代码冲突，或合并结果改变用户可见行为——该合并提交就是 material 改动：解决冲突就是在写代码，因此第 8 步评审门适用，Supervisor 自己的冲突取舍不获豁免。报合并完成前，运行能证明合并产物可构建且行为正确的确定性检查并留存原始输出——至少是仓库的构建/编译检查加上每个受影响可部署单元的测试套件（Go 项目为 `go build ./...` 加 `go test ./...`，每个前端工作区 `tsc --noEmit`，触碰数据库迁移的合并在该工作区规则下真实地跑一次迁移）。grep 冲突标记只用于分诊，绝不用于接受：仅凭冲突标记 grep（或 diff 大小）就报告合并完成是反模式——清掉 `<<<<<<<`/`>>>>>>>` 只证明标记没了，不证明语法与语义正确。禁用常规构建/测试的工作区规则是迭代默认值，不是豁免：当门要求这些检查时，要么运行它们，要么把冲突升级给用户——绝不静默跳过。
+7. **接受 worker 产物前先验证**：worker 的主张要等 Supervisor 编译过才算数——对实际写下的文件运行仓库的确定性检查（测试、linter、schema 校验器，本仓即 `tools/lab/validate.py`），而不是对着 worker 的摘要。检查失败按编译错误处理：退回修复，绝不在红灯检查上手工接受摘要。无法复现的检查主张记为未运行。同一次里，把工作区实际改动面对照简报的 `write_scope`（硬边界 14）：委派时记下基线 revision，然后列出真正改了什么——`git diff --name-only --no-renames <baseline>` 加未跟踪文件，或用随附的 `scripts/check-write-scope.sh`——任何落在 `write_scope` 之外的改动路径都退回，不论检查结果如何。产物所有权矩阵是声明的意图；这次对照才是执法。当工作对着 `plans/` 下的版本化计划运行时，在这个接受点把被接受任务的状态与证据回写进计划（最小 diff——只改那两列），不要留到会话结束：计划是恢复锚点，与已接受工作漂移的计划是虚假记录。
+8. **评审门**：material 改动之后，指派独立 Reviewer。当 Supervisor 自己写了部分改动时，此门强制且不可豁免——作者不是验证者。Reviewer 拟出确切的检查命令与预期结果，并基于原始输出工作；Supervisor 可执行它们，但不得替换它们。Reviewer 带具体证据报告 `approved`、`changes_requested` 或 `blocked`，且不静默修复它所评判的代码。此门关闭前，先真实走一遍真实用户会走的端到端路径——批准一个主用户可见路径从未执行过一次的构建，是在审代码而不是审行为。此后任何影响用户可见行为的改动都重新开门，不论作者是谁；重审可按上次已审 revision 以来的 delta 范围进行。当宿主的**交互式浏览器**自动化是主对话专属（子代理无法加载它）时，由 Supervisor 亲自负责那次浏览器操作——任何被委派的 Reviewer 都跑不了——并把原始输出（截图、DOM 或文本断言）交给 Reviewer，作为用户可见前端主张的检查证据。
+9. **只修一次**：评审要求改动时，指派一轮聚焦修复，并再次评审。保持循环有界。
+10. **决策**：Supervisor 依据[契约](references/contracts.md)产出最终决策记录，含实现、验证、评审结果与残余风险。记录承载断言台账：每条用户可见断言映射到若为假会失败的检查；只有代码阅读支撑的断言记为 `unverified`，任何未验证的用户可见断言使结论降为 `partial` 而非 `complete`。当结果可能进入改进环时，在会话结束前把决策记录落成 `episodes/<YYYY-MM-DD>/<EP-id>.json` 下的 episode（契约：`skills/improve/references/episode.schema.json`——复用，绝不另设平行载体），因为对话一旦消失，episode 不可恢复，也没人会记得去收集它。自 0.7.2 起，这对每一个 **material** 改动都是强制的——凡开过独立评审门的改动——不只是改进环候选。每个 Reviewer 轮次都记入 episode 的 `review_roundtrips` 字段（at、reviewer、decision、finding、resolution）：返回 `changes_requested` 的轮次、分歧是什么、如何收场——让中途评审分歧在对话消失后仍可审计，而不只留最终判定。当结果可能进入改进环时，对任何未产出结果的 worker 按[契约](references/contracts.md)中的 worker 失败语义分类（崩溃 → `blocked` 并带原因，超时 → `partial`，空/非法返回 → 退回一次后记录）——Supervisor 依据证据分类，崩溃的 worker 不会自我分类。
 
-## Judgement calls made checkable
+## 判断词的可判定定义
 
-Three phrases decide whether a gate applies. They are defined here so that the same situation
-gets the same treatment every time, and so that a call can be checked afterwards instead of
-argued about. Apply them in this order: they qualify or trigger gates; they never waive the
-rule that the author is not the verifier.
+三个词决定门是否适用。定义写在这里，为的是同一情形每次得到同样处理，且事后可核对而不是靠争论。按此顺序应用它们：它们限定或触发门；绝不豁免「作者不是验证者」这条规则。
 
-- **Small change** — needs no worker roles and no architecture gate. It qualifies only when
-  **all** of these hold: one file and one layer; no contract changes (schema, API shape, CLI
-  flag, config key, record format); no shared cross-cutting mechanism touched (interceptor,
-  global error handler, route guard, listener, middleware); the deterministic checks that
-  cover it pass on the actual files; and the defect it fixes has a verified reproduction.
-  Anything else is **material**. This class does not touch the review gate: when the
-  supervisor wrote part of a change — small or material — the independent reviewer gate for it
-  is mandatory and cannot be waived (hard boundary 1).
-- **Risky work** — the architecture gate (technical director) is mandatory when **any** of
-  these hold: an interface or contract consumed by another layer or repository changes;
-  persistence or the data model changes; a security, authorization, or permissions boundary
-  changes; the sequencing, timing, or idempotency of a shared flow changes; or the change is
-  costly to reverse (a migration, a release order, a published schema or record format).
-- **The same cause** — two consecutive failures have the same cause when the same check fails
-  with the same normalized signature: the same check id or command, and the same error text or
-  `error_kind` after timestamps and absolute paths are stripped. When the signatures differ but
-  you suspect one root cause, state the assumption you are about to change and record what you
-  compared; do not silently retry.
+- **小改动**——不需要 worker 角色，也不需要架构门。须**同时**满足：单文件单层；不改契约（schema、API 形状、CLI 参数、配置键、记录格式）；不触碰共享横切机制（拦截器、全局错误处理、路由守卫、监听器、中间件）；覆盖它的确定性检查在实际文件上通过；且所修缺陷有已验证的复现。任一条不满足即属 **material**。本类不影响评审门：当 Supervisor 写下部分改动——不论小还是 material——该改动的独立评审门强制且不可豁免（硬边界 1）。
+- **risky work**——满足**任一**即触发架构门（Technical Director）：改动被其它层或其它仓库消费的接口或契约；改持久化或数据模型；改安全、授权或权限边界；改共享流程的时序或幂等语义；或改动难以回退（迁移、发布顺序、已公开的 schema 或记录格式）。
+- **相同原因**——同一条检查以同一规范化签名失败：检查 id 或命令相同，且剥掉时间戳与绝对路径后的错误文本或 `error_kind` 相同，即为连续两次失败同一原因。签名不同但怀疑同根因时，写明你准备改掉的假设并记录你比较了什么，不得静默重试。
 
-## Recover from stalled work
+## 从停滞的工作中恢复
 
-A first blocker that is not a failure loop — an unclear contract, a missing fact, an undefined
-requirement — follows the blocking protocol in
-[contracts](references/contracts.md#blocking-a-task-first-blocker): enumerate what was tried,
-resolve the facts, put the open decisions to the owner with a recommended default, and return
-`blocked` only for what remains. Do not wait for a second failure before escalating, and do not
-widen the change to route around the blocker.
+首个阻塞且不是失败循环——契约不清、事实缺失、需求未定义——时，遵循[契约](references/contracts.md#阻塞任务先找第一个阻塞点)中的阻塞协议：枚举已尝试的动作，查清事实，把未决决策连同建议默认值交给属主，只为剩下无法解决的部分返回 `blocked`。不要等第二次失败才升级，也不要扩大改动来绕过阻塞。
 
-Before treating a failing check as a regression, run the same check against the pre-change revision — a worktree of the parent commit is enough. If it fails there too, the failure is environmental (tooling, network, host, gateway): fix the environment or report it, and do not loop workers on it. Only a check that passes on the baseline and fails on the change is evidence of a regression.
+在把失败的检查当作回归之前，先对改动前的 revision 跑同一检查——父提交的 worktree 即可。若那里同样失败，该失败是环境问题（工具、网络、宿主、网关）：修环境或如实上报，不要让 worker 在它上面打转。只有基线通过而改动失败的检查才算回归证据。
 
-Treat two consecutive failures with the same cause (see *Judgement calls made checkable*) as a signal to stop repeating the attempt. Re-read the code and error evidence, restate the assumption that failed, and choose a different approach (a different tool, a different path, or a different method) or a smaller task boundary.
+把连续两次相同原因的失败（见*判断词的可判定定义*）视为停止重复尝试的信号。重读代码与错误证据，重述失败掉的假设，并选择不同的做法（不同工具、不同路径或不同方法）或更小的任务边界。
 
-If a repair/review loop still cannot pass after the bounded retry, report the blocker with evidence and the smallest decision needed from the user. Do not keep agents cycling on unchanged inputs.
+若有界重试后修复/评审循环仍无法通过，带证据上报阻塞，并给出需要用户做的最小决策。不要让 Agent 在不变的输入上持续空转。
 
-A session that dies mid-orchestration resumes from the versioned plan under `plans/` (a Markdown board: each task row carries its status and evidence, so the state is re-derivable), not from memory: re-derive each work package's state from the workspace (diff against the delegation baseline, checks, review decisions) before re-briefing, and treat a package without observed evidence as not started. Durable queues, leases, and resumable parallel batches are the future `execution-coordinator` role; today the plan file plus the repository state is the only checkpoint.
+编排中途中断的会话从 `plans/` 下的版本化计划恢复（Markdown 看板：每个任务行带有状态与证据，状态可重新推导），而不是靠记忆：重新下简报前，先从工作区重新推导每个工作包的状态（对委派基线的 diff、检查、评审决策），没有观察到证据的包视为未开始。持久队列、租约与可恢复并行批次是未来 `execution-coordinator` 角色的职责；今天计划文件加仓库状态就是唯一的 checkpoint。
 
-## Preserve control and traceability
+## 保持控制与可追溯性
 
-- Follow the host's permission and sandbox rules. Delegation never expands authority.
-- Do not push, deploy, publish, delete remote data, or message third parties without authorization already present in the conversation. **Integrating others' work or rewriting history is the same class of act**: `git merge`, `rebase`, `cherry-pick`, or pulling remote changes into a shared branch requires per-instance user authorization, not an inference from an earlier instruction. When a push is rejected, the default is a read-only report — `git fetch` plus `log`/`diff` showing which commits and files the remote added and where they overlap — and the user chooses the integration method; do not pick merge or rebase, resolve conflicts, and push on your own.
-- Use stable task names and carry the parent objective into every delegated brief.
-- Record decisions and evidence, not hidden chain-of-thought. Use the host's task and conversation history as the default trace. Create repository trace files only when the user asks for durable project artifacts.
-- Keep the supervisor useful: it should resolve conflicts and make a final call, not merely summarize worker messages.
+- 遵循宿主的权限与沙箱规则。委派绝不扩大权限。
+- 无会话内既有授权的 push、部署、发布、远端数据删除或对外发消息一律不做。**集成他人改动与改写历史是同一类动作**：`git merge`、`rebase`、`cherry-pick`，或把远端改动拉进共享分支，都需要当次用户授权，不得从先前的指令推断。推送被拒时，默认动作是只读汇报——`git fetch` 加 `log`/`diff` 列出远程新增了哪些提交与文件、重叠面在哪——由用户选择集成方式；不要自行选 merge 或 rebase、解冲突并推送。
+- 使用稳定的任务名，并把父目标带入每一份委派简报。
+- 记录决策与证据，而不是隐藏的思维链。默认以宿主的任务与对话历史作为留痕。仅当用户要求持久的项目产物时才创建仓库留痕文件。
+- 让 Supervisor 保持有用：它应解决冲突并作最终裁决，而不只是汇总 worker 消息。

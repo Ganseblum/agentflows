@@ -1,15 +1,14 @@
 # issues — 缺陷与事项
 
-Human-readable issue archive: one Markdown file per defect or item, named
-`ISS-<YYYY>-<NNN>-<slug>.md`; recurring failure classes additionally get a ledger under
-`recurrence/`:
+给人读的缺陷与事项归档：每个缺陷或事项一个 Markdown 文件，命名为
+`ISS-<YYYY>-<NNN>-<slug>.md`；复发的失败类另在 `recurrence/` 下配一本台账：
 
 ```text
 issues/
   ISS-2026-001-claude-json-schema-rejected.md   # 编号逐项递增（缺陷与事项同一编号家族）
-  recurrence/                 # one ledger per class that recurred or was consolidated
+  recurrence/                 # 每个复发或已归纳的类一本台账
     unverified-behavior-claims.md
-  归档/                        # rejected records, keeping their date directory
+  归档/                        # rejected 记录，保留其日期目录
     2026-08-01/
       ISS-2026-041-stale-flaky-test.md
 ```
@@ -19,30 +18,28 @@ issues/
 - **编号**：`ISS-<YYYY>-<NNN>-<slug>.md`（逐项递增；缺陷与事项同一编号家族）。起稿用
   `skills/agentflow/templates/issue/issue-template.md`。
 - **看板**：开放条目平铺于本目录；仅 `rejected` 记录移入 `归档/<日期>/`，其余状态（含
-  `verified`）原地保留（见下文 Archive rule）。
+  `verified`）原地保留（见下文归档规则）。
 - **升级通道**：小修在本目录内解决；中/大问题经用户确认后升格为 `features/` 批次，
   并在原条目登记去向。
 - **状态**：历史缺陷记录已随 2026-10 结构改造迁移执行批次迁入本目录并统一编号
   （编号对照表见 `features/feature-2026-10-09-结构改造/plan/migration-mapping.md`）。
 
-Each file is YAML frontmatter (the machine-checked contract,
-[`schemas/bug-record.schema.json`](../schemas/bug-record.schema.json)) plus a Markdown body
-for humans. The body uses fixed Chinese section headings — the validator matches these exact
-literals: `## 现象`, `## 根因`, and `## 修复` (except for `open` bugs); `## 问题代码` is
-recommended whenever a code snippet exists, and `## 审查` is required once a record is
-`verified`. Common extra sections: `## 回归检查`, `## 备注`, `## 变更记录`（每次状态流转
-append 一行：`YYYY-MM-DD HH:MM · 动作 · 一句话证据`，流转历史不随 `updated_at` 单一时间戳
-丢失）.
+每个文件是 YAML frontmatter（机器校验的契约，
+[`schemas/bug-record.schema.json`](../schemas/bug-record.schema.json)）加一段给人读的
+Markdown 正文。正文使用固定的中文小节标题——校验器匹配这些精确字面量：`## 现象`、
+`## 根因` 和 `## 修复`（`open` 的缺陷除外）；只要有代码片段就建议使用 `## 问题代码`，
+记录一旦 `verified` 就必须有 `## 审查`。常见附加小节：`## 回归检查`、`## 备注`、
+`## 变更记录`（每次状态流转 追加一行：`YYYY-MM-DD HH:MM · 动作 · 一句话证据`，流转历史
+不随 `updated_at` 单一时间戳丢失）.
 
-Frontmatter fields: `bug_id`, `title`, `status` (open / fixed-pending-review / verified /
-rejected), `severity` (priority grade: P0 critical / P1 high / P2 medium / P3 low),
-`error_kind` (ai-ignored-doc / ai-ignored-code / missing-constraint / hallucination /
-logic-error / host-compat / environment / other), `attribution`, `provenance`, `project`,
-`files`, `recorded_at`, `updated_at`; `reviewer` + `review_decision` + `regression_status` +
-`closure_criteria`（可度量的关闭条件：指标、日志缺席或检查输出） when verified;
-`rejection_reason` when rejected; `class_id` + `occurrence` when the record belongs to a
-recurrence class; `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定） whenever the
-fix has landed.
+Frontmatter 字段：`bug_id`、`title`、`status`（open / fixed-pending-review / verified /
+rejected）、`severity`（优先级别：P0 critical / P1 high / P2 medium / P3 low）、
+`error_kind`（ai-ignored-doc / ai-ignored-code / missing-constraint / hallucination /
+logic-error / host-compat / environment / other）、`attribution`、`provenance`、`project`、
+`files`、`recorded_at`、`updated_at`；verified 时还要有 `reviewer` + `review_decision` +
+`regression_status` + `closure_criteria`（可度量的关闭条件：指标、日志缺席或检查输出）；
+rejected 时要有 `rejection_reason`；记录属于某个再犯类时要带 `class_id` + `occurrence`；
+修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。
 
 **引用自包含**：`files` 条目要么是本仓路径（校验器查在盘），要么是仓限定引用
 `<repo>@<revision>:<path>`（如 `aiwork-workflow-ai@3930ebb:templates/.../tech-design-backend.md`）；
@@ -87,23 +84,22 @@ fix has landed.
 `python3 tools/lab/validate.py report` 第 7 列输出该字段，可直接
 `awk -F'\t' '$7=="agentflow"'` 过滤。
 
-Archive rule: a `rejected` record must be moved into `issues/归档/<same-date-dir>/`;
-`verified` records stay in place as reference.
+归档规则：`rejected` 记录必须移入 `issues/归档/<same-date-dir>/`；`verified` 记录原地保留
+作为参考。
 
-## Recurrence ledger
+## 再犯台账
 
-`recurrence/<class_id>.md` (contract
-[`schemas/recurrence.schema.json`](../schemas/recurrence.schema.json)): one file per failure
-class that recurred or was consolidated; plain single-occurrence bugs get no ledger. `status`
-is `unconsolidated`（未归纳升级）or `consolidated`（已归纳升级，`consolidated_in` 写明吸收该类的
-Agentflow 版本）。`occurrences` 按时间列出记录 id——版本从各记录自己的 `agentflow_version`
-读取，台账不复制。约束（校验器强制）：台账中的每条记录带 `class_id` 与唯一 `occurrence`；
-带 `class_id` 的记录必须有对应台账；已归纳类的记录必须带 `agentflow_version`，否则无法判定
-它在归纳前还是归纳后。
+`recurrence/<class_id>.md`（契约
+[`schemas/recurrence.schema.json`](../schemas/recurrence.schema.json)）：每个复发或已归纳的
+失败类一个文件；单次发生的普通 bug 不建台账。`status` 为 `unconsolidated`（未归纳升级）
+或 `consolidated`（已归纳升级，`consolidated_in` 写明吸收该类的 Agentflow 版本）。
+`occurrences` 按时间列出记录 id——版本从各记录自己的 `agentflow_version` 读取，台账不复制。
+约束（校验器强制）：台账中的每条记录带 `class_id` 与唯一 `occurrence`；带 `class_id` 的记录
+必须有对应台账；已归纳类的记录必须带 `agentflow_version`，否则无法判定它在归纳前还是归纳后。
 
 档位**由事实推导，不靠人工标记**：`python3 tools/lab/validate.py recurrence` 输出
 `single`（只有一次）/ `recurred`（改了又出现）/ `escalated`（归纳后再犯——最高档加重标记，
 触发 improve 环升级）。
 
-The retired [records index](../_archive/records-2026-10/readmes/records-README.md) documents
-the historical conventions and retrospective queries.
+已退役的[记录索引](../_archive/records-2026-10/readmes/records-README.md)记载了历史约定与
+回溯查询。

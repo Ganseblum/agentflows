@@ -5,77 +5,59 @@ description: Use only when the user asks to evolve, optimize, evaluate, version,
 
 # Agentflow Improve
 
-Run a controlled improvement cycle for the Agentflow plugin. The current host supplies the model, tools, permissions, and agents. Do not invoke the standalone Agentflow CLI.
+为 Agentflow 插件运行受控的改进环。模型、工具、权限与 Agent 均由当前宿主提供。不得调用独立的 Agentflow CLI。
 
-The executing Agent may discover problems and create a candidate, but it must not approve its own evidence or silently replace the installed plugin. Keep analysis, candidate implementation, evaluation, and release decisions as separate roles.
+执行的 Agent 可以发现并创建候选，但不得批准自己的证据，也不得静默替换已安装的插件。分析、候选实现、评测与发布决策必须保持为分离的角色。
 
-Read [evidence and release rules](references/evidence-and-release.md) before creating a candidate. During Intake, explicitly retrieve relevant prior records with `python3 tools/lab/record_store.py index` followed by `python3 tools/lab/record_store.py query '<terms>'`; this is a lexical SQLite FTS5 read-side index only, not a vector store, and it never replaces the record files under the live roots.
+创建候选前阅读[证据与发布规则](references/evidence-and-release.md)。在 Intake 期间，用 `python3 tools/lab/record_store.py index` 继而 `python3 tools/lab/record_store.py query '<terms>'` 显式检索相关既有记录；这只是词法 SQLite FTS5 读侧索引，不是向量库，也绝不替代各记录根下的记录文件。
 
-## Bind roles to the host
+## 把角色绑定到宿主
 
-- Use the main task as the **improvement Supervisor**; during execution it is the sole writer of plan status and evidence write-back, and it owns canonical record routing.
-- Assign a read-only **feedback analyst** to normalize evidence and identify failure patterns.
-- Assign a **candidate engineer** to implement one bounded hypothesis in plugin source.
-- Assign a read-only **evaluator** that did not implement the candidate.
-- Assign a read-only **release governor** to decide whether evidence satisfies the declared gate.
-- In Claude Code, prefer the plugin agents `agentflow:feedback-analyst`, `agentflow:candidate-engineer`, `agentflow:evaluator`, and `agentflow:release-governor`.
-- In ZCode, prefer the same plugin agents (`agentflow:feedback-analyst`, `agentflow:candidate-engineer`, `agentflow:evaluator`, `agentflow:release-governor`) plus `agentflow:bug-investigator` when evidence collection needs a read-only diagnosis. Agent roles load from the installed plugin snapshot, so a role-instrument change is only observable after a reinstall; check `python3 tools/lab/validate.py installed`.
+- 以主任务作为 **improvement Supervisor**；执行期间它是计划状态与证据回写的唯一写入者，并负责规范记录路由。
+- 指派只读的 **feedback analyst**，负责归一化证据并识别失败模式。
+- 指派 **candidate engineer** 在插件源码中实现单个有界假设。
+- 指派未参与实现该候选的只读 **evaluator**。
+- 指派只读的 **release governor**，判定证据是否满足已声明的门。
+- 在 Claude Code 中，优先使用插件 agent `agentflow:feedback-analyst`、`agentflow:candidate-engineer`、`agentflow:evaluator` 与 `agentflow:release-governor`。
+- 在 ZCode 中，优先使用同一批插件 agent（`agentflow:feedback-analyst`、`agentflow:candidate-engineer`、`agentflow:evaluator`、`agentflow:release-governor`），证据收集需要只读诊断时再加 `agentflow:bug-investigator`。Agent 角色从已安装的插件快照加载，因此角色指令改动只有重装后才可观察；检查 `python3 tools/lab/validate.py installed`。
 
-If the host cannot provide independent agents, prepare a proposal but do not claim independent evaluation or automatic promotion.
-Treat role separation as procedural unless the host actually enforces separate tool allowlists and workspaces. Never claim the candidate is isolated merely because its prompt says not to edit protected files.
+若宿主无法提供独立 Agent，可准备提案，但不得声称独立评测或自动晋级。除非宿主确实强制分离的工具白名单与工作区，否则角色分离只是流程性的。绝不因为候选的提示词说不编辑受保护文件，就声称它被隔离。
 
-The candidate write scope excludes every path declared in [`protected-paths.txt`](../../protected-paths.txt) — the evaluator and governor role files, the evaluation suite, the measurement path under `tools/lab/`, the release rules, the result schemas, and the list itself. Enforce it with `isolation.py check-diff` before the candidate is evaluated, not by reading the candidate's summary. Session-enforced tool allowlists (`tools:` in the agent frontmatter) are the second layer; path exclusions still depend on this check plus a supervisor diff review.
+候选写范围排除 [`protected-paths.txt`](../../protected-paths.txt) 中声明的每一个路径——Evaluator 与 Release Governor 角色文件、评测套件、`tools/lab/` 下的度量路径、发布规则、结果 schema 以及清单自身。在候选被评测前用 `isolation.py check-diff` 强制执行，而不是读候选的摘要。会话强制的工具白名单（agent frontmatter 中的 `tools:`）是第二层；路径排除仍依赖该检查加 Supervisor 的 diff 复核。
 
-## Run the improvement loop
+## 运行改进环
 
-1. **Freeze the baseline**: identify the current plugin version, source revision, relevant Skill and Agent files, evaluation suite revision, and host/model settings.
-2. **Collect episodes**: use explicit user feedback, acceptance results, test outcomes, reviewer decisions, regressions, reversions, incidents, and available task summaries. Bug records carry a required `provenance` field: only `provenance: agentflow` records are candidate evidence about Agentflow itself; `session-artifact` (the agent's own ad-hoc plan, analysis, decision, or code with no clause covering it), `user-input`, and `external` records are context, not Agentflow evidence, and an `undetermined` record must have its provenance resolved before use. The recurrence ledger (`issues/recurrence/`) is a first-class episode source: a class whose tier is `escalated` — an occurrence recorded on a version newer than its `consolidated_in` — is the strongest signal this loop has, and the earlier consolidation must be treated as insufficient (re-consolidate it, normally with an eval case). Absence of complaints is not success. Do not claim access to past sessions the host cannot expose.
-3. **Protect the corpus**: remove credentials and unnecessary personal or project data. Preserve source and consent metadata without copying sensitive transcript content into the plugin.
-4. **Attribute failures**: separate prompt or role-policy failures from missing context, tool failure, model limits, repository defects, and environment failure. The record's `provenance` is the gate: `agentflow` means Agentflow's own surface owned the behavior (a clause, role, gate, evaluation, or tool); anything else — `session-artifact`, `user-input`, `external`, or unresolved `undetermined` — cannot justify a source change on its own. Change Agentflow only when evidence points to Agentflow.
-5. **Write one hypothesis**: state the observed pattern, proposed mechanism, affected files, expected improvement, regression risk, and rejection criteria.
-6. **Predeclare evaluation**: choose primary success metrics, guardrails, task slices, minimum evidence, and the holdout cases before implementing the candidate.
-7. **Create a candidate**: edit the canonical source or an isolated branch/worktree. Do not edit the installed live copy. Keep evaluator rules, the declared protected paths, and holdout answers outside the candidate's write scope. Freeze the parent revision first, then run `isolation.py check-diff --candidate <tree> --base <frozen-parent-revision>` from the trusted source checkout before evaluation so committed, staged, unstaged, deleted, renamed, ignored, and untracked changes are all compared. The check always reads the trusted checkout's `protected-paths.txt`, so the gate surface is declared rather than recalled; changing the protected-file source or using an override policy is itself a human-reviewed gate change.
-8. **Compare fairly**: have an isolated runner execute baseline and candidate on the same cases and settings. Include representative successes, known failures, edge cases, and adversarial cases. Give the evaluator immutable result records rather than permission to run candidate-controlled commands. The runner writes result and comparison records verbatim to the supervisor-assigned paths under `improvements/`; the evaluator reads them and must not edit them. Record task-level results, cost/latency when available, and uncertainty.
-9. **Compile artifacts before consuming them**: every record the loop exchanges — candidate record, evaluation result, comparison, release decision — is validated against its schema (`tools/lab/validate.py`, `eval_runner.py validate`) before the next role reads it. The four artifact classes land in `improvements/{candidates,evaluations,comparisons}/` and `releases/` and count as readable only after `python3 tools/lab/validate.py artifacts` and the runner's own validate pass. An invalid record is a compile error: fix the record, never quote or forward it as evidence. A result that cannot be produced by the frozen runner counts as no result.
-10. **Independent review**: the evaluator reports evidence without repairing the candidate. The release governor returns `promote`, `revise`, `reject`, or `rollback`.
-11. **Prepare the release**: bump version, record parent version, changed components, evidence, evaluation results, approvals, rollout policy, and rollback target — the completed release record lands under `releases/`.
-12. **Request the gate**: in the default mode, present the complete candidate and evaluation to the user for one final promotion decision. Do not publish, reinstall, or replace the active version before that approval.
-13. **Monitor after promotion**: compare canary outcomes with the baseline guardrails. Roll back to the immutable previous version when a declared threshold fails.
+1. **冻结基线**：确定当前插件版本、源码 revision、相关 Skill 与 Agent 文件、评测套件 revision，以及宿主/模型设置。
+2. **收集 episode**：使用明确的用户反馈、验收结果、测试结果、reviewer 决策、回归、回退、事故，以及可得任务摘要。Bug 记录带有必填的 `provenance` 字段：只有 `provenance: agentflow` 的记录是关于 Agentflow 自身的候选证据；`session-artifact`（agent 自己即兴产出、无条款覆盖的计划、分析、决策或代码）、`user-input` 与 `external` 记录是上下文，不是 Agentflow 证据，`undetermined` 记录必须先解决归属才能使用。再犯类台账（`issues/recurrence/`）是一等 episode 来源：档位为 `escalated` 的类——occurrence 记录在比其 `consolidated_in` 更新版本上的类——是本环最强的信号，先前的归纳必须视为不充分（重新归纳它，通常配一条 eval 用例）。没有投诉不等于成功。不要声称能访问宿主无法暴露的过往会话。
+3. **保护语料**：移除凭据与不必要的个人或项目数据。保留来源与同意元数据，但不把敏感转录内容复制进插件。
+4. **归因失败**：把提示词或角色策略失败与上下文缺失、工具失败、模型局限、仓库缺陷、环境失败区分开。记录的 `provenance` 是门：`agentflow` 表示行为归 Agentflow 自身表面所有（条款、角色、门、评测或工具）；其它任何取值——`session-artifact`、`user-input`、`external`，或未解决的 `undetermined`——不能单独支撑源码改动。只有证据指向 Agentflow 时才改 Agentflow。
+5. **写一个假设**：写明观察到的模式、提议机制、受影响文件、预期改进、回归风险与否决标准。
+6. **预先声明评测**：在实现候选前选定主成功指标、护栏、任务切片、最低证据与 holdout 用例。
+7. **创建候选**：编辑规范源码，或隔离的分支/worktree。不要编辑已安装的运行副本。把 evaluator 规则、已声明的受保护路径与 holdout 答案保持在候选写范围之外。先冻结父 revision，然后在评测前从受信源码 checkout 运行 `isolation.py check-diff --candidate <tree> --base <frozen-parent-revision>`，使已提交、已暂存、未暂存、已删除、重命名、被忽略与未跟踪的改动都被比较。该检查始终读取受信 checkout 的 `protected-paths.txt`，因此门表面是声明出来的而不是靠回忆；改动受保护文件来源或使用覆盖策略，本身就是需人工审查的门变更。
+8. **公平比较**：让隔离的 runner 在相同用例与设置上执行 Baseline 与 Candidate。包含代表性的成功、已知失败、边界情况与对抗性用例。给 evaluator 不可变的结果记录，而不是允许它运行受候选控制的命令。runner 把结果与比较记录逐字写到 Supervisor 指派的 `improvements/` 路径下；evaluator 读取它们，且不得编辑它们。记录任务级结果、可得的成本/时延，以及不确定性。
+9. **消费产物前先编译**：环中交换的每一条记录——候选记录、评测结果、比较、发布决策——在下一角色读取前先对其 schema 校验（`tools/lab/validate.py`、`eval_runner.py validate`）。四类产物落在 `improvements/{candidates,evaluations,comparisons}/` 与 `releases/` 下，只有在 `python3 tools/lab/validate.py artifacts` 与 runner 自身的 validate 通过后才算可读。非法记录是编译错误：修记录，绝不把它作为证据引用或转发。冻结 runner 无法产出的结果记为无结果。
+10. **独立评审**：evaluator 报告证据而不修复候选。release governor 返回 `promote`、`revise`、`reject` 或 `rollback`。
+11. **准备发布**：递增版本，记录父版本、变更组件、证据、评测结果、批准、发布策略与回滚目标——完成后的发布记录落在 `releases/` 下。
+12. **请求门**：默认模式下，把完整候选与评测呈现给用户做一次最终晋级决策。在该批准之前不得发布、重装或替换当前生效的版本。
+13. **晋级后监控**：把 canary 结果与基线护栏比较。已声明阈值不达标时回滚到不可变的上一版本。
 
-## Promotion modes
+## 晋级模式
 
-- **proposal**: analyze evidence and propose a hypothesis; make no source change.
-- **human-gated**: create and evaluate a candidate, then wait for the user to promote it. Use this by default.
-- **canary**: automatically expose an approved low-risk candidate to a bounded task slice with predetermined rollback thresholds.
-- **automatic**: reserve for mature, statistically supported workflows. Do not enable it merely because a few tasks succeeded.
+- **proposal**：分析证据并提出假设；不改动源码。
+- **human-gated**：创建并评测候选，然后等待用户晋级它。默认使用本模式。
+- **canary**：自动把已批准的低风险候选暴露给一个有界任务切片，并带预设的回滚阈值。
+- **automatic**：只保留给成熟、有统计支撑的工作流。不要仅因若干任务成功就启用它。
 
-Changes to permissions, tool access, hooks, MCP connections, release policy, evaluator instructions, holdout data, or automatic-promotion thresholds always require human review. Never let a candidate relax the gate used to approve itself.
+对权限、工具访问、hook、MCP 连接、发布策略、evaluator 指令、holdout 数据或自动晋级阈值的改动，一律需人工审查。绝不让候选放松用来批准它自己的门。
 
-**Measured scope.** The public suite under `evals/` measures Agentflow against its own contract
-cases. A candidate that changes how roles behave *inside business repositories* — reviewer
-checklists, brief disciplines, acceptance steps — has no regression measurement there. When such
-a method-level hypothesis has a matching business case, run the comparison through the business
-slice under `evals/business/`: three document-review cases on a pinned, read-only snapshot of a
-business repository, scored deterministically by `tools/lab/seed_grader.py` against defects
-planted before the run, so the loop's `better / neutral / worse` standard can be produced. Coverage
-is currently narrow — only the aiwork document-review class — and any method-level change without
-a matching business case is still unmeasured: its evidence is the reasoning plus any incident or
-review findings that triggered it, its release record must state `measurement: none (method-level
-change, no instrumented business task)`, and it must not be described as a verified improvement.
-The first business slice is graded **smoke**: it proves the pipeline and the grader work, and its
-numbers are not an authoritative baseline until the trusted endpoint, the measured permission
-profile, and the snapshot placement (PLAN-BUSINESS-EVAL-001's U-01 / U-02 / U-03) are closed.
+**度量范围。** `evals/` 下的公开套件度量的是 Agentflow 自己的契约用例。改变角色在*业务仓库内*行为的候选——reviewer 清单、简报纪律、验收步骤——在那里没有回归度量。当这样的方法级假设有匹配的业务用例时，经由 `evals/business/` 下的业务切片做比较：在业务仓钉死的只读快照上跑三个文档评审用例，由 `tools/lab/seed_grader.py` 对照运行前埋入的缺陷做确定性评分，从而能产出本环的 `better / neutral / worse` 标准。覆盖面目前很窄——只有 aiwork 文档评审一类——任何无匹配业务用例的方法级改动仍属未度量：其证据是推理加上触发它的任何事故或评审发现，其发布记录必须写明 `measurement: none (method-level change, no instrumented business task)`，且不得表述为已验证的改进。首个业务切片按 **smoke** 评级：它证明流水线与评分器可用，其数字在可信端点、实测权限档与快照位置（PLAN-BUSINESS-EVAL-001 的 U-01 / U-02 / U-03）关闭之前不是权威基线。
 
-**Budget fields are declared, not enforced.** `maxTurns` in an agent's frontmatter is not
-verified on every host (on ZCode it is declared but unverified). The budget discipline in each
-role's prompt — reserve the final turn for the result, return `partial` when the objective is
-unmet — is the operative constraint; treat the frontmatter number as intent metadata, not a
-guaranteed truncation.
+**预算字段是声明的，不是强制的。** agent frontmatter 中的 `maxTurns` 并非在每个宿主上都被验证（在 ZCode 上声明但未验证）。各角色提示词里的预算纪律——最后一轮留给结果，目标未成返回 `partial`——才是生效约束；frontmatter 数字按意图元数据对待，不当作保证的截断。
 
-The hard-boundary list in the agentflow skill's [contracts](../agentflow/references/contracts.md#hard-boundaries) applies to every improvement role as well.
+agentflow skill 的[契约](../agentflow/references/contracts.md#硬边界)中的硬边界清单同样适用于每一个改进角色。
 
-## Stop bad loops
+## 停止坏循环
 
-If two candidate cycles fail for the same reason, stop generating variants. Revisit attribution, data quality, evaluator validity, and whether the host or model is the real constraint.
+若两个候选循环因同一原因失败，停止生成变体。重查归因、数据质量、evaluator 有效性，以及宿主或模型是否才是真正的约束。
 
-Prefer no release over a weakly supported release. A neutral result is not an improvement.
+证据薄弱时宁可选择不发布。neutral 结果不是改进。

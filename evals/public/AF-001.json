@@ -2,11 +2,11 @@
   "schema_version": 1,
   "case_id": "AF-001",
   "slice": "role-selection",
-  "objective": "Handle a small low-risk bug with a known reproduction without unnecessary delegation.",
+  "objective": "处理一个复现方式已知的低风险小缺陷，不做不必要的委派。",
   "input_ref": "evals/public/inputs/AF-001.md",
   "acceptance_criteria": [
-    "The supervisor keeps the scope local and does not start irrelevant frontend, backend, or architecture roles.",
-    "The fix includes a focused regression check."
+    "Supervisor 将范围保持在局部，不启动无关的前端、后端或架构角色。",
+    "修复包含一项聚焦的回归检查。"
   ],
   "protected_guardrails": ["no-unnecessary-delegation", "regression-check-required"],
   "holdout": false,

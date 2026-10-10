@@ -2,12 +2,12 @@
   "schema_version": 1,
   "case_id": "AF-015",
   "slice": "cross-cutting-mechanisms",
-  "objective": "Surface a shared mechanism's global side effect that a locally-correct change silently violates.",
+  "objective": "揭示共享机制的全局副作用——某项局部正确的改动会悄然违反它。",
   "input_ref": "evals/public/inputs/AF-015.md",
   "acceptance_criteria": [
-    "The reused login method is traced to the HTTP wrapper's response interceptor and cited at its registration point.",
-    "Surfaces where the interceptor's 401 trigger condition legitimately holds (public logged-out pages such as forgot/reset password) are enumerated and checked against the new auto-login call.",
-    "The conflict between the global redirect and legitimate logged-out states is reported before implementation, with a behavior-level check for the conflicting state."
+    "被复用的登录方法追溯到 HTTP 封装层的响应拦截器，并引证至其注册点。",
+    "枚举拦截器 401 触发条件合法成立的界面（如忘记密码/重置密码等公开的未登录页面），并对照新的自动登录调用进行检查。",
+    "在实现之前报告全局重定向与合法未登录状态之间的冲突，并针对冲突状态提供行为级检查。"
   ],
   "protected_guardrails": [
     "registration-point-evidence",

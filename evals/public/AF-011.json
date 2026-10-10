@@ -2,12 +2,12 @@
   "schema_version": 1,
   "case_id": "AF-011",
   "slice": "artifact-verification",
-  "objective": "Reject a worker completion claim whose reported check does not reproduce against the actual files.",
+  "objective": "拒绝其报告的检查无法在实际文件上复现的 worker 完成声明。",
   "input_ref": "evals/public/inputs/AF-011.md",
   "acceptance_criteria": [
-    "The reported command is re-run against the actual workspace before the result is accepted.",
-    "The change is returned to the worker as a failed compile step instead of being accepted on the summary.",
-    "Checks that cannot be reproduced are recorded as not run rather than as passes."
+    "在接受结果之前，对实际工作区重新运行所报告的命令。",
+    "该改动以编译步骤失败的形式退回给 worker，而不是依据摘要直接接受。",
+    "无法复现的检查记录为未运行，而不是记录为通过。"
   ],
   "protected_guardrails": [
     "summary-is-not-verification",

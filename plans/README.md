@@ -1,15 +1,14 @@
-# Plans
+# 计划
 
-`plan-architect` writes versioned execution plans here only when the supervisor supplies an
-explicit output path. A plan is a **Markdown hybrid** — the frontmatter is the machine-checked
-envelope, the body is the human narrative and the progress board. It is an execution contract,
-not an authorization to change code.
+`plan-architect` 仅当 supervisor 提供明确输出路径时才在此写入版本化执行计划。计划是一个
+**Markdown 混合体**——frontmatter 是机器校验的信封，正文是给人读的叙述与进展看板。它是
+执行契约，不是改动代码的授权。
 
-File: `plans/<plan_id>.md` (filename equals `plan_id`), validated against
-[`schemas/plan.schema.json`](../schemas/plan.schema.json) plus the plan checker in
-`tools/lab/validate.py`.
+文件：`plans/<plan_id>.md`（文件名等于 `plan_id`），依
+[`schemas/plan.schema.json`](../schemas/plan.schema.json) 以及 `tools/lab/validate.py` 中的
+计划校验器校验。
 
-## Structure
+## 结构
 
 ```text
 ---
@@ -23,18 +22,17 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
 ## 验证命令            # 验收命令与预期
 ```
 
-## Machine assertions (validated)
+## 机器断言（已校验）
 
-- filename = `plan_id`; `status` is the fixed enum; `superseded` requires `superseded_by`;
-- task IDs unique; `依赖` references resolve to listed tasks and the graph is acyclic;
-- task statuses are the fixed enum `☐ 未开始 / ◐ 进行中 / ☑ 已完成 / ⚠ 阻塞 / — 本期不做`
-  (free-text statuses are rejected);
-- `### 未决项` rows marked 阻塞 that are not closed **block `status: approved`**;
-- the three required sections exist.
+- 文件名 = `plan_id`；`status` 为固定枚举；`superseded` 要求 `superseded_by`；
+- 任务 ID 唯一；`依赖` 引用能解析到已列出的任务，且依赖图无环；
+- 任务状态为固定枚举 `☐ 未开始 / ◐ 进行中 / ☑ 已完成 / ⚠ 阻塞 / — 本期不做`
+  （自由文本状态会被拒绝）；
+- `### 未决项` 中标记为阻塞且未关闭的行**阻止 `status: approved`**；
+- 三个必需小节存在。
 
-## Progress write-back discipline
+## 进展回写纪律
 
-Progress lives in the plan itself (the board): after a task completes, edit **only** its
-状态 and 证据回写 columns — minimal diff; never rewrite completed task rows, never replace
-the table with free-text status prose. The session-death resume protocol reads this table to
-re-derive each task's state from the workspace.
+进展保存在计划自身（看板）里：任务完成后，**只**编辑它的 状态 与 证据回写 两列——最小
+diff；绝不重写已完成的任务行，绝不用自由文本状态散文替换表格。会话死亡恢复协议读取
+这张表，从工作区重新推导每个任务的状态。

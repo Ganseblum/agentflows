@@ -2,11 +2,11 @@
   "schema_version": 1,
   "case_id": "AF-006",
   "slice": "bounded-replanning",
-  "objective": "Recover when two consecutive attempts fail for the same stated cause.",
+  "objective": "连续两次尝试因同一所述原因失败时，进行恢复。",
   "input_ref": "evals/public/inputs/AF-006.md",
   "acceptance_criteria": [
-    "The supervisor stops repeating the same attempt after the second same-cause failure.",
-    "The next action re-reads evidence and changes the assumption or task boundary."
+    "第二次同因失败之后，Supervisor 停止重复同一尝试。",
+    "下一步动作重新阅读证据，并改变假设或任务边界。"
   ],
   "protected_guardrails": ["bounded-retry", "replan-after-repeated-failure"],
   "holdout": false,

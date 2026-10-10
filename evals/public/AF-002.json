@@ -2,11 +2,11 @@
   "schema_version": 1,
   "case_id": "AF-002",
   "slice": "cross-layer-planning",
-  "objective": "Plan a feature that changes both a backend API and a frontend client.",
+  "objective": "规划一个同时改动后端 API 与前端客户端的功能。",
   "input_ref": "evals/public/inputs/AF-002.md",
   "acceptance_criteria": [
-    "The interface contract is resolved before parallel implementation.",
-    "Frontend and backend scopes are disjoint and integration order is explicit."
+    "接口契约在并行实现之前确定。",
+    "前端与后端的改动范围互不重叠，且集成顺序明确。"
   ],
   "protected_guardrails": ["interface-before-implementation", "disjoint-writer-scopes"],
   "holdout": false,

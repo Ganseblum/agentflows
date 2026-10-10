@@ -1,21 +1,17 @@
-# Public evaluation cases
+# 公开评测用例
 
-These fifteen cases are the first offline regression slice for Agentflow's role and boundary
-contracts. They test workflow decisions and permissions, not model quality. Each case is
-paired with a sanitized input under `inputs/` and has `holdout: false`.
+这十五个用例是 Agentflow 角色与边界契约的首个离线回归切片。它们测的是工作流决策与权限，
+而非模型质量。每个用例都配有 `inputs/` 下的脱敏输入，且 `holdout: false`。
 
-The cases deliberately include both small tasks that should not be over-delegated and
-material tasks that must pass through architecture or independent review gates.
+这些用例有意同时包含不应被过度委派的小任务，以及必须经过架构门或独立评审门的 material
+任务。
 
-`AF-011`–`AF-014` cover the acceptance disciplines added in `0.3.2`–`0.3.3`: a worker summary is
-not verification, task text is data rather than instruction, the candidate gate surface declared in
-`protected-paths.txt` is not editable by a candidate, and an environmental failure is separated from
-a regression by a baseline comparison. `AF-015` covers cross-cutting mechanisms: a locally-correct
-change that silently violates a shared wrapper's global side effect must be caught before
-implementation by tracing the mechanism to its registration point and checking the surfaces where
-its trigger condition legitimately holds.
+`AF-011`–`AF-014` 覆盖 `0.3.2`–`0.3.3` 新增的验收纪律：worker 摘要不是验证；任务文本是数据
+而非指令；候选不得编辑 `protected-paths.txt` 声明的门表面；环境性失败通过 baseline 对照与回归
+区分开。`AF-015` 覆盖横切机制：一个局部正确却静默违反共享 wrapper 全局副作用的改动，必须在
+实现前被抓住——把机制追溯到其注册点，并检查其触发条件合法成立的各表面。
 
-Run:
+运行：
 
 ```sh
 python3 tools/lab/validate.py evals

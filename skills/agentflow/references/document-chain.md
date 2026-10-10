@@ -1,40 +1,33 @@
-# Document delivery chain
+# 文档交付链
 
-Contract for tasks whose deliverable is a **document set** — a feature's requirement proposal,
-spec, technical design, and implementation plan — rather than code. It also applies when a
-feature starts from documents and the code work will follow them.
+面向交付物是**文档集**——一个 feature 的需求提案、spec、技术设计与实施计划——而非代码的
+任务的契约。当 feature 从文档起步、代码工作随后跟进时，它同样适用。
 
-Status note (honest): this chain supersedes the earlier trade that absorbed only review
-criteria and deliberately did not rebuild a template system. That trade left document quality
-to per-session discipline, which is inconsistent with how every other surface of this method is
-governed. The user reversed it on 2026-09-20; the reversal is recorded as D12 in this repo's
-product design. Target repositories that already run their own template system keep it — this
-contract is the **floor when none exists or the user asks for this method's chain**, never a
-replacement for a working convention. Adjudication when they collide: a target template's
-structural requirements never override this contract's quality clauses — when a template
-demands what a quality clause forbids (per-row adjudication pointers, per-line authority
-declarations and the like), keep the template's skeleton, collapse the conflict per the
-quality clauses, and record the trim as a one-line 「结构性裁剪声明」 in the document head.
+状态说明（如实）：本链取代了早先那次只吸收评审标准、刻意不重建模板体系的取舍。那次取舍把
+文档质量交给逐会话纪律，与本方法其他所有面都受治理的方式不一致。用户于 2026-09-20 推翻了
+它；该推翻记录在本仓产品设计的 D12。已经运行自己模板体系的目标仓保留该体系——本契约是
+**在不存在模板体系或用户要求采用本方法文档链时的下限**，绝不替代一套行之有效的约定。
+两者冲突时的裁决：目标模板的结构性要求绝不凌驾于本契约的质量条款之上——当模板要求质量条款
+所禁止的内容（逐行裁决指针、逐行权威声明之类）时，保留模板骨架，按质量条款收敛冲突，并在
+文档头以一行「结构性裁剪声明」记录该裁剪。
 
-## When to use
+## 使用时机
 
-- The user asks for 需求提案 / 规格 / 技术方案 / 实施计划 as the deliverable, or asks to
-  "起文档" for a feature.
-- A feature kicks off with a document phase before code (proposal → spec → design → plan →
-  implement), and no target-repo convention says otherwise.
+- 用户要求以 需求提案 / 规格 / 技术方案 / 实施计划 作为交付物，或要求为一个 feature
+  "起文档"。
+- 一个 feature 在代码之前以文档阶段起步（proposal → spec → design → plan → implement），
+  且目标仓约定未作其它规定。
 
-When NOT to use: the target repository already has a template system its teams follow — use
-theirs, and apply this contract's **gates and quality criteria** on top; a single-doc quick
-answer; documents that are evidence records (those follow the record contracts; their landing
-spots are the batch directories, `issues/` and `releases/`).
+不适用情形：目标仓已有其团队遵循的模板体系——用他们的模板，并在其上叠加本契约的
+**门与质量标准**；单文档的快速回答；作为证据记录的文档（它们遵循记录契约；其落地位置
+是批次目录 `issues/` 和 `releases/`）。
 
-## Directory layout (target repository, when no convention exists)
+## 目录布局（目标仓，无约定时）
 
-Two shapes, chosen by the target repository:
+两种形态，由目标仓选择：
 
-- **Document hub repository** — a standalone docs/meta repository (the `<project>-workflow-ai`
-  pattern). The stages sit at the hub root, one directory per feature, next to the defect stream,
-  the release records, the templates and the frozen archive:
+- **文档枢纽仓** ——独立的文档/元信息仓库（`<project>-workflow-ai` 模式）。各阶段位于枢纽
+  根目录下，每个 feature 一个目录，与缺陷流、发布记录、模板和冻结归档并列：
 
 ```text
 features/feature-<date>-<topic>/
@@ -50,34 +43,31 @@ _archive/            frozen history (read-only)
 index.md             the single document index
 ```
 
-- **Ordinary business repository** (no separate hub): the chain stays inside the repository —
-  default `docs/features/feature-<slug>/`, with the same stage skeleton.
+- **普通业务仓**（无独立枢纽）：文档链留在仓库内部——默认
+  `docs/features/feature-<slug>/`，阶段骨架相同。
 
-One directory per feature. The README is the only entry point and carries the progress board
-with stage gates — checkboxes move only with a document link, `N/A: reason` for skips, and
-review gates checked only by the independent reviewer. A batch that needs only the entry
-document and a proposal (no separate spec or design tracks) declares it in the README meta
-line (`轻量模式：无 spec/design 轨`); undeclared batches keep the full-chain requirement.
+每个 feature 一个目录。README 是唯一入口，承载带阶段门的进度板——复选框只在附有文档链接时
+才推进，跳过项写 `N/A: reason`，评审门只由独立 reviewer 勾选。只需要入口文档和一份
+proposal（没有独立的 spec 或 design 轨）的批次，在 README 元信息行声明
+（`轻量模式：无 spec/design 轨`）；未声明的批次保留全链要求。
 
-File naming inside the chain: each role track is a directory at both stages, mirroring each
-other — `spec/be/backend.md` ↔ `design/be/backend.md`, `spec/fe/frontend.md` ↔
-`design/fe/frontend.md`, `spec/qa/acceptance.md` ↔ `design/qa/testing.md`, `spec/ui/visual.md` ↔
-`design/ui/visual.md` (`design/be/` and `design/fe/` as directories are hard-required by the
-linter; the rest mirror them, so a role's read scope is exactly one directory per stage).
-Single-document stages keep one file: `proposal/prd.md`, `plan/execution.md`. A `be/be.md`
-double-write is a naming defect — fix it before the closure pass, not in review.
+文档链内的文件命名：每个角色轨在两个阶段各是一个目录，彼此镜像——`spec/be/backend.md` ↔
+`design/be/backend.md`，`spec/fe/frontend.md` ↔ `design/fe/frontend.md`，
+`spec/qa/acceptance.md` ↔ `design/qa/testing.md`，`spec/ui/visual.md` ↔
+`design/ui/visual.md`（`design/be/` 和 `design/fe/` 作为目录是 linter 的硬性要求；其余与
+它们镜像，因此一个角色的读取范围恰为每个阶段一个目录）。单文档阶段保留一个文件：
+`proposal/prd.md`、`plan/execution.md`。`be/be.md` 双写是命名缺陷——在收口通读之前修掉，
+不要留到评审里。
 
-## Stage skeletons
+## 阶段骨架
 
-Fill-in templates with **fixed heading literals** live in
-[`../templates/README.md`](../templates/README.md) — one file per stage, listed in the
-manifest; copy the template, fill the
-placeholders, do not rename or drop sections (the record contracts' fixed-heading approach,
-applied to doc chains). Adding domain-specific sections is allowed; the template core is not
-optional. A chain that declares itself in its README with the marker line 「本 feature 文档链
-由 agentflow 文档链方法生成（<日期>）」 opts into the linter's structure check (C11: the
-fixed design headings must be present). A stage document missing a section is incomplete, and
-a section with no content says "N/A: reason".
+带**固定标题字面量**的填写式模板位于
+[`../templates/README.md`](../templates/README.md) ——每个阶段一个文件，列在清单里；
+复制模板，填写占位符，不得重命名或删减章节（记录契约的固定标题做法，应用于文档链）。
+允许增加领域专属章节；模板核心不是可选项。文档链若在 README 中用标记行
+「本 feature 文档链由 agentflow 文档链方法生成（<日期>）」声明自己，即选择接受 linter 的
+结构检查（C11：固定的 design 标题必须齐备）。阶段文档缺少章节即不完整，无内容的章节写
+"N/A: reason"。
 
 - **proposal**: 文档信息（原文出处与版本）· 背景与目标（含本期不包含）· 产品定位与核心
   原则 · 用户与场景 · 范围决策表（含"明确不做"）· 待冻结问题台账（每项 owner + 关闭条件）。
@@ -114,163 +104,131 @@ a section with no content says "N/A: reason".
   标注「结构稿，非最终视觉」。它同时是提问出口：谈不出来的问题（长什么样 / 怎么感觉）
   用一次性原型回答，**结论（哪个方案对、为什么）写回台账**——结论是交付物；原型按本条
   存放位置留作证据，不作为文档链的交付物，也不在结论落账后删除。
-- **plan**: the target repo's execution-plan contract; when none exists, reuse this repo's
-  hybrid shape (envelope + progress overview + task table with status/evidence write-back +
-  interfaces and shared mechanisms + verification commands) per `plans/README.md`.
+- **plan**：目标仓的执行计划契约；不存在时，按 `plans/README.md` 复用本仓的混合形态
+  （信封 + 进度总览 + 带状态/证据回写的任务表 + 接口与共享机制 + 验证命令）。
 
-## Intake interview (proposal stage)
+## 采集访谈（proposal 阶段）
 
-The proposal is collected through rounds, not one sitting. Model the open decisions as a design
-tree: each decision branches into the decisions that hang off it. The **frontier** is every
-decision whose prerequisites are already settled. Ask the whole frontier in one round — numbered,
-each with a recommended answer and the reason that recommends it, worded so "yes" accepts the
-recommendation — then wait for the answers before computing the next frontier. A question that
-depends on a decision still open in this round belongs to a later round, not this one.
+proposal 分多轮采集，而不是一次问完。把待决事项建模为一棵决策树：每个决策分叉出挂在它
+下面的决策。**前沿**是所有前置条件已经确定的决策。一轮问完整个前沿——编号列出，每项带一个
+建议答案和推荐它的理由，措辞使回答「是」即接受该建议——然后等待回答齐了再计算下一个前沿。
+依赖本轮仍未关闭的决策的问题属于后续轮次，不属于本轮。
 
-Facts are the author's job, never the owner's: anything findable in the repositories, the
-environment, or the platform's documentation is looked up rather than asked, and an unresolved
-lookup blocks only the questions downstream of it — keep asking the rest of the frontier. The
-decisions are the owner's: put each to them and wait; never fill one in and record it as closed.
-An open question that only a product owner can answer never rides into the spec as an assumption.
+事实是作者的职责，绝不是 owner 的：凡是能在仓库、环境或平台文档里查到的，都去查而不是去
+问；一次未解决的查询只阻塞它下游的问题——继续问前沿的其余部分。决策属于 owner：每个都交给
+他们并等待；绝不自行填入一个并记为已关闭。只有产品 owner 能回答的开放问题，绝不作为假设
+混进 spec。
 
-The interview is done when the frontier is empty — every branch visited, nothing silently
-assumed — and the owner confirms the shared understanding; only then does the proposal freeze.
-There is no question-count limit: the frontier is the bound, not a number. When the frontier
-keeps expanding past a few rounds, the scope is too large — split the feature rather than
-compressing the rounds.
+前沿为空时访谈才算完成——每条分支都访问过、没有任何静默假设——并且 owner 确认了共同理解；
+只有到这时 proposal 才冻结。没有问题数量上限：边界是前沿，不是一个数字。当前沿连续多轮
+仍在扩张时，说明范围太大——拆分 feature，而不是压缩轮次。
 
-**Question format.** Ask the question in one line, then at most three options — normally the
-status quo, the cheapest workable path, and the recommendation — each with one line of applying
-condition and price, never a pros-and-cons essay. Mark the recommendation and name the condition
-under which it is the wrong pick; a fourth option appears only when it is genuinely independent,
-and when no engineering preference exists the recommendation says so ("no engineering difference;
-choose on product preference") instead of disappearing. The detailed comparison — compliance
-citations, failure modes, rejected alternatives — belongs to the design's decision table; the
-question points at it rather than restating it. Every question accepts a free-form answer, stated
-once for the round: pick one; pick one and amend it; or none of them, which re-opens the branch
-instead of adding options. Option letters are round-local labels — the ledger and every downstream
-document write the outcome in plain words (白话（代号）).
+**问题格式。** 一行问出问题，然后最多三个选项——通常为现状、最廉价的可行路径与建议项——
+每个附一行适用条件与代价，绝不写成利弊论述。标出建议项，并写明它在什么条件下是错误选择；
+第四个选项只在确实独立时才出现；当不存在工程偏好时，建议项要明说这一点
+（「无工程差异；按产品偏好选择」），而不是消失。详细比较——合规引用、失败模式、被否方案——
+属于 design 的决策表；问题指向它，而不是复述它。每个问题都接受自由格式回答，每轮声明一次：
+选一个；选一个并修改它；或都不选——那会重开该分支，而不是增加选项。选项字母是轮内局部
+标签——台账和每一份下游文档都用白话（代号）写出结论。
 
-**Challenge the answer.** When an answer conflicts with the frozen original text, an existing
-glossary or spec term, or what the repositories' code actually does, put the conflict back in the
-same round (「文档写 X，你说 Y，哪个为准」) and record which one won and why. An answer that
-contradicts already-frozen text without being flagged is a defect, not a note.
+**质疑答案。** 当一个答案与已冻结的原文、既有术语表或 spec 术语、或仓库代码的实际行为
+相冲突时，把冲突放回同一轮（「文档写 X，你说 Y，哪个为准」）并记录哪一个胜出及为什么。
+与已冻结文本相矛盾却未被标记的答案，是缺陷，不是备注。
 
-**Ungrillable questions.** A question that talking cannot settle — what it should look like, how
-it should feel — is not asked again: build the cheapest throwaway artifact that answers it (the
-wireframe / prototype route above), answer it there, and record the verdict next to the question;
-the artifact stays where that route stores it, as the verdict's evidence.
+**谈不出来的问题。** 谈话无法定夺的问题——应该长什么样、应该怎么感觉——不再反复去问：
+构建回答它的最廉价一次性产物（上面的线框/原型路径），在那里回答它，并把结论记在问题旁；
+产物留在那条路径存放它的地方，作为结论的证据。
 
-**Ledger write-back.** Every answer lands in the proposal's 待冻结问题台账 as a row whose closure
-condition is decidable (「做了」 is not a closure condition), dated, with who confirmed it. A
-question that cannot yet be phrased sharply goes to the 「未成型」 list with what blocks it, and
-graduates into a row or a 范围决策表 entry as the frontier advances — it is never dropped and
-never sharpened by guesswork.
+**台账回写。** 每个答案都落进 proposal 的 待冻结问题台账，成为一行：关闭条件可判定
+（「做了」不是关闭条件）、带日期、注明由谁确认。暂时无法说清的问题进入「未成型」列表并
+注明被什么阻塞，随着前沿推进升级为一行或一条 范围决策表 条目——它绝不被丢弃，也绝不靠
+猜测变清晰。
 
-## Gates
+## 门
 
-1. **Spec re-audit gate** — spec's §0 checklist registers every gap found against the
-   proposal; blocking items close by fixing the proposal, being absorbed by a spec item, or
-   being ledgered. A blocking item that is a **product decision** (semantics the requirement
-   owner must choose, e.g. conflicting states or undefined first-fire timing) is put to the
-   owner as an explicit question with a recommended default — the spec author never fills it
-   in unilaterally and calls it closed — put per the intake interview above (whole frontier per
-   round, facts looked up rather than asked, answer conflicts adjudicated in the round they
-   arrive). Design work does not start with a blocking item open.
-2. **Requirement review gate** — the independent reviewer runs the document review modes
-   (proposal/PRD and spec) over the frozen candidates. Blocking findings close before design
-   freezes.
-3. **Design review gate** — the independent reviewer runs the design mode. After approval the
-   design is frozen; later changes are design-change records with a reversal note, not silent
-   edits.
-4. **Plan precondition** — a plan cites frozen design conclusions; when a cited decision is
-   later reversed, the plan row is corrected with a note.
-5. **Design carries contracts** — the design stage includes field-level API contracts
-   (method, path, request/response fields, error semantics per call) and at least one sequence
-   diagram covering the main path **with its failure branches**; a design that defers all
-   contracts to "after review" is incomplete. Facts blocked on unread code go on an explicit
-   to-verify list with what each item blocks — they defer precision, never the contract's
-   existence.
-6. **链路收口通读（chain-closure pass）** — after the chain's last document lands and before
-   completion is declared, a **non-author** reads the whole chain end to end and checks:
-   ① 时效性引用 — a sentence claiming a target is 「待产出 / 尚未产出 / 待补充 / 待生成」 while the
-   target it points at already exists is a finding; delete the claim or re-point it;
-   ② 流程角色词 — session-bound process words (supervisor, 评审人缩写, TD, 本轮, 本次会话 …) never
-   appear in a formal document; replace with the concrete role name or delete;
-   ③ 会话材料落仓 — a session artifact a formal document cites (decision notes, recon reports)
-   is archived into the feature directory before it is cited; otherwise remove the citation
-   and make the body self-sufficient;
-   ④ the machine-checkable part of ①② plus the 代号裸用 form is carried by
-   `tools/lab/doc_chain.py` — run `python3 tools/lab/doc_chain.py <feature-dir>` (C12 时效性引用,
-   C13 会话角色词, C14 代号裸用) and fix or explicitly gate every finding; a standalone session
-   deliverable gets the same text-form pass via `python3 tools/lab/doc_chain.py --file <路径>`.
+1. **Spec 反审门** ——spec 的 §0 checklist 登记对照 proposal 发现的每个缺口；阻塞项通过
+   修正 proposal、被某条 spec 条目吸收、或记入台账来关闭。属于**产品决策**的阻塞项（必须由
+   需求 owner 抉择的语义，例如状态冲突或首次触发时机未定义）作为带推荐默认值的明确问题
+   交给 owner——spec 作者绝不单方面填入并宣布关闭——按上面的采集访谈提出（每轮问完整个
+   前沿、事实去查而非去问、答案冲突在到达的那一轮裁决）。存在未关闭的阻塞项时，不得开始
+   design 工作。
+2. **需求评审门** ——独立的 reviewer 对冻结的候选运行文档评审模式（proposal/PRD 与 spec）。
+   阻塞性发现在 design 冻结前关闭。
+3. **Design 评审门** ——独立的 reviewer 运行 design 模式。批准后 design 冻结；此后的改动是
+   带翻案说明的设计变更记录，而不是静默编辑。
+4. **Plan 前置条件** ——plan 引用已冻结的 design 结论；当被引用的决策后来被推翻时，plan 行
+   随附说明予以更正。
+5. **Design 承载契约** ——design 阶段包含字段级 API 契约（方法、路径、请求/响应字段、
+   每次调用的错误语义）以及至少一张覆盖主链路**并含其失败分支**的时序图；把所有契约都
+   推迟到"评审后"的 design 不完整。因代码未读而受阻的事实进入一份显式的待核实清单，注明
+   每项阻塞什么——它们推迟的是精度，绝不是契约的存在。
+6. **链路收口通读（chain-closure pass）** — 在文档链最后一份文档落地之后、宣布完成之前，由
+   一名**非作者**从头到尾通读整条链并检查：
+   ① 时效性引用 — 某句话声称某目标「待产出 / 尚未产出 / 待补充 / 待生成」，而它指向的目标
+   已经存在，即为一条发现；删掉该断言或改指它处；
+   ② 流程角色词 — 受会话绑定的流程词（supervisor, 评审人缩写, TD, 本轮, 本次会话 …）绝不出现在
+   正式文档中；替换为具体角色名或删除；
+   ③ 会话材料落仓 — 正式文档引用的会话材料（决策笔记、勘察报告）在引用之前已归档进 feature
+   目录；否则删除引用，使正文自足；
+   ④ ①② 中可机器检查的部分连同 代号裸用 形态由
+   `tools/lab/doc_chain.py` 承载——运行 `python3 tools/lab/doc_chain.py <feature-dir>`
+   （C12 时效性引用, C13 会话角色词, C14 代号裸用）并修复或对每条发现显式放行；独立会话
+   交付物经 `python3 tools/lab/doc_chain.py --file <路径>` 走同样的文本形态检查。
 
-7. **Review landing and acceptance vocabulary** — every review round's conclusion lands as a
-   record file in the batch's `reviews/` (or `reviews/<project>-<feature-slug>/` when this repo
-   reviews another repository's documents); a conclusion that exists only in a plan's prose is a
-   defect. A release carries a 待验证清单 (pending-test) that separates "code landed" from
-   "verified"; marking 已实现 as 已验证 without the verification evidence is a defect.
+7. **评审落地与验收用语** ——每一轮评审的结论都以记录文件落在批次的 `reviews/`（或本仓
+   评审其它仓库文档时的 `reviews/<project>-<feature-slug>/`）；只存在于 plan 散文里的结论是
+   缺陷。发布带一份 待验证清单（pending-test），把"代码已落地"与"已验证"分开；没有验证
+   证据就把 已实现 标成 已验证 是缺陷。
 
-## Quality density floor (machine-checked)
+## 质量密度下限（机器检查）
 
-Born from the 2026-09-20 failure: a full chain was produced where every stage "existed" but
-design carried no API contracts, no failure-branch diagrams, no wireframes, and plans carried
-no file targets — and nothing failed, because nothing checked. Before declaring a chain
-complete, run the deterministic linter and fix or explicitly gate every finding:
+源于 2026-09-20 的失败：产出的一条完整链中，每个阶段都「存在」，但 design 不带 API 契约、
+没有失败分支图、没有线框图，plan 也不带文件落点——却没有任何东西失败，因为没有东西在
+检查。宣布一条链完成之前，运行确定性 linter 并修复或对每条发现显式放行：
 
 ```sh
 python3 tools/lab/doc_chain.py <feature-dir>
 ```
 
-It fails the chain when: a stage directory is `.gitkeep`-only; the README lacks the review
-gates; the spec lacks the re-audit checklist or leaves a blocking row open (☐); design/be
-lacks a failure-branch sequence diagram (`alt`), a flowchart, an ER or state diagram, or the
-field-level API contract table; contract interface ids are missing from design/fe; design/fe
-lacks the success/failure exception matrix, at least two text wireframes, or its
-flow/sequence/state diagrams; plan task rows carry neither a code-location path nor an
-explicit to-verify reference; a plan lacks a branch-strategy declaration; a plan task row
-stays blocking with no evidence written back; an open mermaid fence is left unclosed; a
-stage document claims a target is pending while a target it points at (markdown link or
-backtick code path) already exists (时效性引用失实, C12), carries a session-bound process
-word (会话角色词, C13), or uses a bare letter code as a standing prose subject away from its
-definition site (代号裸用, C14); or a design's open V-items are unreferenced by any plan. The
-self-test fixtures pin the checker itself: `python3 tools/lab/doc_chain.py --self-test`.
+以下情形判该链失败：阶段目录只有 `.gitkeep`；README 缺少评审门；spec 缺少反审 checklist
+或留有未关闭的阻塞行（☐）；design/be 缺少失败分支时序图（`alt`）、流程图、ER 图或状态图，
+或缺少字段级 API 契约表；design/fe 缺少契约接口 id；design/fe 缺少成功/失败异常矩阵、
+至少两张文本线框图，或缺少它的 流程图/时序图/状态图；plan 任务行既不带代码落点路径，也不带
+显式的待核实引用；plan 缺少分支策略声明；plan 任务行保持阻塞且没有回写证据；mermaid 围栏
+未闭合；某阶段文档声称某目标处于待产出状态，而它指向的目标（markdown 链接或反引号代码
+路径）已经存在（时效性引用失实, C12），带有受会话绑定的流程词（会话角色词, C13），或在
+远离其定义处把裸字母代号当作常设正文主语使用（代号裸用, C14）；或 design 的未关闭 V-item
+未被任何 plan 引用。自测夹具钉死检查器本身：`python3 tools/lab/doc_chain.py --self-test`。
 
-Expectations beyond what the linter can parse (review-gate material, not optional): state
-machines as state diagrams, one figure answers one question with a figure directory, plans
-carry rollback points, core algorithms carry pseudocode.
+超出 linter 能解析范围的期望（评审门材料，非可选）：状态机以状态图表达，一图回答一个问题
+并配图目录，plan 带回滚点，核心算法带伪代码。
 
-**Depth-first scoping** — when the code facts a design needs are unread, stop before design
-and demand them (read the repositories or get them from the owner). A thin full chain is a
-worse deliverable than a deep half chain sitting correctly behind its gates; a to-verify list
-defers precision, it never substitutes for a contract's existence.
+**深度优先界定范围**——当 design 需要的代码事实尚未读过时，在 design 之前停下并索取它们
+（读仓库，或从 owner 处取得）。薄的全链比一条正确地停在自身门后的深半链更糟；待核实清单
+推迟精度，绝不替代契约的存在。
 
-The author is not the verifier (hard boundary 1): whoever wrote a stage document never checks
-its gate. When the target repository is external to this one, review evidence lands through the
-second-pass review bridge (feature-anchored `reviews/<project>-<feature-slug>/`
-directory, verbatim archive per round, findings as bug records with provenance/attribution).
+作者不是验证者（硬边界 1）：谁写了某阶段文档，就绝不由谁检查该阶段的门。当目标仓在本仓
+之外时，评审证据经第二遍评审桥落地（以 feature 为锚的 `reviews/<project>-<feature-slug>/`
+目录，每轮逐字归档，发现以带出处/归属的 bug 记录承载）。
 
-## Quality criteria (checkable, per document)
+## 质量标准（可检查，逐文档）
 
-- Scope always includes an explicit "not doing" list with one-line reasons.
-- Every decision has a stated rationale and a cross-reference; no naked conclusions.
-- Impact assessment is explicit: rated L0–L3 with justification,
-  per-change compatibility classification (breaking / non-breaking), what changes and what
-  explicitly does not per repository/IDL/config, and a consumer list with dependency strength.
-- New tables carry field-level DDL (type/nullability/default/comment/index per column);
-  new interfaces carry request/response fields and per-call error semantics; frontend designs
-  carry the field-mapping table and testid list.
-- Responsible / not-responsible tables bound every component or role introduced.
-- Open questions live in a ledger with owner and closure condition — never scattered in prose.
-- Original requirement text is preserved verbatim; changelogs record who changed what when.
-- **表达纪律（术语）**: no invented jargon, no compressed words whose referent depends on the
-  reader (the 基线/现网 class). Fix priority is 换 > 释 > 删 — replace with the plain term
-  first; an in-place one-line explanation only when no plain term exists; over-explanation is
-  itself a reading-burden defect. A term only the author can resolve is a finding, not style.
-  流程角色词与会话指称 (supervisor, TD, 本轮, 本次会话 …) follow the same discipline
-  (换 > 释 > 删): their referent lives in the session, not the text, so they hide even better
-  than domain jargon — the devices are a pre-write pass against the word list, plus review
-  that reports each occurrence on citation. 两个语料新形态（2026-09-22 反馈）适用同一纪律：
+- 范围始终包含一份显式的"不做"清单，附一行理由。
+- 每个决策都有写明的理由和交叉引用；没有裸露的结论。
+- 影响面评估是显式的：按 L0–L3 定级并给出理由，逐变更的兼容性分类
+  （breaking / non-breaking），逐仓库/IDL/config 写明什么改了、什么明确未改，以及带依赖
+  强度的消费方清单。
+- 新增表带字段级 DDL（每列的类型/空性/默认值/注释/索引）；新接口带请求/响应字段与每次
+  调用的错误语义；前端 design 带字段映射表与 testid 清单。
+- 负责/不负责表界定引入的每个组件或角色。
+- 开放问题活在带 owner 与关闭条件的台账里——绝不散落在散文里。
+- 原始需求文本逐字保留；变更日志记录谁在何时改了什么。
+- **表达纪律（术语）**：不得生造术语，不得使用指称取决于读者的压缩词（基线/现网 一类）。
+  修复优先级为 换 > 释 > 删——先用白话术语替换；只有不存在白话术语时才就地加一行解释；
+  过度解释本身就是阅读负担缺陷。只有作者能还原的术语是发现，不是风格。流程角色词与会话
+  指称（supervisor, TD, 本轮, 本次会话 …）遵循同一纪律（换 > 释 > 删）：它们的指称活在
+  会话里，不在文本里，因此比领域术语藏得更深——手段是写前对照词表做一次自查，加上评审
+  在引用处逐处报告每次出现。两个语料新形态（2026-09-22 反馈）适用同一纪律：
   **代号裸用** —— 代号/编号（桶号、组号、字母代号）只可出现在定义处（口径表、图例、首次括注）；
   正文一律用白话状态词作主词，代号以括注成对形式伴随出现——「白话（代号）」或「代号（白话）」；
   机器豁免即此两形，无括号的并排写法不算豁免。判据：
@@ -282,59 +240,49 @@ directory, verbatim archive per round, findings as bug records with provenance/a
   产物（数据分析报告、状态汇报、交付说明）——这类产物没有模板与机器门兜底，交付前必须对照
   本节做一次写前自查，单文件可用 `python3 tools/lab/doc_chain.py --file <路径>` 做机器自查
   （C12–C14 文本形态检查）；材料性交付物可指派 reviewer 评审。
-- **plan ↔ design traceability**: the plan task table carries a 「关联 design 条目」 column
-  (design section/decision ids) and, for frontend, a 「计划验证方式/验收标准」 column; when
-  landing on existing code, a 落点校对表 (file:line anchors against the real tree) is the
-  single source for code locations.
-- **错误码表**: a unified table (code / fixed copy / retryable-yes-no / client action) instead
-  of per-interface scatter, when a feature introduces new error semantics.
-- **OQ/冻结台账**: each open question carries Owner, what it blocks (design? plan? release?),
-  and a closure condition; frozen decisions are recorded with date and who confirmed.
-- **契约先核实（写前）**: before writing any new interface contract, verify the platform's
-  existing conventions — response envelope, error-code system (errno table / gate tests),
-  auth, openapi/IDL location — and state the contract source (契约真源) once at the top of the
-  design's interface section; inventing an envelope or a code table is a defect.
-- **主线与克制**: every design document can answer "in what order does a reader read this, and
-  what question does each section answer"; the data section opens with a lifecycle narrative
-  (when each table's rows are written, and why) before DDL; interfaces are grouped by user
-  journey instead of flat listings; a document running more than three numbering systems opens
-  with a legend; adjudication/authority rules are stated once, never repeated per row.
-- **存在性 ≠ 形态**: passing the linter's existence checks is not the form standard. An
-  index-style summary table (契约总表 / 清单表) is navigation only; the form baseline for a
-  field-level contract is per-field columns or a code block with per-field comments — cramming
-  fields into a wide summary table is the same defect (the BUG-20260920-07 fix extended).
-- **QA layer**: module acceptance blocks (M0*-AC-*), coverage mapping, and a conclusion grade
-  (通过/有条件通过/不通过); marking QA "N/A" requires a stated reason pointing at where the
-  acceptance criteria DO live — an empty QA layer under a progressing README is a defect.
+- **plan ↔ design 可追溯性**：plan 任务表带「关联 design 条目」列（design 章节/决策编号），
+  前端另带「计划验证方式/验收标准」列；落在既有代码上时，落点校对表（对照真实代码树的
+  file:line 锚点）是代码位置的唯一真源。
+- **错误码表**：当 feature 引入新的错误语义时，用一张统一表
+  (code / fixed copy / retryable-yes-no / client action)，而不是逐接口散落。
+- **OQ/冻结台账**：每个开放问题带 Owner、它阻塞什么（design？plan？发布？），以及关闭
+  条件；已冻结的决策记录日期与确认人。
+- **契约先核实（写前）**：在写任何新接口契约之前，先核实平台已有的约定——响应信封、错误码
+  体系（errno 表 / 门测试）、鉴权、openapi/IDL 位置——并在 design 接口章节顶部声明一次
+  契约来源（契约真源）；自造信封或错误码表是缺陷。
+- **主线与克制**：每份 design 文档都能回答「读者按什么顺序读它、每一节回答什么问题」；
+  数据章节在 DDL 之前先以生命周期叙述开篇（每张表的行何时写入、为什么）；接口按用户旅程
+  分组，而不是平铺罗列；一份文档若使用超过三套编号体系，开头给图例；裁决/权威规则只声明
+  一次，绝不逐行重复。
+- **存在性 ≠ 形态**：通过 linter 的存在性检查不等于形态标准。索引式汇总表（契约总表 /
+  清单表）只是导航；字段级契约的形态基线是逐字段列，或带逐字段注释的代码块——把字段塞进
+  一张宽汇总表是同一缺陷（BUG-20260920-07 修复的延伸）。
+- **QA 层**：模块验收块（M0*-AC-*）、覆盖映射，以及结论等级（通过/有条件通过/不通过）；
+  把 QA 标为 "N/A" 需要写明理由，并指向验收标准的真正所在——README 在推进而 QA 层为空是
+  缺陷。
 - **文档治理反模式**（语料普查 2026-09-20 提炼，出现即缺陷）: 整表「待补充」占位常态化；
   文档头声明与实际产出脱节（如「本期不产出 QA」却存在 QA 文档）；下游文档落后上游已冻结
   结论不回写；同一结论双源并存（两处 DDL/两套错误码）不声明取舍；决策编号断档；单文件
   巨石（design 单文件超 ~1500 行应拆模块篇）；README 进度与产物脱节（空层照列步骤）；
   第三方附件整篇搬运不裁剪不标注适用范围；同一文档编号体系过载（超过三套）且无图例；
   元话语（关于文档的流程叙述）成段出现、或裁决规则逐行重复。
-- Status lines are honest: `待评审` / `待验证` / `未实施` stay until the gate or evidence
-  exists; strength of claim never exceeds strength of evidence.
+- 状态行是诚实的：`待评审` / `待验证` / `未实施` 一直保留到门或证据出现；断言强度绝不超过
+  证据强度。
 
-## Role wiring
+## 角色接线
 
-- The supervisor collects the proposal by running the intake interview (rounds over the decision
-  frontier; facts resolved by the author, decisions put to the owner; answer conflicts surfaced
-  and adjudicated in the round they arrive) and preserves originals verbatim.
-- Spec and design may be drafted by the supervisor (single-layer document work) or delegated to
-  `plan-architect` (plan layer only writes; never approves) and, for cross-layer features,
-  bounded by a `technical-director` interface decision first.
-- The independent `reviewer` owns all three review gates, using this repo's document review
-  modes with citations to the reviewed text.
-- Evidence for every round lands in the target repository when it owns the documents, and
-  through the review bridge into `reviews/` when this repo is the second-pass reviewer.
-- **Brief hygiene**: the delegation brief is upstream of document wording and follows the same
-  expression discipline — no session-bound process words (supervisor / TD / 本轮 / 本次会话 …);
-  any decision or fact material a brief cites is given as a path already archived inside the
-  feature directory (archive first, cite after), never a temp path.
+- Supervisor 通过运行采集访谈来采集 proposal（围绕决策前沿推进多轮；事实由作者解决，决策
+  交给 owner；答案冲突在到达的那一轮浮出并裁决），并逐字保留原文。
+- spec 与 design 可由 Supervisor 起草（单层文档工作），或委派给 `plan-architect`（plan 层
+  只写，绝不批准）；跨层 feature 先由 `technical-director` 的接口决策界定边界。
+- 独立的 `reviewer` 拥有全部三道评审门，使用本仓的文档评审模式并引用被评审的文本。
+- 每轮的证据：目标仓拥有文档时落在目标仓；本仓是第二遍评审者时，经评审桥落入 `reviews/`。
+- **简报卫生**：委派简报位于文档措辞的上游，遵循同一表达纪律——不得出现受会话绑定的流程词
+  （supervisor / TD / 本轮 / 本次会话 …）；简报引用的任何决策或事实材料，都以已归档在
+  feature 目录内的路径给出（先归档，后引用），绝不用临时路径。
 
-## Episode signal integrity (doc chains)
+## Episode 信号完整性（文档链）
 
-When a doc-chain session is captured as an improvement episode, any method-effect signal must
-state its verification status: an observation without a check is recorded as unverified, never as
-"no recurrence". Claims about what the runtime had installed are anchored by
-`python3 tools/lab/validate.py installed` output captured during the run.
+当一次文档链会话被记录为改进 episode 时，任何方法效果信号都必须注明其验证状态：没有检查的
+观察记为未验证，绝不记为「零复发」。关于运行时安装了什么的断言，以运行期间捕获的
+`python3 tools/lab/validate.py installed` 输出为锚。

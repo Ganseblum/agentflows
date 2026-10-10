@@ -1,10 +1,9 @@
-# Contract examples
+# 契约示例
 
-`issues/`, `plans/`, and `testing/` contain structurally valid, sanitized examples.
-Files under `invalid/` are intentionally rejected: the validator checks both their JSON Schema
-and the cross-document invariants that the schemas cannot express alone.
+`issues/`、`plans/` 和 `testing/` 含有结构上有效、经脱敏的示例。`invalid/` 下的文件是被
+有意拒绝的：校验器同时检查它们的 JSON Schema 以及 schema 无法单独表达的跨文档不变量。
 
-Run:
+运行：
 
 ```sh
 python3 tools/lab/validate.py examples

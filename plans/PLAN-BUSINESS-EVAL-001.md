@@ -13,7 +13,7 @@ updated_at: 2026-09-18T08:07:13Z
 > 状态图例：`☐ 未开始` / `◐ 进行中` / `☑ 已完成` / `⚠ 阻塞` / `— 本期不做`。
 > 回写纪律：完成后只改**状态**与**证据**两列（最小 diff），不改写已完成的任务行。
 > 输入版本（已核实）：技术负责人架构决策 D1–D6（2026-09-17）；agentflow 0.5.2（main）；
-> _archive/handoff-2026-10/next-session-handoff.md:445-447（P1 首项）；skills/improve/SKILL.md:54-62（Measured scope，
+> _archive/handoff-2026-10/next-session-handoff.md:445-447（P1 首项）；skills/improve/SKILL.md:53（Measured scope，
 > `measurement: none (method-level change, no instrumented business task)` 过渡态）。目标仓
 > aiwork-workflow-ai（本地 clone，路径只留本地；企业内部 remote，地址只留本地；pin 到全 sha 冻结；
 > 快照与打种配方只留本地）。

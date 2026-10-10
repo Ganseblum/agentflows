@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Small local read-side index for Agentflow records.
+"""Agentflow 记录的小型本地读侧索引。
 
-The store is disposable: records remain authoritative on disk.  SQLite FTS5 is used only
-for lexical indexing and querying; no vectors, embeddings, or writes to record files occur.
+本存储是一次性的：磁盘上的记录始终是权威。SQLite FTS5 仅用于词法索引与查询；
+不使用向量、嵌入，也不对记录文件做任何写入。
 
-Since the 2026-10 structural overhaul the live record roots are `issues/`, `episodes/`,
-`plans/`, `improvements/`, `releases/`, and `reviews/` (the former single `records/` tree).
-`index` walks every default root; the `--records` option overrides them with one or more
-explicit roots and keeps the "index then query" CLI semantics.
+自 2026-10 结构改造起，现行记录根为 `issues/`、`episodes/`、`plans/`、`improvements/`、
+`releases/`、`reviews/`（取代了原先单一的 `records/` 树）。`index` 会遍历每个默认根；
+`--records` 选项以一个或多个显式根覆盖它们，并保留「先索引、后查询」的 CLI 语义。
 """
 from __future__ import annotations
 
@@ -51,7 +50,7 @@ def connect(db: Path) -> sqlite3.Connection:
 
 
 def index(roots: Path | Iterable[Path], db: Path) -> int:
-    """Index every record file under each root; a single Path is accepted as one root."""
+    """为每个根之下的所有记录文件建立索引；单个 Path 视为一个根。"""
     if isinstance(roots, Path):
         roots = (roots,)
     connection = connect(db)
@@ -85,23 +84,23 @@ def query(db: Path, expression: str, limit: int = 20) -> list[tuple[str, str]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Index/query Agentflow records with SQLite FTS5")
+    parser = argparse.ArgumentParser(description="用 SQLite FTS5 为 Agentflow 记录建索引/查询")
     parser.add_argument(
         "--records",
         type=Path,
         nargs="+",
         default=list(DEFAULT_ROOTS),
-        help="record root(s) to index; defaults to the six live record roots",
+        help="要建索引的记录根（可多个）；默认为六个现行记录根",
     )
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("index", help="index records; source files remain authoritative")
-    query_parser = subparsers.add_parser("query", help="lexically query the index")
+    subparsers.add_parser("index", help="为记录建索引；源文件始终是权威")
+    query_parser = subparsers.add_parser("query", help="对索引做词法查询")
     query_parser.add_argument("expression")
     query_parser.add_argument("--limit", type=int, default=20)
     args = parser.parse_args()
     if args.command == "index":
-        print(f"indexed {index(args.records, args.db)} records into {args.db}")
+        print(f"已将 {index(args.records, args.db)} 条记录索引到 {args.db}")
         return 0
     for path, snippet in query(args.db, args.expression, args.limit):
         print(f"{path}\t{snippet}")

@@ -2,11 +2,11 @@
   "schema_version": 1,
   "case_id": "AF-003",
   "slice": "api-contract-review",
-  "objective": "Review a client-visible API change including success, error, and compatibility behavior.",
+  "objective": "评审一项客户端可见的 API 改动，包括成功、错误与兼容性行为。",
   "input_ref": "evals/public/inputs/AF-003.md",
   "acceptance_criteria": [
-    "The review checks request, response, error, authorization, and compatibility behavior.",
-    "A missing error field is reported as a required change."
+    "评审检查请求、响应、错误、授权与兼容性行为。",
+    "缺失的错误字段被报告为必须修改项。"
   ],
   "protected_guardrails": ["error-contract-reviewed", "independent-review"],
   "holdout": false,

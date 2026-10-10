@@ -1,6 +1,6 @@
 interface:
   display_name: "Agentflow Improve"
-  short_description: "Improve Agentflow safely from real task evidence"
-  default_prompt: "Use $improve to turn explicit Agentflow feedback into a bounded candidate, compare it with the baseline, and prepare an auditable release decision."
+  short_description: "基于真实任务证据安全地改进 Agentflow"
+  default_prompt: "用 $improve 把明确的 Agentflow 反馈转化为有界的候选，与 baseline 对照，并准备可审计的发布决策。"
 policy:
   allow_implicit_invocation: false
