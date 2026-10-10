@@ -1,5 +1,28 @@
 # 变更日志
 
+## 待发布 — 2026-10-10
+
+> 本节记录两批尚未定版本号的改动；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
+> `measurement: none`（方法级改动，无仪器化业务任务）。
+
+- **全仓中文本地化（用户指示「能改的都改」，推送于 `4c767eb`）**：71 个文件一次性汉化——
+  14 个角色文件与两个 SKILL、契约 references、README / AGENTS / docs / tools / packaging /
+  examples 文档面、受保护面（evaluator 与 release-governor 角色、improve 规则书、`schemas/` 与
+  `evals/` 下的 README 与公开用例）、三个脚本的注释与消息、CHANGELOG 全文。frontmatter 宿主
+  规范字段、标识符、枚举、路径与代码块逐字保留；`validate.py all` 全绿、`installed` PASS、
+  runtime 重建并与 cache 逐字节同步。受保护改动的授权依据与回溯登记见
+  `plans/PENDING-DECISIONS.md`。
+- **youc-workflow-ai 模式吸收 + 巡检收尾（用户指示「直接开始改」）**：实例化
+  `releases/todo.md` 与 `releases/pending-test.md`，新建 `plans/PENDING-DECISIONS.md` 单点拍板
+  清单（`artifacts` 门随批放行三个声明工作文件 + 测试钉子）；`AGENTS.md` 增「表达与沉淀
+  纪律」；SKILL 增「首次接入（Init）」；`index.md` 与 `docs/project-structure.md` 双轨化并新增
+  结构地图；`check-write-scope.sh` 的「.」全树范围缺陷修复（ISS-2026-041，含双回归用例）；
+  `PLAN-PRODUCT-001` 看板按实况回写；宿主事实登记端点复测（U-01 解除）。
+- **端点与第一次改善闭环**：`claude --print` 一词探测 3/3 通过（22–24s 返回、end_turn 干净）
+  后，按 `PLAN-LOOP-SMOKE-001` 以 AF-001 × 冻结重复数 3 完成试水实跑（3 轮共 21.7 分钟；
+  时延 540/322/438s，`accepted=false`×3，`tool_failures` 8/0/6，denials 0；成本未落盘为已知
+  观测缺口）；完整对照的授权待用户裁决；结果回写 `releases/pending-test.md`。
+
 ## 0.10.0 — 2026-10-09
 
 全库清理与防漂移清查，用户指令（"要一步到位 去除之前不合理的地方，保证后续

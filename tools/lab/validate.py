@@ -2156,7 +2156,8 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 if frontmatter:
                     review_findings.append((frontmatter.get("findings") or [], path))
             elif root_name == "plans":
-                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+                # README.md plus the declared cross-plan decision queue; a working file, not a plan.
+                if len(parts) == 2 and path.is_file() and path.name in ("README.md", "PENDING-DECISIONS.md"):
                     continue
                 if not path.is_file():
                     continue
@@ -2234,14 +2235,16 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                     else:
                         improvement_comparisons.append((path, document))
             elif root_name == "releases":
-                if len(parts) == 2 and path.is_file() and path.name == "README.md":
-                    continue  # the class README documents the release-record contract
+                # README.md plus the batch todo / pending-test working files, not records.
+                if len(parts) == 2 and path.is_file() and path.name in ("README.md", "todo.md", "pending-test.md"):
+                    continue
                 if len(parts) != 2 or not path.is_file():
                     errors.append(
                         ValidationError(
                             str(path),
                             "unexpected entry under releases/; release records live directly in "
-                            "releases/ as <version>.json (plus README.md) — see releases/README.md",
+                            "releases/ as <version>.json (plus README.md, todo.md, and "
+                            "pending-test.md) — see releases/README.md",
                         )
                     )
                     continue

@@ -15,6 +15,16 @@ description: Use for cross-layer features, architecture changes, parallel invest
 - 在 **Claude Code** 与 **ZCode** 中，仅当[路由表](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；`agents/` 下的文件是可选能力。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。ZCode 从已安装的插件快照加载角色，因此源码编辑只有重装后才生效——运行 `python3 tools/lab/validate.py installed` 查看漂移。
 - 在其它兼容 Agent Skills 的宿主中，使用其内置委派机制。若不存在，则顺序执行同样的阶段，并说明独立执行不可用。
 
+## 首次接入（Init）
+
+在一个尚未接入 Agentflow 的项目里第一次工作时（目标仓没有相关约定、记录结构或检查命令），先做一次轻量接入，再走正常流程：
+
+1. 与用户确认四项：交付语言与读者（默认中文；面向用户时白话优先）、术语约定（用户反复纠正过的词、内部自造词的替代说法，例如「台账」→「清单 / 记录」）、分支与合并纪律、仓库自带的检查命令（构建 / 测试 / lint）。
+2. 把结果写成紧凑的「Agentflow 接入约定」小节，经用户确认后追加进目标仓的 `AGENTS.md`（或用户指定的等效规则文件）；没有该文件时先征得同意再创建。
+3. 此后以该小节为准；约定变化时就地更新它，不另开平行文件。
+
+Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目标仓——需要说明时用白话。
+
 分派工作前阅读[角色档案](references/roles.md)，委派实现或评审前阅读[契约](references/contracts.md)。[硬边界](references/contracts.md#硬边界)在两条工作流的每一次委派中都成立；接受任何交付物前先检查它们。
 
 对于 material、不确定、反复出现、跨层或高风险的 Bug，使用完整的有界序列 `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`。Investigator 确立可复现的症状与归因，Fixer 只在指派的候选工作区改动代码，Reviewer 检查修复，Recorder 在验证后写下被接受的 Bug 记录。对于已有验证复现的小范围低风险 Bug，Supervisor 可合并 Investigator 或 Recorder 环节，但必须保留同样的诊断、回归、评审与状态证据。绝不让 Fixer 批准或关闭它自己的 Bug。

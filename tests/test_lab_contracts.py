@@ -3041,6 +3041,38 @@ class ImprovementArtifactContractTests(unittest.TestCase):
         errors = self._errors_with(wrong_suffix)
         self.assertIn("evaluations artifacts are JSON files; unexpected non-json file", self._messages(errors))
 
+    def test_declared_working_files_under_plans_and_releases_are_allowed(self) -> None:
+        # plans/PENDING-DECISIONS.md and releases/{todo,pending-test}.md are declared
+        # non-record working files; everything else under these roots stays rejected.
+        def add_files(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "plans" / "PENDING-DECISIONS.md").write_text("# decisions\n", encoding="utf-8")
+            (root / "releases" / "todo.md").write_text("# todo\n", encoding="utf-8")
+            (root / "releases" / "pending-test.md").write_text("# pending\n", encoding="utf-8")
+
+        errors = self._errors_with(add_files)
+        self.assertEqual(errors, [], self._messages(errors))
+
+    def test_undeclared_files_under_plans_and_releases_are_rejected(self) -> None:
+        def releases_stray(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "releases" / "notes.md").write_text("# notes\n", encoding="utf-8")
+
+        errors = self._errors_with(releases_stray)
+        self.assertIn("release artifacts are JSON files; unexpected non-json file", self._messages(errors))
+
+        def releases_nested(root: Path, fixture: dict[str, Any]) -> None:
+            nested = root / "releases" / "drafts"
+            nested.mkdir()
+            (nested / "r1.json").write_text("{}\n", encoding="utf-8")
+
+        errors = self._errors_with(releases_nested)
+        self.assertIn("unexpected entry under releases/", self._messages(errors))
+
+        def plans_stray(root: Path, fixture: dict[str, Any]) -> None:
+            (root / "plans" / "notes.md").write_text("# notes\n", encoding="utf-8")
+
+        errors = self._errors_with(plans_stray)
+        self.assertIn("frontmatter", self._messages(errors))
+
 
 class TestRecordContractTests(unittest.TestCase):
     """Test records under features/<batch>/testing/ (0.7.0): plan registry contract and run invariants."""
@@ -3817,6 +3849,56 @@ class ValidateResidualTests(unittest.TestCase):
             (tests / ".hidden" / "__init__.py").write_text("import-time hijack", encoding="utf-8")
             errors = validate.validate_unit_tests(Path(temporary))
         self.assertTrue(any("unexpected entry in the test directory" in error.message for error in errors))
+
+
+class WriteScopeScriptTests(unittest.TestCase):
+    """check-write-scope.sh: "." must cover the whole tree (it used to silently match nothing)."""
+
+    SCRIPT = ROOT / "skills" / "agentflow" / "scripts" / "check-write-scope.sh"
+
+    def _repo_with_changes(self, directory: Path) -> None:
+        def git(*args: str) -> None:
+            subprocess.run(
+                ["git", "-c", "init.defaultBranch=main", "-c", "commit.gpgsign=false", *args],
+                cwd=directory,
+                check=True,
+                capture_output=True,
+            )
+
+        git("init", "-q")
+        git("config", "user.email", "t@example.com")
+        git("config", "user.name", "t")
+        (directory / "tracked.txt").write_text("v1\n", encoding="utf-8")
+        git("add", "tracked.txt")
+        git("commit", "-qm", "init")
+        (directory / "tracked.txt").write_text("v2\n", encoding="utf-8")
+        (directory / "new.txt").write_text("new\n", encoding="utf-8")
+
+    def test_dot_scope_covers_the_whole_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self._repo_with_changes(directory)
+            completed = subprocess.run(
+                ["bash", str(self.SCRIPT), "HEAD", "."],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertIn("OK", completed.stdout)
+
+    def test_out_of_scope_changes_still_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self._repo_with_changes(directory)
+            completed = subprocess.run(
+                ["bash", str(self.SCRIPT), "HEAD", "sub"],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("FAIL", completed.stdout)
 
 
 if __name__ == "__main__":

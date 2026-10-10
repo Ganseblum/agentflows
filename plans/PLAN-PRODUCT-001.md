@@ -4,7 +4,7 @@ plan_version: 0.1.0
 status: proposed
 objective: 把 Agentflow 做成跨宿主方法插件：记下架构结论、收口第一次 improve 噪声底、再按产品卫生与宿主认证完善，不重做运行时
 recorded_at: 2026-09-19T10:31:00Z
-updated_at: 2026-09-19T13:00:00Z
+updated_at: 2026-10-10T15:20:00+08:00
 ---
 
 # Agentflow 产品完善路线
@@ -15,8 +15,9 @@ updated_at: 2026-09-19T13:00:00Z
 
 ## 进展概览
 
-**本期进度**：**4 / 12 已完成** · **0 进行中** · **1 阻塞** · **7 未开始** · **2 本期不做**
+**本期进度**：**6 / 12 已完成** · **1 进行中** · **0 阻塞** · **4 未开始** · **2 本期不做**
 **统计口径**：T01–T12 计入产品完善；T13–T14 明确不做。概览表前两行是已经发生的事实（架构拍板 + 噪声底离线），对应任务格只有 T01。
+（2026-10-10 回写：T04/T05 按实况置完成——版本与提交已随后续批次发生；T02 置进行中——端点复测通过、试水实跑启动。）
 
 | 序号 | 业务侧解读 | 技术侧解读 | 交付效果（完成后可验证） | 状态 |
 | --- | --- | --- | --- | --- |
@@ -27,9 +28,9 @@ updated_at: 2026-09-19T13:00:00Z
 | 5 | 换宿主方法不断 | 方法写一次，测量证书一个一个发 | Claude 先；ZCode 次；Codex 只发基线证 | ☐ |
 | 6 | 方法改动有业务尺子 | `evals/business` smoke 对照 | `measurement: complete` 或仍诚实标 none | ☐ |
 
-**我们在哪**：架构已评、`--case-ids` 已评审、默认角色路径已缩短、ZCode 发布源改为生成的 `packaging/runtime`；工作树未提交；live 对照仍停在 U-01；瘦快照尚未重装核实。
-**下一步**：换可用端点再跑噪声底；或你授权提交；或刷新 marketplace 重装后 `ls` 新快照核实 Z10。
-**阻塞/风险**：可信端点；生成目录 gitignore，克隆后需先跑 `packaging/build_runtime.py`。
+**我们在哪**：架构已评、打包与默认路径已落、T04/T05 按实况回写；端点 2026-10-10 复测通过（U-01 解除），第一次噪声底试水实跑进行中；瘦快照尚未在客户端重装核实。
+**下一步**：试水结果回写噪声底计划 → 完整对照授权；或刷新 marketplace 重装后 `ls` 新快照核实 Z10。
+**阻塞/风险**：无阻塞；生成目录 gitignore，克隆后需先跑 `packaging/build_runtime.py`。
 
 ### 已拍板（2026-09-19）
 
@@ -81,11 +82,11 @@ updated_at: 2026-09-19T13:00:00Z
 | ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据回写 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `T01` | 把架构结论、已拍板事项、已做/没做写入本计划 | P0 | `plans/PLAN-PRODUCT-001.md` | — | ☑ 已完成 | 本文件落盘；`python3.12 tools/lab/validate.py all` 9×PASS |
-| `T02` | 收口第一次噪声底：探测 → 基线/候选实跑 → compare → policy → 人批 | P0 | `plans/PLAN-LOOP-SMOKE-001.md` T05–T09 | `T01` | ⚠ 阻塞 | 2026-09-19T12:46Z 一词探测 90s 空输出退出 124；权威看板 `PLAN-LOOP-SMOKE-001` T05 |
+| `T02` | 收口第一次噪声底：探测 → 基线/候选实跑 → compare → policy → 人批 | P0 | `plans/PLAN-LOOP-SMOKE-001.md` T05–T09 | `T01` | ◐ 进行中 | 2026-10-10：端点复测 3/3 通过（一词探测 21.6/23.7/23.1s 返回 `pong`）；AF-001×3 试水实跑已启动（结果回写噪声底计划 T05 证据列）；权威看板 `PLAN-LOOP-SMOKE-001` T05 |
 | `T03` | 独立评审 `--case-ids` 门变更（作者不审自己） | P0 | `tools/lab/eval_runner.py`、`tests/test_lab_contracts.py` | `T01` | ☑ 已完成 | 独立 Task 评审 `approved`；`CaseIdSubsetTests` 6 OK；`suite_revision` 不由 id 列表改写；残余见评审（CLI help / 业务套件 / 已加载套件内重复 id 未测） |
-| `T04` | 源码版本 bump 与 CHANGELOG：记下门变更与 `measurement: none`（live 未出前不得写成已验证改进） | P1 | 五份 manifest、`CHANGELOG.md`、`docs/iteration-log.md` | `T03` | ☐ 未开始 | |
-| `T05` | 用户授权后再提交本批；默认不 push | P1 | 工作树已改文件 | `T03` | ☐ 未开始 | |
-| `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 安装快照 | `T04` | ☐ 未开始 | |
+| `T04` | 源码版本 bump 与 CHANGELOG：记下门变更与 `measurement: none`（live 未出前不得写成已验证改进） | P1 | 五份 manifest、`CHANGELOG.md`、`docs/iteration-log.md` | `T03` | ☑ 已完成 | 由后续发布批覆盖（0.8.2–0.10.0 均完成 bump + CHANGELOG 且 `measurement: none`）；本批相关的 `--case-ids` 条目缺口经 2026-10-10 复核确认并按书面豁免（不改写历史条目）；2026-10-10 `CHANGELOG`「待发布」节已含新批 |
+| `T05` | 用户授权后再提交本批；默认不 push | P1 | 工作树已改文件 | `T03` | ☑ 已完成 | 用户授权提交：3f902a3 / 4543b69 / a6fd485（2026-09-19）及后续批次（4ae68bd、4c767eb 等）均已落地并推送 |
+| `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 安装快照 | `T04` | ☐ 未开始 | 2026-10-10：本地 cache/0.10.0 已同步且 `installed` PASS；客户端刷新重装仍属用户侧（非阻塞） |
 | `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `source`=`./packaging/runtime`；生成树 43 文件，`records/`、`tests/`、`tools/`、`docs/`、`evals/`、`mock/` 均排除（旧路径为当时口径）；独立评审 `approved`；评审后补目的地禁写源码树 |
 | `T08` | 默认路径缩短：Skill 强调只启用有工作的角色；14 角色留作可选能力 | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | `T01` | ☑ 已完成 | Bind 段不再枚举 14 个 `agentflow:*`；独立评审 `approved`；`validate.py docs` PASS；ZCode 重装提示保留 |
 | `T09` | 日常 Intake 显式检索再犯类（FTS5）；不作为向量 RAG | P2 | `skills/agentflow/SKILL.md`、`tools/lab/record_store.py` | `T02` | ☐ 未开始 | 适合噪声底之后的第一个真假设候选 |

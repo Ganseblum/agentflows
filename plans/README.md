@@ -8,6 +8,9 @@
 [`schemas/plan.schema.json`](../schemas/plan.schema.json) 以及 `tools/lab/validate.py` 中的
 计划校验器校验。
 
+除计划外，本目录只允许两个非计划文件：`README.md`（本节）与 `PENDING-DECISIONS.md`
+（跨计划的「等用户拍板」单点清单，用途与规则见其文件头）。
+
 ## 结构
 
 ```text

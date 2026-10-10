@@ -15,7 +15,8 @@ python3 tools/lab/validate.py all
 `validate.py artifacts` 额外校验实际写入现行记录根（`issues/`、`episodes/`、`plans/`、
 `improvements/`、`releases/`、`reviews/`，递归）下的记录实例——issue 记录及其 recurrence 台账
 与被拒记录归档、评审记录、episode、计划，以及改进环与发布产物——对照同一批 schema 与正文断言；
-`all` 包含它。
+各根 README 与三个声明的工作文件（`plans/PENDING-DECISIONS.md`、`releases/todo.md`、
+`releases/pending-test.md`）按声明放行，其余路径仍按「意外条目」拒绝；`all` 包含它。
 这是 supervisor 产物验收的编译步骤：在接受 worker 的记录之前对真实文件运行它，并把失败当作编译
 错误。`_archive/` 是冻结归档，刻意不巡检；测试记录现在位于功能批次目录
 （`features/<batch>/testing/`），本遍历尚未巡检那里。

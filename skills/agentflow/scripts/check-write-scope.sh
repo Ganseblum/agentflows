@@ -51,6 +51,9 @@ in_scope() {
   path="$1"
   for scope in ${scopes[@]+"${scopes[@]}"}; do
     normalized="${scope%/}"
+    # "."（含 "./"）是整棵树的约定写法；git 输出的路径不带 "./" 前缀，
+    # 用模式匹配会全部失配——直接放行。
+    if [ "$normalized" = "." ]; then return 0; fi
     case "$path" in
       "$normalized" | "$normalized"/*) return 0 ;;
     esac

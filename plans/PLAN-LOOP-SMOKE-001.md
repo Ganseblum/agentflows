@@ -4,7 +4,7 @@ plan_version: 0.1.0
 status: proposed
 objective: 用公开用例噪声底闭合第一次 improve 环（仪器可出 better/neutral/worse），不把 18 次业务调用当第一根尺子
 recorded_at: 2026-09-19T09:40:00Z
-updated_at: 2026-09-19T14:22:00Z
+updated_at: 2026-10-10T15:35:00+08:00
 ---
 
 # 公开用例噪声底 — 第一次 improve 闭环
@@ -16,7 +16,7 @@ updated_at: 2026-09-19T14:22:00Z
 
 ## 进展概览
 
-**本期进度**：**4 / 9 已完成** · **0 进行中** · **1 阻塞** · **4 未开始** · **1 本期不做**
+**本期进度**：**5 / 9 已完成** · **1 进行中** · **0 阻塞** · **3 未开始** · **1 本期不做**
 **统计口径**：T01–T09 计入第一次闭环；T10 业务切片明确留第二次。
 
 | 序号 | 业务侧解读 | 技术侧解读 | 交付效果（完成后可验证） | 状态 |
@@ -27,9 +27,9 @@ updated_at: 2026-09-19T14:22:00Z
 | 4 | 第一次对照有落盘形状 | candidate + 两份 evaluation + comparison + policy 建议 | `improvements/` 四类工件过 `validate.py artifacts` | ☐ |
 | 5 | 业务 18 次不是第一根尺子 | BT 切片保持仪器就绪，本期不跑 | 计划 T10 为「本期不做」 | — 本期不做 |
 
-**我们在哪**：T01–T04 完成；`--case-ids` 已独立评审 `approved`；live 对照停在 U-01。产品路线见 `PLAN-PRODUCT-001`。
-**下一步**：换一条能在 90s 内返回一词结果的端点，然后 T06–T08。
-**阻塞/风险**：U-01 可信端点；ZCode 安装快照停在 0.8.0，本次对照用冻结源码树当基线，不用过期缓存。
+**我们在哪**：T01–T05 完成（端点 2026-10-10 复测通过，U-01 解除）；AF-001×3 试水实跑完成（3 轮 21.7 分钟；成本未落盘）；完整 T06–T08 待用户授权。产品路线见 `PLAN-PRODUCT-001`。
+**下一步**：建议先补 cost 观测记录 → 用户授权 → T06 基线实跑（三例）→ T07/T08。
+**阻塞/风险**：无阻塞（U-01 已解除）；成本未落盘为观测缺口；ZCode 安装快照与评测无关（对照用冻结源码树）。
 
 ## 任务清单
 
@@ -39,8 +39,8 @@ updated_at: 2026-09-19T14:22:00Z
 | `T02` | 冻结基线：源 revision、插件版本、安装快照是否与源码一致 | P0 | `plugin.json` | — | ☑ 已完成 | `git rev-parse HEAD` = `ceb639f56c940939c36c745e739c237167048159`；`plugin.json` 0.8.1；`validate.py installed` FAIL：缓存仅有 0.8.0，对照不用该缓存 |
 | `T03` | 在仓库外建候选 worktree：五份 manifest 版本改为 `0.8.1+smokeloop`；`check-diff`；两侧 digest | P0 | 五份 manifest（仅候选树） | `T02` | ☑ 已完成 | `check-diff` blocked=[]，仅五份 manifest；基线 digest `sha256:47d5c7ceb53719f1351023f0f38ed91cffa25fb5aac63241df834c94779bcf18`；候选 `sha256:b810f06a60fb4143b8c1a4024de548555d19bf32e31d13644162bc3d7e7c3095` |
 | `T04` | `host_adapter.py --dry-run`：公开切片 AF-001,AF-004,AF-011，`--repeat-count 3`，隔离布局合法 | P0 | `tools/lab/host_adapter.py` | `T01`、`T03` | ☑ 已完成 | dry_run exit 0；invocation_count=9；三例 AF-001/AF-004/AF-011；plugin_dir=baseline worktree |
-| `T05` | 一行探测：宿主完成最短模型调用（非 502/403/挂起） | P0 | — | — | ⚠ 阻塞 | 2026-09-19T12:46Z `claude --print --output-format json --no-session-persistence` 一词探测：90s `TimeoutExpired`，stdout/stderr 皆空，退出 124。属 C10 挂起类，不是带 `is_error` 的 502 JSON；13:38Z 复测同口径（PLAN-PY-GUARD-001 T03，Supervisor 执行）：90s `TimeoutExpired`，stdout/stderr 皆空——挂起类持续，U-01 仍开；14:15Z/14:17Z（UTC）U-02 授权后两次探测（C10 协议：20s 间隔重试一次）均 90s 挂起无输出；同刻 codex `exec --ephemeral` 一词探测 20s 返回 `pong`（`gpt-5.6-luna`）——但 X2 契约下 codex 不能评候选，对照仍需 claude 族端点；14:35–14:55Z 端点猎取收口（详见 host-platform-facts C11/Z11）：relay 复测为快速 502（上游仍坏）；bigmodel OAuth JWT（内存提取，未落盘）能过认证但直连 API 全部 429 `1113 余额不足`，coding-plan 额度五条直连路径全部 404 不可消费——**U-01 的解收窄为三选一：bigmodel 充值/一把有余额的明文 key/relay 恢复**，对照管线本身已全部就绪（基线树、候选树、`--case-ids` 跑器、七字段上下文与 digest 均已冻结复核） |
-| `T06` | 基线实跑：`--case-ids AF-001,AF-004,AF-011`，`--source-kind baseline`，`--agentflow-version 0.8.1` | P0 | `improvements/evaluations/` | `T04`、`T05` | ☐ 未开始 | |
+| `T05` | 一行探测：宿主完成最短模型调用（非 502/403/挂起） | P0 | — | — | ☑ 已完成 | 历史：2026-09-19T12:46Z 起多次挂起/502（见 C10/C11，逐字留档原证据保留于下）——2026-09-19T12:46Z 90s `TimeoutExpired` 空输出退出 124；13:38Z 同口径复测同结果；14:15Z/14:17Z 两次均 90s 挂起；14:35–14:55Z 端点猎取收窄为三选一。**2026-10-10：端点切换后一词探测 3/3 通过（21.6s / 23.7s / 23.1s 返回 `pong`，`stop_reason: end_turn`）——U-01 解除（host-platform-facts C12），T05 达成** |
+| `T06` | 基线实跑：`--case-ids AF-001,AF-004,AF-011`，`--source-kind baseline`，`--agentflow-version 0.8.1` | P0 | `improvements/evaluations/` | `T04`、`T05` | ◐ 进行中 | 2026-10-10 试水：AF-001 × 冻结重复数 3 基线实跑完成（3 轮 21.7 分钟；`accepted=false`×3、`tool_failures` 8/0/6、denials 0；成本未落盘；本地产物 `/tmp/agentflow-trial/`，不产生仓内记录）；完整三例（AF-001/004/011）待用户授权（`plans/PENDING-DECISIONS.md` 第 11 条） |
 | `T07` | 候选实跑：同切片同宿主同模型，`--source-kind candidate`，`--agentflow-version 0.8.1+smokeloop` | P0 | `improvements/evaluations/` | `T03`、`T06` | ☐ 未开始 | |
 | `T08` | `eval_runner.py compare` + `policy.py`；期望 `neutral`/`revise`（主指标不改善）；显著偏离先修仪器 | P0 | `improvements/comparisons/` | `T07` | ☐ 未开始 | |
 | `T09` | 人批门：不自动 promote；发布记录等用户 `approved` | P0 | `releases/` | `T08` | ☐ 未开始 | |
@@ -50,7 +50,7 @@ updated_at: 2026-09-19T14:22:00Z
 
 | 编号 | 问题 | 是否阻塞 | 状态 |
 | --- | --- | --- | --- |
-| U-01 | 哪条端点能完成最短模型调用（本机 Claude 中转曾 502；本会话探测未完成） | 阻塞 T05–T08 | 未关闭 |
+| U-01 | 哪条端点能完成最短模型调用（本机 Claude 中转曾 502；本会话探测未完成） | 阻塞 T05–T08 | 已关闭（2026-10-10 端点复测 3/3 通过；`docs/host-platform-facts.md` C12） |
 | U-02 | 对照用冻结源码树当基线，是否还要先重装 ZCode 快照到 0.8.1 | 不阻塞 | 未关闭（dogfood 另做；评测不读该缓存） |
 
 ## 接口与共享机制
