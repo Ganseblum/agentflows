@@ -121,6 +121,8 @@ def create_worktree(args: argparse.Namespace) -> int:
 
 
 def changed_paths(candidate: Path, base: str) -> list[str]:
+    if base.startswith("-"):
+        raise RuntimeError(f"base revision must not start with '-': {base!r}")
     verify_base = ["git", "-C", str(candidate), "rev-parse", "--verify", f"{base}^{{commit}}"]
     verified = subprocess.run(verify_base, text=True, capture_output=True, check=False)
     if verified.returncode != 0:

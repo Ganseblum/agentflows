@@ -63,8 +63,10 @@ def fail(message: str) -> int:
 
 def assert_safe_destination(destination: Path) -> None:
     resolved = destination.resolve()
-    if resolved == ROOT:
-        raise ValueError("拒绝以 runtime 树覆盖仓库根")
+    # 拒绝仓库根本身及其任意祖先目录（如 `..`、`../..`、`/`）。
+    # 否则 build() 的 shutil.rmtree(destination) 会销毁仓库根与其父目录的全部内容。
+    if ROOT.is_relative_to(resolved):
+        raise ValueError("拒绝覆盖仓库根或其任意祖先目录")
     if resolved == SCRIPT_DIR:
         raise ValueError("拒绝覆盖 packaging/")
     for name in RUNTIME_DIRECTORIES:
