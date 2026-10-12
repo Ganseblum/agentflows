@@ -1,8 +1,11 @@
 import argparse
+import ast
 import contextlib
+import hashlib
 import io
 import json
 import os
+import pathlib
 import shutil
 import sys
 import subprocess
@@ -689,6 +692,389 @@ class SeedGraderGoldenTests(unittest.TestCase):
         self.assertIn("unmatched-finding cap exceeded", repetition["error"])
         self.assertEqual(document["summary"]["reps_failed"], 1)
         self.assertEqual(seed_grader.exit_code(document), 2)
+
+
+class GapClosureRegressionTests(unittest.TestCase):
+    """2026-10-12 缺口收尾批（G1–G3）的回归检查：每项都钉住「修复被还原后该测试会失败」。
+
+    - G1: schema 用了子集校验器未实现的校验关键字必须 fail-closed（原为静默跳过）。
+    - G2: 快照 diff 摘要必须与 ``--no-renames --no-textconv`` 口径一致（原为依赖操作者
+      git config，跨机器不确定）。
+    - G3: seed_grader CLI 必须把用例的 ``target_docs`` 透传给 grade_case（原为程序化路径
+      传、CLI 路径不传，文档化调用下 off_target 与每文档 unmatched 上限全部失效）。
+    """
+
+    CASE_ID = "BT-GAP"
+
+    def _seed_list(self, directory: Path, seeds: list[dict[str, Any]]) -> Path:
+        path = Path(directory) / "seeds.json"
+        path.write_text(
+            json.dumps({"schema_version": 1, "case_id": self.CASE_ID, "seeds": seeds}),
+            encoding="utf-8",
+        )
+        return path
+
+    def _findings(self, directory: Path, rep: int, findings: list[dict[str, str]]) -> Path:
+        rep_dir = Path(directory) / f"rep-{rep}"
+        rep_dir.mkdir(parents=True, exist_ok=True)
+        path = rep_dir / "findings.json"
+        path.write_text(
+            json.dumps({"schema_version": 1, "case_id": self.CASE_ID, "findings": findings}),
+            encoding="utf-8",
+        )
+        return path
+
+    # ---- G1: schema 词汇表守卫 ----
+
+    def test_unsupported_validation_keyword_is_rejected(self) -> None:
+        document = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://agentflow.dev/schemas/gap-test",
+            "type": "object",
+            "properties": {"ratio": {"type": "number", "exclusiveMinimum": 0}},
+        }
+        errors = validate.check_schema_keywords(document, validate.Path("schemas/gap-test.schema.json"))
+        self.assertEqual(len(errors), 1)
+        self.assertIn("unsupported keyword 'exclusiveMinimum'", errors[0].message)
+        self.assertIn("$.properties.ratio", errors[0].message)
+
+    def test_misspelled_keyword_is_rejected(self) -> None:
+        # A typo is the same silent gap: the constraint is declared but never enforced.
+        errors = validate.check_schema_keywords(
+            {"type": "string", "minLenght": 3}, validate.Path("schemas/gap-test.schema.json")
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("unsupported keyword 'minLenght'", errors[0].message)
+
+    def test_supported_and_annotation_keywords_pass(self) -> None:
+        document = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://agentflow.dev/schemas/gap-test",
+            "title": "t",
+            "description": "d",
+            "default": {},
+            "examples": [{}],
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "minLength": 1, "pattern": "^x"},
+                "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": True},
+            },
+            "required": ["name"],
+            "additionalProperties": False,
+            "allOf": [{"required": ["name"]}],
+        }
+        self.assertEqual(
+            validate.check_schema_keywords(document, validate.Path("schemas/gap-test.schema.json")), []
+        )
+
+    def test_repository_schemas_stay_within_the_subset(self) -> None:
+        # The whole repo must compile: every shipped schema uses only implemented keywords.
+        # A future schema adding exclusiveMinimum/patternProperties fails here first.
+        errors = validate.validate_schemas()
+        self.assertEqual(errors, [])
+
+    def test_validate_schemas_gate_walks_keywords(self) -> None:
+        # The wiring, not just the helper: a schema reaching the gate's path iterator
+        # with an unimplemented keyword must surface as a gate error. Removing the
+        # check_schema_keywords call from validate_schemas fails this test.
+        with tempfile.TemporaryDirectory() as temporary:
+            bad = Path(temporary) / "bad.schema.json"
+            bad.write_text(
+                json.dumps(
+                    {
+                        "$schema": "https://json-schema.org/draft/2020-12/schema",
+                        "$id": "https://agentflow.dev/schemas/gap-bad",
+                        "type": "object",
+                        "properties": {"ratio": {"type": "number", "multipleOf": 2}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with mock.patch.object(validate, "iter_schema_paths", return_value=iter([bad])):
+                errors = validate.validate_schemas()
+            self.assertTrue(
+                any("unsupported keyword 'multipleOf'" in error.message for error in errors),
+                [error.message for error in errors],
+            )
+
+    def test_unsupported_keyword_in_nested_schema_positions_is_rejected(self) -> None:
+        # The walker must reach every schema position, not just properties: a keyword
+        # hidden in $defs / items / allOf / not / contains / if is the same silent gap.
+        # Mutating _SCHEMA_MAP_KEYWORDS/_SCHEMA_LIST_KEYWORDS/_SCHEMA_VALUE_KEYWORDS down
+        # to properties-only must fail this test.
+        document = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://agentflow.dev/schemas/gap-nested",
+            "$defs": {"inner": {"type": "number", "multipleOf": 2}},
+            "items": {"propertyNames": {"pattern": "^x"}},
+            "allOf": [{"not": {"type": "number", "exclusiveMaximum": 5}}],
+            "contains": {"type": "integer", "multipleOf": 3},
+            "if": {"patternProperties": {"^x": {"type": "string"}}},
+            "then": {"required": ["a"]},
+            "else": {"type": "null"},
+            "properties": {"p": {"type": "boolean", "unevaluatedProperties": False}},
+        }
+        errors = validate.check_schema_keywords(document, validate.Path("schemas/gap.schema.json"))
+        locations = {error.message.split(":")[0] for error in errors}
+        for expected in (
+            "$.$defs.inner",
+            "$.items",
+            "$.allOf[0].not",
+            "$.contains",
+            "$.if",
+            "$.properties.p",
+        ):
+            self.assertIn(expected, locations, sorted(error.message for error in errors))
+
+    def test_array_form_items_is_rejected_as_draft07(self) -> None:
+        document = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://agentflow.dev/schemas/gap-tuple",
+            "items": [{"type": "string"}, {"type": "number"}],
+        }
+        errors = validate.check_schema_keywords(document, validate.Path("schemas/gap.schema.json"))
+        self.assertEqual(len(errors), 1)
+        self.assertIn("array-form items is Draft-07", errors[0].message)
+
+    def test_whitelist_matches_the_validator_dispatch(self) -> None:
+        # Mechanical pin for the whitelist itself: every keyword SchemaValidator._validate
+        # dispatches must be whitelisted (else legal schemas get blocked), and every
+        # whitelisted keyword beyond the declared annotation/metadata exemptions must be
+        # dispatched (else it is a silent-passthrough hole like $anchor was).
+        tree = ast.parse(pathlib.Path(validate.__file__).read_text(encoding="utf-8"))
+        dispatched: set[str] = set()
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.FunctionDef) and node.name == "_validate"):
+                continue
+            for sub in ast.walk(node):
+                if (
+                    isinstance(sub, ast.Compare)
+                    and len(sub.ops) == 1
+                    and isinstance(sub.ops[0], ast.In)
+                    and isinstance(sub.left, ast.Constant)
+                    and isinstance(sub.left.value, str)
+                    and isinstance(sub.comparators[0], ast.Name)
+                    and sub.comparators[0].id == "schema"
+                ):
+                    dispatched.add(sub.left.value)
+                elif (
+                    isinstance(sub, ast.Call)
+                    and isinstance(sub.func, ast.Attribute)
+                    and sub.func.attr == "get"
+                    and isinstance(sub.func.value, ast.Name)
+                    and sub.func.value.id == "schema"
+                    and sub.args
+                    and isinstance(sub.args[0], ast.Constant)
+                    and isinstance(sub.args[0].value, str)
+                ):
+                    dispatched.add(sub.args[0].value)
+                elif (
+                    isinstance(sub, ast.Subscript)
+                    and isinstance(sub.value, ast.Name)
+                    and sub.value.id == "schema"
+                    and isinstance(sub.slice, ast.Constant)
+                    and isinstance(sub.slice.value, str)
+                ):
+                    dispatched.add(sub.slice.value)
+        annotations = {"title", "description", "default", "examples", "deprecated", "readOnly", "writeOnly"}
+        metadata = {"$ref", "$id", "$schema", "$comment", "$defs", "definitions"}
+        whitelisted = set(validate.SUPPORTED_SCHEMA_KEYWORDS)
+        self.assertEqual(dispatched - whitelisted, set(), "implemented keyword not whitelisted")
+        self.assertEqual(
+            whitelisted - dispatched - annotations - metadata,
+            set(),
+            "whitelisted keyword is never dispatched (silent passthrough)",
+        )
+
+    # ---- G2: 快照 digest 的确定性口径 ----
+
+    def test_snapshot_digest_ignores_textconv_filters(self) -> None:
+        # The --no-textconv half, proven on its own: an operator-configured filter must
+        # not be able to change the digest of the same bytes on another machine.
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "snapshot"
+            repository.mkdir()
+            self._git(repository, "init", "--quiet")
+            self._git(repository, "config", "user.email", "gap@test")
+            self._git(repository, "config", "user.name", "gap")
+            (repository / "f.txt").write_text("token-12345\n", encoding="utf-8")
+            self._git(repository, "add", "f.txt")
+            self._git(repository, "commit", "--quiet", "-m", "seed")
+            self._git(repository, "config", "diff.redact.textconv", "sed s/token-12345/REDACTED/")
+            (repository / ".gitattributes").write_text("f.txt diff=redact\n", encoding="utf-8")
+            self._git(repository, "add", ".gitattributes")
+            self._git(repository, "commit", "--quiet", "-m", "attributes")
+            (repository / "f.txt").write_text("token-12345\nmore\n", encoding="utf-8")
+            filtered = subprocess.run(
+                ["git", "-C", str(repository), "diff", "--no-color", "--no-ext-diff"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            raw = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "diff",
+                    "--no-color",
+                    "--no-ext-diff",
+                    "--no-textconv",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertIn("REDACTED", filtered.stdout)  # the filter is active without the flag
+            self.assertNotIn("REDACTED", raw.stdout)
+            self.assertEqual(
+                host_adapter.snapshot_diff_digest(repository),
+                hashlib.sha256(raw.stdout.encode("utf-8")).hexdigest(),
+            )
+
+    def test_snapshot_digest_uses_no_renames_and_no_textconv(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "snapshot"
+            repository.mkdir()
+            self._git(repository, "init", "--quiet")
+            self._git(repository, "config", "user.email", "gap@test")
+            self._git(repository, "config", "user.name", "gap")
+            original = "".join(f"line {index}\n" for index in range(1, 11))
+            (repository / "a.txt").write_text(original, encoding="utf-8")
+            self._git(repository, "add", "a.txt")
+            self._git(repository, "commit", "--quiet", "-m", "seed")
+            # Rename in the worktree, tracked by intent-to-add so it reaches `git diff`
+            # at all: plain diff folds this into a similarity rename record, while the
+            # digest must see delete+add (and raw bytes, never a textconv filter).
+            (repository / "b.txt").write_text(
+                original.replace("line 5", "line 5 edited"), encoding="utf-8"
+            )
+            (repository / "a.txt").unlink()
+            self._git(repository, "add", "-N", "b.txt")
+            stable = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "diff",
+                    "--no-color",
+                    "--no-ext-diff",
+                    "--no-renames",
+                    "--no-textconv",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            unstable = subprocess.run(
+                ["git", "-C", str(repository), "diff", "--no-color", "--no-ext-diff"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(stable.stdout, unstable.stdout)  # the flags matter here
+            self.assertIn("rename from a.txt", unstable.stdout)
+            self.assertNotIn("rename from", stable.stdout)
+            self.assertEqual(
+                host_adapter.snapshot_diff_digest(repository),
+                hashlib.sha256(stable.stdout.encode("utf-8")).hexdigest(),
+            )
+
+    @staticmethod
+    def _git(repository: Path, *arguments: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(repository), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    # ---- G3: seed_grader CLI 透传 target_docs ----
+
+    def test_cli_target_docs_exempt_off_target_findings_from_the_cap(self) -> None:
+        # target_docs semantics: findings on documents the case did NOT ask about are
+        # recorded as off_target and exempt from the per-document unmatched cap. Without
+        # the flag the same spam counts toward the cap and fails the repetition — which
+        # is exactly what the CLI path did before G3 (it never passed target_docs).
+        seed = {
+            "seed_id": "GAP-S1",
+            "doc_ref": "docs/spec.md",
+            "strategy": {"type": "path_and_anchor", "anchors": ["静默重投"], "mode": "any"},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            seeds = self._seed_list(base, [seed])
+            findings_dir = base / "findings"
+            spam = [
+                {"path": "docs/other.md", "issue": f"无关文档问题 {index}", "evidence": "原文"}
+                for index in range(seed_grader.MAX_UNMATCHED_PER_DOC + 1)
+            ]
+            self._findings(findings_dir, 1, spam)
+            without = self._run_cli(seeds, findings_dir)
+            self.assertEqual(without["repetitions"][0]["status"], "failed")
+            self.assertIn("unmatched-finding cap exceeded", without["repetitions"][0]["error"])
+            self.assertEqual(without["summary"]["reps_failed"], 1)
+            self.assertEqual(without["repetitions"][0].get("off_target"), None)
+            with_target = self._run_cli(seeds, findings_dir, ["--target-docs", "docs/spec.md"])
+            repetition = with_target["repetitions"][0]
+            self.assertEqual(repetition["status"], "graded")
+            self.assertEqual(len(repetition["off_target"]), seed_grader.MAX_UNMATCHED_PER_DOC + 1)
+            self.assertEqual(repetition["unmatched_by_doc"], {})
+            self.assertEqual(with_target["summary"]["reps_failed"], 0)
+            # The seed is still missed in both runs: target_docs scopes the cap, not recall.
+            self.assertEqual(repetition["missed"], ["GAP-S1"])
+
+    def test_cli_target_docs_flag_is_repeatable(self) -> None:
+        # action="append" semantics: the FIRST flag's document must reach the grader.
+        # Spam sits on docs/spec.md (first flag): with append it is in-target, so the
+        # per-document cap fails the repetition; a single-value flag would silently
+        # keep only the last document, mark the same spam off-target, and pass.
+        seed = {
+            "seed_id": "GAP-S2",
+            "doc_ref": "docs/spec.md",
+            "strategy": {"type": "path_and_anchor", "anchors": ["静默重投"], "mode": "any"},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            seeds = self._seed_list(base, [seed])
+            findings_dir = base / "findings"
+            spam = [
+                {"path": "docs/spec.md", "issue": f"无锚点问题 {index}", "evidence": "原文"}
+                for index in range(seed_grader.MAX_UNMATCHED_PER_DOC + 1)
+            ]
+            self._findings(findings_dir, 1, spam)
+            document = self._run_cli(
+                seeds,
+                findings_dir,
+                ["--target-docs", "docs/spec.md", "--target-docs", "docs/extra.md"],
+            )
+            repetition = document["repetitions"][0]
+            self.assertEqual(repetition["status"], "failed")
+            self.assertIn("unmatched-finding cap exceeded", repetition["error"])
+            # A failed repetition returns the failure shape (no off_target key): the
+            # spam was counted in-target, not excused.
+            self.assertNotIn("off_target", repetition)
+
+    def _run_cli(
+        self, seeds: Path, findings_dir: Path, extra: list[str] | None = None
+    ) -> dict[str, Any]:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            code = seed_grader.main(
+                [
+                    "--seeds",
+                    str(seeds),
+                    "--findings-dir",
+                    str(findings_dir),
+                    "--min-recall",
+                    "0.5",
+                    *(extra or []),
+                ]
+            )
+        document = json.loads(buffer.getvalue())
+        expected = 2 if document["summary"]["reps_failed"] else 0
+        self.assertEqual(code, expected)  # the CLI exit contract tracks failed repetitions
+        return document
 
 
 class ContractPinTests(unittest.TestCase):

@@ -382,11 +382,23 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="acceptance threshold from the case's grading.min_seed_recall (0..1)",
     )
+    parser.add_argument(
+        "--target-docs",
+        action="append",
+        default=None,
+        help="snapshot-relative document the business case asked the agent to review "
+        "(repeatable; taken from the case's target_docs). Off-target findings and the "
+        "per-document unmatched cap only apply when this is given — omit it only for "
+        "non-business grading.",
+    )
     args = parser.parse_args(argv)
     try:
         seed_document = load_seeds(Path(args.seeds).expanduser().resolve())
         document = grade_case(
-            seed_document, Path(args.findings_dir).expanduser().resolve(), args.min_recall
+            seed_document,
+            Path(args.findings_dir).expanduser().resolve(),
+            args.min_recall,
+            target_docs=args.target_docs,
         )
     except SeedGraderError as exc:
         print(f"seed grader: {exc}", file=sys.stderr)

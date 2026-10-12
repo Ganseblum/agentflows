@@ -1449,6 +1449,7 @@ def validate_schemas() -> list[ValidationError]:
         if not isinstance(document.get("$id"), str) or not document["$id"]:
             errors.append(ValidationError(str(path), "must declare a non-empty $id"))
         errors.extend(check_schema_refs(document, path))
+        errors.extend(check_schema_keywords(document, path))
     return errors
 
 
@@ -1466,6 +1467,124 @@ def check_schema_refs(value: Any, schema_path: Path, location: str = "$") -> lis
     elif isinstance(value, list):
         for index, child in enumerate(value):
             errors.extend(check_schema_refs(child, schema_path, f"{location}[{index}]"))
+    return errors
+
+
+# Keywords the hand-written SchemaValidator implements — mirrors the ``if ... in schema``
+# dispatch in SchemaValidator._validate — plus the annotation keywords JSON Schema lets
+# validators ignore. A schema using a validation keyword outside this set would be
+# silently skipped by the subset validator, so the gate must refuse it instead of
+# pretending to check it (fail-closed). Extend only together with a matching _validate
+# branch; a typo like ``minLenght`` lands here too, which is the point.
+SUPPORTED_SCHEMA_KEYWORDS = frozenset(
+    {
+        # reference and metadata
+        "$ref",
+        "$id",
+        "$schema",
+        "$comment",
+        "$defs",
+        "definitions",
+        # annotations: validators ignore them, so they cannot hide a missing check
+        "title",
+        "description",
+        "default",
+        "examples",
+        "deprecated",
+        "readOnly",
+        "writeOnly",
+        # validation keywords implemented by SchemaValidator._validate
+        "type",
+        "enum",
+        "const",
+        "format",
+        "pattern",
+        "minLength",
+        "maxLength",
+        "minimum",
+        "maximum",
+        "items",
+        "minItems",
+        "maxItems",
+        "uniqueItems",
+        "contains",
+        "minContains",
+        "properties",
+        "additionalProperties",
+        "required",
+        "allOf",
+        "anyOf",
+        "oneOf",
+        "not",
+        "if",
+        "then",
+        "else",
+    }
+)
+
+# Positions whose value is itself a schema, a map of schemas, or a list of schemas.
+# The walker visits schema positions only: the values of ``const``/``enum``/``default``/
+# ``examples`` are data, not schemas, so their keys must never be read as keywords.
+_SCHEMA_VALUE_KEYWORDS = (
+    "additionalProperties",
+    "items",
+    "contains",
+    "not",
+    "if",
+    "then",
+    "else",
+    "propertyNames",
+    "unevaluatedItems",
+    "unevaluatedProperties",
+)
+_SCHEMA_MAP_KEYWORDS = ("properties", "patternProperties", "dependentSchemas", "$defs", "definitions")
+_SCHEMA_LIST_KEYWORDS = ("allOf", "anyOf", "oneOf", "prefixItems")
+
+
+def check_schema_keywords(value: Any, schema_path: Path, location: str = "$") -> list[ValidationError]:
+    """Reject validation keywords the hand-written validator does not implement.
+
+    JSON Schema says validators ignore unknown keywords; this subset validator really
+    does, which turns ``exclusiveMinimum``/``patternProperties`` (or a misspelled
+    ``minLenght``) into a constraint that is declared but never enforced. Walking every
+    schema position keeps that class of silent gap a compile error.
+    """
+    errors: list[ValidationError] = []
+    if not isinstance(value, dict):
+        return errors
+    items = value.get("items")
+    if isinstance(items, list):
+        # Array-form items is the Draft-07 tuple spelling; Draft 2020-12 (which the gate
+        # enforces) uses prefixItems. Reject it instead of walking a form the subset
+        # validator never executes.
+        errors.append(
+            ValidationError(
+                str(schema_path),
+                f"{location}.items: array-form items is Draft-07; use prefixItems (Draft 2020-12)",
+            )
+        )
+    for key in value:
+        if key not in SUPPORTED_SCHEMA_KEYWORDS:
+            errors.append(
+                ValidationError(
+                    str(schema_path),
+                    f"{location}: unsupported keyword {key!r}: the subset validator "
+                    "would silently skip it",
+                )
+            )
+    for key in _SCHEMA_VALUE_KEYWORDS:
+        if key in value:
+            errors.extend(check_schema_keywords(value[key], schema_path, f"{location}.{key}"))
+    for key in _SCHEMA_MAP_KEYWORDS:
+        child = value.get(key)
+        if isinstance(child, dict):
+            for name, sub in child.items():
+                errors.extend(check_schema_keywords(sub, schema_path, f"{location}.{key}.{name}"))
+    for key in _SCHEMA_LIST_KEYWORDS:
+        child = value.get(key)
+        if isinstance(child, list):
+            for index, sub in enumerate(child):
+                errors.extend(check_schema_keywords(sub, schema_path, f"{location}.{key}[{index}]"))
     return errors
 
 

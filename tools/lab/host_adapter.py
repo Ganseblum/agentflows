@@ -163,8 +163,15 @@ def snapshot_diff_digest(business_root: Path) -> str:
     ``snapshot_status_paths`` only sees *which* paths changed; this digest sees *what they
     changed to*, so a host that rewrites the content of an already-seeded file (same file
     set, different bytes) is caught instead of passing the per-invocation check.
+
+    ``--no-renames`` keeps a rename visible as delete+add instead of a similarity-folded
+    rename record, and ``--no-textconv`` keeps the digest independent of the operator's
+    git config: with either flag missing, the same bytes can digest differently on
+    another machine, which would make cross-host comparisons meaningless.
     """
-    completed = run_git(["-C", str(business_root), "diff", "--no-color", "--no-ext-diff"])
+    completed = run_git(
+        ["-C", str(business_root), "diff", "--no-color", "--no-ext-diff", "--no-renames", "--no-textconv"]
+    )
     if completed.returncode != 0:
         detail = completed.stderr.strip() or f"git diff exited with {completed.returncode}"
         raise ValueError(f"cannot read the business snapshot diff: {detail}")
