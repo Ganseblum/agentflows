@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """把可安装的插件面复制到 packaging/runtime。
 
-真源保持在仓库根（agents/、skills/、各 manifest）。本脚本把该面复制到一个生成目录，
-使 local-directory marketplace 可以在不包含记录根（issues/、episodes/、plans/、
-improvements/、releases/、reviews/、_archive/）、tests/、tools/、docs/、evals/、
-mock/ 的情况下对其进行快照。
+真源保持在仓库根（agents/、skills/、各 manifest）。本脚本把该面复制到一个生成目录，使
+local-directory marketplace 可以在不包含记录根（issues/、episodes/、plans/、improvements/、
+releases/、reviews/）、tests/、tools/、docs/、evals/、examples/ 的情况下对其进行快照。
 
 复制只涉及常规文件。符号链接一律拒绝，确保生成树不能指向声明的面之外
 （与 tools/lab/artifact_digest.py 同规则）。
@@ -43,12 +42,10 @@ FORBIDDEN_TOP_LEVEL = frozenset(
         "improvements",
         "releases",
         "reviews",
-        "_archive",
         "tests",
         "tools",
         "docs",
         "evals",
-        "mock",
         "examples",
         ".git",
         "packaging",

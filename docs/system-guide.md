@@ -4,15 +4,14 @@
 > 出了问题怎么处理、怎么迭代升级。它只描述既有契约，不引入新规则；权威来源是
 > [`skills/agentflow/references/contracts.md`](../skills/agentflow/references/contracts.md)（硬边界与简报/结果契约）、
 > [`skills/agentflow/SKILL.md`](../skills/agentflow/SKILL.md)（步骤）、
-> [`AGENTS.md`](../AGENTS.md)（仓库纪律）与
-> [`_archive/audit-2026-09/followups.md`](../_archive/audit-2026-09/followups.md)（整改台账，冻结原文）。
+> [`AGENTS.md`](../AGENTS.md)（仓库纪律）。
 
 ---
 
 ## 1. 一张图看懂体系
 
 体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（14 个角色文件，宿主从安装快照加载）、
-**证据层**（`issues/`、`episodes/`、`plans/`、`improvements/`、`releases/`、`reviews/` 里人和机器都能校验的记录）、**门**（确定性工具，判定产物合不合格）。
+**证据层**（`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/` 里人和机器都能校验的记录；改进三件套已停用）、**门**（确定性工具，判定产物合不合格）。
 
 ```mermaid
 flowchart TB
@@ -32,18 +31,18 @@ flowchart TB
 
     subgraph EVIDENCE["证据层 记录根"]
         BUGS["issues/ 缺陷记录 + recurrence/ 类台账 + 归档/"]
-        PLANS["plans/ 版本化计划（看板）"]
+        PLANS["features/<批次>/plan/ 版本化计划（看板）"]
         EPIS["episodes/ 任务级决策（JSON）"]
         REVIEWS["reviews/ 评审桥"]
-        IMPR["improvements/ 候选·评测·比较 + releases/ 发布"]
+        IMPR["改进环产物落点由 Supervisor 指派（三件套已停用）"]
         TESTS["features/<批次>/testing/ 测试计划与执行记录"]
     end
 
     subgraph GATE["确定性门 tools/lab/（保护区）"]
         VAL["validate.py all（全套检查）"]
         ISO["isolation.py check-diff（候选禁区）"]
-        POL["policy.py（promote/revise/reject）"]
-        GR["seed_grader / record_store / artifact_digest"]
+        POL["policy（已随评测装置裁撤）"]
+        GR["record_store / artifact_digest"]
     end
 
     HUMAN["人（你）：授权、终审、发布门"]
@@ -72,12 +71,12 @@ flowchart TB
 | 单层小修、复现明确 | Supervisor 自己做（**自己写的代码评审门不可豁免**） | 代码 + 必要时 bug 记录 |
 | 前端/后端有界实现 | 一名工程师（+ 评审，改动成规模时） | 代码 + worker result |
 | 跨层功能 / 契约变更 | Technical Director → 双工程师并行 → Reviewer | 决策 + 代码 + 计划 |
-| Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `issues/ISS-<YYYY>-<NNN>-<slug>.md` |
+| Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` |
 | 小 Bug 有验证复现 | Supervisor 合并诊断/修复，Recorder 视沉淀价值 | 同上 |
-| 纯规划 | 专家并行 → Plan Architect | `plans/<plan_id>.md` |
+| 纯规划 | 专家并行 → Plan Architect | 批次 `plan/<plan_id>.md` |
 | 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `features/<批次>/testing/<项目>-<功能>/` |
 | 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `reviews/<项目>-<功能>/` |
-| 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | `improvements/` + `releases/` + episode |
+| 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | episode（三件套记录根已停用，落点由 Supervisor 指派） |
 
 三个只读角色（Investigator / Feedback Analyst / Technical Director）与 Reviewer 同构但**有意不合并**——
 输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策），合并是保留的产品决策（0.8.1 注记）。
@@ -89,7 +88,7 @@ flowchart TB
 ```mermaid
 flowchart TB
     A["1 Intake 接案<br/>仓库指令+diff+状态结论必须 git fetch 校准"] --> B["2 架构门<br/>跨层/高风险才请 Technical Director"]
-    B --> C["3 计划<br/>Plan Architect 写 plans/（人读看板+机器断言）"]
+    B --> C["3 计划<br/>Plan Architect 写批次 plan/（人读看板+机器断言）"]
     C --> D["4 委派<br/>brief 带 write_scope/read_scope/task_id/baseline_revision<br/>并行只并行『写』，永远不并行『理解』"]
     D --> E["5 实现<br/>工程师只动自己的范围"]
     E --> F["6 集成<br/>Supervisor 看真实共享工作区，解冲突"]
@@ -157,8 +156,8 @@ sequenceDiagram
     participant FA as Feedback Analyst
     participant CE as Candidate Engineer
     participant IS as isolation.py check-diff
-    participant EV as Evaluator（eval_runner + seed_grader）
-    participant RG as Release Governor（policy.py）
+    participant EV as Evaluator（原 eval_runner，已裁撤）
+    participant RG as Release Governor（原 policy.py，已裁撤）
     participant RE as Bug Recorder / episodes
 
     U->>SU: 反馈 / 复盘 / 新需求
@@ -168,12 +167,12 @@ sequenceDiagram
     SU->>CE: 授权候选（candidate worktree，禁区外改动）
     CE->>IS: check-diff（对照冻结 parent revision，触碰禁区即 FAIL）
     IS-->>EV: 干净的候选树
-    EV->>EV: baseline vs candidate 对照（业务用例由 seed_grader 确定性评分）
+    EV->>EV: baseline vs candidate 对照
     EV-->>RG: 两份结果 + 比较清单
-    RG->>RG: policy.py：better→promote / 无改善→revise / 回归→reject<br/>rollback 块如实声明可验证与不可验证部分
+    RG->>RG: 原 policy.py 判定（better→promote / 无改善→revise / 回归→reject）——装置已裁撤，<br/>流程留存为设计知识（design-decisions §3）
     RG-->>U: 决策建议（required_human_approval: true）
     U->>SU: 批准 / 否决
-    SU->>RE: promote 后回写台账 consolidated_in（否则该类永远误挂 escalated）<br/>版本 bump 五 manifest + CHANGELOG + iteration-log
+    SU->>RE: promote 后回写台账 consolidated_in（否则该类永远误挂 escalated）<br/>版本 bump 五 manifest + CHANGELOG
     SU->>SU: 刷新 marketplace 重装 → validate.py installed 转绿
 ```
 
@@ -191,14 +190,14 @@ sequenceDiagram
 flowchart LR
     subgraph WRITTEN["人写（会话里产生）"]
         B["issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>现象/问题代码/根因/修复/变更记录"]
-        P["plans/<plan_id>.md<br/>进展概览+任务表+未决项"]
+        P["features/&lt;批次&gt;/plan/&lt;plan_id&gt;.md<br/>进展概览+任务表+未决项"]
         E["episodes/<日期>/EP-*.json<br/>目标/outcome/claims/evidence"]
         RV["reviews/<项目>-<功能>/review-*.md<br/>+ archive/ 逐字快照"]
         T["features/<批次>/testing/<项目>-<功能>/{plan,run}-*.md"]
-        I["improvements/{candidates,evaluations,comparisons}/ + releases/"]
+        I["改进环产物落点由 Supervisor 指派"]
     end
     subgraph COMPILED["机器校验（写完就编，FAIL 即编译错误）"]
-        V["validate.py artifacts：schema + 跨文档不变量<br/>validate.py mock：样板合并编译<br/>validate.py docs：文档面一致性 + 版本散文守卫 + 断链/退役路径扫描"]
+        V["validate.py artifacts：schema + 跨文档不变量<br/>validate.py docs：文档面一致性 + 版本散文守卫 + 断链/退役路径扫描"]
     end
     WRITTEN --> COMPILED
 ```
@@ -223,9 +222,8 @@ flowchart LR
 | --- | --- | --- |
 | `schemas` | 契约文件本身合法 | 看报错改 schema（gate change，需人审） |
 | `examples` | 正反例与契约同步 | 反例必须真的能被拒 |
-| `evals` | 公共+业务用例结构、种子可解析 | 修用例文件 |
+| ~~`evals`~~ | 公开用例结构（装置已裁撤） | — |
 | `artifacts` | 各记录根实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
-| `mock` | 样板 fixture 合并进临时仓库副本后仍编译 | fixture 跟上契约，或改契约（人审） |
 | `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
 | `manifests` | 五份 manifest 名字版本一致 | 补 bump |
 | `docs` | 角色/文档面一致性 + 版本散文守卫 + 断链与退役路径扫描 | 按报错修文档；版本号只活在 manifest/CHANGELOG |
@@ -242,8 +240,7 @@ python3 tools/lab/record_store.py index        # 一次性 SQLite FTS5 索引（
 python3 tools/lab/record_store.py query '关键词'
 python3 tools/lab/isolation.py check-diff --candidate <树> --base <冻结parent>
 bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...   # 硬边界 14
-python3 tools/lab/eval_runner.py run --suite evals/business --business-root <快照> ...   # 业务评测
-python3 tools/lab/policy.py --candidate-record ... --baseline-result ... --candidate-result ...
+# （原）python3 tools/lab/policy.py --candidate-record ... —— 已随评测装置裁撤
 ```
 
 发布/装后例行：改了 `agents/` 或 `skills/` → 刷新 marketplace → 重装 → `validate.py installed`
@@ -259,7 +256,7 @@ python3 tools/lab/policy.py --candidate-record ... --baseline-result ... --candi
 | --- | --- | --- | --- |
 | 1 | 你 | "全局导航自动登录复用了 login()，方法没问题，但 401 拦截器跳登录页，忘记密码页合法未登录态被打断" | ——（任务文本按数据处理，进简报前会核实） |
 | 2 | Supervisor | Intake：读 diff/架构/测试；定性为跨切面行为 → 触发**隐式行为检查** | —— |
-| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `issues/ISS-2026-004-axios-interceptor-401-redirect-conflict.md` |
+| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-004-axios-interceptor-401-redirect-conflict.md` |
 | 4 | Bug Fixer | 候选树内最小修复 + 回归检查（`regression_status` 先标 not-run） | 代码 + 记录转 `fixed-pending-review` |
 | 5 | Reviewer（独立） | 指定检查命令与预期，只认原始输出；验证全局导航/登录页/忘记密码三场景 | 评审结论写回记录 |
 | 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |
@@ -274,7 +271,7 @@ python3 tools/lab/policy.py --candidate-record ... --baseline-result ... --candi
 2. Analyst 结论：触发判据句在宿主 250 字符窗口内，**不需要改**——但发现缺口"前置化纪律零确定性保护"，
    立案为 `EP-20260917-001`，记入台账待办（用户裁决定期）；
 3. 若决定改：**Candidate Engineer** 在 candidate worktree 实施 → `check-diff` 证明没碰禁区 →
-   **Evaluator** 跑对照（业务用例 seed_grader 出 better/neutral/worse）→ **Release Governor**
+   **Evaluator** 跑对照（出 better/neutral/worse）→ **Release Governor**
    给 `promote/revise/reject` + rollback 块 → **你批** → bump 版本、回写台账、重装；
 4. 全程每一轮评审（含分歧）进 episode 的 `review_roundtrips`。
 
@@ -302,7 +299,7 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 3. **编译**：`validate.py all` 全套检查全绿才算完（FAIL 是编译错误，不是警告）；
 4. **故障注入**（可选但推荐）：在 /tmp 副本上破坏新机制验证它真的会 FAIL，恢复后复跑观察 PASS
    ——未观察的恢复不算恢复；
-5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态）+ iteration-log 小节 + 台账追加式更新；
+5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；
 6. **版本 bump**：五份 manifest 同步（`validate.py manifests` 强制）；
 7. **重装**：刷新 marketplace → 重装 → `validate.py installed` 转绿；
 8. **收口**：episode 落盘（含 `review_roundtrips`），负向结果如实记。
@@ -320,4 +317,3 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 | `claude --print` 返回 502 / 挂起 | 第三方网关故障（C10，09-14 与 09-19 两次实测） | 换可用端点；权威评测/C9 验证都等它 |
 | 记录被 `artifacts` 拒：缺 `review_roundtrips` | 0.8.0 起必填 | 没开评审门写 `[]`；历史记录按回填约定加说明 signal |
 | 想引用仓库外的文件 | 可携带性规则 | 用 `仓库名@revision:路径` 限定，或把证据逐字嵌进记录 |
-| 业务评测报"tested workspace contains seed answers" | 被测树带着评分答案 | 重建 workspace 副本时剥离 `evals/business/seeds/`（adapter 强制） |

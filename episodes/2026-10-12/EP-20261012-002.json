@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261012-002",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（瘦身批二期：裁 _archive 归档桶 / 删已完成 features 批次 / 门逻辑摘冻结豁免 / 活面引用全量改指；随本批提交）",
+    "base": "cc03012"
+  },
+  "run": {
+    "run_id": "session-20261012-slimming-phase2",
+    "started_at": "2026-10-12T17:08:00+08:00",
+    "ended_at": "2026-10-12T17:30:00+08:00",
+    "status": "complete"
+  },
+  "objective": "按用户指示（「不用留归档的东西，直接开始全面升级改造，做项目级别的瘦身和专业能力提升，大刀阔斧的改 只要合理就行」）裁撤归档桶与已完成批次目录，门逻辑同步摘除冻结豁免，全部活面引用改指。",
+  "outcome": "accepted",
+  "signals": [
+    { "kind": "user_feedback_quote", "value": "也不用留归档的东西，直接开始全面升级改造，做项目级别的瘦身和专业能力提升，大刀阔斧的改 只要合理就行" },
+    { "kind": "acceptance_output", "value": "validate.py all 9×PASS；unittest 139 全 OK（含重写后的豁免判别测试与新增仓限定地址钉子）；残留 grep 零命中；doc_chain self-test 通过" },
+    { "kind": "measurement", "value": "none (method-level change, no instrumented business task)" }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "_archive/ 整目录（audit-2026-09 / handoff-2026-10 / records-2026-10 共 14 跟踪文件 + 2 未跟踪）与两个已完成 features/ 批次目录裁撤；.zcode 会话残留清除；本仓不再保留归档桶，git 历史即归档",
+      "status": "verified",
+      "check": "git ls-files 确认被删内容全部在 HEAD 可回溯（唯一未跟踪件 PLAN-BUSINESS-EVAL-001.md 的原身在 HEAD plans/ 下）；目录在盘消失",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "门变更（用户显式授权）：validate.py 摘除 FROZEN_ARCHIVE_ROOT / FROZEN_HANDOFF_PREFIX / live_doc_paths 的 _archive 排除 / MIGRATION_RECORD_DIRS 豁免；HISTORICAL_DOC_CARRIERS 收敛为 CHANGELOG.md；RETIRED_PATH_TOKENS 增补 docs/iteration-log 与 docs/agent-roles；token 扫描新增仓限定地址剔除（agentflows@rev:path 是地址不是主张，历史记录引用退役路径不再误报）",
+      "status": "verified",
+      "check": "validate all 9×PASS；豁免判别测试重写为「仅豁免 runtime 与 CHANGELOG」，并新增 recreating 退役载体必触发 token 扫描的反向断言与仓限定地址钉子",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "被误冻的活契约 test-records.md 恢复至 skills/agentflow/references/（4 处活引用改指），其中两处过时路径随恢复修正（records/tests → features/<batch>/testing、records/bugs → issues/）；三级冻结条款改写为两级（L3 = 删除 + git 回溯）",
+      "status": "verified",
+      "check": "grep 确认 4 处引用全部改指；contracts.md 冻结节改写；validate docs PASS",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "活面 _archive / 已删 features 引用全量改指（README、index、project-structure、system-guide、spec-fact-check-design、self-improvement-design、issues/README、releases/README、plans×3、PENDING-DECISIONS、product/README、method-spec、ISS-005/006 改仓限定引用）；README 目录表同步摘除已删的角色镜像/迭代日志描述",
+      "status": "verified",
+      "check": "全仓活面 grep（_archive / seed_grader / evals/business）零残留；断链扫描 PASS",
+      "evidence_ref": "E1"
+    }
+  ],
+  "evidence": [
+    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-047-slimming-phase2-archive-purge.md（回归检查节含全部原始命令输出）" }
+  ],
+  "review_roundtrips": [],
+  "feedback_summary": "用户「不留归档 / 大刀阔斧」驱动二期瘦身：-16 个跟踪文件 + .zcode 残留；门豁免面收敛（4 项豁免删除、2 个退役 token 新增、1 项仓限定剔除新增）；误冻活契约复位；measurement: none",
+  "agentflow_version": "0.10.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "WorkBuddy 会话（主对话直改）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-12T17:30:00+08:00"
+}

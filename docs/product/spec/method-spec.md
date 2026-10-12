@@ -13,7 +13,7 @@
 | # | 缺口（对照 proposal 原文） | 阻塞 | 关闭方式 |
 | --- | --- | --- | --- |
 | C-1 | §1.3「宿主认证矩阵」承诺了"按宿主发测量证书"，但通篇未定义**什么是一份证书**、验收口径是什么 | 阻塞 | 由本 spec **S12** 承接：定义证书的构成与验收 |
-| C-2 | §1.3「产品文档链」说四层，但没说产品线的 **plan 层放哪**（本仓 plan 契约在 `plans/`，业务仓在目标仓约定位置） | 阻塞 | 由本 spec **S13** 承接：定义链条的目录映射 |
+| C-2 | §1.3「产品文档链」说四层，但没说产品线的 **plan 层放哪**（本仓 plan 契约在各批次 `plan/`，业务仓在目标仓约定位置） | 阻塞 | 由本 spec **S13** 承接：定义链条的目录映射 |
 | C-3 | 旧设计文档与本链的内容冲突裁决规则写在 `README.md` 而不在 proposal | 非阻塞 | 已在 `README.md` 声明，接受现状；若评审认为应上收，回填 proposal |
 | C-4 | §三 用户场景缺用户侧收益量化口径（OQ-1） | 非阻塞 | 已登记 proposal §五台账（OQ-1），待业务尺子跑通后定 |
 | C-5 | §五台账 U-02「调用授权与预算」没有授权粒度定义（按次/按批/按预算上限） | 非阻塞 | 属执行期用户决策，不属产品规格；保留在台账，由 `PLAN-LOOP-SMOKE-001` T09 人批门实操时定 |
@@ -81,11 +81,11 @@
 
 ### S6 记录体系
 
-- **陈述**：九类记录各有 schema 与目录——bug（`issues/`）、plan（`plans/`）、
-  review（`reviews/`）、episode（`episodes/`）、test-plan / test-run
-  （`features/<批次>/testing/`）、evaluation / comparison / candidate（`improvements/`）
-  与 release（`releases/`）。
-  记录是 Markdown+YAML 或 JSON，过编译门才存在。
+- **陈述**：记录各有 schema 与落点——bug（`docs/issues/`）、plan（批次内
+  `docs/features/<批次>/plan/`）、review（`reviews/`）、episode（`episodes/`）、
+  test-plan / test-run（`docs/features/<批次>/testing/`）、批次（`docs/features/<批次>/`）、
+  在途与待验收工作文件（`docs/releases/`）。改进三件套与逐版本发布记录已停用
+  （2026-10-12）。记录是 Markdown+YAML 或 JSON，过编译门才存在。
 - **验收口径**：任何新记录落盘即可被检索与校验；失效记录不删除只改状态。
 - **标尺**：`validate.py schemas` + `validate.py artifacts` + `record_store`（FTS5 读侧）。
 - **状态**：生效。
@@ -95,16 +95,16 @@
 - **陈述**：反馈 → episode → 归因 → 假设（预声明指标与拒绝条件）→ 候选（只动候选树，
   `check-diff` 拒绝触碰保护门）→ 独立评测 → policy 建议 → **人批门**发布。policy 拒绝
   基线与候选 digest 相同的对贴；候选不得松自己的评分 schema。
-- **验收口径**：一次完整闭环产出四类工件（candidate / evaluations / comparison / policy
-  建议）且全部过编译门；发布由用户 `approved` 触发。
-- **标尺**：`validate.py evals` + `eval_runner.py`（含 `--case-ids` 失败即停子集）+
-  `policy.py` + `isolation.py check-diff`。
-- **状态**：`待验证`（仪器与门全部就绪，live 对照阻塞于 proposal §五 U-01）。
+- **验收口径**（停用前口径，留存备查）：一次完整闭环产出四类工件（candidate / evaluations /
+  comparison / policy 建议）且全部过编译门；发布由用户 `approved` 触发。
+- **标尺（停用前口径）**：原 `validate.py evals` + runner + policy；`isolation.py check-diff` 保留为通用工具。
+- **状态**：**已停用**（2026-10-12 用户拍板：改进三件套记录根与逐版本发布记录退役；
+  方法级改动一律 `measurement: none`；恢复仪器化时落点由 Supervisor 显式指派）。
 
 ### S8 确定性验证面
 
-- **陈述**：`validate.py all` 全套检查（schemas / examples / evals / artifacts / mock /
-  protected / manifests / docs / tests / doc_chain 自测）全绿是任何交付的最低门槛；保护门清单
+- **陈述**：`validate.py all` 全套检查（schemas / examples / artifacts / protected /
+  manifests / docs / tests / doc_chain 自测，8 项）全绿是任何交付的最低门槛；保护门清单
   （`protected-paths.txt`）覆盖评测官/发布官角色、评测套件、测量路径、记录 schema、钉住
   回归测试；门变更须人工评审。
 - **验收口径**：`python3 tools/lab/validate.py all` 退出码 0；`validate.py protected`
@@ -115,23 +115,22 @@
 ### S9 打包与安装
 
 - **陈述**：marketplace 源指向 `packaging/build_runtime.py` 生成的瘦快照（含 agents /
-  skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除六个记录根、`_archive/`
-  与 tests / tools / docs / evals / mock / examples / packaging）；五份 manifest 是唯一版本
-  事实源；源码编辑在重装前不改变宿主行为。
+  skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除 `docs/`、`episodes/`、
+  `reviews/` 与 tests / tools / evals / examples / packaging/CHANGELOG）；五份 manifest 是唯一
+  版本事实源；源码编辑在重装前不改变宿主行为。
 - **验收口径**：生成目录存在且组件齐全；`validate.py installed` 逐文件 sha256 与源码一致；
   克隆后先跑构建脚本（gitignore 产物）。
 - **标尺**：`validate.py installed`；`validate.py manifests`（名称/版本五处一致）。
 - **状态**：生效（瘦快照已重装核实）。
 
-### S10 业务评测仪器
+### S10 业务评测仪器（已裁撤）
 
-- **陈述**：业务任务度量切片（`evals/business/`）以种子缺陷确定性评分；被测树含
-  `*.seeds.json` 时 fail-closed；请求级 `allowed_tools` 与 `isolate_host_config` 为
-  authoritative 运行的前置；claude 侧 `observed_permission_denials` 宿主观测通道，缺失
-  键 = 未观测而绝非 0。
-- **验收口径**：种子防泄漏双实验可复现；缺前置参数时运行被大声拒绝。
-- **标尺**：`validate.py evals` + `seed_grader.py` + `host_adapter.py` 参数拒绝路径 + 单测。
-- **状态**：`待验证`（仪器就绪，未在 live 业务任务上跑过，依赖 U-01/U-02）。
+- **原陈述**：业务任务度量切片以种子缺陷确定性评分；被测树含 `*.seeds.json` 时
+  fail-closed；请求级 `allowed_tools` 与 `isolate_host_config` 为运行前置；claude 侧
+  `observed_permission_denials` 宿主观测通道，缺失键 = 未观测而绝非 0。
+- **状态**：**已裁撤**（2026-10-12 用户拍板「保公开、裁业务」）：`evals/business/`、
+  `seed_grader.py` 与相关机器已删除，原文留存备查；公开套件（`evals/public/`，15 用例）
+  保留为仪器存量。
 
 ### S11 文档交付链（对外生成）
 
@@ -149,19 +148,19 @@
 
 - **陈述**：一份"宿主测量证书"= 针对单一宿主的一次公开套件实跑记录：声明宿主与适配器、
   套件 revision、用例集、每用例结果与原始证据、guardrail 观测值，落在
-  `improvements/evaluations/` 并过编译门。方法文本全宿主通用；**证书按宿主逐个发**，
+  Supervisor 指派的落点并过编译门（三件套记录根已停用）。方法文本全宿主通用；**证书按宿主逐个发**，
   未发证书的宿主只声明"骨架兼容"，不声明行为等价。顺序：Claude 先、ZCode 次、Codex 基线证。
 - **验收口径**：每个声称"已在宿主 X 验证"的结论能指到一份该宿主的 evaluation 记录；
   指不出的按未验证处理。
 - **标尺**：`validate.py artifacts`（evaluation 编译门）。
-- **状态**：`待验证`（claude 证书依赖 U-01；当前唯一 live 证据是 codex 一词探测，X1）。
+- **状态**：条款生效 / 尚无首份证书（claude 证书依赖 U-01；当前唯一 live 证据是 codex 一词探测，X1）。
 
 ### S13 产品文档链条目映射（承接 C-2）
 
 - **陈述**：产品线的文档链落在本目录（`docs/product/`）；执行契约层不另建，复用
-  `plans/`（机器校验契约不变）；业务仓的文档链落目标仓约定位置（无约定时
-  `docs/features/feature-*/`），其评审证据经评审桥落回本仓 `reviews/`。
-- **验收口径**：任一产品线任务能在本链找到设计出处、在 `plans/` 找到执行契约；
+  批次 `docs/features/<批次>/plan/`（机器校验契约不变）；业务仓的文档链落目标仓约定位置
+  （无约定时 `docs/features/feature-*/`），其评审证据经评审桥落回本仓 `reviews/`。
+- **验收口径**：任一产品线任务能在本链找到设计出处、在批次 `plan/` 找到执行契约；
   链内引用不断链。
 - **标尺**：`validate.py docs`（引用/schema 引用存在性）。
 - **状态**：生效。
@@ -170,7 +169,7 @@
 
 - **陈述**：对外部系统产出的文档做第二道评审时，按 feature 锚定目录
   `reviews/<project>-<feature-slug>/` 归档逐字快照（每轮一个 archive 子目录）、
-  记录 source_revision、发现以 bug 记录落 `issues/` 并按 provenance/attribution
+  记录 source_revision、发现以 bug 记录落 `docs/issues/` 并按 provenance/attribution
   双维归因。
 - **验收口径**：评审记录与全部归档文件存在且交叉引用可解析。
 - **标尺**：`validate.py artifacts`（快照与发现存在性交叉检查）。
@@ -194,13 +193,13 @@
 | S3 | 写/读范围分离 + 12 条硬边界 | 生效 |
 | S4 | 独立评审门（作者参与不可豁免） | 生效 |
 | S5 | 失败语义三类，编排层不做保底 | 生效（注入演练待做） |
-| S6 | 九类记录 + 编译门 | 生效 |
-| S7 | 改进环：预声明 → 独立评测 → 人批门 | 待验证（U-01） |
+| S6 | 记录体系 + 编译门 | 生效 |
+| S7 | 改进环：预声明 → 独立评测 → 人批门 | **已停用**（2026-10-12） |
 | S8 | 确定性检查全套 + 保护门 | 生效 |
 | S9 | 瘦快照打包，manifest 为版本事实源 | 生效 |
-| S10 | 业务尺子：种子隔离 fail-closed | 待验证（U-01/U-02） |
+| S10 | 业务尺子 | **已裁撤**（2026-10-12） |
 | S11 | 文档交付链（对外生成） | 生效 |
-| S12 | 宿主测量证书按宿主发 | 待验证（U-01） |
+| S12 | 宿主测量证书按宿主发 | 生效条款 / 尚无首份证书（U-01） |
 | S13 | 产品链目录映射 | 生效 |
 | S14 | 外部文档评审桥 | 生效 |
 | S15 | 诚实声明条款 | 生效 |

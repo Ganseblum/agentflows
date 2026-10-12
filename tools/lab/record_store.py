@@ -19,7 +19,8 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = ROOT / ".agentflow-records.sqlite3"
 DEFAULT_ROOTS = tuple(
-    ROOT / name for name in ("issues", "episodes", "plans", "improvements", "releases", "reviews")
+    ROOT / name
+    for name in ("docs/issues", "docs/releases", "docs/features", "episodes", "reviews")
 )
 
 

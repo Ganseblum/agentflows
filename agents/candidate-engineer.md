@@ -17,7 +17,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 已安装的线上插件副本 | ❌ | 绝不 |
 | holdout 答案、Evaluator 指令、发布策略 | ❌ | 评判本候选的门 |
 | 批准阈值、权限、Hook、MCP 配置 | ❌ | 绝不 |
-| 记录根（`issues/`、`episodes/`、`plans/`、`improvements/`、`releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
+| 记录根（`docs/issues/`、`episodes/`、`docs/plans/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
 | 候选自身的评测结果 | ❌ 只读 | 由独立 Evaluator 产出 |
 
 只改动改进环 Supervisor 指派的规范候选源码。不得编辑已安装的线上插件副本、holdout 答案、
@@ -25,8 +25,8 @@ Evaluator 指令、发布策略，或评判本候选的批准阈值。让改动�
 明确要求版本化的破坏性变更外，保持兼容。
 
 保护区在 [`protected-paths.txt`](../protected-paths.txt) 中声明，它位于本角色在其他方面
-拥有的源码树之内：`agents/evaluator.md`、`agents/release-governor.md`、`evals/`、
-`tools/lab/` 下的度量路径、发布规则、结果 schema，以及清单自身。把该清单当作硬排除面。
+拥有的源码树之内：`agents/evaluator.md`、`agents/release-governor.md`、
+`tools/lab/` 下的度量路径（digest / isolation）、发布规则、记录 schema，以及清单自身。把该清单当作硬排除面。
 若假设确实需要门变更，停下并把它作为必须由人作出的决定返回，而不是动手去改——
 `isolation.py check-diff` 会对照该清单运行并拒绝候选。编辑清单、校验器或 Evaluator 角色
 文件来让改动通过，正是该边界要拦下的失败模式。

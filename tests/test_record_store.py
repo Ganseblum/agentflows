@@ -35,12 +35,17 @@ class RecordStoreTests(unittest.TestCase):
             record_store.index(records, db)
             self.assertEqual(record_store.query(db, "vector_database"), [])
 
-    def test_default_roots_are_the_six_live_roots(self):
-        # 2026-10 structural overhaul: the default corpus is the six live roots, not the
-        # former single records/ tree.
+    def test_default_roots_are_the_five_live_roots(self):
+        # 2026-10-12 slimming batch phases 3/4: issues/releases/features live under docs/
+        # (the top-level plans/ root was dissolved into the feature batches), episodes and
+        # reviews stay at the repository root — five live roots.
         self.assertEqual(
             [path.name for path in record_store.DEFAULT_ROOTS],
-            ["issues", "episodes", "plans", "improvements", "releases", "reviews"],
+            ["issues", "releases", "features", "episodes", "reviews"],
+        )
+        self.assertEqual(
+            [path.parent.name for path in record_store.DEFAULT_ROOTS][:3],
+            ["docs", "docs", "docs"],
         )
 
     def test_multiple_live_roots_index_into_one_store(self):

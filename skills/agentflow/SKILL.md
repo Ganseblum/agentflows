@@ -33,7 +33,7 @@ Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目�
 
 ## 自动化测试
 
-当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），边界覆盖并声明未覆盖的类别，以及用于 spec 未定义行为的 `## 流程疑点`（契约：`_archive/records-2026-10/tests/README.md`）。`test-executor` 执行它：先做脚本化自动化（Playwright 或项目自有的 e2e 套件，headless），API 用例走命令，宿主浏览器 UI 步骤由 Supervisor 在主对话中按 Executor 的步骤脚本执行——浏览器自动化在 Claude Code 与 ZCode 上是主对话专属——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、证据与汇总计数。失败的用例带可直接复现的 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用项目级 Playwright 方案；Supervisor 驱动的路线是兜底，不是目标。
+当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），边界覆盖并声明未覆盖的类别，以及用于 spec 未定义行为的 `## 流程疑点`（契约：`skills/agentflow/references/test-records.md`）。`test-executor` 执行它：先做脚本化自动化（Playwright 或项目自有的 e2e 套件，headless），API 用例走命令，宿主浏览器 UI 步骤由 Supervisor 在主对话中按 Executor 的步骤脚本执行——浏览器自动化在 Claude Code 与 ZCode 上是主对话专属——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、证据与汇总计数。失败的用例带可直接复现的 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用项目级 Playwright 方案；Supervisor 驱动的路线是兜底，不是目标。
 
 ## 外部文档二次评审
 

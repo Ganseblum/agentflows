@@ -14,9 +14,7 @@
 | [hub/README.md](hub/README.md) · [index.md](hub/index.md) · [issues-README.md](hub/issues-README.md) | 文档枢纽仓骨架（`<project>-workflow-ai/` 的 README、index、issues 看板） |
 | [issue/issue-template.md](issue/issue-template.md) | ISS 记录骨架（frontmatter 全字段 + 固定章节的契约形态）：复制到 `issues/ISS-<YYYY>-<NNN>-<slug>.md` |
 | [releases/todo.md](releases/todo.md) · [releases/pending-test.md](releases/pending-test.md) | 发布待办 / 待验收双文件骨架：复制到 `releases/`（发布记录 JSON 契约见 `releases/README.md`） |
-| [index-template.md](index-template.md) | 文档索引骨架（仓库/中枢的 `index.md`；枢纽仓用 [hub/index.md](hub/index.md)） |
 
-> 填好的**完整样板**（各状态、再犯台账、评审桥、计划）在 [`mock/`](../../../mock/README.md)——按它的映射表复制文件即可当模板用；骨架先抄本目录，填写后跑 `python3 tools/lab/validate.py all`。
 
 ## 可选层（语料中出现的扩展，按需启用）
 

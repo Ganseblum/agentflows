@@ -11,15 +11,15 @@
 | # | 决策点 | 结论 | 一句话理由 | 详见 |
 | --- | --- | --- | --- | --- |
 | D1 | 做产品还是做运行时 | 只做方法，宿主是运行时 | LangGraph/CrewAI/Dify 管循环已被做好；本产品管协作纪律、证据编译、改自己时不能改评分规则 | PLAN-PRODUCT-001 架构结论 |
-| D2 | 产品载体 | 宿主插件（Skill + 角色文件 + manifest），不绑死单一宿主 | 方法写一次；用户留在成熟宿主里 | `docs/agent-product-boundary.md` |
-| D3 | 自迭代形态 | 受治理的人工闭环，不是自动学习系统 | 执行者发现并生成候选，独立评测验证，人按预声明门槛发布 | `docs/self-improvement-design.md` |
+| D2 | 产品载体 | 宿主插件（Skill + 角色文件 + manifest），不绑死单一宿主 | 方法写一次；用户留在成熟宿主里 | `docs/design-decisions.md` §1–§2 |
+| D3 | 自迭代形态 | 受治理的人工闭环，不是自动学习系统 | 执行者发现并生成候选，独立评测验证，人按预声明门槛发布 | `docs/design-decisions.md` §3 |
 | D4 | 评判门归属 | 保护门清单单点声明（`protected-paths.txt`），候选不可触碰 | 工具改自己时不能改评分规则；门变更=人工评审 | spec S8 |
-| D5 | 记录形态 | 九类记录各有 schema，落盘即过编译门 | 摘要不算验证；不可复现的检查视同没跑 | spec S6 |
-| D6 | 计划形态 | Markdown 融合契约（信封 + 看板任务表 + 机器断言） | 人读性与机器校验合一；plan 是执行契约不是改码授权 | `plans/README.md` |
+| D5 | 记录形态 | 各类记录各有 schema 与落点，落盘即过编译门 | 摘要不算验证；不可复现的检查视同没跑 | spec S6 |
+| D6 | 计划形态 | Markdown 融合契约（信封 + 看板任务表 + 机器断言） | 人读性与机器校验合一；plan 是执行契约不是改码授权，且随批次走 | `docs/features/README.md` 计划形态节 |
 | D7 | 失败语义 | crash/timeout/empty 三类成文，编排层不做保底 | 降级=结果降级+丢弃在途；产品级 fallback 归异常矩阵 | spec S5 |
 | D8 | 打包 | 瘦快照：`build_runtime.py` 生成，marketplace 源指向生成树 | 用户装的不是整仓死重；运行时面与实验室控制面分开 | spec S9 |
 | D9 | 版本事实源 | 五份 manifest + CHANGELOG 唯一；文档禁复述版本号 | 版本散文化曾三次漂移，守卫检查执行 | spec S9、`validate.py docs` |
-| D10 | 评测仪器 | 公开套件（AF-xxx）+ 业务切片（种子确定性评分）；`--case-ids` 子集失败即停 | 第一次闭环不必等业务 18 次；噪声底先行 | PLAN-LOOP-SMOKE-001 |
+| D10 | 评测仪器 | ~~公开套件 + 业务切片~~ **已整线裁撤**（2026-10-12）；设计知识与恢复清单留存 | 仪器化度量暂停，方法级改动 `measurement: none` | 原始决策见 PLAN-LOOP-SMOKE-001 |
 | D11 | 度量效度 | 被测树含 seeds 即 fail-closed；authoritative 运行强制隔离参数 | 种子泄漏=考试漏题；不可信基线不如不测 | spec S10 |
 | D12 | 文档链吸收 | 方法增加 proposal→spec→design→plan 交付链（对外生成 + 对内自举），**推翻**早期"只吸收评审判据、不建模板体系"的取舍 | 只有评审判据没有生成契约时，文档质量靠当次会话自觉——与方法的其余部分治理哲学不一致；用户 2026-09-20 拍板补链 | spec S11/S13；本文件 §1.4 |
 | D13 | 文档链门禁 | spec 反审 proposal（阻塞清单）、design 冻结前独立评审、plan 前置=design 冻结 | 链条带门才不是仪式；复用评审桥落证据 | `references/document-chain.md` |
@@ -34,7 +34,7 @@
 | P0 | 工具改自己时可能松掉评分规则（candidate 改 schema/评测/守卫） | 保护门 + `check-diff` 对冻结父 revision 比对 + `validate.py protected` 守清单覆盖（D4） |
 | P0 | 独立评测的效度：基线与候选同树对贴、种子泄漏、宿主不可信端点 | digest 相同拒判（D10）、seeds fail-closed（D11）、证书按宿主发（S12） |
 | P0 | 方法声明与宿主实态漂移：源码编辑≠宿主行为 | 瘦快照 + `installed` 逐文件比对（D8）；宿主事实只入 `host-platform-facts.md` 且带复验方法 |
-| P1 | 记录一旦分散即不可检索，证据随会话消失 | 九类记录 + FTS5 读侧 + episode 会话内强制落盘（D5） |
+| P1 | 记录一旦分散即不可检索，证据随会话消失 | 记录体系（schema + 编译门）+ FTS5 读侧 + episode 会话内强制落盘（D5） |
 | P1 | 文档链只有评审没有生成契约，质量靠自觉 | D12 补生成契约 + D13 门禁；内部链自举（本目录即样例） |
 | P2 | 多宿主行为差异（浏览器主会话专属、工具白名单语义不同） | 宿主差异如实分宿主记录；证书不跨宿主外推（S12/S15） |
 
@@ -54,8 +54,8 @@ flowchart TB
     Roles --> Out["工件 + worker 结果契约"]
     Sup --> Gate1["独立评审门<br/>(reviewer)"]
     Gate1 --> Decide["决定记录 + claims ledger"]
-    Decide --> Ep["记录根: issues/ · episodes/ · plans/ · improvements/ · releases/ · reviews/"]
-    Ep --> Inst["实验室仪器层（不入快照）<br/>validate / eval_runner / host_adapter / policy / isolation / record_store"]
+    Decide --> Ep["记录根: docs/issues/ · docs/features/ · docs/releases/ · episodes/ · reviews/"]
+    Ep --> Inst["实验室工具层（不入快照）<br/>validate / doc_chain / isolation / record_store / artifact_digest"]
     Inst --> Loop["改进环: episode→假设→候选→独立评测→policy→人批门"]
     Loop -->|"候选树 + check-diff"| Gate2["保护门 protected-paths"]
     Inst --> Docs["产品文档链 docs/product/<br/>proposal→spec→design→plan"]
@@ -66,9 +66,9 @@ flowchart TB
 | Skill（SKILL.md） | 触发、十步骨架、门禁接线 | 具体角色指令（在角色文件） |
 | 角色文件（agents/*.md） | 单角色能力、产物归属、工具白名单 | 跨角色编排（在 Skill/Supervisor） |
 | Supervisor（主会话） | 收口、委派、集成、决定、失败分类 | 替评审者下结论；豁免自己参与的评审门 |
-| `issues/` 等记录根 | 证据落盘与检索 | 承载产品叙事（在 docs/） |
+| `docs/issues/` 等记录根 | 证据落盘与检索 | 承载产品叙事（在 `docs/`） |
 | 实验室（tools/lab/） | 编译门、评测、隔离、策略、检索 | 进入宿主瘦快照 |
-| docs/product/ | 产品四层文档链 | 取代原记录树中的产品叙事（执行契约仍在 `plans/`） |
+| docs/product/ | 产品四层文档链 | 取代原记录树中的产品叙事（执行契约在各批次 `docs/features/<批次>/plan/`） |
 | 保护门（protected-paths.txt） | 候选禁区单点声明 | 保护"怎么干活"的角色提示词（那是改进环的对象） |
 
 ### 1.3 文档链与角色/记录的接线
@@ -93,7 +93,7 @@ flowchart LR
 | proposal | Supervisor 与用户收口（原文逐字保留） | spec 反审（blocking checklist） | 目标链目录 |
 | spec | Supervisor 或 plan-architect 起；承接口登记缺口 | 需求评审门（独立评审，文档模式） | `reviews/`（跨仓）或目标仓约定 |
 | design | 相应角色（跨层时 technical-director 定边界） | 技术方案评审门（独立评审） | 同上 |
-| plan | plan-architect（只写不改码） | plan 前置门=design 冻结 | `plans/`（本仓）或目标仓计划契约 |
+| plan | plan-architect（只写不改码） | plan 前置门=design 冻结 | 本仓批次 `docs/features/<批次>/plan/` 或目标仓计划契约 |
 
 ### 1.4 本批改动与影响面评估
 
@@ -105,7 +105,7 @@ flowchart LR
 | 重装 | `packaging/runtime` 重新生成 + marketplace 刷新 + 重装 | 宿主行为在重装后切换 | 不适用（幂等构建） |
 
 **不改动**：`agents/*.md`（角色面零变化）、`schemas/` 与一切保护门路径、`tools/lab/`、
-`issues/` 等记录根（不新增计划记录——本批以本链代替，理由见 §1.3 门禁设计）。
+`docs/issues/` 等记录根（不新增计划记录——本批以本链代替，理由见 §1.3 门禁设计）。
 
 ### 2. 验证与灰度
 

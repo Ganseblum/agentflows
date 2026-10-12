@@ -8,8 +8,7 @@ python3 packaging/build_runtime.py
 ```
 
 该副本包含 `agents/`、`skills/`、`schemas/`、五份 manifest、宿主插件包装，以及
-`protected-paths.txt`。它排除记录根（`issues/`、`episodes/`、`plans/`、`improvements/`、
-`releases/`、`reviews/`）、`_archive/`、`tests/`、`tools/`、`docs/`、`evals/`、`mock/` 和
+`protected-paths.txt`。它排除记录根（`docs/`、`episodes/`、`reviews/`）、`tests/`、`tools/`、`evals/` 和
 `examples/`。
 
 生成后刷新本地 marketplace 并重新安装。`python3 tools/lab/validate.py

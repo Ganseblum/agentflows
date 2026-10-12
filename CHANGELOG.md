@@ -5,6 +5,211 @@
 > 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
 > `measurement: none`（方法级改动，无仪器化业务任务）。
 
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **内容质量批：四批改造后活面语义复核（用户指示「把无效或者需要更新的都处理了」）**：机器门只覆盖
+  断链与退役 token，语义层过时内容无门覆盖——以「读者通读是否成立」为准绳复核全部活文档：`method-spec`
+  的 S6 落点/S7 停用/S8 清单/S9 口径/S10 裁撤/S12-S13、`acceptance-matrix` 的台账引用与标尺行、
+  `product-design` 的记录形态与 mermaid、`product/README` 的阅读顺序与路径、`agent-product-boundary` 的
+  对外口径（重写为人工闭环现状）、`system-guide` 与两份 PLAN 的路径与落点标注、`index.md` 重复段删除。
+  历史时点证据（事实台账观察行、CHANGELOG、episodes、issue 正文）按原则不回写。9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **内容质量批：四批改造后活面语义复核（用户指示「把无效或者需要更新的都处理了」）**：机器门只覆盖
+  断链与退役 token，语义层过时内容无门覆盖——以「读者通读是否成立」为准绳复核全部活文档：`method-spec`
+  的 S6 落点/S7 停用/S8 清单/S9 口径/S10 裁撤/S12-S13、`acceptance-matrix` 的台账引用与标尺行、
+  `product-design` 的记录形态与 mermaid、`product/README` 的阅读顺序与路径、`agent-product-boundary` 的
+  对外口径（重写为人工闭环现状）、`system-guide` 与两份 PLAN 的路径与落点标注、`index.md` 重复段删除。
+  历史时点证据（事实台账观察行、CHANGELOG、episodes、issue 正文）按原则不回写。9×PASS、124 测试 OK。
+- **结构改造批四期：plan 归入 feature 批次与改进环死代码清除（用户指示「所以要改，合理化的处理」）**：
+  顶层 `docs/plans/` 撤销——两份计划迁入 `docs/features/feature-2026-09-19-产品线完善/plan/`（批次 README 以段落映射复用 `docs/product/` 链），跨批次拍板口提至 `docs/PENDING-DECISIONS.md`；`LIVE_RECORD_ROOTS` 收敛五根（`docs/issues` / `docs/releases` / `docs/features` / `episodes` / `reviews`），features 根只校验 `plan/<plan_id>.md` 的计划契约；改进环死代码（遍历分支、两个校验函数、schema 常量块）随停用机制整体清除，`record_store` 默认根同步；用户停手令范围的脚本收尾结清——12 个失去宿主的断言退役、fixture 对齐新布局。`validate.py all` 9×PASS、unittest 139→124 全 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **内容质量批：四批改造后活面语义复核（用户指示「把无效或者需要更新的都处理了」）**：机器门只覆盖
+  断链与退役 token，语义层过时内容无门覆盖——以「读者通读是否成立」为准绳复核全部活文档：`method-spec`
+  的 S6 落点/S7 停用/S8 清单/S9 口径/S10 裁撤/S12-S13、`acceptance-matrix` 的台账引用与标尺行、
+  `product-design` 的记录形态与 mermaid、`product/README` 的阅读顺序与路径、`agent-product-boundary` 的
+  对外口径（重写为人工闭环现状）、`system-guide` 与两份 PLAN 的路径与落点标注、`index.md` 重复段删除。
+  历史时点证据（事实台账观察行、CHANGELOG、episodes、issue 正文）按原则不回写。9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **评测装置裁撤批：evals 整线删除，设计知识先吸收（用户指示「先把精华吸收到那个文档里面」）**：
+  `docs/design-decisions.md` §3 新增留存节（15 个用例的决策维度表、八指标与可比条件、宿主适配
+  协议要点含隔离与观测通道、恢复重建清单）；随后整线删除 `evals/`、`eval_runner` / `host_adapter` /
+  `policy`、`adapter-protocol.md`、三个 schema 与 `eval-case.schema.json`、`examples` 两组样例；
+  `validate.py` 的 `evals` 检查与六项受保护必需集摘除（`all` 9→8 项），`protected-paths.txt` 摘四条；
+  12 个评测测试类删除（124→58，仍高于 20 底线）；活文档与角色面引用全量改指；8 条历史记录的
+  `files` 条目按契约处置（移除 + 变更记录留痕）。全量门 8×PASS。
+- **归档批：设计文档三合一与遗留项结清（用户指示「全部处理更新」）**：`host-native-plugin-design` /
+  `self-improvement-design` / `agent-product-boundary` 三份（379 行）合并为 `docs/design-decisions.md`
+  （保留决策、六个自迭代边界与现时状态，压缩已实施细节），`VERSION_PROSE_FILES` 守卫由四文件收窄为
+  `README.md` + 新记录；`evals/README` 标注「仪器存量」定位（改良环停用后暂无消费者，恢复时基线现成）；
+  `PENDING-DECISIONS` 第 4 条范围并入 2026-10-12 五批受保护面改动；批次 README 门槛口径与产品链对齐。
+  9×PASS、124 测试 OK。
+- **内容质量批：四批改造后活面语义复核（用户指示「把无效或者需要更新的都处理了」）**：机器门只覆盖
+  断链与退役 token，语义层过时内容无门覆盖——以「读者通读是否成立」为准绳复核全部活文档：`method-spec`
+  的 S6 落点/S7 停用/S8 清单/S9 口径/S10 裁撤/S12-S13、`acceptance-matrix` 的台账引用与标尺行、
+  `product-design` 的记录形态与 mermaid、`product/README` 的阅读顺序与路径、`agent-product-boundary` 的
+  对外口径（重写为人工闭环现状）、`system-guide` 与两份 PLAN 的路径与落点标注、`index.md` 重复段删除。
+  历史时点证据（事实台账观察行、CHANGELOG、episodes、issue 正文）按原则不回写。9×PASS、124 测试 OK。
+- **结构改造批四期：plan 归入 feature 批次与改进环死代码清除（用户指示「所以要改，合理化的处理」）**：
+  顶层 `docs/plans/` 撤销——两份计划迁入 `docs/features/feature-2026-09-19-产品线完善/plan/`（批次 README 以段落映射复用 `docs/product/` 链），跨批次拍板口提至 `docs/PENDING-DECISIONS.md`；`LIVE_RECORD_ROOTS` 收敛五根（`docs/issues` / `docs/releases` / `docs/features` / `episodes` / `reviews`），features 根只校验 `plan/<plan_id>.md` 的计划契约；改进环死代码（遍历分支、两个校验函数、schema 常量块）随停用机制整体清除，`record_store` 默认根同步；用户停手令范围的脚本收尾结清——12 个失去宿主的断言退役、fixture 对齐新布局。`validate.py all` 9×PASS、unittest 139→124 全 OK。
+- **结构改造批三期：记录根迁入 docs/ 与两个记录机制停用（用户三轮拍板）**：`issues/`、`plans/`
+  迁入 `docs/`，`releases/` 只留 `todo.md` 与 `pending-test.md`（0.8.x 版本 JSON 停用删除，
+  版本史单轨 `CHANGELOG.md`）；`improvements/` 改进三件套整目录删除（用户拍板），
+  `skills/improve` 落点条款改「Supervisor 指派」；`docs/features/` 按 youc-workflow-ai 形态
+  重建（五段骨架约定）。门配套（用户拍板授权）：`LIVE_RECORD_ROOTS` 收敛五根、releases 布局
+  检查改写、release 交叉检查移除、`record_store.py` 默认根同步；**其余脚本收尾按用户停手令
+  冻结**（10 个 fixture 测试挂，待发话）。活面引用全量改指，`validate.py all` 除 tests 外
+  全 PASS。
+- **瘦身批二期：归档桶裁撤与门豁免收敛（用户指示「不用留归档的东西……大刀阔斧的改」）**：
+  删 `_archive/` 整目录（audit / handoff / records 三桶）与两个已完成 `features/` 批次目录、
+  `.zcode/` 会话残留——本仓不再保留归档桶，git 历史即归档。门变更（用户显式授权，
+  `ISS-2026-047`）：`validate.py` 摘除四项冻结豁免、`RETIRED_PATH_TOKENS` 增补两个退役文档
+  载体、token 扫描新增仓限定地址剔除；豁免判别测试重写并加反向钉子。被误冻的活契约
+  `test-records.md` 复位到 `skills/agentflow/references/`（4 处引用改指，随恢复修正两处
+  退役路径）；三级冻结条款收敛为两级（L3 = 删除 + git 回溯）；活面 15+ 处过时引用全量改指，
+  `self-improvement-design` 头部与 `README` 目录表的过时描述同步更新。`validate.py all`
+  9×PASS、unittest 139 OK、活面残留 grep 零命中。
 - **全仓中文本地化（用户指示「能改的都改」，推送于 `4c767eb`）**：71 个文件一次性汉化——
   14 个角色文件与两个 SKILL、契约 references、README / AGENTS / docs / tools / packaging /
   examples 文档面、受保护面（evaluator 与 release-governor 角色、improve 规则书、`schemas/` 与
@@ -38,6 +243,17 @@
   `cache/0.10.0` 逐字节同步（客户端重装仍待用户侧，见 `releases/pending-test.md` 第 7 行）；提示词面审计补齐残留（`AGENTS.md` 接入节四项→五项、`agents/reviewer.md` 计划模式指针仓无关化、`SKILL.md` 简报映射句、`plan/execution.md` 模板补节）；
   独立评审四轮（第 1–3 轮 `changes_requested` 逐轮修复，第 4 轮 `approved`；往返与闭合证据见
   `EP-20261010-004`）。`measurement: none`。
+- **精简批（用户指示「不能阐述的都删除，合并的合并，减少阅读负担」+「大刀阔斧」，两项拍板：保公开
+  裁业务、删角色镜像）**：删 `mock/` 整目录与 mock 编译门（`all` 10→9 检查；其与 examples 的
+  逐字节重复件随删，审计 E8 负债清偿）；裁撤业务评测切片——`evals/business/`、`seed_grader.py`、
+  `business-case.schema.json`、`release-record.schema.json` 的 `business_case_ids`、
+  validate/eval_runner/host_adapter/isolation 的业务机器与约 24 个测试（公开路径逐字保留，测试
+  163→139 全绿），`PLAN-BUSINESS-EVAL-001` 冻结归档，待拍板 #2/#3/#5 关闭，improve 度量纪律收敛为
+  「方法级候选一律 `measurement: none`」；删 `docs/agent-roles.md` 镜像及其 parity 检查（角色面收敛为
+  agents/*.md + references/roles.md）；`docs/iteration-log.md` L3 冻结（版本史单轨到 CHANGELOG）；
+  `plans/` 收敛（PY-GUARD 归档、两处业务行标已失对象）。记录 `ISS-2026-046`；
+  `validate.py all` 9×PASS、unittest 139 OK、self-test 38/38、`installed` PASS。
+  `measurement: none`。
 
 ## 0.10.0 — 2026-10-09
 

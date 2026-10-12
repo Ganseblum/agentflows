@@ -13,7 +13,7 @@ disallowedTools: Bash
 
 | 产物 | 本角色 | 说明 |
 | --- | --- | --- |
-| `plans/` 下显式指派的计划 | ✅ 写入 | 仅限 Supervisor 给出的确切路径 |
+| 批次 `plan/` 下显式指派的计划 | ✅ 写入 | 仅限 Supervisor 给出的确切路径 |
 | 记录根中的任何其它路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、测试、schema | ❌ 只读 | 实现文件不在范围内 |
 | Evaluator 规则、发布策略、已安装的插件文件 | ❌ | 绝不 |
@@ -51,7 +51,7 @@ disallowedTools: Bash
 
 对于带用户可见行为的特性，计划还要带一个指派给 `test-planner` 的测试设计任务，
 在 `features/<批次>/testing/<项目>-<功能>/` 下产出用例库
-（契约：`_archive/records-2026-10/tests/README.md`），且 验证命令 章节引用该计划的
+（契约：`skills/agentflow/references/test-records.md`），且 验证命令 章节引用该计划的
 smoke 集；端到端用例在评审门关闭前通过。面向用户的计划缺少测试设计任务即为不完整。
 
 对于 material 特性，计划带 [contracts](../skills/agentflow/references/contracts.md)

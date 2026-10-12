@@ -5,8 +5,9 @@
 - 需求名称：Agentflow 产品化（宿主原生多角色协作方法插件）
 - 所属阶段：`proposal`
 - 目标阶段：`proposal -> spec -> design -> plan`
-- 原文出处：用户 2026-09-19 拍板记录（`plans/PLAN-PRODUCT-001.md`「已拍板」表）、
-  产品边界决策（`docs/agent-product-boundary.md`）、迭代台账（`docs/iteration-log.md`）
+- 原文出处：用户 2026-09-19 拍板记录（`docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md`「已拍板」表）、
+  产品边界决策（`docs/agent-product-boundary.md`）；版本史与「为什么迭代」见 `CHANGELOG.md` 与 `episodes/`
+  （原 `docs/iteration-log.md` 已随 2026-10-12 瘦身批删除，git 历史可回溯）
 - 状态：历史原文结论收口；当前实施口径以 `spec/`、`design/` 为准
 
 ## 一、背景与目标
@@ -94,7 +95,7 @@ OQ-1（待冻结）：业务仓开发者场景缺量化口径——"完整链路
 | G4 | 首次真实业务评测未跑，BUG-20260914-003 等 `fixed-pending-review` 记录无法转 verified | 阻塞若干记录状态收敛 | 依赖 U-01/U-02 |
 | D1 | 诊断/反馈/架构角色与 reviewer 同形不同命（显式过渡态注记） | 非阻塞，产品决策搁置 | 合并与否保留为保留决策，见 roles 收敛注记 |
 | OQ-1 | 用户侧收益无量化基线（见第三节） | 非阻塞 | 待业务尺子跑通后定口径 |
-| OQ-2 | `spec-fact-check-design.md` 事实核对流程未实施 | 非阻塞 | 保留讨论稿；若文档链跑顺，作为 design 阶段的可选检查项再评估 |
+| OQ-2 | `spec-fact-check-design.md` 事实核对流程未实施 | 非阻塞 | ~~保留讨论稿~~ 已随 2026-10-12 瘦身批删除（讨论稿一个月未动、无实施计划，git 历史可回溯）；若文档链后续需要该检查项，从 git 历史取稿重启评估 |
 
 ## 六、明确不做
 

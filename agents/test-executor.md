@@ -46,7 +46,7 @@ disallowedTools: Edit
 先跑 smoke 集（计划的 P0 smoke 用例）；smoke 失败时停下并报告，不要对着已损坏的构建继续跑
 全量。
 
-写执行记录（契约：`schemas/test-run.schema.json`、`_archive/records-2026-10/tests/README.md`）：
+写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）：
 `test_run_id`（`TR-<YYYYMMDD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
 钉住的 `test_plan_id`/`test_plan_version`、实际测试的 `target_revision`、`environment`
 （origin、路由、账号角色）、`credentials`（注入方式，绝不是值）、平铺的

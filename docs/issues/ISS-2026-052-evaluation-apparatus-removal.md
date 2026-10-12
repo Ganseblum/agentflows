@@ -1,0 +1,78 @@
+---
+bug_id: ISS-2026-052
+title: 评测装置裁撤批——evals 整线与三份契约删除，设计知识先吸收后删（用户拍板）
+status: fixed-pending-review
+severity: P2
+error_kind: missing-constraint
+attribution: workflow_policy
+provenance: agentflow
+project: agentflow
+files:
+  - docs/design-decisions.md
+  - protected-paths.txt
+  - tools/lab/validate.py
+  - tests/test_lab_contracts.py
+  - skills/improve/references/evidence-and-release.md
+  - agents/release-governor.md
+  - README.md
+  - docs/product/spec/method-spec.md
+recorded_at: 2026-10-12T18:46:00+08:00
+source_revision: agentflows@cc03012 + 本批工作树（2026-10-12）
+agentflow_version: 0.10.0
+fix_revision: 随本批提交（agentflows，2026-10-12）
+regression_status: pass
+---
+
+## 现象
+
+用户拍板「evals 删除吧，删除之前先把精华看看能吸收到那个文档里面」。评测装置在改进环停用
+（ISS-2026-048）后已无活跃消费者，但整套装置仍在盘并且是 `validate.py` 的一个检查项：
+
+1. `evals/`（README + 15 个公开用例 + 脱敏输入）与 `tools/lab/` 的三个评测器
+   （`eval_runner.py` / `host_adapter.py` / `policy.py`）、`adapter-protocol.md`。
+2. 三个 schema（`evaluation-result` / `comparison` / `adapter-case-result`）与改进面的
+   `eval-case.schema.json`；`examples/evaluation-results/` 与 `examples/policy/` 样例。
+3. 门与清单的接线：`validate.py` 的 `evals` 检查（含 `validate_evals`、`schema_for`、
+   `validate_document` 与两个 invariants）、`REQUIRED_PROTECTED_PATHS` 六项、
+   `protected-paths.txt` 四条、12 个测试类。
+4. 活文档与角色面的大量引用（README / AGENTS / system-guide / project-structure / 产品链 /
+   `skills/improve` / evaluator、release-governor、candidate-engineer）。
+
+## 根因
+
+与 ISS-2026-048（改进三件套）同源：装置是方法早期为「仪器化改进」预留的，运行收敛为人工治理
+后失去消费者。差异在于本轮对象是**度量装置**而非记录机制——它有可复用的设计知识（用例维度、
+度量口径、宿主适配协议），所以正确处置是「先吸收精华、再整线删除」，而不是像记录机制那样直接删。
+
+## 修复
+
+1. **精华先行吸收**：`docs/design-decisions.md` §3 新增「评测装置：已裁撤，留存的设计知识」——
+   15 个用例覆盖的决策维度清单（AF-001..015 的 slice 与测点）、八个指标与可比条件（同宿主/模型/
+   权限/fixture/套件/重复数）、宿主适配协议要点（观察上下文五字段、重复编号、holdout 前置拒绝、
+   codex 候选路径刻意 fail-closed、`allowed_tools` + `isolate_host_config` 隔离、权限拒绝观测
+   通道「缺失=未观测」）、以及恢复时需要重建的清单。
+2. **整线删除**：`evals/`、三个评测器脚本、`adapter-protocol.md`、三个 schema +
+   `eval-case.schema.json`、`examples/evaluation-results/`、`examples/policy/`。
+3. **门配套**：`validate.py` 删 `evals` 检查项与相关函数（`validate_evals`、`schema_for`、
+   `validate_document`、两个 invariants）、`REQUIRED_PROTECTED_PATHS` 摘六项、`all` 由 9 项
+   收敛为 8 项；`protected-paths.txt` 摘 `evals/` 与三条脚本、包含规则注释改写（评测半线退役，
+   保留 digest / isolation）。
+4. **测试**：12 个评测测试类与三个失效 import 删除（124 → 58 测试，仍远高于 20 底线）。
+5. **引用改指**：README / AGENTS / index / system-guide / project-structure / 产品链三份 /
+   `skills/improve/SKILL.md` / `evidence-and-release.md` / 三个角色文件；`examples/README.md` 与
+   `schemas/README.md` 复核。
+6. **历史记录**（ISS-001/002/003/004/005/006/046/051）：`files` 中指向已删装置的条目移除，
+   在各记录「变更记录」补一行留痕（含原文件名与恢复指引）；空 `files` 的记录指向
+   `docs/design-decisions.md`。
+
+## 回归检查
+
+- `python3 tools/lab/validate.py all` → 8×PASS（evals 检查项随装置裁撤移除）；`unittest` → 58 OK。
+- 活面 grep（`evals` / `eval_runner` / `host_adapter` / `policy.py` / 评测套件 / 三个 schema 名）
+  零残留（`design-decisions.md` 的留存节与各处的「已裁撤」标注除外）。
+- `protected-paths.txt` 的 `validate.py protected` 覆盖检查 PASS（清单与必需集同步）。
+- runtime 重建后 `installed` 复验。
+
+## 变更记录
+
+- 2026-10-12 · recorded + fixed · 评测装置裁撤批落地（fix_revision 随本批提交）

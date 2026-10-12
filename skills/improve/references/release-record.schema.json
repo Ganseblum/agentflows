@@ -45,13 +45,6 @@
         "basis": {
           "type": "string",
           "minLength": 1
-        },
-        "business_case_ids": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
         }
       }
     },
@@ -133,39 +126,6 @@
     }
   },
   "allOf": [
-    {
-      "if": {
-        "properties": {
-          "measurement": {
-            "properties": {
-              "status": {
-                "const": "complete"
-              }
-            },
-            "required": [
-              "status"
-            ]
-          }
-        },
-        "required": [
-          "measurement"
-        ]
-      },
-      "then": {
-        "properties": {
-          "measurement": {
-            "required": [
-              "business_case_ids"
-            ],
-            "properties": {
-              "business_case_ids": {
-                "minItems": 1
-              }
-            }
-          }
-        }
-      }
-    },
     {
       "if": {
         "properties": {

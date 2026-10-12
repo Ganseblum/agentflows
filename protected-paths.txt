@@ -7,11 +7,13 @@
 # the candidate tree contains these paths.
 #
 # Inclusion rule: a path belongs here when it decides whether a candidate is measured or judged —
-# the evaluator and governor role instructions, the evaluation suite, the measurement path
-# (runner, adapter, digest), the deterministic release policy, the compile step, the boundary
-# check, the record contracts that compile step enforces, the regression tests that pin the gate
-# tools, and the result schemas. Role prompts that only describe how work is done are NOT
-# protected; improving them is the point of the loop.
+# the evaluator and governor role instructions, the measurement path that survives (digest,
+# isolation), the compile step, the boundary check, the record contracts that compile step
+# enforces, and the regression tests that pin the gate tools. The evaluation suite, runner,
+# adapter, and release policy were retired with the 2026-10-12 evaluation-apparatus removal
+# (design knowledge kept in docs/design-decisions.md §3); restore their protection together
+# with the apparatus. Role prompts that only describe how work is done are NOT protected;
+# improving them is the point of the loop.
 #
 # Three prefixes below are deliberately broad. `schemas/` covers the record contracts that
 # `validate.py` compiles candidate artifacts against: a candidate that loosens the schema it is
@@ -41,8 +43,6 @@ agents/evaluator.md
 agents/release-governor.md
 .github/
 
-evals/
-
 skills/improve/references/
 
 schemas/
@@ -51,11 +51,7 @@ tests/test_record_store.py
 
 tools/lab/artifact_digest.py
 tools/lab/doc_chain.py
-tools/lab/eval_runner.py
-tools/lab/host_adapter.py
 tools/lab/isolation.py
-tools/lab/policy.py
-tools/lab/seed_grader.py
 tools/lab/validate.py
 
 protected-paths.txt

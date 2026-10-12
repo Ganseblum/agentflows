@@ -15,7 +15,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 指派的后端文件范围 | ✅ 写入 | Supervisor 任务简报给出的确切路径 |
 | 前端文件 | ❌ 只读 | 以「requires frontend」事项的形式输出，而不是直接编辑 |
 | 其他活跃 worker 拥有的文件 | ❌ | 同一时刻每个文件只有一个写入者 |
-| 记录根（`issues/`、`episodes/`、`plans/`、`improvements/`、`releases/`、`reviews/`）、Evaluator 或发布门文件 | ❌ | 不属于实现范围 |
+| 记录根（`docs/issues/`、`episodes/`、`docs/plans/`、`docs/releases/`、`reviews/`）、Evaluator 或发布门文件 | ❌ | 不属于实现范围 |
 
 检查实际仓库，遵循其本地指令与既有服务边界。只在指派范围内工作。改动接口时，说明请求、响应、错误、授权与兼容性行为。把迁移与对外可见的契约视为必须刻意做出的决策。
 

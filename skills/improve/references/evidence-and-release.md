@@ -71,7 +71,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
   "evaluation_suite_revision": "immutable revision",
   "baseline_results": {},
   "candidate_results": {},
-  "measurement": {"status": "complete | none", "basis": "business slice or explicit reason"},
+  "measurement": {"status": "complete | none", "basis": "explicit reason only"},
   "decision": "promote | revise | reject | rollback",
   "approvals": [],
   "rollout": {},
@@ -80,10 +80,11 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 }
 ```
 
-候选预声明用 [candidate.schema.json](candidate.schema.json)，冻结用例用
-[eval-case.schema.json](eval-case.schema.json)，完成后的门用
-[release-record.schema.json](release-record.schema.json)，runner 的
-baseline/候选比较用 [comparison.schema.json](../../../schemas/comparison.schema.json)。
+候选预声明用 [candidate.schema.json](candidate.schema.json)，完成后的门用
+[release-record.schema.json](release-record.schema.json)（以上两份契约文件仍在）。
+**冻结用例与对照结果的原契约（`eval-case.schema.json`、`comparison.schema.json`）已随
+2026-10-12 评测装置裁撤删除**——本轮及以后的方法级改动一律 `measurement: none`；恢复仪器化时
+按 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3 的重建清单一并恢复契约。
 
 把记录绑定到确切的源码与评测 revision 以及不可变的产物摘要。不要复用另一个候选的结果。受保护切片独立评测；聚合改进不能掩盖被声明切片里的回归。
 

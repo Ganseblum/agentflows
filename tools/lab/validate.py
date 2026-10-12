@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Agentflow contracts, examples, and public evaluation fixtures.
+"""Validate Agentflow contracts, examples, and record artifacts.
 
 This intentionally uses only the Python standard library. It implements the small
 Draft 2020-12 vocabulary used by the repository's contracts and adds explicit
@@ -39,10 +39,8 @@ SCHEMA_PATHS = [
     ROOT / "skills" / "improve" / "references",
 ]
 IMPROVEMENT_SCHEMA_NAMES = {
-    "business-case.schema.json",
     "candidate.schema.json",
     "episode.schema.json",
-    "eval-case.schema.json",
     "release-record.schema.json",
 }
 
@@ -52,42 +50,25 @@ IMPROVEMENT_SCHEMA_NAMES = {
 REQUIRED_PROTECTED_PATHS = {
     "agents/evaluator.md",
     "agents/release-governor.md",
-    "evals",
     "schemas/bug-record.schema.json",
     "schemas/recurrence.schema.json",
     "schemas/review.schema.json",
     "schemas/plan.schema.json",
-    "schemas/evaluation-result.schema.json",
     "schemas/test-plan.schema.json",
     "schemas/test-run.schema.json",
     "skills/improve/references/evidence-and-release.md",
     "skills/improve/references/episode.schema.json",
-    "skills/improve/references/eval-case.schema.json",
     "skills/improve/references/candidate.schema.json",
     "skills/improve/references/release-record.schema.json",
     "tests/test_lab_contracts.py",
     "tests/test_record_store.py",
     "tools/lab/artifact_digest.py",
     "tools/lab/doc_chain.py",
-    "tools/lab/eval_runner.py",
-    "tools/lab/host_adapter.py",
     "tools/lab/isolation.py",
-    "tools/lab/policy.py",
-    "tools/lab/seed_grader.py",
     "tools/lab/validate.py",
     "protected-paths.txt",
     ".github/workflows/validate.yml",
 }
-
-# The business evaluation slice (evals/business): real document review against a read-only
-# enterprise snapshot. The snapshot repository is deliberately absent from this checkout, so
-# target_id, target_pin, and target_docs are checked structurally only — requiring them to
-# resolve would drag an enterprise path into the public validation surface. input_ref and
-# seeds_ref do point into this repository and must resolve.
-BUSINESS_EVALS_DIR = ROOT / "evals" / "business"
-BUSINESS_CASE_SCHEMA = ROOT / "skills" / "improve" / "references" / "business-case.schema.json"
-BUSINESS_CASE_COUNT_RANGE = (3, 10)
-BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 
 # Declared contents of `tests/`. The directory is not a protected prefix — generated
 # `__pycache__` entries there would otherwise block every candidate that ran the checks — so the
@@ -95,23 +76,23 @@ BUSINESS_SEED_STRATEGY_TYPES = ("path_and_anchor",)
 # test file is a human-authored change to this list plus the protection entry above.
 EXPECTED_TEST_FILES = ("test_lab_contracts.py", "test_record_store.py")
 
-# Live record roots (2026-10 structural overhaul): the six zones that replaced the former
-# `records/` tree. `validate_workspace_artifacts` walks each root and compiles what it holds —
-# issues/ (issue records, recurrence ledgers, the 归档 archive), episodes/ (decision records),
-# plans/ (execution plans), improvements/ (candidates, evaluations, comparisons), releases/
-# (release records), reviews/ (review records with their archive snapshots).
-LIVE_RECORD_ROOTS = ("issues", "episodes", "plans", "improvements", "releases", "reviews")
+# Live record roots (2026-10-12 slimming batch, phase 4): the top-level plans/ root was
+# dissolved — plans live inside their feature batch (docs/features/<batch>/plan/), matching
+# youc-workflow-ai / aiwork-workflow-ai where a feature owns its plan/spec/design segments.
+# Five record zones now: docs/issues, docs/releases (working files only; per-version release
+# JSON was retired with the 0.8.x records, the improvements/ three-subtree by user decision),
+# docs/features (batch directories; only plan/*.md carries a machine contract here), plus
+# episodes/ and reviews/ at the root. The cross-batch decision queue sits at
+# docs/PENDING-DECISIONS.md, outside any record root.
+# `validate_workspace_artifacts` walks each root and compiles what it holds.
+LIVE_RECORD_ROOTS = ("docs/issues", "docs/releases", "docs/features", "episodes", "reviews")
 
-# `_archive/` is the frozen archive: documents inside are verbatim historical originals
-# (pre-migration audit/handoff material, retired class READMEs) whose paths and cross-references
-# reflect the trees they were written in. They are deliberately neither rewritten nor
-# path/reference-checked here — this constant is the single, explicit exemption, referenced
-# wherever a scan could otherwise reach into the archive. Do not add further exemptions.
-FROZEN_ARCHIVE_ROOT = ROOT / "_archive"
+# 2026-10-12 slimming batch (user-authorized gate change, ISS-2026-047): the frozen `_archive/`
+# tree was removed outright — the repository keeps no archive bucket. Its former exemptions
+# (scan exclusions, the handoff-pointer waiver) are deleted with it, and the retired doc
+# carriers `docs/iteration-log.md` / `docs/agent-roles.md` joined RETIRED_PATH_TOKENS below so
+# recreating them fails the residue scan instead of drifting back in.
 
-# The live roots mock/ carries demo fixtures for. mock/README.md declares these contents and
-# `validate_mock_fixtures` overlays each of them onto the throwaway repository copy.
-MOCK_RECORD_ROOTS = ("issues", "episodes", "plans", "reviews")
 
 # Floor for the regression suite size, parsed from the unittest "Ran N tests" summary. The
 # floor is set far below the suite's steady state but far above a trivial suite, so deleting
@@ -138,7 +119,7 @@ MANIFEST_POINTERS = (
 )
 
 # Components whose content decides installed plugin behavior. Anything outside this list
-# (docs, record artifacts, evals) may legitimately differ between a source checkout and a snapshot.
+# (docs, record artifacts) may legitimately differ between a source checkout and a snapshot.
 INSTALLED_COMPONENTS = ("agents", "skills")
 INSTALLED_FILES = (
     "plugin.json",
@@ -480,17 +461,6 @@ def iter_schema_paths() -> Iterable[Path]:
             if directory.name == "references" and path.name not in IMPROVEMENT_SCHEMA_NAMES:
                 continue
             yield path
-
-
-def schema_for(relative_path: Path) -> Path | None:
-    parts = relative_path.parts
-    if len(parts) >= 2 and parts[0] == "evals" and parts[1] == "public":
-        return ROOT / "skills" / "improve" / "references" / "eval-case.schema.json"
-    if len(parts) >= 2 and parts[0] == "evals" and parts[1] == "business":
-        return BUSINESS_CASE_SCHEMA
-    if len(parts) >= 2 and parts[0] == "examples" and parts[1] == "evaluation-results":
-        return ROOT / "schemas" / "evaluation-result.schema.json"
-    return None
 
 
 def path_inside_root(relative_ref: str) -> Path | None:
@@ -1345,12 +1315,12 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
             )
         )
 
-    parts = relative.parts  # ("issues", "ISS-…-slug.md") or ("issues", "归档", "YYYY-MM-DD", "ISS-…-slug.md")
+    parts = relative.parts  # ("docs", "issues", "ISS-…-slug.md") or ("docs", "issues", "归档", "YYYY-MM-DD", "ISS-…-slug.md")
     if BUG_ARCHIVE_DIR in parts:
-        date_parts = [part for part in parts[2:] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", part)]
+        date_parts = [part for part in parts[3:] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", part)]
         if not date_parts:
             errors.append(
-                ValidationError(str(path), "archived records live in a YYYY-MM-DD directory under issues/归档/")
+                ValidationError(str(path), "archived records live in a YYYY-MM-DD directory under docs/issues/归档/")
             )
             return errors
         recorded = frontmatter.get("recorded_at")
@@ -1366,72 +1336,12 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
                         f"date directory {date_parts[-1]!r} does not match recorded_at date {recorded_date.isoformat()}",
                     )
                 )
-    elif len(parts) != 2:
+    elif len(parts) != 3:
         errors.append(
-            ValidationError(str(path), "live issue records live directly under issues/ (issues/ISS-<YYYY>-<NNN>-<slug>.md)")
+            ValidationError(str(path), "live issue records live directly under docs/issues/ (docs/issues/ISS-<YYYY>-<NNN>-<slug>.md)")
         )
     return errors
 
-
-
-def validate_eval_invariants(document: dict[str, Any], path: Path) -> list[ValidationError]:
-    errors: list[ValidationError] = []
-    if document.get("holdout") is not False:
-        errors.append(ValidationError(str(path), "public evaluation cases must have holdout=false"))
-    input_ref = document.get("input_ref")
-    if isinstance(input_ref, str):
-        resolved = path_inside_root(input_ref)
-        if resolved is None or not resolved.is_file():
-            errors.append(ValidationError(str(path), f"input_ref does not resolve to a file: {input_ref!r}"))
-    return errors
-
-
-def validate_evaluation_result_invariants(document: dict[str, Any], path: Path) -> list[ValidationError]:
-    errors: list[ValidationError] = []
-    case_results = document.get("case_results", [])
-    case_ids = [item.get("case_id") for item in case_results]
-    if len(case_ids) != len(set(case_ids)):
-        errors.append(ValidationError(str(path), "evaluation case_id values must be unique"))
-    if document.get("suite_case_count") != len(case_results):
-        errors.append(ValidationError(str(path), "suite_case_count must equal the number of case_results"))
-    observed = document.get("observed_context", {})
-    for field in ("host", "model", "permissions_profile", "fixture_revision"):
-        if observed.get(field) != document.get(field):
-            errors.append(ValidationError(str(path), f"observed_context.{field} must match the declared result context"))
-    repeat_count = document.get("repeat_count")
-    for index, item in enumerate(case_results):
-        actual = len(item.get("repetitions", []))
-        if actual != repeat_count:
-            errors.append(
-                ValidationError(
-                    f"{path}:$.case_results[{index}].repetitions",
-                    f"expected exactly {repeat_count} repetitions, found {actual}",
-                )
-            )
-    return errors
-
-
-def validate_document(path: Path) -> list[ValidationError]:
-    document, errors = load_json(path)
-    if errors:
-        return errors
-    schema_path = schema_for(path.relative_to(ROOT))
-    if schema_path is None:
-        return [ValidationError(str(path), "no schema mapping is defined")]
-    try:
-        validator = SchemaValidator(schema_path)
-        errors.extend(validator.validate(document))
-    except (OSError, ValueError) as exc:
-        errors.append(ValidationError(str(path), f"validator setup failed: {exc}"))
-        return errors
-    if not errors and isinstance(document, dict):
-        relative = path.relative_to(ROOT)
-        record_parts = relative.parts[0:2]
-        if relative.parts[0:2] == ("evals", "public"):
-            errors.extend(validate_eval_invariants(document, path))
-        elif relative.parts[0:2] == ("examples", "evaluation-results"):
-            errors.extend(validate_evaluation_result_invariants(document, path))
-    return errors
 
 
 def validate_schemas() -> list[ValidationError]:
@@ -1513,11 +1423,10 @@ def validate_examples() -> list[ValidationError]:
     errors: list[ValidationError] = []
     bug_paths = sorted((ROOT / "examples" / "issues").glob("*.md"))
     plan_paths = sorted((ROOT / "examples" / "plans").glob("*.md"))
-    result_paths = sorted((ROOT / "examples" / "evaluation-results").glob("*.json"))
     test_paths = sorted((ROOT / "examples" / "testing").glob("*.md"))
     test_plan_paths = [path for path in test_paths if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
     test_run_paths = [path for path in test_paths if re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
-    valid_paths = plan_paths + result_paths
+    valid_paths = plan_paths
     invalid_dir = ROOT / "examples" / "invalid"
     present = sorted(invalid_dir.iterdir()) if invalid_dir.is_dir() else []
     declared: set[str] = set()
@@ -1580,412 +1489,20 @@ def validate_examples() -> list[ValidationError]:
         )
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
-    for path in result_paths:
-        document_errors = validate_document(path)
-        if document_errors:
-            errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
     return errors
 
-
-def validate_evals() -> list[ValidationError]:
-    errors: list[ValidationError] = []
-    paths = sorted((ROOT / "evals" / "public").glob("AF-*.json"))
-    if not paths:
-        return [ValidationError("evals/public", "no public evaluation cases found")]
-    case_ids: set[str] = set()
-    for path in paths:
-        document_errors = validate_document(path)
-        if document_errors:
-            errors.extend(document_errors)
-            continue
-        document, load_errors = load_json(path)
-        errors.extend(load_errors)
-        if isinstance(document, dict):
-            case_id = document.get("case_id")
-            if case_id in case_ids:
-                errors.append(ValidationError(str(path), f"duplicate case_id {case_id!r}"))
-            case_ids.add(case_id)
-            if path.stem != case_id:
-                errors.append(ValidationError(str(path), "filename stem must match case_id"))
-    if len(paths) < 10 or len(paths) > 20:
-        errors.append(ValidationError("evals/public", f"expected 10-20 public cases, found {len(paths)}"))
-    return errors
-
-
-def relative_to_root(path: Path) -> Path | None:
-    """The repository-relative form of `path`, or None when it lies outside the repository."""
-    try:
-        return path.relative_to(ROOT)
-    except ValueError:
-        return None
-
-
-def validate_document_with_schema(path: Path, schema_path: Path) -> list[ValidationError]:
-    """Validate one JSON document against an explicit schema file.
-
-    `validate_document` derives the schema from a repository-relative path; this variant
-    serves documents outside the repository, such as the temporary fixture directories the
-    negative tests use.
-    """
-    document, errors = load_json(path)
-    if errors:
-        return errors
-    try:
-        validator = SchemaValidator(schema_path)
-    except (OSError, ValueError) as exc:
-        return [ValidationError(str(path), f"validator setup failed: {exc}")]
-    return validator.validate(document)
-
-
-def validate_business_seeds(case: dict[str, Any], case_path: Path) -> list[ValidationError]:
-    """Check one business case's seed list: location, parseability, declared structure.
-
-    Structure only — the seed doc_refs name paths inside the enterprise snapshot and are not
-    resolved here. What is enforced: the seed file is a repository-local file, its case_id
-    matches the case, every seed's doc_ref is one of the case's target_docs, every
-    strategy.type is one the seed grader implements (an unknown type is fail-closed there, so
-    it must not pass validation here), and seed_id values are unique. An empty seed list is an
-    answer key with no answers and is rejected.
-    """
-    errors: list[ValidationError] = []
-    case_id = case.get("case_id")
-    seeds_ref = case.get("seeds_ref")
-    if not isinstance(seeds_ref, str):
-        return errors  # the schema check already reported the missing or invalid field
-    source = path_inside_root(seeds_ref)
-    if source is None or not source.is_file():
-        return [ValidationError(str(case_path), f"seeds_ref does not resolve to a file: {seeds_ref!r}")]
-    seed_document, load_errors = load_json(source)
-    if load_errors:
-        return [
-            ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: {error.message}")
-            for error in load_errors
-        ]
-    if not isinstance(seed_document, dict):
-        return [ValidationError(str(case_path), f"seeds_ref {seeds_ref!r} must be a JSON object")]
-    if seed_document.get("case_id") != case_id:
-        errors.append(
-            ValidationError(
-                str(case_path),
-                f"seeds_ref {seeds_ref!r} declares case_id {seed_document.get('case_id')!r}, not {case_id!r}",
-            )
-        )
-    seeds = seed_document.get("seeds")
-    if not isinstance(seeds, list) or not seeds:
-        errors.append(
-            ValidationError(str(case_path), f"seeds_ref {seeds_ref!r} must declare a non-empty seeds array")
-        )
-        return errors
-    target_docs = case.get("target_docs") or []
-    seen_seed_ids: set[str] = set()
-    for index, seed in enumerate(seeds):
-        if not isinstance(seed, dict):
-            errors.append(
-                ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: seeds[{index}] must be an object")
-            )
-            continue
-        seed_id = seed.get("seed_id")
-        if not isinstance(seed_id, str) or not seed_id:
-            errors.append(
-                ValidationError(
-                    str(case_path), f"seeds_ref {seeds_ref!r}: seeds[{index}] must declare a non-empty seed_id"
-                )
-            )
-        elif seed_id in seen_seed_ids:
-            errors.append(
-                ValidationError(str(case_path), f"seeds_ref {seeds_ref!r}: duplicate seed_id {seed_id!r}")
-            )
-        else:
-            seen_seed_ids.add(seed_id)
-        doc_ref = seed.get("doc_ref")
-        if not isinstance(doc_ref, str) or not doc_ref:
-            errors.append(
-                ValidationError(
-                    str(case_path), f"seeds_ref {seeds_ref!r}: seed {seed_id!r} must declare a non-empty doc_ref"
-                )
-            )
-        elif doc_ref not in target_docs:
-            errors.append(
-                ValidationError(
-                    str(case_path),
-                    f"seeds_ref {seeds_ref!r}: seed {seed_id!r} doc_ref {doc_ref!r} is not one of "
-                    "the case target_docs",
-                )
-            )
-        strategy = seed.get("strategy")
-        strategy_type = strategy.get("type") if isinstance(strategy, dict) else None
-        if strategy_type not in BUSINESS_SEED_STRATEGY_TYPES:
-            errors.append(
-                ValidationError(
-                    str(case_path),
-                    f"seeds_ref {seeds_ref!r}: seed {seed_id!r} declares unknown strategy.type "
-                    f"{strategy_type!r}; known types: {', '.join(BUSINESS_SEED_STRATEGY_TYPES)}",
-                )
-            )
-    return errors
-
-
-def validate_business_evals(directory: Path | None = None) -> list[ValidationError]:
-    """Validate the business evaluation slice: case count, case contract, and seed lists.
-
-    The optional `directory` (default evals/business) exists so negative tests and the pinned
-    contract tests can validate a fixture copy; a directory outside the repository is still
-    validated against the business schema.
-
-    Acceptance mirrors `evals/public`: the filename stem equals the case_id and case_ids are
-    unique across the suite. `target_id`/`target_pin`/`target_docs` stay structural — the
-    enterprise snapshot is not part of this repository, and the public checks must pass
-    without it. `input_ref` and `seeds_ref` resolve inside this repository and are enforced.
-    """
-    errors: list[ValidationError] = []
-    directory = BUSINESS_EVALS_DIR if directory is None else directory
-    relative = relative_to_root(directory)
-    label = relative.as_posix() if relative is not None else str(directory)
-    paths = sorted(directory.glob("BT-*.json"))
-    if not paths:
-        return [ValidationError(label, "no business evaluation cases found")]
-    minimum, maximum = BUSINESS_CASE_COUNT_RANGE
-    if len(paths) < minimum or len(paths) > maximum:
-        errors.append(ValidationError(label, f"expected {minimum}-{maximum} business cases, found {len(paths)}"))
-    case_ids: set[str] = set()
-    for path in paths:
-        if relative_to_root(path) is not None:
-            case_errors = validate_document(path)
-        else:
-            case_errors = validate_document_with_schema(path, BUSINESS_CASE_SCHEMA)
-        if case_errors:
-            errors.extend(case_errors)
-            continue
-        document, load_errors = load_json(path)
-        errors.extend(load_errors)
-        if not isinstance(document, dict):
-            continue
-        case_id = document.get("case_id")
-        if case_id in case_ids:
-            errors.append(ValidationError(str(path), f"duplicate case_id {case_id!r}"))
-        case_ids.add(case_id)
-        if path.stem != case_id:
-            errors.append(ValidationError(str(path), "filename stem must match case_id"))
-        input_ref = document.get("input_ref")
-        if isinstance(input_ref, str):
-            resolved = path_inside_root(input_ref)
-            if resolved is None or not resolved.is_file():
-                errors.append(ValidationError(str(path), f"input_ref does not resolve to a file: {input_ref!r}"))
-        errors.extend(validate_business_seeds(document, path))
-    return errors
-
-
-def validate_evals_suite() -> list[ValidationError]:
-    """Public cases plus the business slice, reported under the single `evals` row."""
-    return validate_evals() + validate_business_evals()
-
-
-# The improvement loop's JSON handoff plane: each artifact class has its own schema and its own
-# identity rule, compiled by validate_workspace_artifacts. Candidates, evaluations, and
-# comparisons live under improvements/; release records live under the repository-root
-# releases/ (split out by the 2026-10 structural overhaul). The schema split is deliberate —
-# schemas/ holds the deterministic tool-output contracts (evaluation result, comparison),
-# skills/improve/references/ holds the improve-loop rulebook contracts (candidate,
-# release record) — see improvements/README.md and releases/README.md.
-EVALUATION_RESULT_SCHEMA = ROOT / "schemas" / "evaluation-result.schema.json"
-COMPARISON_SCHEMA = ROOT / "schemas" / "comparison.schema.json"
-CANDIDATE_SCHEMA = ROOT / "skills" / "improve" / "references" / "candidate.schema.json"
-RELEASE_RECORD_SCHEMA = ROOT / "skills" / "improve" / "references" / "release-record.schema.json"
-IMPROVEMENT_SCHEMA_BY_SUBTREE = {
-    "candidates": CANDIDATE_SCHEMA,
-    "evaluations": EVALUATION_RESULT_SCHEMA,
-    "comparisons": COMPARISON_SCHEMA,
-    "releases": RELEASE_RECORD_SCHEMA,
-}
-# The subtrees that live under improvements/; release records moved to the root releases/.
-IMPROVEMENT_ARTIFACT_SUBTREES = ("candidates", "evaluations", "comparisons")
-# The seven execution-context fields the runner compares on (eval_runner.py compare) and that
-# every improvement cross-check treats as one unit.
-COMPARISON_CONTEXT_FIELDS = (
-    "suite_revision",
-    "host",
-    "model",
-    "permissions_profile",
-    "fixture_revision",
-    "repeat_count",
-    "suite_case_count",
-)
 
 # Every path under a live record root is a stray file or an unknown subdirectory and must fail
 # the artifacts check explicitly instead of falling through the root dispatch silently.
 
-def validate_improvement_document(
-    path: Path, subtree: str
-) -> tuple[dict[str, Any] | None, list[ValidationError]]:
-    """Validate one JSON artifact under improvements/<subtree>/ (or releases/) against its schema.
-
-    Improvement artifacts are exchanged between loop roles, so identity is the filename: a
-    candidate record's stem must equal its ``candidate_version`` and an evaluation result's
-    stem must equal its ``result_id`` (a release record's embedded candidate and a comparison
-    have no file identity of their own). Evaluation results additionally reuse the evaluation
-    invariants. Returns the parsed document so the caller can collect it for the
-    cross-document pass; ``None`` means the document could not be read or parsed at all.
-    """
-    document, load_errors = load_json(path)
-    if load_errors or not isinstance(document, dict):
-        return None, load_errors or [
-            ValidationError(str(path), f"{subtree} artifact is not a JSON object")
-        ]
-    try:
-        validator = SchemaValidator(IMPROVEMENT_SCHEMA_BY_SUBTREE[subtree])
-    except (OSError, ValueError) as exc:
-        return None, [ValidationError(str(path), f"validator setup failed: {exc}")]
-    errors = validator.validate(document)
-    if errors:
-        return document, errors
-    if subtree == "candidates":
-        expected = document.get("candidate_version")
-        if path.stem != expected:
-            errors.append(
-                ValidationError(str(path), f"filename stem must equal candidate_version {expected!r}")
-            )
-    elif subtree == "evaluations":
-        expected = document.get("result_id")
-        if path.stem != expected:
-            errors.append(
-                ValidationError(str(path), f"filename stem must equal result_id {expected!r}")
-            )
-        errors.extend(validate_evaluation_result_invariants(document, path))
-    return document, errors
-
-
-def validate_improvement_cross_references(
-    candidates: dict[str, tuple[Path, dict[str, Any]]],
-    results: dict[str, tuple[Path, dict[str, Any]]],
-    comparisons: list[tuple[Path, dict[str, Any]]],
-    releases: list[tuple[Path, dict[str, Any]]],
-    seen_episode_ids: dict[str, Path],
-    seen_bug_ids: dict[str, Path],
-) -> list[ValidationError]:
-    """Second pass over the collected improvement artifacts: every claim one record makes
-    about another must resolve.
-
-    Checked here, not per file, because the rglob pass is single-shot and sorted — a
-    comparison may reference a result collected later in the same pass. ``rollback_to`` is
-    deliberately unchecked: it names a release pointer, not a record in this tree.
-    """
-    errors: list[ValidationError] = []
-    comparison_pairs: set[tuple[str, str]] = set()
-    for path, comparison in comparisons:
-        pair = (comparison["baseline_result_id"], comparison["candidate_result_id"])
-        comparison_pairs.add(pair)
-        for role, result_id in (("baseline", pair[0]), ("candidate", pair[1])):
-            entry = results.get(result_id)
-            if entry is None:
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        f"{role}_result_id {result_id!r} does not resolve to an evaluation "
-                        "result under improvements/evaluations/",
-                    )
-                )
-                continue
-            result_document = entry[1]
-            expected_kind = role  # baseline result carries source_kind "baseline", etc.
-            actual_kind = result_document.get("source_kind")
-            if actual_kind != expected_kind:
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        f"{role}_result_id {result_id!r} points at a result whose source_kind "
-                        f"is {actual_kind!r}, not {expected_kind!r}",
-                    )
-                )
-            for field in COMPARISON_CONTEXT_FIELDS:
-                if result_document.get(field) != comparison["context"].get(field):
-                    errors.append(
-                        ValidationError(
-                            str(path),
-                            f"context.{field} does not match the {role} result {result_id!r} "
-                            f"({comparison['context'].get(field)!r} vs {result_document.get(field)!r})",
-                        )
-                    )
-    for path, release in releases:
-        embedded = release.get("candidate")
-        version = embedded.get("candidate_version") if isinstance(embedded, dict) else None
-        candidate_entry = candidates.get(version) if isinstance(version, str) else None
-        if candidate_entry is None:
-            errors.append(
-                ValidationError(
-                    str(path),
-                    f"embedded candidate_version {version!r} does not resolve to a candidate "
-                    "record under improvements/candidates/",
-                )
-            )
-        else:
-            candidate_path = candidate_entry[0]
-            file_document, load_errors = load_json(candidate_path)
-            if load_errors or not isinstance(file_document, dict):
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        f"candidate record {candidate_path.name} could not be re-read for the "
-                        "equality check",
-                    )
-                )
-            elif json_equal_key(file_document) != json_equal_key(embedded):
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        f"embedded candidate object is not JSON-equal to candidate record "
-                        f"{candidate_path.name}",
-                    )
-                )
-        referenced: dict[str, str] = {}
-        for role in ("baseline_results", "candidate_results"):
-            entry = release.get(role)
-            result_id = entry.get("result_id") if isinstance(entry, dict) else None
-            referenced[role] = result_id if isinstance(result_id, str) else ""
-            if isinstance(result_id, str) and result_id not in results:
-                errors.append(
-                    ValidationError(
-                        str(path),
-                        f"{role}.result_id {result_id!r} does not resolve to an evaluation "
-                        "result under improvements/evaluations/",
-                    )
-                )
-        pair = (referenced["baseline_results"], referenced["candidate_results"])
-        if pair not in comparison_pairs:
-            errors.append(
-                ValidationError(
-                    str(path),
-                    "no comparison under improvements/comparisons/ matches this "
-                    f"release's result pair ({pair[0]!r}, {pair[1]!r})",
-                )
-            )
-    for version, (candidate_path, document) in candidates.items():
-        for evidence_id in document.get("evidence_ids") or []:
-            if not isinstance(evidence_id, str):
-                continue
-            if evidence_id.startswith("EP-"):
-                pool, location = seen_episode_ids, "episodes/"
-            elif evidence_id.startswith("ISS-"):
-                pool, location = seen_bug_ids, "issues/"
-            else:
-                continue  # other evidence shapes are outside this tree's resolver
-            if evidence_id not in pool:
-                errors.append(
-                    ValidationError(
-                        str(candidate_path),
-                        f"evidence_ids entry {evidence_id!r} does not resolve to an existing "
-                        f"record under {location}",
-                    )
-                )
-    return errors
-
-
 def validate_workspace_artifacts() -> list[ValidationError]:
     """Validate record instances under the live record roots.
 
-    Issue records (with their recurrence ledgers and rejected-record archive under issues/),
-    JSON episodes, Markdown plans, the improvement artifact subtrees under improvements/ plus
-    release records under releases/, and review records with their archive snapshots. The
-    `_archive/` tree is frozen history and is deliberately not patrolled (FROZEN_ARCHIVE_ROOT).
+    Issue records (with their recurrence ledgers and rejected-record archive under
+    docs/issues/), JSON episodes, the batch directories under docs/features/ (their
+    plan/<plan_id>.md hybrids only), the working files under docs/releases/, and review
+    records with their archive snapshots. The improve-loop artifact subtrees and the
+    per-version release records were retired by the 2026-10-12 slimming batches.
     """
     errors: list[ValidationError] = []
     seen_bug_ids: dict[str, Path] = {}
@@ -1995,10 +1512,6 @@ def validate_workspace_artifacts() -> list[ValidationError]:
     ledgers: dict[str, dict[str, Any]] = {}
     class_records: list[tuple[str, Any, str, Path]] = []
     review_findings: list[tuple[list, Path]] = []
-    improvement_candidates: dict[str, tuple[Path, dict[str, Any]]] = {}
-    improvement_results: dict[str, tuple[Path, dict[str, Any]]] = {}
-    improvement_comparisons: list[tuple[Path, dict[str, Any]]] = []
-    improvement_releases: list[tuple[Path, dict[str, Any]]] = []
     live_roots: list[str] = []
     for root_name in LIVE_RECORD_ROOTS:
         root = ROOT / root_name
@@ -2014,21 +1527,25 @@ def validate_workspace_artifacts() -> list[ValidationError]:
             )
     for root_name in live_roots:
         root = ROOT / root_name
+        kind = root_name.rsplit("/", 1)[-1]
+        base = len(root_name.split("/"))  # path depth of the root itself
         for path in sorted(root.rglob("*")):
             relative = path.relative_to(ROOT)
             parts = relative.parts
-            if any(part.startswith(".") for part in parts[1:]):
+            under = parts[base:]  # entry path relative to the record root
+            n = len(under)
+            if any(part.startswith(".") for part in under):
                 if path.name == ".DS_Store":
                     continue
                 errors.append(ValidationError(str(path), "hidden record entry is not allowed"))
                 continue
-            if root_name == "issues":
-                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+            if kind == "issues":
+                if n == 1 and path.is_file() and under[0] == "README.md":
                     continue  # the class README documents the numbering and archive rules
                 if (
-                    len(parts) == 2
+                    n == 1
                     and not path.is_file()
-                    and parts[1] not in (RECURRENCE_DIR, BUG_ARCHIVE_DIR)
+                    and under[0] not in (RECURRENCE_DIR, BUG_ARCHIVE_DIR)
                 ):
                     errors.append(
                         ValidationError(
@@ -2039,7 +1556,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                         )
                     )
                     continue
-                if parts[1] == RECURRENCE_DIR:
+                if under[0] == RECURRENCE_DIR:
                     if not path.is_file():
                         continue
                     if path.suffix != ".md":
@@ -2061,8 +1578,8 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                         else:
                             ledgers[class_id] = {"path": path, "frontmatter": frontmatter}
                     continue
-                archived = parts[1] == BUG_ARCHIVE_DIR
-                if len(parts) > 2 and not archived:
+                archived = under[0] == BUG_ARCHIVE_DIR
+                if n > 1 and not archived:
                     errors.append(
                         ValidationError(
                             str(path),
@@ -2120,8 +1637,8 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 class_id = frontmatter.get("class_id")
                 if isinstance(class_id, str):
                     class_records.append((class_id, frontmatter.get("occurrence"), str(bug_id or ""), path))
-            elif root_name == "episodes":
-                if len(parts) == 2 and path.is_file() and path.name == "README.md":
+            elif kind == "episodes":
+                if n == 1 and path.is_file() and under[0] == "README.md":
                     continue
                 if not path.is_file():
                     continue
@@ -2141,8 +1658,8 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                         )
                     else:
                         seen_episode_ids[episode_id] = path
-            elif root_name == "reviews":
-                if len(parts) != 3 or not path.is_file() or not re.fullmatch(
+            elif kind == "reviews":
+                if n != 2 or not path.is_file() or not re.fullmatch(
                     r"review-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name
                 ):
                     # Only feature-directory-level review-*.md files are records; README, archived
@@ -2155,109 +1672,27 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 frontmatter, _, _ = load_bug_markdown(path)
                 if frontmatter:
                     review_findings.append((frontmatter.get("findings") or [], path))
-            elif root_name == "plans":
-                # README.md plus the declared cross-plan decision queue; a working file, not a plan.
-                if len(parts) == 2 and path.is_file() and path.name in ("README.md", "PENDING-DECISIONS.md"):
-                    continue
-                if not path.is_file():
-                    continue
-                if path.suffix != ".md":
-                    errors.append(ValidationError(str(path), "plans are Markdown files; unexpected non-md file"))
+            elif kind == "features":
+                # Batch directories: only <batch>/plan/<plan_id>.md carries a machine contract
+                # here (the plan hybrid). README / proposal / spec / design segments are
+                # governed by the doc-chain linter, not by this walk.
+                if n != 3 or under[1] != "plan" or not path.is_file() or path.suffix != ".md":
                     continue
                 errors.extend(validate_plan_markdown(path, relative))
-            elif root_name == "improvements":
-                if len(parts) == 2 and path.is_file() and path.name == "README.md":
-                    continue  # the subtree README documents the artifact contracts
-                if not path.is_file():
-                    if len(parts) == 2 and parts[1] in IMPROVEMENT_ARTIFACT_SUBTREES:
-                        continue  # the artifact subtree container
-                    errors.append(
-                        ValidationError(
-                            str(path),
-                            "unexpected entry under improvements/; artifacts live directly "
-                            "in candidates/, evaluations/, or comparisons/ (plus README.md) — "
-                            "release records live under releases/ — see improvements/README.md",
-                        )
+            elif kind == "releases":
+                # 2026-10-12: per-version release JSON was retired — this root holds only the
+                # batch todo / pending-test working files, not records.
+                if n == 1 and path.is_file() and under[0] in ("todo.md", "pending-test.md"):
+                    continue
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        "unexpected entry under docs/releases/; per-version release records were "
+                        "retired (version history lives in CHANGELOG.md) — only todo.md and "
+                        "pending-test.md working files belong here",
                     )
-                    continue
-                if len(parts) != 3 or parts[1] not in IMPROVEMENT_ARTIFACT_SUBTREES:
-                    errors.append(
-                        ValidationError(
-                            str(path),
-                            "unexpected entry under improvements/; artifacts live directly "
-                            "in candidates/, evaluations/, or comparisons/ (plus README.md) — "
-                            "release records live under releases/ — see improvements/README.md",
-                        )
-                    )
-                    continue
-                if path.suffix != ".json":
-                    errors.append(
-                        ValidationError(str(path), f"{parts[1]} artifacts are JSON files; unexpected non-json file")
-                    )
-                    continue
-                document, artifact_errors = validate_improvement_document(path, parts[1])
-                errors.extend(artifact_errors)
-                if document is None or artifact_errors:
-                    continue
-                if parts[1] == "candidates":
-                    version = document["candidate_version"]
-                    if version in improvement_candidates:
-                        errors.append(
-                            ValidationError(
-                                str(path),
-                                f"duplicate candidate_version {version!r} already declared in "
-                                f"{improvement_candidates[version][0]}",
-                            )
-                        )
-                    else:
-                        improvement_candidates[version] = (path, document)
-                elif parts[1] == "evaluations":
-                    result_id = document["result_id"]
-                    if result_id in improvement_results:
-                        errors.append(
-                            ValidationError(
-                                str(path),
-                                f"duplicate result_id {result_id!r} already declared in "
-                                f"{improvement_results[result_id][0]}",
-                            )
-                        )
-                    else:
-                        improvement_results[result_id] = (path, document)
-                elif parts[1] == "comparisons":
-                    pair = (document["baseline_result_id"], document["candidate_result_id"])
-                    if pair in {(c["baseline_result_id"], c["candidate_result_id"]) for _, c in improvement_comparisons}:
-                        errors.append(
-                            ValidationError(
-                                str(path),
-                                f"duplicate comparison result pair ({pair[0]!r}, {pair[1]!r})",
-                            )
-                        )
-                    else:
-                        improvement_comparisons.append((path, document))
-            elif root_name == "releases":
-                # README.md plus the batch todo / pending-test working files, not records.
-                if len(parts) == 2 and path.is_file() and path.name in ("README.md", "todo.md", "pending-test.md"):
-                    continue
-                if len(parts) != 2 or not path.is_file():
-                    errors.append(
-                        ValidationError(
-                            str(path),
-                            "unexpected entry under releases/; release records live directly in "
-                            "releases/ as <version>.json (plus README.md, todo.md, and "
-                            "pending-test.md) — see releases/README.md",
-                        )
-                    )
-                    continue
-                if path.suffix != ".json":
-                    errors.append(
-                        ValidationError(str(path), "release artifacts are JSON files; unexpected non-json file")
-                    )
-                    continue
-                document, artifact_errors = validate_improvement_document(path, "releases")
-                errors.extend(artifact_errors)
-                if document is None or artifact_errors:
-                    continue
-                improvement_releases.append((path, document))
+                )
+                continue
 
     # Cross-check recurrence ledgers against the records they claim.
     for class_id, entry in ledgers.items():
@@ -2312,22 +1747,11 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                     ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
     # Test records (test plans and runs) moved to features/<batch>/testing/ with the 2026-10
-    # structural overhaul. The artifacts walk does not patrol the feature batch directories yet
-    # — that patrol, including the run-findings bug-id cross-check below, is deferred to a
-    # separately reviewed change; validate_test_plan_markdown / validate_test_run_markdown stay
-    # exercised through the example fixtures.
-    # Cross-check the improvement artifacts against each other (second pass — a comparison may
-    # reference a result collected later in the same sorted rglob pass).
-    errors.extend(
-        validate_improvement_cross_references(
-            improvement_candidates,
-            improvement_results,
-            improvement_comparisons,
-            improvement_releases,
-            seen_episode_ids,
-            seen_bug_ids,
-        )
-    )
+    # structural overhaul. The artifacts walk patrols only <batch>/plan/ inside docs/features/
+    # — the testing/ patrol, including the run-findings bug-id cross-check below, is deferred
+    # to a separately reviewed change; validate_test_plan_markdown / validate_test_run_markdown
+    # stay exercised through the example fixtures. The improve-loop artifact cross-checks were
+    # retired with the improvements/ three-subtree (2026-10-12, user decision).
     return errors
 
 
@@ -2361,9 +1785,7 @@ def validate_agents_md_plan_contract(agents_md: Path) -> list[ValidationError]:
 # manifests and CHANGELOG, and these files must point at it instead of restating it.
 VERSION_PROSE_FILES = (
     "README.md",
-    "docs/host-native-plugin-design.md",
-    "docs/self-improvement-design.md",
-    "docs/agent-product-boundary.md",
+    "docs/design-decisions.md",
 )
 VERSION_LITERAL_PATTERN = re.compile(r"\bv?\d+\.\d+\.\d+\b")
 
@@ -2374,25 +1796,21 @@ VERSION_LITERAL_PATTERN = re.compile(r"\bv?\d+\.\d+\.\d+\b")
 # close. Two classes are machine-checkable: a relative Markdown link whose target does not
 # resolve, and a retired path token in prose. Fenced blocks and inline code are quotations, not
 # claims (the record contracts' 引文 exemption) — but a mermaid diagram is content, not a
-# quotation, so diagrams stay scanned. The generated `packaging/runtime/` tree and the
-# frozen `_archive/` are out of both scans; `CHANGELOG.md` and `docs/iteration-log.md` are exempt
-# from the token scan only — like the frozen archive, their entries describe the layout of their
-# own time and keep retired paths verbatim — and so is the migration execution record directory
-# (`MIGRATION_RECORD_DIRS`), whose old→new mapping is its content.
+# quotation, so diagrams stay scanned. The generated `packaging/runtime/` tree is out of both
+# scans; `CHANGELOG.md` is exempt from the token scan only — its entries describe the layout of
+# their own time and keep retired paths verbatim. The 2026-10-12 slimming batch removed the
+# frozen `_archive/` bucket and the migration-record exemption with it: those paths are now
+# residue like any other, and the two retired doc carriers joined the token list.
 RETIRED_PATH_TOKENS = (
     "records/",
     "bugs/",
     "improvement/",
     "docs/audit-2026-09-18",
     "next-session-handoff",
+    "docs/iteration-log",
+    "docs/agent-roles",
 )
-HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md", "docs/iteration-log.md")
-# The migration execution record's content IS the old→new path mapping (migration-mapping.md,
-# migration-spec.md, batch3-gate-change-spec.md, the batch README/plan); its old paths are
-# load-bearing content, not residue — the same treatment as the frozen archive, declared here
-# as the single exemption for that directory.
-MIGRATION_RECORD_DIRS = ("features/feature-2026-10-09-结构改造/",)
-FROZEN_HANDOFF_PREFIX = "_archive/handoff-2026-10/"
+HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md",)
 FENCED_BLOCK_PATTERN = re.compile(r"```(?P<info>[^\n`]*)\n.*?```", re.DOTALL)
 INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
 LINK_TARGET_PATTERN = re.compile(r"\]\(([^)]+)\)")
@@ -2407,14 +1825,13 @@ def strip_quotation_fences(text: str) -> str:
 
 
 def live_doc_paths(root: Path) -> list[Path]:
-    """Every *.md outside the frozen archive and the generated runtime tree."""
+    """Every *.md outside the generated runtime tree."""
     paths: list[Path] = []
     for path in root.rglob("*.md"):
         relative = path.relative_to(root)
         if any(part.startswith(".") for part in relative.parts):
             continue
-        posix = relative.as_posix()
-        if posix.startswith("_archive/") or posix.startswith("packaging/runtime/"):
+        if relative.as_posix().startswith("packaging/runtime/"):
             continue
         paths.append(path)
     return sorted(paths)
@@ -2440,8 +1857,6 @@ def validate_live_doc_references(root: Path = ROOT) -> list[ValidationError]:
                 errors.append(ValidationError(str(relative), f"broken relative link: {target}"))
         if relative.as_posix() in HISTORICAL_DOC_CARRIERS:
             continue
-        if relative.as_posix().startswith(MIGRATION_RECORD_DIRS):
-            continue
         inside_fence: str | None = None
         for number, line in enumerate(text.splitlines(), start=1):
             if line.lstrip().startswith("```"):
@@ -2450,19 +1865,18 @@ def validate_live_doc_references(root: Path = ROOT) -> list[ValidationError]:
                 continue
             if inside_fence is not None and not inside_fence.startswith("mermaid"):
                 continue
-            scan = INLINE_CODE_PATTERN.sub("", line)
+            # A repo-qualified reference (<repo>@<revision>:<path>) is an address, not a
+            # claim — the record contracts accept it verbatim in prose and frontmatter, so
+            # the token scan strips it before matching (agentflows@0.8.2:docs/agent-roles.md
+            # must stay citable inside a record even after docs/agent-roles was retired).
+            scan = QUALIFIED_REF_PATTERN.sub(" ", INLINE_CODE_PATTERN.sub("", line))
             for token in RETIRED_PATH_TOKENS:
                 index = scan.find(token)
                 while index != -1:
                     preceded_by_word = index > 0 and (
                         scan[index - 1].isalnum() or scan[index - 1] == "_"
                     )
-                    frozen_pointer = (
-                        token == "next-session-handoff"
-                        and scan[max(0, index - len(FROZEN_HANDOFF_PREFIX)) : index]
-                        == FROZEN_HANDOFF_PREFIX
-                    )
-                    if not preceded_by_word and not frozen_pointer:
+                    if not preceded_by_word:
                         errors.append(
                             ValidationError(
                                 str(relative),
@@ -2486,8 +1900,7 @@ def validate_doc_consistency() -> list[ValidationError]:
     English contract documents. Two live-surface scans close the 2026-10 residue classes:
     relative Markdown links must resolve, and prose must not name a retired path (fenced and
     inline code are quotations — except mermaid diagrams, which are content — and
-    `CHANGELOG.md` / `docs/iteration-log.md` keep their historical entries verbatim).
-    `_archive/` is frozen history and stays outside the surface (FROZEN_ARCHIVE_ROOT).
+    `CHANGELOG.md` keeps its historical entries verbatim).
     """
     errors: list[ValidationError] = []
     agents_dir = ROOT / "agents"
@@ -2524,8 +1937,6 @@ def validate_doc_consistency() -> list[ValidationError]:
         ROOT / "README.md",
         ROOT / "AGENTS.md",
     ]
-    # `_archive/` is deliberately absent from the surface above: frozen originals keep their
-    # historical paths and references unchecked (see FROZEN_ARCHIVE_ROOT).
     schema_ref_pattern = re.compile(r"schemas/([a-z0-9-]+\.schema\.json)")
     schema_dir = ROOT / "schemas"
     for base in reference_surface:
@@ -2562,94 +1973,9 @@ def validate_doc_consistency() -> list[ValidationError]:
                 )
             )
 
-    zh = ROOT / "docs" / "agent-roles.md"
-    zh_text, zh_errors = read_document_text(zh)
-    errors.extend(zh_errors)
-    contracts = ROOT / "skills" / "agentflow" / "references" / "contracts.md"
-    contracts_text, contracts_errors = read_document_text(contracts)
-    errors.extend(contracts_errors)
-    if zh_errors or contracts_errors:
-        return errors
-    zh_schemas = set(schema_ref_pattern.findall(zh_text))
-    contracts_schemas = set(schema_ref_pattern.findall(contracts_text))
-    if zh_schemas != contracts_schemas:
-        only_zh = zh_schemas - contracts_schemas
-        only_en = contracts_schemas - zh_schemas
-        errors.append(
-            ValidationError(
-                str(zh),
-                f"schema references diverge from {contracts.name}: zh-only={sorted(only_zh)}, en-only={sorted(only_en)}",
-            )
-        )
     errors.extend(validate_live_doc_references())
     return errors
 
-
-def validate_mock_fixtures() -> list[ValidationError]:
-    """Compile mock/ demo records by merging them into a throwaway repository copy.
-
-    mock/README.md declares the fixtures as validated demo material that must stay in
-    sync with the record contracts. Until 0.8.0 nothing enforced that: no check walked
-    mock/, so a contract change could silently invalidate every fixture. This check
-    performs exactly the merge the README describes — the repository tree is copied to a
-    temporary directory (never mutated in place), each mock record root (issues/,
-    episodes/, plans/, reviews/) is overlaid onto the same-named root of the copy, and the
-    full artifacts compile runs against the copy, where ROOT resolves to the copy. A
-    fixture that no longer compiles, an id that collides with a real record, or a
-    cross-reference the demo ledger declares but cannot satisfy now fails the gate instead
-    of surviving until someone re-runs the manual experiment.
-    """
-    errors: list[ValidationError] = []
-    mock_root = ROOT / "mock"
-    if not mock_root.is_dir():
-        return [ValidationError(str(mock_root), "mock directory is missing; fixtures are required")]
-    for name in MOCK_RECORD_ROOTS:
-        if not (mock_root / name).is_dir():
-            errors.append(ValidationError(f"mock/{name}", "mock records directory is missing"))
-    errors.extend(
-        ValidationError(
-            f"mock/{entry.name}",
-            "unexpected entry under mock/; declared contents are "
-            + ", ".join(f"{name}/" for name in MOCK_RECORD_ROOTS)
-            + " and README.md",
-        )
-        for entry in sorted(mock_root.iterdir())
-        if entry.name not in {*MOCK_RECORD_ROOTS, "README.md"}
-    )
-    if errors:
-        return errors
-    try:
-        with tempfile.TemporaryDirectory(prefix="agentflow-mock-") as tmp:
-            copy_root = Path(tmp) / "repo"
-            shutil.copytree(
-                ROOT,
-                copy_root,
-                # .git can be orders of magnitude larger than the tree itself; caches and
-                # the disposable record-store database are regenerated artifacts.
-                ignore=shutil.ignore_patterns(".git", "__pycache__", ".agentflow-records.sqlite3*"),
-            )
-            for name in MOCK_RECORD_ROOTS:
-                shutil.copytree(mock_root / name, copy_root / name, dirs_exist_ok=True)
-            completed = subprocess.run(
-                [sys.executable, str(copy_root / "tools" / "lab" / "validate.py"), "artifacts"],
-                cwd=str(copy_root),
-                text=True,
-                capture_output=True,
-                timeout=600,
-                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-            )
-            if completed.returncode != 0:
-                output = (completed.stderr.strip() or completed.stdout.strip())[:2000]
-                errors.append(
-                    ValidationError(
-                        "mock",
-                        "mock fixtures failed the merged-record compile: "
-                        + (output or f"exit {completed.returncode}"),
-                    )
-                )
-    except (OSError, subprocess.SubprocessError) as exc:
-        errors.append(ValidationError("mock", f"cannot compile merged mock records: {exc}"))
-    return errors
 
 
 def load_protected_paths(path: Path) -> tuple[list[str], list[ValidationError]]:
@@ -3031,7 +2357,7 @@ def bug_report(
     the equivalent of piping through `awk -F'\\t'`, without remembering column numbers.
     """
     rows: list[tuple[str, str, str, str, str, str, str]] = []
-    issues_root = ROOT / "issues"
+    issues_root = ROOT / "docs" / "issues"
     if issues_root.is_dir():
         for path in sorted(issues_root.rglob("*.md")):
             if path.name == "README.md" or RECURRENCE_DIR in path.relative_to(issues_root).parts:
@@ -3069,7 +2395,7 @@ def recurrence_report() -> list[ValidationError]:
     occurrences), `escalated` (at least one occurrence recorded on a version newer than the
     consolidation version). Counts use the referenced records' `agentflow_version`.
     """
-    issues_root = ROOT / "issues"
+    issues_root = ROOT / "docs" / "issues"
     versions: dict[str, str] = {}
     for path in sorted(issues_root.rglob("*.md")):
         if path.name == "README.md" or RECURRENCE_DIR in path.relative_to(issues_root).parts:
@@ -3149,9 +2475,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=[
             "schemas",
             "examples",
-            "evals",
-            "artifacts",
-            "mock",
+                    "artifacts",
             "protected",
             "manifests",
             "docs",
@@ -3196,9 +2520,7 @@ def main(argv: list[str] | None = None) -> int:
     checks = {
         "schemas": [("schemas", validate_schemas)],
         "examples": [("examples", validate_examples)],
-        "evals": [("evals", validate_evals_suite)],
         "artifacts": [("artifacts", validate_workspace_artifacts)],
-        "mock": [("mock", validate_mock_fixtures)],
         "protected": [("protected", validate_protected_paths)],
         "manifests": [("manifests", validate_manifests)],
         "docs": [("docs", validate_doc_consistency)],
@@ -3207,9 +2529,7 @@ def main(argv: list[str] | None = None) -> int:
         "all": [
             ("schemas", validate_schemas),
             ("examples", validate_examples),
-            ("evals", validate_evals_suite),
             ("artifacts", validate_workspace_artifacts),
-            ("mock", validate_mock_fixtures),
             ("protected", validate_protected_paths),
             ("manifests", validate_manifests),
             ("docs", validate_doc_consistency),

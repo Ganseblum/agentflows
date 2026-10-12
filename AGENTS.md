@@ -11,9 +11,9 @@
 python3 tools/lab/validate.py all
 ```
 
-`all` 覆盖 schema、examples、公开评测用例、现行记录根（`issues/`、`episodes/`、`plans/`、
-`improvements/`、`releases/`、`reviews/`）下的记录产物、`mock/` 下的样板 fixture
-（通过合并进一次性仓库副本进行编译）、角色/文档面（含版本散文守卫与对现行文档面的
+`all` 覆盖 schema、examples、公开评测用例、现行记录根（`docs/issues/`、`docs/features/`、`episodes/`、
+`docs/releases/`、`reviews/`）下的记录产物、
+角色/文档面（含版本散文守卫与对现行文档面的
 断链 / 退役路径扫描）、受保护门清单的完整性、文档链 linter 的判别自测、
 五份 manifest 的名字/版本一致性，以及 `tests/` 下仓库自身的回归测试。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
@@ -57,7 +57,7 @@ linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`�
 ## 绝不编辑门
 
 [`protected-paths.txt`](protected-paths.txt) 声明候选不得编辑的路径：evaluator 与
-governor 角色文件、评测套件、`tools/lab/` 下的测量路径、发布规则、`schemas/` 下的
+governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）、发布规则、`schemas/` 下的
 记录 schema、钉住的回归测试，以及清单本身。`tools/lab/isolation.py check-diff`
 针对候选 diff 强制执行它，而 `validate.py protected` 在清单不再覆盖某个必需条目时失败。
 
@@ -69,16 +69,17 @@ governor 角色文件、评测套件、`tools/lab/` 下的测量路径、发布�
 
 ## 在本仓库工作
 
-- 记录存放于现行记录根下：`issues/`（缺陷记录、`recurrence/` 台账、`归档/` 存放被拒记录）、
-  `episodes/`、`plans/`、`improvements/`、`releases/` 与 `reviews/`；布局与查询见
+- 记录存放于现行记录根下：`docs/issues/`（缺陷记录、`recurrence/` 台账、`归档/` 存放被拒记录）、
+  `episodes/`、`docs/features/`（批次目录，计划在各批次的 `plan/` 下）、`docs/releases/`（在途批次索引与待验收，版本记录已停用）
+  与 `reviews/`；改进三件套已随 2026-10-12 瘦身批停用。布局与查询见
   [index.md](index.md)。
 - issue 记录与计划是带经过校验的 YAML frontmatter 的 Markdown。计划文件的命名精确为
-  `<plan_id>.md`（形态：`plans/README.md`）；issue 记录文件命名为
-  `ISS-<YYYY>-<NNN>-<slug>.md`，位于 `issues/` 下，被拒记录移入
-  `issues/归档/<YYYY-MM-DD>/`。Supervisor 为每条记录显式指派路径。
+  `<plan_id>.md`（形态：`docs/features/README.md` 的计划形态节）；issue 记录文件命名为
+  `ISS-<YYYY>-<NNN>-<slug>.md`，位于 `docs/issues/` 下，被拒记录移入
+  `docs/issues/归档/<YYYY-MM-DD>/`。Supervisor 为每条记录显式指派路径。
 - 新增、移动或删除文档时，在同一变更中更新 [`index.md`](index.md)；新的顶层目录或
   新的文档类型需要先经用户确认——不得自行创建。
-- 「等用户拍板」的事项统一登记到 [`plans/PENDING-DECISIONS.md`](plans/PENDING-DECISIONS.md)；
+- 「等用户拍板」的事项统一登记到 [`docs/PENDING-DECISIONS.md`](docs/PENDING-DECISIONS.md)；
   已决定的事写进各自载体，不留悬空承诺。
 - 除非用户要求，不得提交、推送或发布。不得声称走查过自己未观察到的宿主行为——
   应改为把它连同证据、范围与再验证方法记录进

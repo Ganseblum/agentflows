@@ -1,0 +1,57 @@
+---
+bug_id: ISS-2026-046
+title: 精简批——mock 样板面与业务评测切片裁撤、角色镜像与迭代台账合并（用户授权的门变更）
+status: fixed-pending-review
+severity: P2
+error_kind: missing-constraint
+attribution: workflow_policy
+provenance: agentflow
+project: agentflow
+files:
+  - tools/lab/validate.py
+  - tools/lab/isolation.py
+  - tests/test_lab_contracts.py
+  - protected-paths.txt
+  - skills/improve/references/release-record.schema.json
+recorded_at: 2026-10-12T12:10:00+08:00
+source_revision: agentflows@cc03012 + 本批工作树（2026-10-12）
+agentflow_version: 0.10.0
+fix_revision: 随本批提交（agentflows，2026-10-12）
+regression_status: pass
+---
+
+## 现象
+
+用户以两条判据驱动精简：「不能阐述的都删除，合并的合并，减少阅读负担」+「大刀阔斧不合理的就全部改」。排查证实四类负担为真：
+
+1. `mock/`（11 件）与 `validate.py mock` 检查：其内 `PLAN-DEMO-SHARE-001.md` 与 `examples/plans/` 逐字节相同（2026-09 审计 E8 已点名的「改两遍」负担）；无任何测试钉住该检查。
+2. `evals/business/`（3 用例）及其机器（`seed_grader.py` 402 行、`host_adapter.py` 业务路径约 550 行、`isolation.py` 第四隔离位、约 24 个测试方法、`business-case.schema.json`）：从未产出过一次测量，被私有快照与可信端点阻塞（待拍板 #2/#3 挂账）。
+3. `docs/agent-roles.md`（418 行）：同一套角色描述四处成文的纯仓内镜像（运行时快照只携带 agents/ 与 roles.md），靠手工同步。
+4. `docs/iteration-log.md`（603 行）：与 CHANGELOG 逐版本双轨、内容高度重叠（抽样 0.8.4/0.8.6/0.9.0 证实触发/改动/验证三要素两边重复）。
+
+## 根因
+
+四者都是「以防万一」型预留面：mock 是记录形态样板（其职责已被 examples + tests 自建 fixture 覆盖）；业务切片是为方法级度量预留的仪器（其依赖的快照/端点从未就位）；角色镜像与迭代台账是早期单语文档向契约化过渡时的双轨残留。共同机制缺口：仓库长期缺一次以「这套面今天还值不值」为准绳的整批审视，各面靠引用关系存活。
+
+## 修复
+
+用户两项拍板（保公开裁业务；删角色镜像）+ 计划批准后整批执行：
+
+1. 删 `mock/` 整目录与 `validate.py` 的 mock 检查（`MOCK_RECORD_ROOTS`、`validate_mock_fixtures`、CLI/checks/`all` 三处接线）；`all` 由 10 检查收敛为 9；同步 7 处活文档引用；待拍板 #5 关闭。
+2. 删 `evals/business/`、`tools/lab/seed_grader.py`、`business-case.schema.json`、`release-record.schema.json` 的 `business_case_ids` 字段；`validate/eval_runner/host_adapter/isolation` 业务机器全摘（公开请求路径逐字保留）；测试 163→139 全绿；`protected-paths.txt` 摘 seed_grader 行；`PLAN-BUSINESS-EVAL-001` 冻结入 `_archive/records-2026-10/`；待拍板 #2/#3 关闭；improve 度量纪律收敛为「方法级候选一律 `measurement: none`」。
+3. 删 `docs/agent-roles.md` + `validate.py` 的镜像 parity 检查；其独有内容经对照确认由 `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`docs/system-guide.md` 与 `AGENTS.md` 承载；断链全部修复（含 ISS-2026-026 历史引用改仓限定）。
+4. `docs/iteration-log.md` L3 冻结入 `_archive/records-2026-10/`（头部冻结声明；「为什么迭代」此后写 CHANGELOG 首句 + episodes）。
+5. `plans/` 收敛：PLAN-PY-GUARD-001（已完成）冻结归档；PLAN-LOOP-SMOKE T10 与 PLAN-PRODUCT T11 业务行标「已失对象」。
+
+## 回归检查
+
+- `python3 tools/lab/validate.py all` → 9×PASS（schemas/examples/evals/artifacts/protected/manifests/docs/tests/doc_chain），exit=0。
+- `python3 -m unittest discover -s tests` → 139 全 OK；`doc_chain.py --self-test` → 38/38。
+- 残留 grep（seed_grader / evals/business / business_root / BUSINESS_）在 tools/tests/skills 活面零命中；`evals/public/` 15 用例 + 15 输入完好；公开 dry-run（15 例 × 3 重复）过。
+- 断链扫描活体证明：本批删除 agent-roles.md 与 iteration-log.md 后该检查两次真实抓到断链并修复。
+- runtime 重建 + cache 同步 → `installed` PASS。
+
+## 变更记录
+
+- 2026-10-12 · recorded + fixed · 精简批落地（fix_revision 随本批提交）
+- 2026-10-12 · 条目维护 · files 中指向评测装置（已随同日裁撤删除）的条目已移除：`tools/lab/eval_runner.py`、`tools/lab/host_adapter.py`；设计知识与恢复清单见 `docs/design-decisions.md` §3。

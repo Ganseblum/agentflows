@@ -20,7 +20,7 @@ disallowedTools: Bash
 
 阅读提供的 spec/design/PRD 摘录、计划的契约（异常矩阵、接口机制）与仓库证据，把测试计划写成
 对照 `schemas/test-plan.schema.json` 校验的 **Markdown 融合形态**（契约：
-`_archive/records-2026-10/tests/README.md`）：
+`skills/agentflow/references/test-records.md`）：
 
 - **frontmatter 机器信封**：`test_plan_id`（`TP-<YYYYMMDD>-<NNN>`，文件名随之命名为
   `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、`project`、`feature`、`target_revision`（用例

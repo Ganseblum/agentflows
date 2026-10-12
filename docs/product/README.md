@@ -4,14 +4,13 @@
 主链组织。方法与工具的"为什么做、做成什么、怎么实现、接下来做什么"分别收口在四层，
 上层不重复下层内容，只引用。
 
-> 与旧设计文档的关系：`docs/self-improvement-design.md`、`docs/host-native-plugin-design.md`、
-> `docs/agent-product-boundary.md` 是本链建立之前的决策记录，**保留原位不迁移**（多处记录
-> 引用其路径，移动即断链）。本链把它们降级为证据引用：结论收口进本链，原文作为决策出处。
-> 两处内容冲突时，以本链为准并回到旧文档补翻案记录。
+> 与设计决策记录的关系：`docs/design-decisions.md` 是本链建立之前的决策记录（产品边界 / 宿主形态 /
+> 自迭代三份于 2026-10-12 合并）。本链把它作为证据引用：结论收口进本链，原文作为决策出处。
+> 两处内容冲突时，以本链为准并在决策记录补翻案记录。
 
 推荐阅读顺序：
 
-`proposal -> spec -> design -> plans/`
+`proposal -> spec -> design -> plan/`（计划在批次 `docs/features/feature-2026-09-19-产品线完善/plan/`）
 
 ## 元信息
 
@@ -19,7 +18,7 @@
 - 主实施仓：本仓库（方法、角色、仪器、记录契约同仓）
 - 分发形态：ZCode / Claude Code / Codex 宿主插件，marketplace 源指向
   `packaging/build_runtime.py` 生成的瘦快照
-- 最后更新时间：`2026-09-20`
+- 最后更新时间：`2026-10-12`
 
 ## 推进进度
 
@@ -50,10 +49,10 @@
 
 ### 5. Plan [执行契约]
 
-- ☑ 方法改进线：`plans/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环，live 对照阻塞于 U-01）
-- ☑ 业务评测线：`plans/PLAN-BUSINESS-EVAL-001.md`（业务尺子，仪器就绪）
-- ☑ 打包线：`plans/PLAN-PRODUCT-001.md`（产品线四步总账）
-- ☑ 工具守卫线：`plans/PLAN-PY-GUARD-001.md`（解释器下限 fail-closed，已完成）
+- ☑ 方法改进线：批次内 `plan/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环；改进环已停用，计划留存备查）
+- ~~业务评测线~~：业务尺子随 2026-10-12 精简批退役（原计划随瘦身批删除，git 历史可回溯）；方法级改动一律 `measurement: none` 口径
+- ☑ 打包线：批次内 `plan/PLAN-PRODUCT-001.md`（产品线四步总账）
+- ☑ 工具守卫线：解释器下限 fail-closed（已完成，原计划随瘦身批删除，git 历史可回溯）
 
 ## 门禁语义
 
