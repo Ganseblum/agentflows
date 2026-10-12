@@ -52,6 +52,8 @@ python3 tools/lab/isolation.py check-diff \
 examples、evals、记录产物、合并后的 mock 编译、受保护清单、manifest 一致性、
 文档面（含断链与退役路径扫描）、文档链 linter 的判别自测，以及仓库自身的回归测试。
 
+> 注意：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归——本会话即观察到此类环境假红。
+
 三个 Bug 角色是可选择的能力，而不是每个问题都必须走的固定仪式。对 material、
 不确定、反复出现、跨层或高风险的 bug，使用完整的
 Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现的小型低风险 bug，

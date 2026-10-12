@@ -36,7 +36,8 @@ description: Use only when the user asks to evolve, optimize, evaluate, version,
 7. **创建候选**：编辑规范源码，或隔离的分支/worktree。不要编辑已安装的运行副本。把 evaluator 规则、已声明的受保护路径与 holdout 答案保持在候选写范围之外。先冻结父 revision，然后在评测前从受信源码 checkout 运行 `isolation.py check-diff --candidate <tree> --base <frozen-parent-revision>`，使已提交、已暂存、未暂存、已删除、重命名、被忽略与未跟踪的改动都被比较。该检查始终读取受信 checkout 的 `protected-paths.txt`，因此门表面是声明出来的而不是靠回忆；改动受保护文件来源或使用覆盖策略，本身就是需人工审查的门变更。
 8. **公平比较**：让隔离的 runner 在相同用例与设置上执行 Baseline 与 Candidate。包含代表性的成功、已知失败、边界情况与对抗性用例。给 evaluator 不可变的结果记录，而不是允许它运行受候选控制的命令。runner 把结果与比较记录逐字写到 Supervisor 指派的 `improvements/` 路径下；evaluator 读取它们，且不得编辑它们。记录任务级结果、可得的成本/时延，以及不确定性。
 9. **消费产物前先编译**：环中交换的每一条记录——候选记录、评测结果、比较、发布决策——在下一角色读取前先对其 schema 校验（`tools/lab/validate.py`、`eval_runner.py validate`）。四类产物落在 `improvements/{candidates,evaluations,comparisons}/` 与 `releases/` 下，只有在 `python3 tools/lab/validate.py artifacts` 与 runner 自身的 validate 通过后才算可读。非法记录是编译错误：修记录，绝不把它作为证据引用或转发。冻结 runner 无法产出的结果记为无结果。
-10. **独立评审**：evaluator 报告证据而不修复候选。release governor 返回 `promote`、`revise`、`reject` 或 `rollback`。
+10. **独立评审与机器裁决**：evaluator 报告证据而不修复候选。在 release governor 给出 `promote`/`revise`/`reject`/`rollback` 之前，必须先运行 `tools/lab/policy.py` 对候选记录、基线结果与候选结果产出确定性裁决；发布记录的 `evaluation_result` 与 `decision` **必须**与该裁决一致，不一致则阻塞发布——候选不得用人工摘要自证 promote（硬边界 1：作者不自证）。`policy.py` 只产出裁决、绝不安装或替换插件，且 `required_human_approval` 恒为 true：
+    `python3 tools/lab/policy.py --candidate-record improvements/candidates/<id>.json --baseline-result improvements/evaluations/<baseline>.json --candidate-result improvements/evaluations/<candidate>.json --output improvements/evaluations/<id>-policy.json`
 11. **准备发布**：递增版本，记录父版本、变更组件、证据、评测结果、批准、发布策略与回滚目标——完成后的发布记录落在 `releases/` 下。
 12. **请求门**：默认模式下，把完整候选与评测呈现给用户做一次最终晋级决策。在该批准之前不得发布、重装或替换当前生效的版本。
 13. **晋级后监控**：把 canary 结果与基线护栏比较。已声明阈值不达标时回滚到不可变的上一版本。

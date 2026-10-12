@@ -109,6 +109,7 @@ baseline/候选比较用 [comparison.schema.json](../../../schemas/comparison.sc
 - 其风险等级允许所选发布模式；
 - 回滚目标可用且已验证；
 - 必需的人工批准已记录。
+- 发布记录的 `evaluation_result` 与 `decision` 必须由 `tools/lab/policy.py` 的确定性裁决产生，且与之一致；该工具不安装、不发布，且恒需人工批准。不得用人工摘要替代机器裁决（硬边界 1：作者不自证）。基线结果与候选结果的 `artifact_digest` 必须不同——相同摘要会被 `policy.py` 判 `invalid` 并阻塞发布。
 
 提示词措辞与角色描述在流程被证明之后可以取得 canary 资格。权限、工具、hook、MCP、evaluator 规则、发布规则与自动阈值保持人工把门。
 
