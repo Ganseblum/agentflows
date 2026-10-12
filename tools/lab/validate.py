@@ -501,7 +501,7 @@ BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
 # issues/归档/<YYYY-MM-DD>/; recurrence ledgers live under issues/recurrence/.
 BUG_ARCHIVE_DIR = "归档"
 RECURRENCE_DIR = "recurrence"
-BUG_FILENAME_PATTERN = re.compile(r"^ISS-\d{4}-\d{3,}-[a-z0-9][a-z0-9-]*$")
+BUG_FILENAME_PATTERN = re.compile(r"^ISS-\d{4}-\d{3,}-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*$")
 
 PLAN_REQUIRED_HEADINGS = (
     "## 进展概览",
@@ -1310,8 +1310,8 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
         errors.append(
             ValidationError(
                 str(path),
-                "filename must be ISS-<YYYY>-<NNN>-<kebab-case-slug> "
-                "(lowercase letters, digits, hyphens) — e.g. ISS-2026-001-claude-json-schema-rejected.md",
+                "filename must be ISS-<YYYY>-<NNN>-<slug> "
+                "(letters, digits, Chinese, hyphens) — e.g. ISS-2026-001-claude-json-schema-被拒.md",
             )
         )
 

@@ -34,7 +34,7 @@ merge/integration 用例，measurement: none），不写「已防住」。
 
 | 次序 | 记录 | 发现版本 | 归纳后？ | 处置 |
 | --- | --- | --- | --- | --- |
-| 1 | [ISS-2026-026](../ISS-2026-026-merge-conflict-resolution-quality-gate-gap.md) | 0.8.1 | 否（归纳前） | 0.8.2 已归纳落地；预防效果待对照验证（无 instrumented 用例，measurement: none） |
+| 1 | [ISS-2026-026](../ISS-2026-026-合并冲突解决质量门缺口.md) | 0.8.1 | 否（归纳前） | 0.8.2 已归纳落地；预防效果待对照验证（无 instrumented 用例，measurement: none） |
 
 注：本类与 ISS-2026-007（git 集成的授权侧缺口，0.4.2 修复）同属「分支集成」任务族，但
 缺口面不同——那是授权（集成要不要问），这是质量（产物如何验收）；本次事件中 0.4.2 授权

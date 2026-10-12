@@ -75,7 +75,8 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
   [index.md](index.md)。
 - issue 记录与计划是带经过校验的 YAML frontmatter 的 Markdown。计划文件的命名精确为
   `<plan_id>.md`（形态：`docs/features/README.md` 的计划形态节）；issue 记录文件命名为
-  `ISS-<YYYY>-<NNN>-<slug>.md`，位于 `docs/issues/` 下，被拒记录移入
+  `ISS-<YYYY>-<NNN>-<slug>.md`（slug 用中文短语描述问题，无中文译法的技术词保留原文），
+  位于 `docs/issues/` 下，被拒记录移入
   `docs/issues/归档/<YYYY-MM-DD>/`。Supervisor 为每条记录显式指派路径。
 - 新增、移动或删除文档时，在同一变更中更新 [`index.md`](index.md)；新的顶层目录或
   新的文档类型需要先经用户确认——不得自行创建。

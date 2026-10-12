@@ -2,6 +2,21 @@
 
 角色是能力，不是必走的阶段。只选择那些能降低风险或允许有效并行的角色。
 
+## 阶段 × 角色速查（文档链）
+
+一条 feature 的文档面按 `proposal → spec → design → plan` 推进；每段谁产出、产出什么、哪道门把关，一张表速查。完整契约见 [`references/document-chain.md`](document-chain.md)，本表只做快速定位。
+
+| 阶段 | 谁产出 | 产出物（按角色镜像） | 门 |
+| --- | --- | --- | --- |
+| proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/prd.md` | — |
+| spec | Supervisor 起草或各角色 | `spec/{be,fe,qa,ui}/` | Spec 反审门（spec §0 反审 proposal） |
+| design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审门 → Design 评审门（Reviewer 独立） |
+| plan | Plan architect | `plan/execution.md` | 链收口通读（非作者） |
+
+三轨职责一句话：**Backend engineer** 定对象模型、状态机、接口契约、DDL；**Frontend engineer**
+定页面规格、文件落点、类型契约、字段映射；**QA（Test planner）** 定验收口径、边界矩阵、用例库。
+`spec/ui` 与 `design/ui` 是可选扩展，启用与否在 feature README 元信息声明一行。
+
 ## 路由表
 
 按任务形态选角色，不按名字的资历。完整清单是为难 case 准备的；大多数任务只用一两行。

@@ -1,21 +1,21 @@
 # issues — 缺陷与事项
 
 给人读的缺陷与事项归档：每个缺陷或事项一个 Markdown 文件，命名为
-`ISS-<YYYY>-<NNN>-<slug>.md`；复发的失败类另在 `recurrence/` 下配一本台账：
+`ISS-<YYYY>-<NNN>-<slug>.md`（slug 用中文短语，无中文译法的技术词保留原文）；复发的失败类另在 `recurrence/` 下配一本台账：
 
 ```text
 issues/
-  ISS-2026-001-claude-json-schema-rejected.md   # 编号逐项递增（缺陷与事项同一编号家族）
+  ISS-2026-001-claude-json-schema-被拒.md      # 编号逐项递增（缺陷与事项同一编号家族）
   recurrence/                 # 每个复发或已归纳的类一本台账
     unverified-behavior-claims.md
   归档/                        # rejected 记录，保留其日期目录
     2026-08-01/
-      ISS-2026-041-stale-flaky-test.md
+      ISS-2026-041-陈旧-flaky-测试.md
 ```
 
 ## 编号与看板
 
-- **编号**：`ISS-<YYYY>-<NNN>-<slug>.md`（逐项递增；缺陷与事项同一编号家族）。起稿用
+- **编号**：`ISS-<YYYY>-<NNN>-<slug>.md`（逐项递增；缺陷与事项同一编号家族；slug 用中文短语）。起稿用
   `skills/agentflow/templates/issue/issue-template.md`。
 - **看板**：开放条目平铺于本目录；仅 `rejected` 记录移入 `归档/<日期>/`，其余状态（含
   `verified`）原地保留（见下文归档规则）。
@@ -28,9 +28,15 @@ issues/
 [`schemas/bug-record.schema.json`](../../schemas/bug-record.schema.json)）加一段给人读的
 Markdown 正文。正文使用固定的中文小节标题——校验器匹配这些精确字面量：`## 现象`、
 `## 根因` 和 `## 修复`（`open` 的缺陷除外）；只要有代码片段就建议使用 `## 问题代码`，
-记录一旦 `verified` 就必须有 `## 审查`。常见附加小节：`## 回归检查`、`## 备注`、
+记录一旦 `verified` 就必须有 `## 审查`。常见附加小节：`## 前后对比`（修复前后对照，证明
+bug 真的解决了）、`## 怎么避免`（防再犯机制）、`## 回归检查`、`## 备注`、
 `## 变更记录`（每次状态流转 追加一行：`YYYY-MM-DD HH:MM · 动作 · 一句话证据`，流转历史
-不随 `updated_at` 单一时间戳丢失）.
+不随 `updated_at` 单一时间戳丢失）。
+
+「为什么出现」要在 `## 根因` 里人话点破类别，而不是只贴 frontmatter 标签：`error_kind` 为
+`ai-ignored-doc`（文档写明了但没照做）、`ai-ignored-code`（代码写明了但没照做）、
+`missing-constraint`（文档/契约压根没说清）、`hallucination`（无中生有）、`logic-error`
+（推理错）时，正文都要写出具体是哪条文档没照做、或哪处契约缺失。
 
 Frontmatter 字段：`bug_id`、`title`、`status`（open / fixed-pending-review / verified /
 rejected）、`severity`（优先级别：P0 critical / P1 high / P2 medium / P3 low）、

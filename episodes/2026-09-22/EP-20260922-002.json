@@ -28,7 +28,7 @@
     {
       "kind": "attribution",
       "value": "产物级 provenance=session-artifact（无条款可违）；方法面缺陷对象=作用域声明本身（attribution=workflow_policy ⇒ provenance=agentflow）；台账立新类 session-deliverable-jargon-scope 而非升级 expression-discipline-jargon（0.8.4 吸收在其声明作用域内未被证伪）",
-      "evidence_ref": "issues/ISS-2026-040-session-deliverable-jargon-scope-gap.md 备注；issues/recurrence/session-deliverable-jargon-scope.md"
+      "evidence_ref": "issues/ISS-2026-040-会话交付物术语范围缺口.md 备注；issues/recurrence/session-deliverable-jargon-scope.md"
     },
     {
       "kind": "isolation_gate",

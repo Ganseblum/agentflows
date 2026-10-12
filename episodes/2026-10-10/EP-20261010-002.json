@@ -80,7 +80,7 @@
     {
       "evidence_id": "E3",
       "kind": "bug_record",
-      "ref": "issues/ISS-2026-041-write-scope-dot-scope-silent-no-match.md（现象/根因/修复/回归检查）"
+      "ref": "issues/ISS-2026-041-写范围dot-scope静默不匹配.md（现象/根因/修复/回归检查）"
     },
     {
       "evidence_id": "E4",

@@ -48,7 +48,7 @@
     {
       "evidence_id": "E1",
       "kind": "books",
-      "ref": "docs/issues/ISS-2026-050-content-quality-sweep-after-restructure.md"
+      "ref": "docs/issues/ISS-2026-050-重构后内容质量清扫.md"
     }
   ],
   "review_roundtrips": [],

@@ -43,7 +43,7 @@
     }
   ],
   "evidence": [
-    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-048-records-into-docs-releases-improvements-retired.md" }
+    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-048-记录迁入docs改进停用.md" }
   ],
   "review_roundtrips": [],
   "feedback_summary": "用户「搬到 docs / 不这样记录 / 删 improvements」驱动三期结构改造：五记录根收敛于 docs/ 与根两处、两个记录机制停用（版本 JSON、改进三件套）、脚本收尾冻结待令；measurement: none",

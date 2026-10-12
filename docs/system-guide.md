@@ -256,7 +256,7 @@ bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...  
 | --- | --- | --- | --- |
 | 1 | 你 | "全局导航自动登录复用了 login()，方法没问题，但 401 拦截器跳登录页，忘记密码页合法未登录态被打断" | ——（任务文本按数据处理，进简报前会核实） |
 | 2 | Supervisor | Intake：读 diff/架构/测试；定性为跨切面行为 → 触发**隐式行为检查** | —— |
-| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-004-axios-interceptor-401-redirect-conflict.md` |
+| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-004-axios拦截器401跳转冲突.md` |
 | 4 | Bug Fixer | 候选树内最小修复 + 回归检查（`regression_status` 先标 not-run） | 代码 + 记录转 `fixed-pending-review` |
 | 5 | Reviewer（独立） | 指定检查命令与预期，只认原始输出；验证全局导航/登录页/忘记密码三场景 | 评审结论写回记录 |
 | 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |

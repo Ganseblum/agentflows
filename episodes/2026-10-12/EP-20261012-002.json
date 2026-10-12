@@ -50,7 +50,7 @@
     }
   ],
   "evidence": [
-    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-047-slimming-phase2-archive-purge.md（回归检查节含全部原始命令输出）" }
+    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-047-瘦身二批归档清除.md（回归检查节含全部原始命令输出）" }
   ],
   "review_roundtrips": [],
   "feedback_summary": "用户「不留归档 / 大刀阔斧」驱动二期瘦身：-16 个跟踪文件 + .zcode 残留；门豁免面收敛（4 项豁免删除、2 个退役 token 新增、1 项仓限定剔除新增）；误冻活契约复位；measurement: none",

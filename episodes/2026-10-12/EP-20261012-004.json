@@ -43,7 +43,7 @@
     }
   ],
   "evidence": [
-    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-049-plans-into-features-root-dissolved-dead-code.md" }
+    { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-049-计划并入features撤销死代码.md" }
   ],
   "review_roundtrips": [],
   "feedback_summary": "用户以两个参考仓形态为尺子驱动四期改造：feature 成为 plan 的容器（顶层 plans 消亡）、死代码随停用机制清除、此前冻结的脚本收尾一次结清；measurement: none",
