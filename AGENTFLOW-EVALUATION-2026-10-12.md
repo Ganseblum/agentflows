@@ -194,3 +194,61 @@ Agentflow 是一个**设计哲学明显领先于工程落地的受治理多 agen
 | E4 | `templates/design/be/backend.md` 等「断号导致 linter 必红」（六、十/8） | 仓库根 `templates/**` Glob 返回**无文件**；真实模板在 `skills/agentflow/templates/`（feature/hub/issue/releases + index-template.md），原文件不存在 | 撤回原说法；改为「先定位真实模板逐项核查」，真实 `skills/agentflow/templates/feature/design/be/backend.md` 缺 §3 属实，已补占位 §3（T2.10） |
 
 **诚实说明**：以上 4 处均非 Agentflow 代码缺陷，而是评审自身未逐文件核对路径与事实即下结论，恰好印证了本报告「核心差异点尚未被自己的门真正验收」的元批评——**评审本身也犯了"验证缺席"的同源错误**。后续已通过 T0–T3 共 16 项改动收敛问题（含把 `policy.py` 接入改进环、补诚实性披露、结构去重），详见 `AGENTFLOW-OPTIMIZATION-2026-10-12.md`。
+
+---
+
+## 十三、优化后复评（2026-10-12 晚，同一评审者）
+
+> 口径说明：本复评由**原评审者**做出（非独立第三方），每条分数变动都以「当前文件实证」为依据——
+> 复评前对全部残留项逐条重跑检查（命令与结果见各节引用），未采信任何早期摘要。
+> 「T0.1–T3.13」条目编号对应 `AGENTFLOW-OPTIMIZATION-2026-10-12.md`；落地提交为
+> `9caf54a`–`a2da3fd` 共 7 个主题 commit（含 T2.12 回归修复与 0.8.6 再审计记录）。
+> 若需独立复核，建议按硬边界 1 另派 reviewer 审本节的证据链。
+
+### 13.1 六维分数变动
+
+| 维度 | 复评前 | 复评后 | 变动原因（一句话） |
+| --- | --- | --- | --- |
+| 架构设计 | 7 | **7.5** | 五条硬伤三条全清（policy.py 入环、schema 单点化、validate 去重）、一条文档层已修 |
+| 目录结构 | 8 | **8** | 批次链声明已补；但 mock/examples 双份维护仍在，无新结构改进 |
+| 文档内容 | 7.5 | **8** | 两处「已立案未修」矛盾清一处、两张可选层清单统一、全绿绝对化改为环境说明 |
+| 代码质量 | 7.5 | **8.5** | 9 项确认 bug/风险修 6 项（含破坏性 rmtree 默认值）；残留 3 项全在保护路径 |
+| Agent/Skill 质量 | 7 | **7.5** | recorder 必填字段漏列、模板断号两处已修；判断词冲突等 5 项仍在 |
+| 整体效果与能力 | 6.5 | **7.5** | 「确定性晋升链被绕开」已闭环；「确定性测量从未发生」仍卡在外部输入 |
+| **综合** | **7.1** | **7.8** | 47/6≈7.83；从「设计领先执行一个版本」收缩到「执行还差最后一步」 |
+
+### 13.2 逐维明细（修了什么、什么还压着）
+
+**架构设计 7 → 7.5**。原五条硬伤：①提示词级强制（README:38 自承宿主不强制 `Write` 路径约束）——**仍在，属宿主侧天花板**；②policy.py 孤儿门——**已修**（SKILL 第 10 步强制先跑机器裁决、release 记录须与之一致；0.8.6 矛盾另以 EP-20261012-001 固定事实）；③schema 结果集形状重复——原判「四份拷贝」经勘误实为「8 指标形状跨文件重复」，**已单点化**（`schemas/metrics.schema.json`，四处 `$ref` 复用）；④validate.py 三处重复登记——**已修**（`checks["all"]` 从单目标推导；`sys.path.insert` 副作用仍在，未处置）；⑤「全绿」绝对化——**文档层已修**（README 增运行环境说明；环境假红根因在宿主 shim，非仓库缺陷）。5 条中 3 条全清、1 条部分清、1 条外部依赖。
+
+**目录结构 8 → 8**。`feature-2026-10-09-结构改造` 的批次链不完整**已修**（README 补「轻量模式：无 spec/design 轨」声明，闭合链规则）；`mock/plans` 与 `examples/plans` 的 `PLAN-DEMO-SHARE-001.md` **仍逐字节相同**（复评时 `diff -q` 实测），双份维护的漂移风险未除；`features/` 仅 2 个批次属时间性事实，非缺陷。一修两留，不上浮。
+
+**文档内容 7.5 → 8**。已修：`method-spec.md` 两处「12 条硬边界」→「14 条」（原已立案未修矛盾，1/2）；`document-chain.md` 与 `templates/README.md` 两张可选层清单统一并互引；README 全绿声明改环境说明；bug-recorder 补状态必填字段（消除「照指令产出必被 schema 拒」的文档矛盾）。仍在：`iteration-log.md` 与 CHANGELOG 冗余及内联死引用（约 21 处）、`agent-roles.md` 与角色文件重述、`proposal.md` U-01 状态矛盾、记录面历史脱节（见 13.3）。
+
+**代码质量 7.5 → 8.5**。原 9 项确认 bug/风险处置 6 项：`build_runtime.py` 祖先目录守卫（T0.1，`..`/`../..`/`/`/`.` 全部拦截实测）、`check-write-scope.sh` `-z`+退出码 fail-closed（T0.2）、`isolation.py` base `-` 前缀守卫（T0.3；原「静默 PASS」判定经勘误实为 fail-closed，仍做纵深加固）、`validate.py` 两处异常逃逸（T2.9a/b）、`eval_runner.py` adapter 超时（T3.13）。测试面净增强：T2.12 回归被修复且钉住测试强于修复前（单点+接线+四组变异证明承重）。残留 3 项**全部落在保护路径**（`tools/lab/`），本轮未动：schema 子集静默失明（`validate_schemas:1437` 无词汇表限定——原报告标记的「最严重」项）、`host_adapter.py` `snapshot_diff_digest` 未传 `--no-renames/--no-textconv`、`seed_grader.py:388` main 调 `grade_case` 未传 `target_docs`。最严重项未清，故不上 9。
+
+**Agent/Skill 质量 7 → 7.5**。已修：`bug-recorder.md` 补 verified/fixed-pending-review/rejected 必填字段（T1.6）；`backend.md` 缺 §3 断号已补占位（T2.10）；「照模板填必挂 C7/C8」经复核**不成立**（C7/C8 只查 design/fe 线框图，原判撤回）。仍在 5 项：`evaluator.md` description 称「compares on predeclared cases」而正文是只读记录（路由误导，**保护路径**）；SKILL 判断词「小改动 vs risky」优先级未裁决（:68 称「按此顺序应用」但顺序未给出——单文件改持久化默认值可同时落进两类）；`bug-fixer.md:26` 与 `candidate-engineer.md:40-41` partial 规则复制粘贴（且各文件内同句重复两遍）；`roles.md:14/83` 裸用「专家」无定义；test-executor 的 Edit 禁用语义未进路由表。
+
+**整体效果 6.5 → 7.5**。原两大缺口清一半：「确定性晋升链在真实循环被绕开」——**已闭环**（policy.py 入环 + 0.8.6 再审计记录，`policy.py` 实跑判 invalid/reject 与 release 记录 better/promote 的矛盾被固定为机器可复现的事实，exit=1 一手证据）；「确定性测量从未发生」——**仍在**，BT-001/002/003 夹具就绪但缺业务快照/端点/权限档。记录面历史账（16 份 open issue 停滞、12/30 episode 的 `review_roundtrips` 为空、0 rejected 故 `issues/归档/` 空转）属只增不改的历史包袱，无法本轮补救；但本轮新产记录（EP-20261012-001 全程 signals/evidence/claims 齐全，PLAN-OPT-CLOSEOUT-001 看板实跑回写纪律）提供了可复制的正面样板。
+
+### 13.3 剩余缺口清单（复评后仍开的项，逐条附解锁条件）
+
+| # | 缺口 | 复评实证 | 压住哪维 | 解锁条件 |
+| --- | --- | --- | --- | --- |
+| G1 | schema 子集静默失明 | `validate_schemas`（:1437）无词汇表限定 | 代码质量（原标「最严重」） | 授权改 `tools/lab/validate.py`（保护路径） |
+| G2 | host_adapter digest 依赖 git config | 未传 `--no-renames/--no-textconv` | 代码质量 | 授权改 `tools/lab/host_adapter.py`（保护） |
+| G3 | seed_grader off_target 失效 | :388 调 `grade_case` 未传 `target_docs` | 代码质量 | 授权改 `tools/lab/seed_grader.py`（保护） |
+| G4 | evaluator description 误导路由 | description 与正文行为不符 | Agent/Skill | 授权改 `agents/evaluator.md`（保护） |
+| G5 | SKILL 判断词优先级未裁决 | :68「按此顺序应用」无顺序 | Agent/Skill | 非保护；建议拍板「risky 优先」后修 `SKILL.md` |
+| G6 | partial 规则三处重复 | bug-fixer:26 同句两遍 + candidate-engineer:40-41 | Agent/Skill | 非保护，可直接收敛单一权威 |
+| G7 | roles.md「专家」裸用 | :14/:83 无定义 | Agent/Skill | 非保护，加首现定义即可 |
+| G8 | test-executor Edit 语义未进路由表 | 路由表无此行 | Agent/Skill | 非保护，补路由表一行 |
+| G9 | mock/examples 双份逐字节相同 | `diff -q` 实测相同 | 目录结构 | 非保护；最优解是加「两目录必须一致」的机器断言（触及 validate.py，需授权）； interim 可加互引注释 |
+| G10 | 宿主强制力缺位 | README:38 自承 | 架构天花板 | 宿主侧落地 hooks/沙箱（外部依赖，非本仓可修） |
+| G11 | BT 首次真实对照 | 夹具就绪、measurement 全 none | 整体效果（核心差异点另半边） | 用户提供业务快照根/可信端点/权限档 |
+| G12 | 记录面历史账 | 16 open 停滞、12/30 空 roundtrips、归档空转、PLAN-PRODUCT-001 概览「4 未开始」与实表 6 个不符 | 整体/文档 | 只增不改；PLAN-PRODUCT-001 看板算术可修（非保护）；新记录立样板 |
+| G13 | 文档冗余与内联死引用 | iteration-log/CHANGELOG 重复主题、约 21 处内联死引用未核验细化 | 文档内容 | 非保护；下一批文档清理 |
+
+### 13.4 复评结论
+
+**综合 7.1 → 7.8**。本批优化把「设计哲学领先工程落地约一个版本」的差距压缩到**最后一步**：确定性晋升链已闭环、最刺手的诚信问题（自证 promote vs 机器裁决）已固定并设防、破坏性默认值已堵。剩余缺口呈清晰的三分结构：**3 项保护路径代码修复**（G1–G3，原报告标记的最严重项在其中）、**5 项非保护路径小修**（G5–G9+G12 看板，均可直接做）、**2 项外部依赖**（G10 宿主 hooks、G11 BT 输入）。换句话说：**9 分及格的路径已经画出来了，缺的是授权与输入，不是设计**。
