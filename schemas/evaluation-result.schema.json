@@ -127,30 +127,7 @@
         }
       }
     },
-    "summary": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "acceptance_rate",
-        "first_pass_review_rate",
-        "correction_count",
-        "escaped_defects",
-        "permission_violations",
-        "unnecessary_delegation_count",
-        "tool_failures",
-        "latency_ms"
-      ],
-      "properties": {
-        "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "first_pass_review_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "correction_count": { "type": "integer", "minimum": 0 },
-        "escaped_defects": { "type": "integer", "minimum": 0 },
-        "permission_violations": { "type": "integer", "minimum": 0 },
-        "unnecessary_delegation_count": { "type": "integer", "minimum": 0 },
-        "tool_failures": { "type": "integer", "minimum": 0 },
-        "latency_ms": { "type": "number", "minimum": 0 }
-      }
-    },
+    "summary": { "$ref": "metrics.schema.json#/$defs/metricSummary" },
     "generated_at": { "type": "string", "format": "date-time" }
   }
 }

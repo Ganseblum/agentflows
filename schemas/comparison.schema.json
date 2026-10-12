@@ -39,77 +39,8 @@
         "suite_case_count": { "type": "integer", "minimum": 1 }
       }
     },
-    "deltas": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "acceptance_rate",
-        "first_pass_review_rate",
-        "correction_count",
-        "escaped_defects",
-        "permission_violations",
-        "unnecessary_delegation_count",
-        "tool_failures",
-        "latency_ms"
-      ],
-      "properties": {
-        "acceptance_rate": { "type": "number" },
-        "first_pass_review_rate": { "type": "number" },
-        "correction_count": { "type": "number" },
-        "escaped_defects": { "type": "number" },
-        "permission_violations": { "type": "number" },
-        "unnecessary_delegation_count": { "type": "number" },
-        "tool_failures": { "type": "number" },
-        "latency_ms": { "type": "number" }
-      }
-    },
-    "baseline_summary": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "acceptance_rate",
-        "first_pass_review_rate",
-        "correction_count",
-        "escaped_defects",
-        "permission_violations",
-        "unnecessary_delegation_count",
-        "tool_failures",
-        "latency_ms"
-      ],
-      "properties": {
-        "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "first_pass_review_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "correction_count": { "type": "integer", "minimum": 0 },
-        "escaped_defects": { "type": "integer", "minimum": 0 },
-        "permission_violations": { "type": "integer", "minimum": 0 },
-        "unnecessary_delegation_count": { "type": "integer", "minimum": 0 },
-        "tool_failures": { "type": "integer", "minimum": 0 },
-        "latency_ms": { "type": "number", "minimum": 0 }
-      }
-    },
-    "candidate_summary": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "acceptance_rate",
-        "first_pass_review_rate",
-        "correction_count",
-        "escaped_defects",
-        "permission_violations",
-        "unnecessary_delegation_count",
-        "tool_failures",
-        "latency_ms"
-      ],
-      "properties": {
-        "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "first_pass_review_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-        "correction_count": { "type": "integer", "minimum": 0 },
-        "escaped_defects": { "type": "integer", "minimum": 0 },
-        "permission_violations": { "type": "integer", "minimum": 0 },
-        "unnecessary_delegation_count": { "type": "integer", "minimum": 0 },
-        "tool_failures": { "type": "integer", "minimum": 0 },
-        "latency_ms": { "type": "number", "minimum": 0 }
-      }
-    }
+    "deltas": { "$ref": "metrics.schema.json#/$defs/metricDeltas" },
+    "baseline_summary": { "$ref": "metrics.schema.json#/$defs/metricSummary" },
+    "candidate_summary": { "$ref": "metrics.schema.json#/$defs/metricSummary" }
   }
 }

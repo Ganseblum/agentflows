@@ -722,13 +722,36 @@ class ContractPinTests(unittest.TestCase):
     def test_metric_names_are_exactly_the_eight_contract_metrics(self) -> None:
         self.assertEqual(eval_runner.METRIC_NAMES, self.EXPECTED_METRICS)
         self.assertEqual(len(eval_runner.METRIC_NAMES), 8)
-        schema = json.loads(
-            (ROOT / "schemas" / "evaluation-result.schema.json").read_text(encoding="utf-8")
+        # 8 指标形状自 2026-10-12（T2.12）起单点定义于 metrics.schema.json，由
+        # evaluation-result 与 comparison 经 $ref 复用；本测试钉住单点形状与两处接线。
+        shared = json.loads(
+            (ROOT / "schemas" / "metrics.schema.json").read_text(encoding="utf-8")
         )
-        summary = schema["properties"]["summary"]
+        summary = shared["$defs"]["metricSummary"]
         self.assertEqual(tuple(summary["required"]), self.EXPECTED_METRICS)
         self.assertEqual(set(summary["properties"]), set(self.EXPECTED_METRICS))
         self.assertIs(summary["additionalProperties"], False)
+        deltas = shared["$defs"]["metricDeltas"]
+        self.assertEqual(set(deltas["required"]), set(self.EXPECTED_METRICS))
+        self.assertEqual(set(deltas["properties"]), set(self.EXPECTED_METRICS))
+        self.assertIs(deltas["additionalProperties"], False)
+        evaluation = json.loads(
+            (ROOT / "schemas" / "evaluation-result.schema.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            evaluation["properties"]["summary"],
+            {"$ref": "metrics.schema.json#/$defs/metricSummary"},
+        )
+        comparison = json.loads(
+            (ROOT / "schemas" / "comparison.schema.json").read_text(encoding="utf-8")
+        )
+        expected_refs = {
+            "deltas": {"$ref": "metrics.schema.json#/$defs/metricDeltas"},
+            "baseline_summary": {"$ref": "metrics.schema.json#/$defs/metricSummary"},
+            "candidate_summary": {"$ref": "metrics.schema.json#/$defs/metricSummary"},
+        }
+        for field, expected_ref in expected_refs.items():
+            self.assertEqual(comparison["properties"][field], expected_ref)
 
     def test_adapter_result_requires_exactly_the_nine_repetition_fields(self) -> None:
         schema = json.loads(

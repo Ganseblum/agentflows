@@ -376,7 +376,7 @@ class SchemaValidator:
             try:
                 target, target_path = self._resolve_ref(schema["$ref"], schema_path)
                 errors.extend(self._validate(instance, target, path, target_path))
-            except (KeyError, IndexError, ValueError, OSError) as exc:
+            except (KeyError, IndexError, ValueError, OSError, TypeError) as exc:
                 errors.append(ValidationError(path, f"cannot resolve $ref {schema['$ref']!r}: {exc}"))
             return errors
 
@@ -2656,7 +2656,7 @@ def load_protected_paths(path: Path) -> tuple[list[str], list[ValidationError]]:
     """Read protected-paths.txt: one repository-relative prefix per line."""
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         return [], [ValidationError(str(path), f"cannot read protected path list: {exc}")]
     entries: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
@@ -3204,22 +3204,13 @@ def main(argv: list[str] | None = None) -> int:
         "docs": [("docs", validate_doc_consistency)],
         "tests": [("tests", validate_unit_tests)],
         "doc_chain": [("doc_chain", validate_doc_chain)],
-        "all": [
-            ("schemas", validate_schemas),
-            ("examples", validate_examples),
-            ("evals", validate_evals_suite),
-            ("artifacts", validate_workspace_artifacts),
-            ("mock", validate_mock_fixtures),
-            ("protected", validate_protected_paths),
-            ("manifests", validate_manifests),
-            ("docs", validate_doc_consistency),
-            ("tests", validate_unit_tests),
-            ("doc_chain", validate_doc_chain),
-        ],
-    }[args.target]
+    }
+    # "all" 从单目标条目推导，避免 10 项重复登记；新增检查只需加一行单目标。
+    checks["all"] = [(label, fn) for entries in checks.values() for (label, fn) in entries]
+    check_list = checks[args.target]
 
     success = True
-    for label, check in checks:
+    for label, check in check_list:
         success = report(label, check()) and success
     return 0 if success else 1
 

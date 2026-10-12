@@ -51,6 +51,9 @@ index.md                  the single document index
 
 可选层（按需启用）：`workflow/` 项目级活规则、`templates/` 复制骨架、
 `user/` 产品使用文档、`api/` 接口规范、`_archive/` 冻结历史（只读）。
+扩展清单见 [`../templates/README.md`](../templates/README.md) 的「可选层」：
+`复盘.md`（批次收口复盘）、`code-gap-matrix`（文档 vs 代码完成度矩阵）、
+超大 feature 的模块化拆分（一模块一套 proposal/spec/design/plan 四件套 + 总控 spec）。
 
 - **② 普通业务仓**（无独立枢纽）：文档链留在仓库内部——默认
   `docs/features/feature-<slug>/`，阶段骨架相同。

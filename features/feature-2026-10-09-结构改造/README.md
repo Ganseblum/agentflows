@@ -2,6 +2,7 @@
 
 - **目标**：按 `plan/structure-overhaul-plan.md` 把本仓改为 `youc-workflow-ai` 同族结构：去 `records/`、缺陷与事项统一 `ISS-` 编号、模板真文件化、`docs/` 收窄为「设计·指南·事实」。
 - **实施计划**：`plan/structure-overhaul-plan.md` 第 4 节的批 0–5（已执行；过程件见本目录 `plan/`）。
+- **文档链模式**：`轻量模式：无 spec/design 轨`（本批次仅 README + `plan/`；符合 document-chain.md 轻量模式条款，故未含独立 proposal/spec/design/reviews 文件）。
 - **基线**：`plan/baseline-2026-10-09.md`（修订号与 `validate.py all` 原始输出）。
 - **门变更**：批 3 的保护清单改动须经人工评审后随批 4 落地；逐项清单见 `plan/`。
 

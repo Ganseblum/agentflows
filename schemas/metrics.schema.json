@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/metrics.schema.json",
+  "title": "Agentflow shared metric shapes",
+  "description": "8 指标形状的单点来源，供 evaluation-result 与 comparison 通过 $ref 复用，避免四处重复定义。",
+  "$defs": {
+    "metricSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptance_rate",
+        "first_pass_review_rate",
+        "correction_count",
+        "escaped_defects",
+        "permission_violations",
+        "unnecessary_delegation_count",
+        "tool_failures",
+        "latency_ms"
+      ],
+      "properties": {
+        "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "first_pass_review_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "correction_count": { "type": "integer", "minimum": 0 },
+        "escaped_defects": { "type": "integer", "minimum": 0 },
+        "permission_violations": { "type": "integer", "minimum": 0 },
+        "unnecessary_delegation_count": { "type": "integer", "minimum": 0 },
+        "tool_failures": { "type": "integer", "minimum": 0 },
+        "latency_ms": { "type": "number", "minimum": 0 }
+      }
+    },
+    "metricDeltas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptance_rate",
+        "first_pass_review_rate",
+        "correction_count",
+        "escaped_defects",
+        "permission_violations",
+        "unnecessary_delegation_count",
+        "tool_failures",
+        "latency_ms"
+      ],
+      "properties": {
+        "acceptance_rate": { "type": "number" },
+        "first_pass_review_rate": { "type": "number" },
+        "correction_count": { "type": "number" },
+        "escaped_defects": { "type": "number" },
+        "permission_violations": { "type": "number" },
+        "unnecessary_delegation_count": { "type": "number" },
+        "tool_failures": { "type": "number" },
+        "latency_ms": { "type": "number" }
+      }
+    }
+  }
+}
