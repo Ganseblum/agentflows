@@ -12,13 +12,15 @@
 | 有界范围的前端或后端实现 | 一名工程师 + 改动重要时启用 Reviewer |
 | 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
 | 纯规划请求、暂不写码 | 专家并行 → Plan Architect |
-| 用户可见功能的自动化测试（用户点名，或计划带测试设计任务） | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行）→ Reviewer（流程合理性模式） |
+| 用户可见功能的自动化测试（用户点名，或计划带测试设计任务） | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行；禁 Edit，只写运行记录、不改被测对象）→ Reviewer（流程合理性模式） |
 | 测试执行产出失败或覆盖缺口 | Executor 证据 → bug 链路（Investigator → Fixer → Reviewer → Recorder） |
 | 重要、不确定、反复或跨层的 bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | 已有验证复现的小 bug | Supervisor 自己做诊断/修复/检查；Supervisor 亲写的改动独立 Reviewer 门仍然强制；需要沉淀时再记录 |
 | 评审按另一系统规则编写的文档 | Supervisor（归档 + 评审记录）+ Reviewer；findings 落成带 `provenance: external` 的 bug 记录 |
 | 任务本身是带解冲突的分支合并 | Supervisor 解决并验证 + 独立 Reviewer（supervisor 亲解代码冲突时强制；报完成前留存合并后确定性检查的原始输出） |
 | 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
+
+> 「专家」指宿主按任务域提供的领域专家角色（专家中心 / 专家市场按域选用）：它产出建议与判断依据，不写计划、不执行改动；上表「专家并行」即按任务域同时启用多名专家，交汇结论交 Plan Architect。
 
 ## Supervisor
 

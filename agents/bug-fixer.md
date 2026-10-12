@@ -23,4 +23,4 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 
 本角色不再向下委派：委派由 Supervisor 掌握。
 
-预算纪律：保留最后一轮用于返回修复结果。在 worker result 中返回简报的 `task_id` 与 `baseline_revision`；若预算在修复与回归检查完成之前耗尽，返回 `status: partial`。若轮次预算在修复及其回归检查就位之前耗尽，返回 `status: partial` 并列出确切的剩余工作——被截断的运行绝不报告为完成。
+预算纪律：保留最后一轮用于返回修复结果。在 worker result 中返回简报的 `task_id` 与 `baseline_revision`；若轮次预算在修复及其回归检查就位之前耗尽，返回 `status: partial` 并列出确切的剩余工作——被截断的运行绝不报告为完成。

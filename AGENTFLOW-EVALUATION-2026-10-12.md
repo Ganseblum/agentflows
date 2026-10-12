@@ -233,22 +233,29 @@ Agentflow 是一个**设计哲学明显领先于工程落地的受治理多 agen
 
 ### 13.3 剩余缺口清单（复评后仍开的项，逐条附解锁条件）
 
-| # | 缺口 | 复评实证 | 压住哪维 | 解锁条件 |
-| --- | --- | --- | --- | --- |
-| G1 | schema 子集静默失明 | `validate_schemas`（:1437）无词汇表限定 | 代码质量（原标「最严重」） | 授权改 `tools/lab/validate.py`（保护路径） |
-| G2 | host_adapter digest 依赖 git config | 未传 `--no-renames/--no-textconv` | 代码质量 | 授权改 `tools/lab/host_adapter.py`（保护） |
-| G3 | seed_grader off_target 失效 | :388 调 `grade_case` 未传 `target_docs` | 代码质量 | 授权改 `tools/lab/seed_grader.py`（保护） |
-| G4 | evaluator description 误导路由 | description 与正文行为不符 | Agent/Skill | 授权改 `agents/evaluator.md`（保护） |
-| G5 | SKILL 判断词优先级未裁决 | :68「按此顺序应用」无顺序 | Agent/Skill | 非保护；建议拍板「risky 优先」后修 `SKILL.md` |
-| G6 | partial 规则三处重复 | bug-fixer:26 同句两遍 + candidate-engineer:40-41 | Agent/Skill | 非保护，可直接收敛单一权威 |
-| G7 | roles.md「专家」裸用 | :14/:83 无定义 | Agent/Skill | 非保护，加首现定义即可 |
-| G8 | test-executor Edit 语义未进路由表 | 路由表无此行 | Agent/Skill | 非保护，补路由表一行 |
-| G9 | mock/examples 双份逐字节相同 | `diff -q` 实测相同 | 目录结构 | 非保护；最优解是加「两目录必须一致」的机器断言（触及 validate.py，需授权）； interim 可加互引注释 |
-| G10 | 宿主强制力缺位 | README:38 自承 | 架构天花板 | 宿主侧落地 hooks/沙箱（外部依赖，非本仓可修） |
-| G11 | BT 首次真实对照 | 夹具就绪、measurement 全 none | 整体效果（核心差异点另半边） | 用户提供业务快照根/可信端点/权限档 |
-| G12 | 记录面历史账 | 16 open 停滞、12/30 空 roundtrips、归档空转、PLAN-PRODUCT-001 概览「4 未开始」与实表 6 个不符 | 整体/文档 | 只增不改；PLAN-PRODUCT-001 看板算术可修（非保护）；新记录立样板 |
-| G13 | 文档冗余与内联死引用 | iteration-log/CHANGELOG 重复主题、约 21 处内联死引用未核验细化 | 文档内容 | 非保护；下一批文档清理 |
+> 2026-10-12 晚更新：用户指示「先全部修复处理」后，G1–G9 与 G12 已全部落地（含独立评审
+> `changes_requested` → F1 修复 → delta 放行一轮；12 个回归测试 + 6 组变异实验证明承重）。
+> 下表「状态」列记录收尾结果；仍在的项与新增的潜伏项保留原解锁条件。
+
+| # | 缺口 | 复评实证 | 压住哪维 | 解锁条件 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| G1 | schema 子集静默失明 | `validate_schemas`（:1437）无词汇表限定 | 代码质量（原标「最严重」） | 授权改 `tools/lab/validate.py`（保护路径） | **已修复**：白名单 + `check_schema_keywords` walker 接入 `validate_schemas`；AST 机械比对 `blocked-legal: []`/`silent-passthrough: []`；4 测试 + MUT-G1/V3 证明承重 |
+| G2 | host_adapter digest 依赖 git config | 未传 `--no-renames/--no-textconv` | 代码质量 | 授权改 `tools/lab/host_adapter.py`（保护） | **已修复**：两 flag 已传；rename/textconv 两个半场各有专测；MUT-G2/V6 证明承重 |
+| G3 | seed_grader off_target 失效 | :388 调 `grade_case` 未传 `target_docs` | 代码质量 | 授权改 `tools/lab/seed_grader.py`（保护） | **已修复**：CLI 增 `--target-docs`（append）透传；单旗/多旗两测试；MUT-G3/V7 证明承重 |
+| G4 | evaluator description 误导路由 | description 与正文行为不符 | Agent/Skill | 授权改 `agents/evaluator.md`（保护） | **已修复**：description 改为只读记录审查表述，与正文及 `docs/agent-roles.md` 一致 |
+| G5 | SKILL 判断词优先级未裁决 | :68「按此顺序应用」无顺序 | Agent/Skill | 非保护；建议拍板「risky 优先」后修 `SKILL.md` | **已修复**：裁决「risky 优先」落入 SKILL.md 与中文镜像 `docs/agent-roles.md`；小改动条件补「不改持久化或数据模型」 |
+| G6 | partial 规则三处重复 | bug-fixer:26 同句两遍 + candidate-engineer:40-41 | Agent/Skill | 非保护，可直接收敛单一权威 | **已修复**：两文件各收敛为一条完整规则 |
+| G7 | roles.md「专家」裸用 | :14/:83 无定义 | Agent/Skill | 非保护，加首现定义即可 | **已修复**：roles.md 与 `docs/agent-roles.md` 路由表后均加首现定义 |
+| G8 | test-executor Edit 语义未进路由表 | 路由表无此行 | Agent/Skill | 非保护，补路由表一行 | **已修复**：两份路由表均补「禁 Edit，只写运行记录、不改被测对象」 |
+| G9 | mock/examples 双份逐字节相同 | `diff -q` 实测相同 | 目录结构 | 非保护；最优解是加「两目录必须一致」的机器断言（触及 validate.py，需授权）； interim 可加互引注释 | **已 interim 修复**：两份文件加相同互引注记（MD5 实测仍一致）；机器断言仍欠授权 |
+| G10 | 宿主强制力缺位 | README:38 自承 | 架构天花板 | 宿主侧落地 hooks/沙箱（外部依赖，非本仓可修） | 仍在（外部依赖） |
+| G11 | BT 首次真实对照 | 夹具就绪、measurement 全 none | 整体效果（核心差异点另半边） | 用户提供业务快照根/可信端点/权限档 | 仍在（等输入） |
+| G12 | PLAN-PRODUCT-001 看板算术 | 概览「4 未开始」与实表 5 个 ☐ 不符（初版复评误记 6，已订正） | 整体/文档 | 非保护；更正概览即可 | **已修复**：概览改为「5 未开始」，与任务表及统计口径自洽 |
+| G13 | 文档冗余与内联死引用 | iteration-log/CHANGELOG 重复主题、约 21 处内联死引用未核验细化 | 文档内容 | 非保护；下一批文档清理 | 仍在 |
+| G14 | `format` 取值粒度失明（新增，独立评审 F3） | `_validate` 仅对 `format == "date-time"` 生效，其他取值静默跳过；现存 15 个 schema 的 format 全为 date-time，未激活 | 代码质量（潜伏） | 下一批在 `_validate` 对未知 format 值 fail-closed（触及 validate.py，需授权） | 仍在（潜伏） |
 
 ### 13.4 复评结论
 
 **综合 7.1 → 7.8**。本批优化把「设计哲学领先工程落地约一个版本」的差距压缩到**最后一步**：确定性晋升链已闭环、最刺手的诚信问题（自证 promote vs 机器裁决）已固定并设防、破坏性默认值已堵。剩余缺口呈清晰的三分结构：**3 项保护路径代码修复**（G1–G3，原报告标记的最严重项在其中）、**5 项非保护路径小修**（G5–G9+G12 看板，均可直接做）、**2 项外部依赖**（G10 宿主 hooks、G11 BT 输入）。换句话说：**9 分及格的路径已经画出来了，缺的是授权与输入，不是设计**。
+
+**2026-10-12 晚收尾更新**：用户授权「全部修复」后，G1–G9 与 G12 全部落地（13 个文件，+542/-13），只剩 **G10（宿主 hooks）、G11（BT 三样输入）、G13（文档清理）、G14（format 粒度，潜伏）** 四项——前两项外部依赖，后两项各需一轮小批。综合分具备再上半级的全部条件，所欠仅为外部输入与下一批授权。
