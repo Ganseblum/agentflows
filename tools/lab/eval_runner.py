@@ -402,14 +402,19 @@ def run_adapter(args: argparse.Namespace) -> int:
     if not command:
         print("adapter command must not be empty", file=sys.stderr)
         return 1
-    completed = subprocess.run(
-        command,
-        input=json.dumps(request, ensure_ascii=False),
-        text=True,
-        capture_output=True,
-        cwd=ROOT,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            input=json.dumps(request, ensure_ascii=False),
+            text=True,
+            capture_output=True,
+            cwd=ROOT,
+            check=False,
+            timeout=600,
+        )
+    except subprocess.TimeoutExpired:
+        print(f"adapter timed out after 600s: {' '.join(command)}", file=sys.stderr)
+        return 1
     if completed.returncode != 0:
         print(f"adapter exited with {completed.returncode}", file=sys.stderr)
         if completed.stderr:
