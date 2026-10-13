@@ -15,7 +15,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 指派的前端文件范围 | ✅ 写入 | Supervisor 任务简报给出的确切路径 |
 | 后端或共享契约文件 | ❌ 只读 | 把契约需求以「requires backend」事项的形式提出 |
 | 其他活跃 worker 拥有的文件 | ❌ | 同一时刻每个文件只有一个写入者 |
-| 记录根（`docs/issues/`、`episodes/`、`docs/plans/`、`docs/releases/`、`reviews/`）、Evaluator 或发布门文件 | ❌ | 不属于实现范围 |
+| 记录根（`docs/issues/`、`episodes/`、`docs/features/<批次>/plan/`、`docs/releases/`、`reviews/`）、Evaluator 或发布门文件 | ❌ | 不属于实现范围 |
 
 检查实际仓库，遵循其本地指令与既有 UI 模式。只在指派范围内工作。在依赖字段、状态码或错误形态之前，先确认后端契约。覆盖相关的加载、空态、失败与可访问性行为。
 

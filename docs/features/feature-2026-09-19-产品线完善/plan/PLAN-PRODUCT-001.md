@@ -58,9 +58,9 @@ updated_at: 2026-10-10T15:20:00+08:00
 | 项 | 落点 | 证据 |
 | --- | --- | --- |
 | `--case-ids` 门变更 | `tools/lab/eval_runner.py`、`tests/test_lab_contracts.py`、`tools/lab/README.md` | `CaseIdSubsetTests` 6 OK；`validate.py all` 9×PASS |
-| 噪声底计划 | `plans/PLAN-LOOP-SMOKE-001.md` | T01–T04 ☑；T05 ⚠ |
+| 噪声底计划 | `PLAN-LOOP-SMOKE-001.md` | T01–T04 ☑；T05 ⚠ |
 | 候选预声明 | `improvements/candidates/0.8.1+smokeloop.json` | parent `0.8.1`；digest 异于基线 |
-| 本会话 episode | `episodes/2026-09-19/EP-20260919-001.json` | outcome `partial` |
+| 本次执行 episode | `episodes/2026-09-19/EP-20260919-001.json` | outcome `partial` |
 | 仓库外候选树 | 不入仓 | `check-diff` blocked=[]；仅五份 manifest |
 
 源码基线：`plugin.json` `0.8.1`，HEAD `ceb639f56c940939c36c745e739c237167048159`。ZCode 安装快照仍为 `0.8.0`。
@@ -69,10 +69,10 @@ updated_at: 2026-10-10T15:20:00+08:00
 
 | 项 | 为什么还没做 |
 | --- | --- |
-| 一行模型探测 / live 对照 / policy 建议 / 人批 | U-01；本会话不能替用户打外部 Claude |
+| 一行模型探测 / live 对照 / policy 建议 / 人批 | U-01；本次执行不能替用户打外部 Claude |
 | 提交、bump 五份源码 manifest、CHANGELOG 0.8.2 | 用户未要求提交；live 数字未出 |
 | 重装 ZCode 到与源码一致 | 对照用冻结源码树，不读过期缓存；dogfood 另做 |
-| 独立评审 `--case-ids` | 本会话 Supervisor 实施，`review_roundtrips=[]` |
+| 独立评审 `--case-ids` | 由执行方实施，`review_roundtrips=[]` |
 | 业务 18 次 | 第二次尺子，见业务计划 |
 | 插件打包 allowlist | 产品卫生，不挡噪声底 |
 | ZCode/Cursor 评测适配器、Codex 评 candidate | 先闭合一个能绑候选源的宿主 |
@@ -116,7 +116,7 @@ updated_at: 2026-10-10T15:20:00+08:00
 
 | 共享机制 | 注册点 | 行为 | 受影响表面 |
 | --- | --- | --- | --- |
-| 作者不验证自己 | `skills/agentflow/references/contracts.md` 硬边界 1 | `--case-ids` 的作者不能给 T03 当评审 | Supervisor 本会话只准实施，不准自批发布 |
+| 作者不验证自己 | `skills/agentflow/references/contracts.md` 硬边界 1 | `--case-ids` 的作者不能给 T03 当评审 | 执行方只准实施，不准自批发布 |
 | 安装快照 | ZCode marketplace | 源码改角色不生效直到重装 | T06；对照不把 0.8.0 缓存当 0.8.1 基线 |
 | FTS5 记录索引 | `tools/lab/record_store.py` | 一次性索引，源文件权威 | T09 只加 Intake 纪律，不上向量 |
 
@@ -139,7 +139,7 @@ updated_at: 2026-10-10T15:20:00+08:00
 
 回滚：未提交 diff 可弃；`/tmp` 候选树可删；parent 仍是 `0.8.1` @ `ceb639f56c940939c36c745e739c237167048159`。已提交后回滚=回到该 revision，不是改安装目录。
 
-**评审门**：T03 必须独立 Reviewer；T04/T05 提交与 bump 需用户当次授权；T07/T10 触及 `tools/lab/` 或发布源时按门变更人审。本文件由 Supervisor 落盘，不自批 T03。
+**评审门**：T03 必须独立 Reviewer；T04/T05 提交与 bump 需用户当次授权；T07/T10 触及 `tools/lab/` 或发布源时按门变更人审。本文件由执行方落盘，不自批 T03。
 
 ## 验证命令
 

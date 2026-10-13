@@ -229,6 +229,7 @@ flowchart LR
 | `docs` | 角色/文档面一致性 + 版本散文守卫 + 断链与退役路径扫描 | 按报错修文档；版本号只活在 manifest/CHANGELOG |
 | `tests` | tests/ 目录内容受控 + 回归全绿 + 拒绝 skip | 测试红即门回归 |
 | `doc_chain` | 文档链 linter 判别自测（用例数下限守卫） | 自测红或用例数缩水即门红（缩水=门变更，需人审） |
+| `doc_chain_live` | 活面扫描：对声明域（docs/product、docs/features）跑文档链文本形态，FAIL 即门红 | 按报错修文档；这是被检查物体检，不是检查器自检 |
 
 其他日常命令：
 
@@ -236,6 +237,7 @@ flowchart LR
 python3 tools/lab/validate.py installed        # 源码 vs 安装快照逐文件比对（改角色后必跑）
 python3 tools/lab/validate.py report           # bug 回溯表（可按项目/状态/来源过滤）
 python3 tools/lab/validate.py recurrence       # 类台账与推导档位
+python3 tools/lab/trend.py --append             # 追加一行改进环信号到 docs/trend.jsonl（无校验，仅观测）
 python3 tools/lab/record_store.py index        # 一次性 SQLite FTS5 索引（只读辅助）
 python3 tools/lab/record_store.py query '关键词'
 python3 tools/lab/isolation.py check-diff --candidate <树> --base <冻结parent>

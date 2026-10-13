@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import sys
 import subprocess
 import tempfile
@@ -88,6 +89,45 @@ class ValidatorRegressionTests(unittest.TestCase):
             changed = isolation.changed_paths(repository, base)
 
         self.assertEqual(set(changed), {"tracked.txt", "ordinary.txt", "ignored.ignored"})
+
+    def test_live_doc_chain_gate_flags_drift_and_requires_surface(self) -> None:
+        # The compile gate must run the checker on the documents, not only pin the checker:
+        # a drifted live document fails, and a missing declared surface is a failure rather
+        # than a silent loss of coverage.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "tools" / "lab").mkdir(parents=True)
+            shutil.copy(LAB / "doc_chain.py", root / "tools" / "lab" / "doc_chain.py")
+            (root / "docs" / "features").mkdir(parents=True)
+            errors = validate.validate_doc_chain_live(root)
+            self.assertTrue(any("docs/product" in error.path for error in errors))
+            (root / "docs" / "product").mkdir(parents=True)
+            (root / "docs" / "product" / "drifted.md").write_text(
+                "# 报告\n\nD 桶积分中断最多。\n", encoding="utf-8"
+            )
+            errors = validate.validate_doc_chain_live(root)
+        self.assertTrue(
+            any("drifted.md" in error.path and "C14" in error.message for error in errors)
+        )
+
+    def test_path_residue_flags_migrated_plans_but_spares_examples_fixture(self) -> None:
+        # docs/plans has no live descendant (it moved into the singular plan/), so it is a
+        # token; examples/plans/ is a live fixture directory and must not be punished by it.
+        self.assertIn("docs/plans", validate.PATH_RESIDUE_TOKENS)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs" / "features").mkdir(parents=True)
+            (root / "docs" / "features" / "README.md").write_text(
+                "计划落在 docs/plans/ 下。\n", encoding="utf-8"
+            )
+            errors = validate.validate_live_doc_references(root)
+            self.assertTrue(any("docs/plans" in error.message for error in errors))
+            (root / "examples" / "plans").mkdir(parents=True)
+            (root / "examples" / "plans" / "README.md").write_text(
+                "plans/ 下有结构有效的示例。\n", encoding="utf-8"
+            )
+            errors = validate.validate_live_doc_references(root)
+        self.assertEqual([error for error in errors if "examples/plans" in error.path], [])
 
     def test_bug_record_severity_uses_priority_grades(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")

@@ -14,11 +14,11 @@ python3 tools/lab/validate.py all
 它校验本仓库使用的 Draft 2020-12 词汇表，然后检查记录状态规则、计划依赖图与公开 fixture 引用。
 失败的检查返回退出码 1。
 
-`validate.py artifacts` 额外校验实际写入现行记录根（`docs/issues/`、`docs/features/`、`episodes/`、`docs/releases/`、
-`improvements/`、`releases/`、`reviews/`，递归）下的记录实例——issue 记录及其 recurrence 台账
-与被拒记录归档、评审记录、episode、计划，以及改进环与发布产物——对照同一批 schema 与正文断言；
-各根 README 与两个声明的工作文件（`releases/todo.md`、
-`releases/pending-test.md`）按声明放行，其余路径仍按「意外条目」拒绝；`all` 包含它。
+`validate.py artifacts` 额外校验实际写入现行记录根（`docs/issues/`、`docs/releases/`、`docs/features/`、
+`episodes/`、`reviews/`，递归）下的记录实例——issue 记录及其 recurrence 台账、评审记录、episode，
+以及批次目录下的计划与测试记录——对照同一批 schema 与正文断言；
+各根 README 与 `docs/releases/` 下两个声明的工作文件（`todo.md`、
+`pending-test.md`）按声明放行，其余路径仍按「意外条目」拒绝；`all` 包含它。
 这是 supervisor 产物验收的编译步骤：在接受 worker 的记录之前对真实文件运行它，并把失败当作编译
 错误。测试记录位于功能批次目录（`features/<batch>/testing/`），本遍历尚未巡检那里。
 
@@ -48,6 +48,13 @@ SKILL 引用的每个 `agentflow:<role>` 都解析到一个 agent 文件，docs/
 链接与已退役路径散文。非 mermaid 围栏块与行内代码是引文，保持豁免——mermaid 图属于内容，仍被
 扫描；`CHANGELOG.md` 作为历史载体保持豁免于 token 扫描。`all` 包含它。
 
+`validate.py doc_chain` 运行文档链 linter 的判别自测（`python3 tools/lab/doc_chain.py --self-test`），
+断言退出码、N/M 通过计数与无静默截断——它钉的是检查器本身。`validate.py doc_chain_live` 把同一个
+linter 跑在**文档**上：`docs/product/` 与 `docs/features/`（`DOC_CHAIN_LIVE_ROOTS`）下的每份 Markdown
+都过文本形态检查（C12 时效性引用 / C13 会话角色词 / C14 代号裸用；结构检查 C1–C11 属 feature 链
+模式），任一发现即门失败，声明的面缺失也失败。两者都在 `all` 中：只钉检查器、不跑被检物，正是
+2026-10-13 审计量到的缺口——门全绿，而检查器本该守住的文档已经漂移。
+
 两张只读的回溯表只打印、不做校验便退出：`validate.py report
 [--project X] [--status Y] [--provenance Z]`（缺陷记录表，provenance 作为最后一列）与
 `validate.py recurrence`（按类别的合并状态与推导出的档位——`single` / `recurred` /
@@ -66,7 +73,12 @@ python3 tools/lab/artifact_digest.py --root .
 python3 tools/lab/isolation.py --help
 python3 tools/lab/record_store.py --help
 python3 tools/lab/doc_chain.py --help
+python3 tools/lab/trend.py --help
 ```
+
+`trend.py` 不做任何校验：它把改进环已有的信号（recurrence 档位、活面文档链发现数、评审记录里的
+发现数、回归套件规模）追加成一行 JSON 到 `docs/trend.jsonl`，让环的输入在会话之间可见。它记录的
+是计数，不是质量裁决（`measurement: none` 口径同样适用）；默认打印该行，`--append` 才写入。
 
 候选工作树与私有 holdout 必须位于
 公开仓库之外，且互不包含。`isolation.py` 检查该布局，并在发布门

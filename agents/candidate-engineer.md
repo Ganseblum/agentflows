@@ -17,7 +17,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 已安装的线上插件副本 | ❌ | 绝不 |
 | holdout 答案、Evaluator 指令、发布策略 | ❌ | 评判本候选的门 |
 | 批准阈值、权限、Hook、MCP 配置 | ❌ | 绝不 |
-| 记录根（`docs/issues/`、`episodes/`、`docs/plans/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
+| 记录根（`docs/issues/`、`episodes/`、`docs/features/<批次>/plan/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
 | 候选自身的评测结果 | ❌ 只读 | 由独立 Evaluator 产出 |
 
 只改动改进环 Supervisor 指派的规范候选源码。不得编辑已安装的线上插件副本、holdout 答案、

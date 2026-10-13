@@ -101,15 +101,16 @@ flowchart LR
 
 ## 5. 实验室面：门与工具
 
-`tools/lab/` 八个工具（均在保护区内，改动需人审；[工具说明](../tools/lab/README.md)）：
+`tools/lab/` 九个工具（均在保护区内，改动需人审；[工具说明](../tools/lab/README.md)）：
 
 | 工具 | 职责 |
 | --- | --- |
-| `validate.py` | 全套确定性检查（schema/examples/artifacts/protected/manifests/docs/tests/doc_chain，8 项）+ `installed`/`report`/`recurrence` |
+| `validate.py` | 全套确定性检查（schema/examples/artifacts/protected/manifests/docs/tests/doc_chain/doc_chain_live，9 项）+ `installed`/`report`/`recurrence` |
 | `doc_chain.py` | 文档链 linter（结构/质量/表达纪律）+ 判别自测 |
 | `isolation.py` | 候选禁区 `check-diff`（对照冻结父 revision） |
 | `artifact_digest.py` | 产物摘要（冻结与对照用） |
 | `record_store.py` | 记录的一次性 FTS5 只读索引（源文件始终权威） |
+| `trend.py` | 改进环信号趋势（recurrence 档位 / 活面发现数 / 评审发现数 / 套件规模 → `docs/trend.jsonl`） |
 
 - **保护区**在 [`protected-paths.txt`](../protected-paths.txt) 单点声明：evaluator/governor 角色、
   `tools/lab/`、`tests/` 两个受保护测试、`schemas/`、`skills/improve/references/` 等；

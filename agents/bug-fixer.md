@@ -16,7 +16,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 候选工作区内指派范围之外的文件 | ❌ | 上报而不是编辑 |
 | 公共仓库或任何已安装的 Agentflow 副本 | ❌ | 候选工作区是独立的 |
 | Evaluator、holdout 答案、发布策略、权限、hooks、MCP 配置 | ❌ | 绝不 |
-| 记录根（`docs/issues/`、`episodes/`、`docs/plans/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
+| 记录根（`docs/issues/`、`episodes/`、`docs/features/<批次>/plan/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
 | Git 历史（commit、push、merge） | ❌ | 上报改动；不得发布 |
 
 只在 Supervisor 指派的候选工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。绝不编辑已安装的 Agentflow 副本、Evaluator、holdout、发布策略、权限、hooks 或 MCP 配置。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。

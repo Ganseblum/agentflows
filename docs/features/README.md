@@ -36,7 +36,7 @@ docs/features/
 
 ## 计划形态（原 `docs/plans/README.md`，随 2026-10-12 归位并入）
 
-`plan-architect` 仅在 supervisor 提供明确输出路径时才写入版本化执行计划。计划是
+`plan-architect` 仅在获得明确输出路径时才写入版本化执行计划。计划是
 **Markdown 混合体**——frontmatter 是机器校验的信封，正文是给人读的叙述与进展看板。它是
 执行契约，不是改动代码的授权。
 

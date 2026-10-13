@@ -35,7 +35,9 @@ python3 tools/lab/doc_chain.py <feature-dir>
 ```
 
 linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`，自测作为门的一部分
-运行）：`python3 tools/lab/doc_chain.py --self-test`。
+运行）：`python3 tools/lab/doc_chain.py --self-test`。`validate.py doc_chain_live` 进一步把
+同一个 linter 跑在本仓的活文档面（`docs/product/`、`docs/features/`）上，任一发现即门红——
+自测绿只说明检查器没坏，不说明它照看的文档没漂移。
 契约：[skills/agentflow/references/document-chain.md](skills/agentflow/references/document-chain.md)。
 
 ## 编辑角色或 skill

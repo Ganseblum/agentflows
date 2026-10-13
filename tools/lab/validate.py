@@ -65,6 +65,7 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/artifact_digest.py",
     "tools/lab/doc_chain.py",
     "tools/lab/isolation.py",
+    "tools/lab/trend.py",
     "tools/lab/validate.py",
     "protected-paths.txt",
     ".github/workflows/validate.yml",
@@ -1774,7 +1775,7 @@ def validate_agents_md_plan_contract(agents_md: Path) -> list[ValidationError]:
             ValidationError(
                 str(agents_md),
                 "AGENTS.md carries the pre-0.5.0 JSON plan contract; plans are Markdown "
-                "hybrids named <plan_id>.md — see plans/README.md",
+                "hybrids named <plan_id>.md — see docs/features/README.md",
             )
         )
     return errors
@@ -1805,11 +1806,22 @@ RETIRED_PATH_TOKENS = (
     "records/",
     "bugs/",
     "improvement/",
+    "improvements/",
     "docs/audit-2026-09-18",
     "next-session-handoff",
     "docs/iteration-log",
     "docs/agent-roles",
 )
+
+# Migrated, not deleted (2026-10-12 phased overhaul, ISS-2026-048 / ISS-2026-049). A migration
+# differs from a retired tree only in what the old spelling leaves behind: the two plural moves
+# issues/ -> docs/issues/ and releases/ -> docs/releases/ survive as the live path's own
+# suffix, so a bare token would punish the new path — those are deliberately NOT tokens. The one
+# migration with no live descendant is the top-level plans/ root, which dissolved into the
+# *singular* docs/features/<batch>/plan/. It is written `docs/plans` (not `plans/`) so it cannot
+# collide with examples/plans/, a live fixture directory.
+MIGRATED_PATH_TOKENS = ("docs/plans",)
+PATH_RESIDUE_TOKENS = RETIRED_PATH_TOKENS + MIGRATED_PATH_TOKENS
 HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md",)
 FENCED_BLOCK_PATTERN = re.compile(r"```(?P<info>[^\n`]*)\n.*?```", re.DOTALL)
 INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
@@ -1870,7 +1882,7 @@ def validate_live_doc_references(root: Path = ROOT) -> list[ValidationError]:
             # the token scan strips it before matching (agentflows@0.8.2:docs/agent-roles.md
             # must stay citable inside a record even after docs/agent-roles was retired).
             scan = QUALIFIED_REF_PATTERN.sub(" ", INLINE_CODE_PATTERN.sub("", line))
-            for token in RETIRED_PATH_TOKENS:
+            for token in PATH_RESIDUE_TOKENS:
                 index = scan.find(token)
                 while index != -1:
                     preceded_by_word = index > 0 and (
@@ -2227,6 +2239,66 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
     return []
 
 
+# Live-document surfaces the compile gate lints with the doc-chain text checks (C12/C13/C14).
+# Until now the gate pinned the *checker* — validate_doc_chain runs doc_chain.py --self-test —
+# but never ran the checker on the tree it governs, so a document could drift (a stale claim, a
+# session role word, a bare code subject) while every gate stayed green: the checker's own
+# self-test passed, the documents it exists to check did not. The 2026-10-13 audit measured that
+# gap: eight green checks, with docs/product and docs/features failing the very checks the
+# linter was built for. These are the surfaces the method itself produces and must keep true.
+# Role contracts (agents/), the shipped skill text (skills/) and records (docs/issues, reviews,
+# episodes) are deliberately out of scope — their role words are definitions or recorded facts,
+# not session-bound claims (C13_EXEMPT_PREFIXES in doc_chain.py) — so linting them would only
+# manufacture false findings. Deleting either surface is a visible gate change, not silent loss
+# of coverage: validate_doc_chain_live fails when a declared surface is missing.
+DOC_CHAIN_LIVE_ROOTS = ("docs/product", "docs/features")
+
+
+def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:
+    """Run the doc-chain text checks over the live document surfaces.
+
+    Companion to validate_doc_chain: that check pins the linter's self-test, this one points the
+    linter at the documents. Every *.md under DOC_CHAIN_LIVE_ROOTS is linted with
+    `doc_chain.py --file` — the text-form checks only, since these trees have no
+    feature-directory shape to satisfy (the structure checks C1–C11 are the feature-chain
+    pass's job) — and any finding fails the gate with the linter's own message and the
+    repo-relative path. `root` defaults to the repository.
+    """
+    linter = root / "tools" / "lab" / "doc_chain.py"
+    if not linter.is_file():
+        return [ValidationError("doc_chain_live", "tools/lab/doc_chain.py is missing")]
+    errors: list[ValidationError] = []
+    for surface in DOC_CHAIN_LIVE_ROOTS:
+        base = root / surface
+        if not base.is_dir():
+            errors.append(
+                ValidationError(surface, "declared live-document surface is missing")
+            )
+            continue
+        for path in sorted(base.rglob("*.md")):
+            relative = path.relative_to(root)
+            completed = subprocess.run(
+                [sys.executable, str(linter), "--file", relative.as_posix()],
+                cwd=str(root),
+                text=True,
+                capture_output=True,
+                timeout=120,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+            if completed.returncode == 0:
+                continue
+            findings = [
+                line.strip()[2:].strip()
+                for line in completed.stdout.splitlines()
+                if line.strip().startswith("- ")
+            ]
+            if not findings:
+                findings = [f"doc-chain linter exited {completed.returncode} with no findings"]
+            for finding in findings:
+                errors.append(ValidationError(relative.as_posix(), finding))
+    return errors
+
+
 def plugin_identity() -> tuple[str, str, str] | None:
     """Return (marketplace, plugin, version) for the source checkout, when declared."""
     manifest, load_errors = load_json(ROOT / "plugin.json")
@@ -2481,6 +2553,7 @@ def main(argv: list[str] | None = None) -> int:
             "docs",
             "tests",
             "doc_chain",
+            "doc_chain_live",
             "installed",
             "all",
             "report",
@@ -2526,6 +2599,7 @@ def main(argv: list[str] | None = None) -> int:
         "docs": [("docs", validate_doc_consistency)],
         "tests": [("tests", validate_unit_tests)],
         "doc_chain": [("doc_chain", validate_doc_chain)],
+        "doc_chain_live": [("doc_chain_live", validate_doc_chain_live)],
         "all": [
             ("schemas", validate_schemas),
             ("examples", validate_examples),
@@ -2535,6 +2609,7 @@ def main(argv: list[str] | None = None) -> int:
             ("docs", validate_doc_consistency),
             ("tests", validate_unit_tests),
             ("doc_chain", validate_doc_chain),
+            ("doc_chain_live", validate_doc_chain_live),
         ],
     }[args.target]
 

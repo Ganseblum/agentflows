@@ -34,7 +34,9 @@ Checks:
                        disk — the claim rotted
   C13 session role words  stage documents carry session-bound process words (supervisor /
                        coordinator case-insensitive; literal TD 开放问题 / 本轮评审 /
-                       本次会话 / 本轮会话) — replace with a concrete role name or delete
+                       本次会话 / 本轮会话 / 本会话) — replace with a concrete role name or
+                       delete; skipped whole on method-self-description surfaces, see
+                       C13_EXEMPT_PREFIXES
   C14 bare code subjects  a stage document uses a single uppercase letter as a standing prose
                        subject with the 桶 classifier (「A 桶」「D 桶」, spaced or not) away from
                        its definition site — codes pair with the plain word (白话（代号）) in
@@ -72,7 +74,30 @@ BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 # it. Case-insensitive process-role names plus the literal session-bound phrases seen in the
 # 2026-09-21 corpus (TD 开放问题 etc.).
 ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.I)
-ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话")
+ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话", "本会话")
+
+# C13 scope — a session-bound role word is a defect in a *deliverable*: text handed to a reader
+# who was not in the session, where 「supervisor」 resolves to nobody. On a
+# *method-self-description* surface the same words are the method's own vocabulary or quoted
+# examples: product-design.md states 「Supervisor = 主会话」, contracts.md addresses Supervisor
+# as the actor throughout, the agent contracts define roles, and reviewer.md *lists*
+# 「supervisor、TD、本轮、本次会话一类」 as the very thing the clause forbids — no line-local
+# rule can tell a mention from a use. Review records name who reviewed as recorded fact
+# (硬边界 8 keeps records from being rewritten). C13 is therefore skipped whole on these
+# surfaces, left to the clause text and the reviewer — the same bargain C15 already makes (see
+# the note at CODE_SUBJECT_RE). The line is drawn on the document's *path*, not its wording:
+# the same sentence is a defect in a chain stage document and a term under docs/product/.
+C13_EXEMPT_PREFIXES = (
+    "docs/product/",
+    "skills/",
+    "agents/",
+    "reviews/",
+)
+
+# A planned-but-absent component name is not a session word: 「Execution Coordinator」 names a
+# future role in the workflow (PLAN-PRODUCT-001 lists it as 本期不做), resolved by the sentence
+# around it, not by the session. Stripped before matching so the bare-word rule keeps its teeth.
+ROLE_WORD_EXEMPT_PHRASES = ("Execution Coordinator", "execution-coordinator")
 
 # C12/C13/C14 scan stage documents only: proposal/spec/design/plan. The README progress log and
 # .gitkeep placeholders are out of scope (progress-log wording is not document wording).
@@ -136,6 +161,20 @@ def inside_parens(s: str, idx: int) -> bool:
     return depth > 0
 
 
+def c13_checked(label: str) -> bool:
+    """False when the document is a method-self-description surface (see the C13 scope note).
+
+    Keyed on the path so --file (a session deliverable) and the feature-chain pass (stage
+    documents, labelled relative to the feature dir) still run C13, while docs/product/**,
+    skills/**, agents/** and reviews/** do not.
+    """
+    posix = label.replace("\\", "/")
+    return not any(
+        posix.startswith(prefix) or f"/{prefix}" in posix
+        for prefix in C13_EXEMPT_PREFIXES
+    )
+
+
 def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list[str]:
     """C12/C13/C14 — the text-form checks that need no feature-directory shape.
 
@@ -145,6 +184,7 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
     """
     errors: list[str] = []
     fences = fenced_lines(text)
+    check_c13 = c13_checked(label)
     for i, line in enumerate(text.splitlines(), 1):
         # C12 stale-time reference: the line claims a target is still pending while the
         # markdown link OR backtick code path on the same line already resolves on disk —
@@ -161,11 +201,18 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
                     errors.append(
                         f"C12 时效性引用: {label}:{i} 声称待产出但目标已存在: {t}"
                     )
-        # C13 session role words: replace with the concrete role name, or delete the
-        # clause so the body stands on its own.
-        hits = ROLE_WORD_RE.findall(line) + [w for w in ROLE_PHRASES if w in line]
-        for w in sorted(set(hits)):
-            errors.append(f"C13 会话角色词: {label}:{i} {w}")
+        # C13 session role words: replace with the concrete role name, or delete the clause so
+        # the body stands on its own. Skipped whole on the method-self-description surfaces —
+        # there the words are defined terms or quoted examples (reviewer.md lists 「supervisor、
+        # TD、本轮、本次会话一类」 as the very thing the clause forbids), and no line-local rule
+        # can tell a mention from a use.
+        if check_c13:
+            role_line = line
+            for phrase in ROLE_WORD_EXEMPT_PHRASES:
+                role_line = re.sub(re.escape(phrase), " ", role_line, flags=re.I)
+            hits = [w for w in ROLE_PHRASES if w in line] + ROLE_WORD_RE.findall(role_line)
+            for w in sorted(set(hits)):
+                errors.append(f"C13 会话角色词: {label}:{i} {w}")
         # C14 bare code subjects: codes pair with the plain word in prose; the definition
         # site, code spans/fences, and the two paired forms are exempt (see CODE_SUBJECT_RE).
         if i not in fences and not line.lstrip().startswith("|"):
@@ -396,8 +443,9 @@ def self_test() -> int:
     NOT trip. Fixes review finding F1 ("self-test vacuous for most checks"). Cases 27–34
     pin C14's positive/negative surface (paired forms, definition rows, code spans, the
     real-corpus 「IP 桶」 near-miss); cases 35–38 pin the --file text-form mode and its
-    mutual exclusion with the positional feature dir; case 34 documents why C15 stays
-    clause-governed (see the note at CODE_SUBJECT_RE).
+    mutual exclusion with the positional feature dir; cases 39–41 pin C13's
+    method-self-description scope and the planned-role exemption; case 34 documents why C15
+    stays clause-governed (see the note at CODE_SUBJECT_RE).
     """
     import subprocess
     import tempfile
@@ -639,8 +687,9 @@ def self_test() -> int:
              ["PASS doc-chain"], add_schema_word, results)
 
     def run_file_case(name: str, expect_rc: int, want: list[str], text: str,
-                      argv: list[str] | None = None) -> None:
-        d = Path(tempfile.mkdtemp()) / "deliverable.md"
+                      argv: list[str] | None = None, sub: str = "deliverable.md") -> None:
+        d = Path(tempfile.mkdtemp()) / sub
+        d.parent.mkdir(parents=True, exist_ok=True)
         d.write_text(text, encoding="utf-8")
         cmd = [sys.executable, str(linter)] + (argv if argv is not None else ["--file", str(d)])
         r = subprocess.run(cmd, capture_output=True, text=True)
@@ -661,6 +710,22 @@ def self_test() -> int:
                   argv=[str(Path(tempfile.mkdtemp())), "--file", "deliverable.md"])
     run_file_case("38 --file without a path is a usage error", 2, ["Usage"], "# 报告\n",
                   argv=["--file"])
+
+    # --- C13 scope + the planned-role exemption (cases 39–41). C13 is a defect in a deliverable
+    # and is skipped whole on a method-self-description surface: the same sentence must flip
+    # verdict on the path alone, and a spec may quote the words it forbids. A planned role name
+    # (Execution Coordinator) is neither.
+    run_file_case("39 C13 role word passes under docs/product/ (method-self-description surface)",
+                  0, ["PASS doc-chain --file"],
+                  "# method spec\n\nspec 由 supervisor 起草，独立评审门不可豁免。\n",
+                  sub="docs/product/spec/method-spec.md")
+    run_file_case("40 C13 is skipped whole under docs/product/ — a spec may quote the session "
+                  "words it forbids", 0, ["PASS doc-chain --file"],
+                  "# method spec\n\n表达纪律禁止 supervisor、TD、本轮评审 一类会话词。\n",
+                  sub="docs/product/spec/method-spec.md")
+    run_file_case("41 Execution Coordinator is a planned role name, not a session word", 0,
+                  ["PASS doc-chain --file"],
+                  "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n")
 
     ok = all(passed for _, passed in results)
     for name, passed in results:
