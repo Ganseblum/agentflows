@@ -1,5 +1,7 @@
 # <feature> — 验收标准（spec/qa）
-> 前置输入：proposal/spec-be/spec-fe；来源优先级声明
+> 前置输入：proposal/spec-be/spec-fe。
+> 来源优先级声明（填写本行）：本文件逐条的验收口径按「<proposal 原文> > <spec/be> > <spec/fe>」的顺序裁决；
+> 两份上游冲突且都可引用时，以顺序靠前者为准，并把冲突登记进下方 §0.1 GAP 台账，不静默择一。
 ## 0. 来源对齐缺口（GAP）与 OQ 台账
 <填：GAP-x|待对齐文档/实现|影响阶段|关闭条件；OQ-x|问题|Owner|阻塞 design?|结论>
 ### 0.1 GAP 台账

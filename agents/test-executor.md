@@ -13,7 +13,7 @@ disallowedTools: Edit
 
 | 产物 | 本角色 | 说明 |
 | --- | --- | --- |
-| Supervisor 显式指派的 `features/<批次>/testing/<项目>-<功能>/` 下的执行记录 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
+| Supervisor 显式指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 下的执行记录 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
 | 同一 feature 目录下的临时自动化脚本 | ✅ 写入 | 例如执行记录旁的 `scratch/`；可随时丢弃 |
 | 源码、产品测试、配置 | ❌ 绝不编辑 | 你运行产品；绝不修复它 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |

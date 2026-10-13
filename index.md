@@ -7,15 +7,15 @@
 | 场景 | 入口 |
 | --- | --- |
 | 日常两轨 | 小修与零星事项走 `docs/issues/`；成批 / 跨层工作立 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md` |
-| 改角色定义 | `agents/`（14 个角色文件） |
+| 改角色定义 | `agents/`（<!-- count:agents -->14<!-- /count --> 个角色文件） |
 | 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）、`skills/improve/` |
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md` |
-| 查批次与实施计划 | `docs/features/`（`feature-<YYYY-MM-DD>-<主题>/`；当前无在途批次，已完成批次随瘦身批删除，git 历史可回溯） |
+| 查批次与实施计划 | `docs/features/`（`feature-<YYYY-MM-DD>-<主题>/`；在途批次 `feature-2026-09-19-产品线完善`（部分任务未开始）、`feature-2026-10-13-质量提升`（草案，待独立评审）） |
 | 查缺陷与事项 | `docs/issues/README.md`（`ISS-<YYYY>-<NNN>`，含看板与归档规则） |
 | 查对外评审落点 | `reviews/README.md` |
 | 查发布与待验证清单 | `docs/releases/`：`todo.md`（待办与索引）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md` |
 | 看设计、指南与事实 | `docs/`：`product/`（产品链）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
-| 看项目结构体系 | `docs/project-structure.md`（目录树、五个面、安装链路、约定速查） |
+| 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录与改进环 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）；改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
 
@@ -27,6 +27,9 @@
 
 ## 迁移与清理记录
 
+- 2026-10-13 文档面校正批：删除手写目录树 `docs/project-structure.md`（计数多处失实，且与 `index.md`、
+  `README.md` 重复），引用改指 `README.md`「仓库布局」节与 `tools/lab/README.md`；同步修正 README、
+  AGENTS、host-platform-facts、design-decisions、system-guide、product 链与待拍板清单的失实内容。
 - 2026-10-12 评测装置裁撤批：`evals/`、runner/adapter/policy、三个 schema 与相关契约整线删除，
   设计知识与恢复清单留存 `docs/design-decisions.md` §3（ISS-2026-052）。
 - 2026-10-12 归档批：三份设计文档合并为 `docs/design-decisions.md`（守卫清单收窄）；`evals/` 标注为仪器存量；待拍板第 4 条范围并入本日五批（ISS-2026-051）。

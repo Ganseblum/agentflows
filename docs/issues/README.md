@@ -90,7 +90,7 @@ rejected 时要有 `rejection_reason`；记录属于某个再犯类时要带 `cl
 `python3 tools/lab/validate.py report` 第 7 列输出该字段，可直接
 `awk -F'\t' '$7=="agentflow"'` 过滤。
 
-归档规则：`rejected` 记录必须移入 `issues/归档/<same-date-dir>/`；`verified` 记录原地保留
+归档规则：`rejected` 记录必须移入 `docs/issues/归档/<same-date-dir>/`；`verified` 记录原地保留
 作为参考。
 
 ## 再犯台账

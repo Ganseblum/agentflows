@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/improvement/candidate.schema.json",
   "title": "Agentflow improvement candidate",
+  "description": "Predeclaration of one bounded improvement candidate. The public suite and business slices were retired with the 2026-10-12 evaluation-apparatus removal (design knowledge in docs/design-decisions.md §3), so primary_metrics, guardrails and protected_slices are declared as intent, not machine-measured — a method-level candidate carries measurement: none and its evidence is reasoning plus the incident or review finding that triggered it. artifact_digest binds the candidate tree itself, not a suite. Restore a suite_revision field together with the apparatus.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +15,6 @@
     "evidence_ids",
     "changed_components",
     "risk_class",
-    "evaluation_suite_revision",
     "primary_metrics",
     "guardrails",
     "rejection_criteria",
@@ -68,10 +68,6 @@
         "medium",
         "high"
       ]
-    },
-    "evaluation_suite_revision": {
-      "type": "string",
-      "minLength": 1
     },
     "primary_metrics": {
       "type": "array",

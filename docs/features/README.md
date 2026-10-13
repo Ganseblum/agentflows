@@ -15,8 +15,10 @@ docs/features/
     testing/       # 测试计划与运行记录（可选）
 ```
 
-段落可为空但必须在批次 README 的「段落映射」表里写明落点——若 proposal/spec/design 由
-其他活文档承载（如产品链的 `docs/product/`），在表里指向它，不重复造册。
+段落可为空但必须在批次 README 的「段落映射」表里写明落点。
+
+**段落映射豁免（统一规则）**：批次 README 的段落映射表中，某段落落点写了非空且不为「—」的位置时，
+该段目录可缺失（内容由该落点承载，例如产品链的 `docs/product/`，不重复造册）；否则该段目录必须存在且含 `.md`。
 
 ## 在途批次
 
@@ -27,7 +29,9 @@ docs/features/
 ## 纪律
 
 - 目录由「首次接入 / 批次立项」创建；对实际目录跑
-  `python3 tools/lab/doc_chain.py <feature-dir>` 接受文档链，全绿才算链完成。
+  `python3 tools/lab/doc_chain.py <feature-dir>` 接受文档链，全绿才算链完成。该命令是独立命令：
+  结构检查 C1–C11，文本形态检查 C12–C14。同一 linter 另由 `python3 tools/lab/validate.py doc_chain_live`
+  以 `--file` 模式扫描 `docs/product/`、`docs/features/` 下全部 `.md`（已接入 `validate.py all`），任一发现即门红。
 - 批次内的 `plan/<plan_id>.md` 受计划契约校验（文件名 = `plan_id`、固定状态枚举、任务表
   依赖图无环——完整断言见下节）；其他段落由文档链 linter 管。
 - 完成批次不长期留存：结论写进 `CHANGELOG.md` 与 episode 后随瘦身批删除，git 历史
@@ -47,6 +51,7 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
 ---
 
 ## 进展概览            # 一行进度 + 三视角概览表 + 我们在哪/下一步/阻塞
+## 分支策略            # 工作分支与依据（文档链 C9 要求计划声明分支策略）
 ## 任务清单            # T01… 任务表：优先级/代码落点/依赖/状态/证据回写 + ### 未决项
 ## 接口与共享机制       # 契约表 + 异常矩阵 + 发布顺序×回滚点 + 评审门
 ## 验证命令            # 验收命令与预期

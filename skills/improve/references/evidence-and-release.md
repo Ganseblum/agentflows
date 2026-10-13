@@ -28,9 +28,10 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
   "signals": [],
   "feedback_summary": "sanitized factual summary",
   "agentflow_version": "0.2.0",
-  "host": "codex | claude-code | other",
+  "host": "codex | claude-code | zcode | other",
   "provenance": {"carrier": "<session carrier>", "sanitized": true},
-  "redactions": []
+  "redactions": [],
+  "review_roundtrips": []
 }
 ```
 
@@ -55,40 +56,67 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 
 ## 发布记录
 
-完成后的发布门产出一条这样的记录：
+完成后的发布门产出一条这样的记录。下面的例子是一次**方法级晋升**（`measurement: none`）：它通过
+`release-record.schema.json` 校验，也是当前装置状态下唯一可用的晋升形态——评测套件、runner 与
+对照结果契约已随 2026-10-12 裁撤，所以不再有 `baseline_results` / `candidate_results` 可填
+（两者仅在 `measurement: complete` 时必填）。
 
 ```json
 {
   "schema_version": 1,
-  "candidate_version": "0.3.0-rc.1",
-  "parent_version": "0.2.0",
-  "source_revision": "immutable revision",
-  "artifact_digest": "sha256:immutable artifact digest",
-  "hypothesis": "one falsifiable improvement claim",
-  "evidence_ids": [],
-  "changed_components": [],
-  "risk_class": "low | medium | high",
-  "evaluation_suite_revision": "immutable revision",
-  "baseline_results": {},
-  "candidate_results": {},
-  "measurement": {"status": "complete | none", "basis": "explicit reason only"},
-  "decision": "promote | revise | reject | rollback",
-  "approvals": [],
-  "rollout": {},
-  "rollback_to": "previous immutable version",
-  "protected_slices": ["task-slice-id"]
+  "candidate": {
+    "schema_version": 1,
+    "candidate_version": "0.3.0-rc.1",
+    "parent_version": "0.2.0",
+    "source_revision": "git:<frozen parent revision>",
+    "artifact_digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "hypothesis": "one falsifiable improvement claim",
+    "evidence_ids": ["EP-20260101-001"],
+    "changed_components": ["agents/reviewer.md"],
+    "risk_class": "low",
+    "primary_metrics": ["review first-pass rate (declared intent, not instrumented)"],
+    "guardrails": ["no protected slice regresses"],
+    "rejection_criteria": ["any guardrail fails"],
+    "protected_slices": ["role-selection"]
+  },
+  "measurement": {
+    "status": "none",
+    "basis": "human review: release governor approved 2026-01-01, evidence EP-20260101-001"
+  },
+  "evaluation_result": "neutral",
+  "decision": "promote",
+  "approvals": [
+    {
+      "actor": "agentflow:release-governor",
+      "decision": "approved",
+      "evidence_ref": "review round EP-20260101-001 / review_roundtrips[0]",
+      "recorded_at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "rollout": {"mode": "human-gated"},
+  "rollback_to": "0.2.0"
 }
 ```
+
+`evaluation_result` 是**证据等级**字段，不是晋升许可证：它照实记录该候选相对基线的判定，没有
+仪器化度量时通常记为 `neutral`（方法级改动没有对照面），而晋升许可来自下面这条规则。当
+`measurement: none` 时，晋升的正确性由人工评审承载，`evaluation_result` 不再被要求为 `better`。
 
 候选预声明用 [candidate.schema.json](candidate.schema.json)，完成后的门用
 [release-record.schema.json](release-record.schema.json)（以上两份契约文件仍在）。
 **冻结用例与对照结果的原契约（`eval-case.schema.json`、`comparison.schema.json`）已随
 2026-10-12 评测装置裁撤删除**——本轮及以后的方法级改动一律 `measurement: none`；恢复仪器化时
-按 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3 的重建清单一并恢复契约。
+按 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3 的重建清单一并恢复契约
+（届时 `baseline_results` / `candidate_results` 再次成为 `measurement: complete` 的必填项，
+晋升也重新要求 `evaluation_result: better`）。
 
 把记录绑定到确切的源码与评测 revision 以及不可变的产物摘要。不要复用另一个候选的结果。受保护切片独立评测；聚合改进不能掩盖被声明切片里的回归。
 
-## 评测隔离
+## 评测隔离（恢复仪器化后适用）
+
+评测套件与隔离 runner 已随 2026-10-12 装置裁撤，本节条款当前无对照面可挂载——留存为恢复
+仪器化时的施工要求（重建清单见 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3）。
+恢复后：
 
 - 在实现候选之前定义评分标准与阈值。
 - 让 holdout 答案对 candidate engineer 不可得。
@@ -101,15 +129,29 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 
 ## 发布门
 
-只有满足以下条件，候选才可晋级：
+发布门由一条可执行的晋升规则判定，`measurement` 决定它走哪一支：
 
-- 已声明的主指标改善，或候选修复了关键缺陷；
+- **`measurement: complete`（有仪器化度量时）**：`promote` 要求 `evaluation_result: better`，
+  且记录同时带 `baseline_results` 与 `candidate_results` 两份对照结果。
+- **`measurement: none`（方法级改动，当前装置状态下的唯一形态）**：没有可产生 `better` 的
+  对照面，因此 `promote` 要求 `measurement.basis` 写为**人工评审**（human review）并附评审引用——
+  `approvals` 中至少一条 `decision: approved` 带非空 `evidence_ref`，指向触发该候选的评审
+  轮次或事故记录。此时 `evaluation_result` 照实记（没有对照面通常为 `neutral`），不伪装成已
+  验证的改进。
+
+两支共同仍要求：
+
+- 候选修复了关键缺陷，或（仅 complete 支）已声明的主指标改善；
 - 没有受保护任务切片或安全/权限护栏越过其阈值回归；
 - 必需的确定性检查通过；
-- 独立评测完成；
+- 独立评审完成（none 支即以人工评审承载）；
 - 其风险等级允许所选发布模式；
 - 回滚目标可用且已验证；
 - 必需的人工批准已记录。
+
+**`measurement: none` 时禁止 `promote` 配 `evaluation_result: better`**：那是把无人对照的推断
+记成已验证的改进，本环最不该犯的错。这一条与 [release-record.schema.json](release-record.schema.json)
+的 `allOf` 分支、`skills/improve/SKILL.md` 的「度量范围与晋升规则」段逐字一致。
 
 提示词措辞与角色描述在流程被证明之后可以取得 canary 资格。权限、工具、hook、MCP、evaluator 规则、发布规则与自动阈值保持人工把门。
 

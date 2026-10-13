@@ -11,12 +11,22 @@
 python3 tools/lab/validate.py all
 ```
 
-`all` 覆盖 schema、examples、公开评测用例、现行记录根（`docs/issues/`、`docs/features/`、`episodes/`、
+`all` 覆盖 schema、examples、现行记录根（`docs/issues/`、`docs/features/`、`episodes/`、
 `docs/releases/`、`reviews/`）下的记录产物、
-角色/文档面（含版本散文守卫与对现行文档面的
-断链 / 退役路径扫描）、受保护门清单的完整性、文档链 linter 的判别自测、
-五份 manifest 的名字/版本一致性，以及 `tests/` 下仓库自身的回归测试。失败的检查
+角色/文档面与版本散文守卫、受保护门清单的完整性、文档链 linter 的判别自测、
+文档链 linter 对活文档面（`docs/product/`、`docs/features/`）的扫描、
+五份 manifest 的名字/版本一致性，以及 `tests/` 下仓库自身的回归测试——共九项。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
+
+其中的角色/文档面检查（`validate.py docs`）扫描的对象是：`agents/*.md`、两个 `SKILL.md`、
+`skills/agentflow/references/roles.md`、现行记录根下的各类 `README.md`，以及根 `AGENTS.md`。
+它断言五组事实——每个 agent 文件的 frontmatter `name` 等于其文件名；SKILL 里引用的每个
+`agentflow:<role>` 都能解析到一个 agent 文件；这个面上（含 `AGENTS.md`）点名的每个
+`schemas/*.schema.json` 路径都存在；`AGENTS.md` 不再携带早期的 JSON 计划契约标记；
+中文镜像与英文契约文档保持段落对应。此外两项面级扫描收口历史残留：全仓 Markdown 的相对链接
+必须可解析，散文不得出现退役路径（围栏与行内代码是引文，但 mermaid 图算内容仍扫描；
+`CHANGELOG.md` 的历史条目按原样保留）。版本散文守卫另扫 `README.md` 与 `docs/design-decisions.md`
+两个文件，禁止其中出现 `x.y.z` 版本字面量——版本只在 manifest 与 `CHANGELOG.md` 声明。
 
 迭代过程中也可以直接运行测试：
 
@@ -71,7 +81,7 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
 
 ## 在本仓库工作
 
-- 记录存放于现行记录根下：`docs/issues/`（缺陷记录、`recurrence/` 台账、`归档/` 存放被拒记录）、
+- 记录存放于现行记录根下：`docs/issues/`（缺陷记录、`recurrence/` 台账、`docs/issues/归档/` 存放被拒记录）、
   `episodes/`、`docs/features/`（批次目录，计划在各批次的 `plan/` 下）、`docs/releases/`（在途批次索引与待验收，版本记录已停用）
   与 `reviews/`；改进三件套已随 2026-10-12 瘦身批停用。布局与查询见
   [index.md](index.md)。

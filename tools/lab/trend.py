@@ -73,7 +73,7 @@ def open_review_findings() -> int | None:
     for path in sorted(reviews.rglob("review-*.md")):
         text = path.read_text(encoding="utf-8")
         if "## 发现摘要" not in text:
-            continue
+            raise ValueError(f"{path.relative_to(ROOT)}: 评审记录缺少「## 发现摘要」小节")
         seen = True
         section = text.split("## 发现摘要", 1)[1].split("\n## ", 1)[0]
         total += sum(1 for line in section.splitlines() if line.strip().startswith("- "))

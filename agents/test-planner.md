@@ -13,7 +13,7 @@ disallowedTools: Bash
 
 | 产物 | 本角色 | 说明 |
 | --- | --- | --- |
-| Supervisor 显式指派的 `features/<批次>/testing/<项目>-<功能>/` 下的测试计划 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
+| Supervisor 显式指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 下的测试计划 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、产品测试、schema | ❌ 只读 | 你设计用例；绝不改动实现 |
 | Evaluator 规则、发布策略、已安装的插件文件 | ❌ | 绝不 |

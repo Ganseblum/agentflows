@@ -482,11 +482,95 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "\n## 验证命令\n\n```sh\necho x\n```\n",
                 encoding="utf-8",
             )
-            errors = validate.validate_plan_markdown(path, Path("plans/PLAN-TEST-002.md"))
+            errors = validate.validate_plan_markdown(path)
         messages = [error.message for error in errors]
         self.assertTrue(any("duplicate task id" in m for m in messages))
         self.assertTrue(any("dependency cycle" in m for m in messages))
         self.assertTrue(any("blocking unresolved decision" in m for m in messages))
+
+    def test_approval_gate_is_not_bypassed_by_a_decision_titled_with_wei_jue(self) -> None:
+        # Item A: a 未决项 row whose text merely contains the word 未决 used to be skipped as if it
+        # were a header, so an approved plan with an open blocking decision passed the gate.
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "PLAN-TEST-004.md"
+            path.write_text(
+                "---\n"
+                "plan_id: PLAN-TEST-004\n"
+                "plan_version: 0.1.0\n"
+                "status: approved\n"
+                "objective: o\n"
+                "recorded_at: 2026-09-17T00:00:00Z\n"
+                "---\n\n## 进展概览\n\n概述\n\n## 任务清单\n\n"
+                "| ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据回写 |\n"
+                "| --- | --- | --- | --- | --- | --- | --- |\n"
+                "| `T01` | 甲 | P0 | a.ts | — | ☐ 未开始 | |\n"
+                "\n### 未决项\n\n"
+                "| 编号 | 问题 | 是否阻塞 | 状态 |\n"
+                "| --- | --- | --- | --- |\n"
+                "| U-01 | 未决的权限模型 | 阻塞 | 尚未关闭 |\n"
+                "\n## 验证命令\n\n```sh\necho x\n```\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_plan_markdown(path)
+        messages = [error.message for error in errors]
+        self.assertTrue(
+            any("blocking unresolved decision" in m and "U-01" in m for m in messages), messages
+        )
+        # The real header row ("编号") must still be skipped, not reported as a decision.
+        self.assertFalse(any("'编号'" in m for m in messages), messages)
+
+    def test_schema_else_without_if_is_not_applied(self) -> None:
+        # Item E: JSON Schema applies then/else only as branches of an if. An else without an if
+        # used to run unconditionally, so a bare else could reject every instance.
+        with tempfile.TemporaryDirectory() as temporary:
+            bare = Path(temporary) / "bare-else.schema.json"
+            bare.write_text(json.dumps({"else": {"required": ["never"]}}), encoding="utf-8")
+            self.assertEqual(validate.SchemaValidator(bare).validate({}), [])
+            guarded = Path(temporary) / "guarded.schema.json"
+            guarded.write_text(
+                json.dumps(
+                    {
+                        "if": {"required": ["a"]},
+                        "then": {"required": ["b"]},
+                        "else": {"required": ["c"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            failed_if = validate.SchemaValidator(guarded).validate({})
+            self.assertTrue(any("'c'" in error.message for error in failed_if), failed_if)
+            self.assertEqual(validate.SchemaValidator(guarded).validate({"a": 1, "b": 1}), [])
+
+    def test_external_fragment_must_sit_next_to_its_citation(self) -> None:
+        # Item G: the old check accepted a fragment anywhere in the body. The excerpt must follow
+        # its citation directly (blank lines allowed), or the citation must sit inside the quote.
+        path = ROOT / "issues" / "fixture.md"
+        frontmatter = {"files": ["example-project@r1:services/api/orders.go"]}
+        distant = (
+            "问题代码见 `example-project@r1:services/api/orders.go`：\n\n"
+            "这里是一段与引文无关的正文说明。\n\n"
+            "```\ncode\n```\n"
+        )
+        errors = validate.validate_external_excerpts(frontmatter, distant, path)
+        self.assertTrue(
+            any("embedded fragment" in error.message for error in errors),
+            [error.message for error in errors],
+        )
+        blockquote = (
+            "问题代码见 `example-project@r1:services/api/orders.go`：\n\n"
+            "> 引文原文\n"
+        )
+        self.assertEqual(validate.validate_external_excerpts(frontmatter, blockquote, path), [])
+
+    def test_bug_layout_archive_date_message_is_pinned(self) -> None:
+        # Item F (helper extraction): the archive date check must keep its exact behavior.
+        relative = Path("docs/issues/归档/2026-01-01/ISS-2026-910-archived.md")
+        frontmatter = {"bug_id": "ISS-2026-910", "recorded_at": "2026-01-02T00:00:00Z"}
+        errors = validate.validate_bug_layout(frontmatter, ROOT / relative, relative, {})
+        self.assertEqual(
+            [error.message for error in errors],
+            ["date directory '2026-01-01' does not match recorded_at date 2026-01-02"],
+        )
 
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:
@@ -633,6 +717,13 @@ class CheckDiffGateTests(unittest.TestCase):
         self.assertEqual(result["blocked"], [])
         self.assertEqual(result["changed_paths"], ["docs/extra.txt", "docs/notes.txt"])
 
+    def test_lab_readme_states_the_checker_root_is_caller_designated(self) -> None:
+        # Item K: the README used to claim check-diff "always" reads the trusted checker, but
+        # --checker-root is caller-chosen. The wording must say so plainly.
+        readme = (LAB / "README.md").read_text(encoding="utf-8")
+        self.assertNotIn("始终从受信任的检查器仓库读取", readme)
+        self.assertIn("由调用方（监督者）指定", readme)
+
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:
         subprocess.run(
@@ -760,6 +851,53 @@ class GateIntegrityNegativeTests(unittest.TestCase):
             trivial_errors[0].message,
         )
         self.assertIn("gate change that requires explicit review", trivial_errors[0].message)
+
+    def test_build_runtime_is_a_declared_and_required_gate_path(self) -> None:
+        # Item O: packaging/build_runtime.py decides which files the candidate snapshot copies and
+        # verifies, so it must be protected and must stay required by validate.py.
+        self.assertIn("packaging/build_runtime.py", validate.REQUIRED_PROTECTED_PATHS)
+        entries = [
+            line.strip()
+            for line in validate.PROTECTED_PATHS_FILE.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        self.assertIn("packaging/build_runtime.py", entries)
+        with tempfile.TemporaryDirectory() as temporary:
+            shrunken = Path(temporary) / "shrunken.txt"
+            shrunken.write_text(
+                "\n".join(entry for entry in entries if entry != "packaging/build_runtime.py") + "\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_protected_paths(shrunken)
+        self.assertTrue(
+            any("packaging/build_runtime.py" in error.message for error in errors),
+            [str(error) for error in errors],
+        )
+
+    def test_validate_workflow_runs_tests_once_read_only_with_full_history(self) -> None:
+        # Item M: `validate.py all` already runs the regression suite, so a separate
+        # `validate.py tests` step duplicated it. The workflow must also declare read-only
+        # permissions and fetch full history for the trusted checker's default-branch reference.
+        workflow = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
+        self.assertNotIn("validate.py tests", workflow)
+
+    def test_packaging_readme_names_every_forbidden_top_level_entry(self) -> None:
+        # Item N: the exclusion list in packaging/README.md must match what build_runtime.py
+        # forbids at the top level of the generated tree.
+        sys.path.insert(0, str(ROOT / "packaging"))
+        try:
+            import build_runtime  # noqa: E402  (packaging/ is not a package)
+        finally:
+            sys.path.pop(0)
+        readme = (ROOT / "packaging" / "README.md").read_text(encoding="utf-8")
+        missing = sorted(
+            name
+            for name in build_runtime.FORBIDDEN_TOP_LEVEL
+            if f"`{name}`" not in readme and f"`{name}/`" not in readme
+        )
+        self.assertEqual(missing, [], "packaging/README.md does not name these excluded entries")
 
 
 class TestRecordContractTests(unittest.TestCase):
@@ -938,6 +1076,43 @@ recorded_at: "2026-09-17T16:00:00Z"
             )
             self.assertTrue(any("zero fail and zero blocked" in message for message in self._messages(errors)))
 
+    def test_dated_identity_messages_for_plans_and_runs_are_pinned(self) -> None:
+        # Item F (helper extraction): the id/filename/recorded_at agreement messages for test
+        # plans and runs must keep their exact wording after the shared helper is extracted.
+        with tempfile.TemporaryDirectory() as temporary:
+            plan_dir = Path(temporary) / "features/feature-2026-09-17-demo/testing/demo-webapp-feature-login"
+            plan_path = self._write(
+                plan_dir / "plan-2026-09-17-002.md",
+                self.PLAN_MD.format(case_count="2"),
+            )
+            errors, _ = validate.validate_test_plan_markdown(plan_path, plan_path.relative_to(temporary), {})
+            self.assertIn(
+                "filename must be plan-2026-09-17-001.md to match test_plan_id 'TP-20260917-001'",
+                self._messages(errors),
+            )
+            drifted_plan = self._write(
+                plan_dir / "plan-2026-09-17-001.md",
+                self.PLAN_MD.format(case_count="2").replace(
+                    'recorded_at: "2026-09-17T15:00:00Z"', 'recorded_at: "2026-09-18T15:00:00Z"'
+                ),
+            )
+            errors, _ = validate.validate_test_plan_markdown(drifted_plan, drifted_plan.relative_to(temporary), {})
+            self.assertIn(
+                "test_plan_id date must match recorded_at date 2026-09-18", self._messages(errors)
+            )
+            drifted_run = self._write(
+                plan_dir / "run-2026-09-17-001.md",
+                self.RUN_MD.format(
+                    row2="| TC-LOGIN-002 | pass | — | ok |", p="2", f="0", decision="pass"
+                ).replace('recorded_at: "2026-09-17T16:00:00Z"', 'recorded_at: "2026-09-18T16:00:00Z"'),
+            )
+            errors, _, _ = validate.validate_test_run_markdown(
+                drifted_run, drifted_run.relative_to(temporary), {}, {}
+            )
+            self.assertIn(
+                "test_run_id date must match recorded_at date 2026-09-18", self._messages(errors)
+            )
+
     def test_live_record_roots_are_the_five_record_zones(self) -> None:
         # 2026-10-12 slimming batch phases 3/4: the top-level plans/ root was dissolved into
         # the feature batches; five live zones remain — docs/issues, docs/releases,
@@ -989,11 +1164,11 @@ class ValidateResidualTests(unittest.TestCase):
     tests/ declared-content assertion no longer exempting dot entries.
     """
 
-    def test_load_bug_markdown_surfaces_decoding_errors(self) -> None:
+    def test_load_record_markdown_surfaces_decoding_errors(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "non-utf8.md"
             path.write_bytes(b"---\nid: broken\n---\n\xff\xfe\xfa body")
-            frontmatter, body, errors = validate.load_bug_markdown(path)
+            frontmatter, body, errors = validate.load_record_markdown(path)
         self.assertIsNone(frontmatter)
         self.assertEqual(body, "")
         self.assertEqual(len(errors), 1)
@@ -1040,6 +1215,139 @@ class ValidateResidualTests(unittest.TestCase):
             (tests / ".hidden" / "__init__.py").write_text("import-time hijack", encoding="utf-8")
             errors = validate.validate_unit_tests(Path(temporary))
         self.assertTrue(any("unexpected entry in the test directory" in error.message for error in errors))
+
+    LIVE_FIXTURE_FILES = {
+        "docs/issues/README.md": "# issues\n",
+        "docs/releases/todo.md": "# todo\n",
+        "docs/features/README.md": "# features\n",
+        "episodes/README.md": "# episodes\n",
+        "reviews/README.md": "# reviews\n",
+    }
+
+    @classmethod
+    def _live_fixture(cls, root: Path) -> None:
+        """Create the five live record roots, each with a root-level file the walk accepts."""
+        for relative, text in cls.LIVE_FIXTURE_FILES.items():
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8")
+
+    @staticmethod
+    def _artifact_errors(root: Path) -> list[str]:
+        with mock.patch.object(validate, "ROOT", root):
+            return [str(error) for error in validate.validate_workspace_artifacts()]
+
+    def test_files_entries_cannot_be_absolute_or_escape_the_repository(self) -> None:
+        # Item B: the files: check used a bare is_file() on (ROOT / entry). An absolute entry such
+        # as /etc/hosts ignored ROOT, and ../ climbed out of it; both passed as if they were evidence.
+        bug = (
+            "---\n"
+            "bug_id: ISS-2026-920\n"
+            "title: 绝对路径与上溯\n"
+            "status: open\n"
+            "severity: P2\n"
+            "error_kind: other\n"
+            "attribution: unknown\n"
+            "provenance: agentflow\n"
+            "project: p\n"
+            "files:\n"
+            "  - /etc/hosts\n"
+            "  - ../outside.md\n"
+            "  - docs/kept.md\n"
+            "recorded_at: 2026-01-01T00:00:00Z\n"
+            "---\n\n## 现象\n\nx\n\n## 根因\n\ny\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary) / "repo"
+            self._live_fixture(repo)
+            (repo / "docs" / "kept.md").write_text("kept", encoding="utf-8")
+            (Path(temporary) / "outside.md").write_text("outside", encoding="utf-8")
+            (repo / "docs" / "issues" / "ISS-2026-920-escape.md").write_text(bug, encoding="utf-8")
+            errors = self._artifact_errors(repo)
+        self.assertTrue(any("'/etc/hosts'" in error for error in errors), errors)
+        self.assertTrue(any("'../outside.md'" in error for error in errors), errors)
+        self.assertFalse(any("'docs/kept.md'" in error for error in errors), errors)
+
+    def test_unrecognised_review_entries_fail_and_archive_snapshots_pass(self) -> None:
+        # Item C: a non-record file directly under a review directory was skipped silently.
+        # Archived evidence snapshots under archive/ remain allowed.
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            self._live_fixture(repo)
+            feature = repo / "reviews" / "demo-feature"
+            (feature / "archive" / "2026-09-16-001").mkdir(parents=True)
+            (feature / "archive" / "2026-09-16-001" / "doc.md").write_text("snapshot", encoding="utf-8")
+            (feature / "notes.md").write_text("stray", encoding="utf-8")
+            errors = self._artifact_errors(repo)
+        self.assertTrue(any("/reviews/demo-feature/notes.md" in error for error in errors), errors)
+        self.assertFalse(any("/reviews/demo-feature/archive/" in error for error in errors), errors)
+
+    def test_unknown_feature_batch_entries_fail_and_known_segments_pass(self) -> None:
+        # Item C: non-plan files in docs/features/ were skipped. Unknown entries must now fail;
+        # the documented batch layout (README, proposal/, plan/) must still pass.
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            self._live_fixture(repo)
+            batch = repo / "docs" / "features" / "feature-2026-09-17-demo"
+            (batch / "plan").mkdir(parents=True)
+            (batch / "proposal").mkdir()
+            (batch / "README.md").write_text("# batch\n", encoding="utf-8")
+            (batch / "proposal" / "p.md").write_text("# proposal\n", encoding="utf-8")
+            (batch / "notes.txt").write_text("stray", encoding="utf-8")
+            (batch / "plan" / "notes.txt").write_text("stray", encoding="utf-8")
+            (repo / "docs" / "features" / "stray.md").write_text("stray", encoding="utf-8")
+            errors = self._artifact_errors(repo)
+        paths = [error.split(": ", 1)[0] for error in errors]
+        self.assertTrue(any(p.endswith("feature-2026-09-17-demo/notes.txt") for p in paths), errors)
+        self.assertTrue(any(p.endswith("feature-2026-09-17-demo/plan/notes.txt") for p in paths), errors)
+        self.assertTrue(any(p.endswith("docs/features/stray.md") for p in paths), errors)
+        self.assertFalse(any(p.endswith(("README.md", "proposal/p.md")) for p in paths), errors)
+
+    def test_feature_testing_records_are_patrolled(self) -> None:
+        # Item H: features/<batch>/testing/ was never walked. The shipped valid plan and run pair
+        # must pass there, and a misnamed plan must now fail.
+        plan_source = (ROOT / "examples" / "testing" / "plan-2026-09-17-001.md").read_text(encoding="utf-8")
+        run_source = (ROOT / "examples" / "testing" / "run-2026-09-17-001.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            self._live_fixture(repo)
+            testing = repo / "docs" / "features" / "feature-2026-09-17-demo" / "testing" / "demo-webapp-feature-login"
+            testing.mkdir(parents=True)
+            (testing / "plan-2026-09-17-001.md").write_text(plan_source, encoding="utf-8")
+            (testing / "run-2026-09-17-001.md").write_text(run_source, encoding="utf-8")
+            clean = [error for error in self._artifact_errors(repo) if "/testing/" in error]
+            self.assertEqual(clean, [])
+            (testing / "plan-2026-09-18-001.md").write_text(plan_source, encoding="utf-8")
+            broken = [error for error in self._artifact_errors(repo) if "/testing/" in error]
+        self.assertTrue(
+            any("plan-2026-09-18-001.md" in error and "must be plan-2026-09-17-001.md" in error for error in broken),
+            broken,
+        )
+
+    def test_missing_agent_and_skill_directories_fail_the_docs_check(self) -> None:
+        # Item C: a missing agents/ or skills/ directory made the glob empty and the check passed.
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.object(validate, "ROOT", Path(temporary)):
+                errors = [str(error) for error in validate.validate_doc_consistency()]
+        self.assertTrue(any("agents/ directory is missing" in error for error in errors), errors)
+        self.assertTrue(any("skills/ directory is missing" in error for error in errors), errors)
+
+    def test_generated_test_cache_holds_only_bytecode(self) -> None:
+        # Item D: tests/__pycache__ was exempted wholesale, so a source file or package hidden in it
+        # reached unittest discovery unchecked. Only .pyc files may live in the generated cache.
+        with tempfile.TemporaryDirectory() as temporary:
+            tests = Path(temporary) / "tests"
+            (tests / "__pycache__").mkdir(parents=True)
+            (tests / "test_lab_contracts.py").write_text("", encoding="utf-8")
+            (tests / "test_record_store.py").write_text("", encoding="utf-8")
+            (tests / "__pycache__" / "test_lab_contracts.cpython-312.pyc").write_bytes(b"")
+            (tests / "__pycache__" / "sneaky.py").write_text("import-time hijack", encoding="utf-8")
+            errors = validate.validate_unit_tests(Path(temporary))
+        self.assertTrue(
+            any(error.path == "tests/__pycache__/sneaky.py" for error in errors),
+            [str(error) for error in errors],
+        )
+        self.assertFalse(any(error.path.endswith(".pyc") for error in errors))
 
 
 class WriteScopeScriptTests(unittest.TestCase):
@@ -1090,6 +1398,35 @@ class WriteScopeScriptTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
             self.assertIn("FAIL", completed.stdout)
+
+
+class TrendReviewFindingsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        import trend
+
+        self.trend = trend
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / "reviews" / "feat").mkdir(parents=True)
+        self.patch = mock.patch.object(trend, "ROOT", self.root)
+        self.patch.start()
+
+    def tearDown(self) -> None:
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def test_review_without_findings_section_is_an_error(self) -> None:
+        (self.root / "reviews" / "feat" / "review-2026-10-13-001.md").write_text(
+            "# review\n\n无摘要\n", encoding="utf-8")
+        with self.assertRaises(ValueError) as caught:
+            self.trend.open_review_findings()
+        self.assertIn("## 发现摘要", str(caught.exception))
+
+    def test_counts_bullets_under_findings_section(self) -> None:
+        (self.root / "reviews" / "feat" / "review-2026-10-13-001.md").write_text(
+            "# review\n\n## 发现摘要\n\n- F1 一条\n- F2 一条\n\n## 其它\n\n- 不计\n",
+            encoding="utf-8")
+        self.assertEqual(self.trend.open_review_findings(), 2)
 
 
 if __name__ == "__main__":

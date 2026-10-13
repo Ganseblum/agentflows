@@ -55,4 +55,6 @@ tools/lab/isolation.py
 tools/lab/trend.py
 tools/lab/validate.py
 
+packaging/build_runtime.py
+
 protected-paths.txt

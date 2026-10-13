@@ -14,6 +14,8 @@ files:
 recorded_at: 2026-09-21T14:40:00+08:00
 source_revision: agentflow@7a235b5 (0.8.3+方法整合候选)
 agentflow_version: 0.8.3
+class_id: unverified-behavior-claims
+occurrence: "2"
 ---
 
 ## 现象

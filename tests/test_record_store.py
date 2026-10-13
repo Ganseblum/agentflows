@@ -1,7 +1,10 @@
+import contextlib
+import io
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +50,20 @@ class RecordStoreTests(unittest.TestCase):
             [path.parent.name for path in record_store.DEFAULT_ROOTS][:3],
             ["docs", "docs", "docs"],
         )
+
+    def test_docstring_and_cli_help_name_the_live_roots_that_are_indexed(self):
+        # Item J: the module docstring listed retired roots (plans/, improvements/) and the CLI
+        # help claimed six roots. Both must now match DEFAULT_ROOTS.
+        doc = record_store.__doc__
+        for root in record_store.DEFAULT_ROOTS:
+            self.assertIn(root.relative_to(record_store.ROOT).as_posix(), doc)
+        self.assertNotIn("improvements", doc)
+        self.assertNotIn("plans/", doc)
+        out = io.StringIO()
+        with mock.patch.object(sys, "argv", ["record_store.py", "--help"]), contextlib.redirect_stdout(out):
+            with self.assertRaises(SystemExit):
+                record_store.main()
+        self.assertIn("五个现行记录根", out.getvalue())
 
     def test_multiple_live_roots_index_into_one_store(self):
         with tempfile.TemporaryDirectory() as temp:

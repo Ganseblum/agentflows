@@ -11,11 +11,17 @@
 | proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/prd.md` | — |
 | spec | Supervisor 起草或各角色 | `spec/{be,fe,qa,ui}/` | Spec 反审门（spec §0 反审 proposal） |
 | design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审门 → Design 评审门（Reviewer 独立） |
-| plan | Plan architect | `plan/execution.md` | 链收口通读（非作者） |
+| plan | Plan architect | `plan/execution.md`（含 `## 分支策略` 节） | Plan 前置条件（plan 引用已冻结的 design 结论） |
 
 三轨职责一句话：**Backend engineer** 定对象模型、状态机、接口契约、DDL；**Frontend engineer**
 定页面规格、文件落点、类型契约、字段映射；**QA（Test planner）** 定验收口径、边界矩阵、用例库。
 `spec/ui` 与 `design/ui` 是可选扩展，启用与否在 feature README 元信息声明一行。
+
+判定各阶段是否齐全看批次 README 的段落映射表（落点非空且非「—」的段落可缺失，其余段落
+齐全）；plan 的 `## 分支策略` 节与 design 的图/形态要求（`spec/<角色>/` 或 `design/<角色>/`
+任一含 `.md` 即触发）是 linter 会判失败的硬项。**链路收口通读**不是 plan 阶段的门：它定义在
+[`document-chain.md`](document-chain.md) 的门清单第 6 条，是链尾门——最后一份文档落地、宣布
+完成之前，由非作者通读整条链；门 6 是它的定义处，此处只作引用，不重复定义。
 
 ## 路由表
 
@@ -43,7 +49,7 @@ supervisor 决定是否委派，保持范围不重叠，并停止不再产出新
 
 会话中交给用户的独立书面交付物（分析报告、状态报告——任何文档链之外的东西）遵循 document-chain.md 表达纪律（术语）条款——包括代号裸用与模式词分域两种形态：先对照该条款做交付前自检，并跑机器检查 `python3 tools/lab/doc_chain.py --file <路径>`，之后才交付；交付物带重要结论，或用户明确在盯措辞质量时，指派独立 reviewer。
 
-### 收敛注记（0.8.1）
+### 收敛注记
 
 bug investigator、feedback analyst 和 technical director 与 reviewer 画像同构（只读、证据进、结构化结论出），且**有意不**收敛进它：三者的输入契约与产出不同——分别是带复现与归因的诊断、归一化证据聚类、带边界与排序的架构决策——折成 reviewer 的模式会掩盖简报必须满足哪个输入契约。它们保持独立角色文件，是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，不作为常规编辑执行。
 
@@ -81,7 +87,7 @@ findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补�
 
 ## Bug investigator
 
-用于 bug 的范围、原因或归因不清时——尤其是跨模块、跨层或宿主相关的失败。只读；它返回结构化诊断，带复现步骤、严重度（P0–P3）、归因、provenance 和可证伪的修复假设，绝不返回修复。provenance（`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`）必须有证据支撑——覆盖条款的引用，或明确声明没有条款覆盖该产物——因为它决定该记录日后能否驱动 Agentflow 改动。行为按规格实为正确时，它返回显式的 `no-defect` finding，适用同样的证据标准。它先查 `issues/recurrence/`：命中既有类的 bug 作为该类的一次 occurrence 提出，而不是新立一个类。
+用于 bug 的范围、原因或归因不清时——尤其是跨模块、跨层或宿主相关的失败。只读；它返回结构化诊断，带复现步骤、严重度（P0–P3）、归因、provenance 和可证伪的修复假设，绝不返回修复。provenance（`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`）必须有证据支撑——覆盖条款的引用，或明确声明没有条款覆盖该产物——因为它决定该记录日后能否驱动 Agentflow 改动。行为按规格实为正确时，它返回显式的 `no-defect` finding，适用同样的证据标准。它先查 `docs/issues/recurrence/`：命中既有类的 bug 作为该类的一次 occurrence 提出，而不是新立一个类。
 
 对意料之外的全局行为（本地代码从未请求的跳转或 toast），它先枚举受影响上下文里隐式运行的东西——拦截器、守卫、全局监听——再归因到可见调用链。
 
@@ -91,7 +97,7 @@ findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补�
 
 ## Bug recorder
 
-已诊断 bug 的证据应当沉淀时使用——反复出现的类、流程事故，以及改进环日后可能消费的任何东西。它只写 supervisor 指派的那个 `issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径，带脱敏的 frontmatter 与叙述；bug 属于某个再犯类时，它还携带 `class_id` + `occurrence`，由 `issues/recurrence/` 下的台账列出。归纳状态（`consolidated` / `consolidated_in`）只在有实际吸收该类的 Agentflow 发布时写入——档位（`single` / `recurred` / `escalated`）由校验器推导，绝不手写。它不得仅凭 fixer 的摘要把记录标为 `verified`；那需要一次已批准的独立评审加一次通过的回归检查。
+已诊断 bug 的证据应当沉淀时使用——反复出现的类、流程事故，以及改进环日后可能消费的任何东西。它只写 supervisor 指派的那个 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径，带脱敏的 frontmatter 与叙述；bug 属于某个再犯类时，它还携带 `class_id` + `occurrence`，由 `docs/issues/recurrence/` 下的记录清单列出。归纳状态（`consolidated` / `consolidated_in`）只在有实际吸收该类的 Agentflow 发布时写入——档位（`single` / `recurred` / `escalated`）由校验器推导，绝不手写。它不得仅凭 fixer 的摘要把记录标为 `verified`；那需要一次已批准的独立评审加一次通过的回归检查。
 
 ## Plan architect
 
@@ -99,7 +105,7 @@ findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补�
 
 ## Test planner
 
-用户可见功能需要用例库时使用：级别 smoke / e2e / api / boundary；步骤表的断言要能被从未读过代码的操作者观察到；边界覆盖要声明未覆盖的类别；对 spec 未定义的行为登记带编号的流程疑点。只写指派的 `features/<批次>/testing/<项目>-<功能>/plan-*.md`；绝不改动实现，也绝不接触凭据值——计划声明注入方式，不声明密钥本身。契约断言绝不硬编码源契约值（i18n key、尺寸、端点参数）——从源推导并引用它们的出处。
+用户可见功能需要用例库时使用：级别 smoke / e2e / api / boundary；步骤表的断言要能被从未读过代码的操作者观察到；边界覆盖要声明未覆盖的类别；对 spec 未定义的行为登记带编号的流程疑点。只写指派的 `docs/features/<批次>/testing/<项目>-<功能>/plan-*.md`；绝不改动实现，也绝不接触凭据值——计划声明注入方式，不声明密钥本身。契约断言绝不硬编码源契约值（i18n key、尺寸、端点参数）——从源推导并引用它们的出处。
 
 ## Test executor
 

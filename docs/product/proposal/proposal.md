@@ -38,7 +38,7 @@ Agentflow 最初的形态是散装 Skill 与角色说明，随着真实任务（
 - **第一次 improve 闭环**：公开用例噪声底仪器，跑出 first better/neutral/worse（live 对照进行中）。
 - **打包分发**：瘦快照 runtime（运行时面与实验室控制面分开），marketplace 源指向生成树（已落地）。
 - **宿主认证矩阵**：方法写一次，测量证书按宿主逐个发（Claude 先、ZCode 次、Codex 基线证）。
-- **业务尺子**：`evals/business` smoke 对照，让方法级改动从 `measurement: none` 走向可度量。
+- **业务尺子**：`evals/business` smoke 对照（已于 2026-10-12 裁撤，见 `docs/design-decisions.md` §3），让方法级改动从 `measurement: none` 走向可度量。
 - **产品文档链**：本目录的 proposal/spec/design/plan 四层（本提案即其产物）。
 
 本期不包含：
@@ -57,7 +57,7 @@ Agentflow 最初的形态是散装 Skill 与角色说明，随着真实任务（
 2. **角色是能力不是流水线**：14 个角色是按需取用的能力清单，默认路径短；完整角色表是进阶。
 3. **治理优先**：自迭代是受治理的版本发布系统，不是"Agent 觉得哪里不好就改自己并上线"。
    独立评测、预声明拒绝条件、不可变版本、人批门，一个都不能少。
-4. **作者不自证**：产生改动的角色永不验收自己的改动；supervisor 自己写的部分，独立评审门
+4. **作者不自证**：产生改动的角色永不验收自己的改动；主会话 自己写的部分，独立评审门
    不可豁免。
 5. **证据编译**：任何"做完了"的声明必须映射到一个可复现的检查；不可复现的检查视同没跑。
 6. **诚实声明**：做不到、未验证、角色分离而非环境隔离——如实写进文档与记录，不粉饰。
@@ -81,7 +81,7 @@ OQ-1（待冻结）：业务仓开发者场景缺量化口径——"完整链路
 | 架构拍板 | 产品 vs 运行时、主宿主策略、自迭代优先级、硬边界进默认 Skill | ☑ |
 | 打包 | 运行时面 / 实验室控制面分开；marketplace 源指向生成树；重装核实 | ☑ |
 | 宿主认证 | 方法写一次，测量证书按宿主发：Claude 先、ZCode 次、Codex 基线证 | ☐ |
-| 业务尺子 | `evals/business` smoke 对照；方法级改动的 `measurement` 从 none 走向 complete | ☐ |
+| 业务尺子 | `evals/business` smoke 对照（已裁撤，见 `docs/design-decisions.md` §3）；方法级改动的 `measurement` 从 none 走向 complete | ☐ |
 
 ## 五、待冻结问题台账
 

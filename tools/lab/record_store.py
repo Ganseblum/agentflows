@@ -4,8 +4,8 @@
 本存储是一次性的：磁盘上的记录始终是权威。SQLite FTS5 仅用于词法索引与查询；
 不使用向量、嵌入，也不对记录文件做任何写入。
 
-自 2026-10 结构改造起，现行记录根为 `issues/`、`episodes/`、`plans/`、`improvements/`、
-`releases/`、`reviews/`（取代了原先单一的 `records/` 树）。`index` 会遍历每个默认根；
+自 2026-10 结构改造起，现行记录根为 `docs/issues/`、`docs/releases/`、`docs/features/`、`episodes/`、
+`reviews/`（取代了原先单一的 `records/` 树）。`index` 会遍历每个默认根；
 `--records` 选项以一个或多个显式根覆盖它们，并保留「先索引、后查询」的 CLI 语义。
 """
 from __future__ import annotations
@@ -91,7 +91,7 @@ def main() -> int:
         type=Path,
         nargs="+",
         default=list(DEFAULT_ROOTS),
-        help="要建索引的记录根（可多个）；默认为六个现行记录根",
+        help="要建索引的记录根（可多个）；默认为五个现行记录根",
     )
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     subparsers = parser.add_subparsers(dest="command", required=True)

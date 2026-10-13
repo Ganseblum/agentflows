@@ -10,7 +10,7 @@
 
 ## 1. 一张图看懂体系
 
-体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（14 个角色文件，宿主从安装快照加载）、
+体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（<!-- count:agents -->14<!-- /count --> 个角色文件，宿主从安装快照加载）、
 **证据层**（`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/` 里人和机器都能校验的记录；改进三件套已停用）、**门**（确定性工具，判定产物合不合格）。
 
 ```mermaid
@@ -79,7 +79,7 @@ flowchart TB
 | 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | episode（三件套记录根已停用，落点由 Supervisor 指派） |
 
 三个只读角色（Investigator / Feedback Analyst / Technical Director）与 Reviewer 同构但**有意不合并**——
-输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策），合并是保留的产品决策（0.8.1 注记）。
+输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策），合并与否是保留的产品决策（版本史见 [`CHANGELOG.md`](../CHANGELOG.md)）。
 
 ---
 
@@ -135,7 +135,7 @@ flowchart TB
 → `verified`（独立评审 approved + 回归检查通过 + closure_criteria 逐条闭合）
 → 或 `rejected` 进 `archive/`。**Fixer 永远不能批准自己的 Bug；Recorder 不能用 Fixer 的转述代替独立评审。**
 
-Worker 没有产出时的分类权在 Supervisor（0.8.1 失败语义）：
+Worker 没有产出时的分类权在 Supervisor（失败语义见 [`contracts.md`](../skills/agentflow/references/contracts.md)）：
 
 | 现象 | 分类 | 处理 |
 | --- | --- | --- |
@@ -207,8 +207,8 @@ flowchart LR
 - **标题字面量固定**：bug 记录章节必须是 `## 现象` / `## 根因` / `## 修复`（+ `## 问题代码` / `## 审查`）；
 - **机器层英文、人读层单语**，title 与正文同语言，默认中文；
 - **正文引用规则**：散文里的路径必须真实存在（或用 `仓库名@revision:路径` 限定），围栏/行内代码里的是引文不算；
-- **episode 是任务级的最终决策记录**，material 改动一律写（0.7.2 起），`review_roundtrips` 必填
-  （`[]` 也算表态），负向 outcome（rejected/partial/failed）与成功同等收录——只记成功会让改进环
+- **episode 是任务级的最终决策记录**，material 改动一律写，`review_roundtrips` 必填
+  （`[]` 也算表态；字段要求见 [`episodes/README.md`](../episodes/README.md)），负向 outcome（rejected/partial/failed）与成功同等收录——只记成功会让改进环
   把"没做坏过"误读成"不会做坏"；
 - **plan 看板**：任务状态枚举 `☐/◐/☑/⚠/—`，回写只动状态与证据两列；阻塞未决不关闭不得 approved。
 
@@ -264,8 +264,11 @@ bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...  
 | 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |
 | 7 | Supervisor 收口 | episode：目标/claims 台账/评审轮次/成本 | `episodes/<日期>/EP-*.json` |
 
-如果这类"横切机制漏检"以后**再犯**，Recorder 会把它挂到类台账 → 校验器推导 `recurred/escalated`
-→ 下次按改进环升格为评测用例（AF-011~015 就是这么来的）。
+如果这类"横切机制漏检"以后**再犯**，Recorder 会把它挂到再犯分类台账 → 校验器推导 `recurred/escalated`
+→ 按惯例，这类信号本会升格为公开评测用例——历史上 AF-011~015 就是这么来的。但评测用例已于
+2026-10-12 随评测装置整线裁撤（`evals/`、runner、adapter、policy 全删），当前再犯信号不再有
+自动升格通道，只落台账；恢复仪器化时按
+[`docs/design-decisions.md`](design-decisions.md) §3 的重建清单恢复。
 
 ### 例 2：你说"帮我看看 Agentflow 触发描述要不要改"（改进环一轮）
 
@@ -317,5 +320,5 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 | `check-diff` FAIL：candidate changed a forbidden path | 候选碰了评判自己的门 | 立即停止；需要改门 = gate change，走人审 |
 | 评审说 `changes_requested` | 正常环 | 步骤 9 修复一轮再审；轮次进 episode |
 | `claude --print` 返回 502 / 挂起 | 第三方网关故障（C10，09-14 与 09-19 两次实测） | 换可用端点；权威评测/C9 验证都等它 |
-| 记录被 `artifacts` 拒：缺 `review_roundtrips` | 0.8.0 起必填 | 没开评审门写 `[]`；历史记录按回填约定加说明 signal |
+| 记录被 `artifacts` 拒：缺 `review_roundtrips` | 字段必填（要求见 `episodes/README.md`） | 没开评审门写 `[]`；历史记录按回填约定加说明 signal |
 | 想引用仓库外的文件 | 可携带性规则 | 用 `仓库名@revision:路径` 限定，或把证据逐字嵌进记录 |

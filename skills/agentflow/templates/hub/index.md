@@ -6,10 +6,27 @@
 
 | 场景 | 入口 |
 | --- | --- |
-| 开新需求 | `features/` 下建 `feature-<日期>-<主题>/`，按 proposal → spec → design → plan 推进；其 README 为唯一入口 |
-| 修缺陷 / 登记事项 | `issues/`（开放条目 + `归档/`） |
-| 发版验收 | `releases/pending-test.md`（待验收）· `releases/todo.md`（待办） |
-| 查 feature 进展 | 各 feature 的 README 进度板 |
+| 开新需求 | `features/` 下建 `feature-<日期>-<主题>/`，按 proposal → spec → design → plan 推进；其 `README.md` 为唯一入口与进度板 |
+| 修缺陷 / 登记事项 | `docs/issues/README.md`（看板）＋ `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md`（开放条目）；已关闭或被拒的移入 `docs/issues/归档/<日期>/` |
+| 发版验收 | `releases/pending-test.md`（待验收）· `releases/todo.md`（待办与批次索引） |
+| 查 feature 进展 | 各批次的 `README.md` 进度板（复选框附文档链接才推进） |
+
+## 批次清单
+
+按批次逐行登记，新增批次时在此追加一行（这也是「新开 feature」唯一要改的索引位）：
+
+| 批次 | 一句话范围 | 状态 | 进度板 |
+| --- | --- | --- | --- |
+| `features/feature-<日期>-<主题>/` | <做什么、不做什么> | 在途 / 已完成 / 搁置 | `features/feature-<日期>-<主题>/README.md` |
+
+> 没有批次时保留表头与一行占位，不要删表。批次完成并随瘦身批删除后，把该行状态改为
+> 「已完成（git 历史可回溯）」并在 `## 冻结历史` 记一行。
+
+## 段落落点
+
+每个批次的段落（proposal / spec / design / plan）由该批次 `README.md` 的**段落映射表**声明；
+某段落落在本批次目录之外（例如产品链的 `docs/product/`）时，在表里写明对方路径，不重复造册。
+段落映射表声明了非空、非「—」落点的段落可缺目录，其余段落齐全。
 
 ## 维护纪律
 

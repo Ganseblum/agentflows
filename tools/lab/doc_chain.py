@@ -14,7 +14,9 @@ the structural density bar is met, not that the content is correct. Content corr
 still belongs to the review gates.
 
 Checks:
-  C1  structure        every stage directory holds at least one real document (no .gitkeep only)
+  C1  structure        every stage directory holds at least one real document (no .gitkeep only),
+                       unless the batch README's 段落映射 table names a landing for that stage
+                       (non-empty and not 「—」)
   C2  entry gates      README carries the requirement-review and design-review gate entries
   C3  spec re-audit    a spec file contains the re-audit checklist; no blocking row left open (☐)
   C4  design/be figures  >=1 sequenceDiagram WITH an alt failure branch, >=1 flowchart,
@@ -24,8 +26,12 @@ Checks:
   C6  fe exception matrix  design/fe has a table whose header covers success AND failure
   C7  fe wireframes    >=2 text wireframes (box-drawing frames) in design/fe
   C8  design/fe figures  >=1 flowchart, >=1 sequenceDiagram, >=1 stateDiagram
-  C9  plan grounding   every task row carries a code-location token; branch strategy present;
-                       design's V-n open items are referenced by some plan
+                       C4/C5/C8 apply to a role when spec/<role>/ or design/<role>/ holds any .md
+  C9  plan grounding   every task row (table whose first header is ID) has a valid T/FT id, a
+                       status from the fixed enum, and a code location that is a repository path
+                       (every path token must exist) or carries 「待核实」 in the location cell;
+                       every plan file has a 「分支策略」 section; design's V-n open items are
+                       referenced by some plan
   C10 mermaid fences   every ```mermaid block is closed
   C11 structure template  chains whose README declares the agentflow marker carry the fixed
                        design headings (先说结论 / 影响面评估 / 评审前自检 / data-testid)
@@ -35,8 +41,7 @@ Checks:
   C13 session role words  stage documents carry session-bound process words (supervisor /
                        coordinator case-insensitive; literal TD 开放问题 / 本轮评审 /
                        本次会话 / 本轮会话 / 本会话) — replace with a concrete role name or
-                       delete; skipped whole on method-self-description surfaces, see
-                       C13_EXEMPT_PREFIXES
+                       delete; skipped only on the files listed in C13_EXEMPT_FILES
   C14 bare code subjects  a stage document uses a single uppercase letter as a standing prose
                        subject with the 桶 classifier (「A 桶」「D 桶」, spaced or not) away from
                        its definition site — codes pair with the plain word (白话（代号）) in
@@ -44,7 +49,7 @@ Checks:
                        clause-governed, not machine-checked (see the note at CODE_SUBJECT_RE)
 
 Usage:
-    python3 tools/lab/doc_chain.py <feature-dir>
+    python3 tools/lab/doc_chain.py [--root <repo-dir>] <feature-dir>
     python3 tools/lab/doc_chain.py --file <single-markdown-path>
     python3 tools/lab/doc_chain.py --self-test
 
@@ -62,6 +67,9 @@ from pathlib import Path
 
 MERMAID_KINDS = ("sequenceDiagram", "flowchart", "erDiagram", "stateDiagram")
 BOX_CHARS = ("┌", "└", "├", "│")
+# Repository root, used to resolve C9 code-location paths. Overridable with --root (self-test
+# fixtures and validate.py's live pass pass their own root explicitly).
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # C12 stale-time reference: claim words whose truth depends on the world, not the text — a
 # line claiming one of these while pointing at a target that already exists on disk (markdown
@@ -76,23 +84,41 @@ BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.I)
 ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话", "本会话")
 
-# C13 scope — a session-bound role word is a defect in a *deliverable*: text handed to a reader
-# who was not in the session, where 「supervisor」 resolves to nobody. On a
-# *method-self-description* surface the same words are the method's own vocabulary or quoted
-# examples: product-design.md states 「Supervisor = 主会话」, contracts.md addresses Supervisor
-# as the actor throughout, the agent contracts define roles, and reviewer.md *lists*
-# 「supervisor、TD、本轮、本次会话一类」 as the very thing the clause forbids — no line-local
-# rule can tell a mention from a use. Review records name who reviewed as recorded fact
-# (硬边界 8 keeps records from being rewritten). C13 is therefore skipped whole on these
-# surfaces, left to the clause text and the reviewer — the same bargain C15 already makes (see
-# the note at CODE_SUBJECT_RE). The line is drawn on the document's *path*, not its wording:
-# the same sentence is a defect in a chain stage document and a term under docs/product/.
-C13_EXEMPT_PREFIXES = (
-    "docs/product/",
-    "skills/",
-    "agents/",
-    "reviews/",
-)
+# C13 exemptions are per FILE, never per prefix. A listed file either defines the process role
+# names it uses (the defined term is its own subject) or is an immutable review record (verbatim
+# history; 硬边界 8 forbids rewriting it). Every other file is checked. Adding an entry needs the
+# same reason; a new file that merely contains the words does not qualify.
+C13_EXEMPT_FILES: dict[str, str] = {
+    # role files: each defines the role it describes; Supervisor is the defined delegator
+    "agents/backend-engineer.md": "角色定义",
+    "agents/bug-fixer.md": "角色定义",
+    "agents/bug-investigator.md": "角色定义",
+    "agents/bug-recorder.md": "角色定义",
+    "agents/candidate-engineer.md": "角色定义",
+    "agents/frontend-engineer.md": "角色定义",
+    "agents/plan-architect.md": "角色定义",
+    "agents/release-governor.md": "角色定义",
+    "agents/reviewer.md": "角色定义；列举被禁止的会话词本身",
+    "agents/technical-director.md": "角色定义",
+    "agents/test-executor.md": "角色定义",
+    "agents/test-planner.md": "角色定义",
+    # shipped skill text: defines the method's roles, and the clause that forbids the words
+    "skills/agentflow/SKILL.md": "方法定义（角色与流程）",
+    "skills/agentflow/references/contracts.md": "方法定义（角色契约）",
+    "skills/agentflow/references/roles.md": "方法定义（角色表）",
+    "skills/agentflow/references/document-chain.md": "方法定义；条款本身引用被禁止的词",
+    "skills/agentflow/references/test-records.md": "方法定义（角色交接）",
+    "skills/improve/SKILL.md": "方法定义（改进环角色）",
+    "reviews/README.md": "方法定义（评审流程）",
+    # product design: the glossary entry 「Supervisor = 主会话」 and the role table
+    "docs/product/design/product-design.md": "术语定义表",
+    # immutable review records and their snapshots
+    "reviews/agentflow-product-chain/review-2026-10-10-001.md": "评审记录（不可改写）",
+    "reviews/agentflow-product-chain/archive/2026-10-10-001/proposal.md": "评审快照（不可改写）",
+    "reviews/agentflow-product-chain/archive/2026-10-10-001/method-spec.md": "评审快照（不可改写）",
+    "reviews/agentflow-product-chain/archive/2026-10-10-001/acceptance-matrix.md": "评审快照（不可改写）",
+    "reviews/infinite-canvas-office-agent-plan/review-2026-09-19-001.md": "评审记录（不可改写）",
+}
 
 # A planned-but-absent component name is not a session word: 「Execution Coordinator」 names a
 # future role in the workflow (PLAN-PRODUCT-001 lists it as 本期不做), resolved by the sentence
@@ -102,6 +128,17 @@ ROLE_WORD_EXEMPT_PHRASES = ("Execution Coordinator", "execution-coordinator")
 # C12/C13/C14 scan stage documents only: proposal/spec/design/plan. The README progress log and
 # .gitkeep placeholders are out of scope (progress-log wording is not document wording).
 STAGE_DIRS = ("proposal", "spec", "design", "plan")
+
+# C9 plan task rows: the fixed status enum and ID shape (docs/features/README.md 计划形态).
+TASK_STATUS_ENUM = ("☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻塞", "— 本期不做")
+TASK_ID_RE = re.compile(r"^(?:FT?\d{2}|T\d{1,2})$")
+PLACEHOLDER = "待核实"
+# 「分支策略」 section: a heading at level 2-4, optionally numbered ("## 分支策略", "### 0. 分支策略").
+BRANCH_HEADING_RE = re.compile(r"^#{2,4}\s+(?:\d+\.\s*)?分支策略(?:\s|$)", re.M)
+SEP_RE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
+BARE_PATH_RE = re.compile(
+    r"(?<![\w./-])[\w.\-]+(?:/[\w.\-]+)*\.(?:go|ts|tsx|vue|sql|py|md|json|sh|html|yml|yaml|toml|txt|js|css)\b"
+)
 
 # C14 bare code subjects: single uppercase letter + optional (half/full-width) space + 桶, the
 # 2026-09-22 report corpus form — the report defined every bucket in its §1 glossary yet kept
@@ -162,17 +199,13 @@ def inside_parens(s: str, idx: int) -> bool:
 
 
 def c13_checked(label: str) -> bool:
-    """False when the document is a method-self-description surface (see the C13 scope note).
+    """False only for the files listed in C13_EXEMPT_FILES, matched on the path's tail.
 
-    Keyed on the path so --file (a session deliverable) and the feature-chain pass (stage
-    documents, labelled relative to the feature dir) still run C13, while docs/product/**,
-    skills/**, agents/** and reviews/** do not.
+    Tail matching lets --file (the path as given, possibly absolute) and the feature-chain pass
+    (labels relative to the feature dir) resolve the same listing.
     """
     posix = label.replace("\\", "/")
-    return not any(
-        posix.startswith(prefix) or f"/{prefix}" in posix
-        for prefix in C13_EXEMPT_PREFIXES
-    )
+    return not any(posix == name or posix.endswith("/" + name) for name in C13_EXEMPT_FILES)
 
 
 def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list[str]:
@@ -248,6 +281,102 @@ def mermaid_kinds(text: str) -> dict[str, list[str]]:
     return out
 
 
+def split_row(line: str) -> list[str]:
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def md_tables(text: str) -> list[tuple[list[str], list[list[str]]]]:
+    """Pipe tables as (header cells, body rows): a pipe line followed by a separator line."""
+    lines = text.splitlines()
+    out: list[tuple[list[str], list[list[str]]]] = []
+    i = 0
+    while i < len(lines) - 1:
+        if lines[i].lstrip().startswith("|") and "-" in lines[i + 1] and SEP_RE.match(lines[i + 1]):
+            header = split_row(lines[i])
+            rows: list[list[str]] = []
+            j = i + 2
+            while j < len(lines) and lines[j].lstrip().startswith("|"):
+                rows.append(split_row(lines[j]))
+                j += 1
+            out.append((header, rows))
+            i = j
+        else:
+            i += 1
+    return out
+
+
+def stage_landing(readme_text: str) -> dict[str, str]:
+    """Batch README 段落映射: stage -> 落点 cell, read from any table with a 落点 column."""
+    out: dict[str, str] = {}
+    for header, rows in md_tables(readme_text):
+        if "落点" not in header:
+            continue
+        col = header.index("落点")
+        for row in rows:
+            if not row:
+                continue
+            stage = row[0].strip("`* ").lower()
+            if stage in STAGE_DIRS and col < len(row):
+                out[stage] = row[col].strip()
+    return out
+
+
+def path_candidates(cell: str) -> set[str]:
+    """Repository-path tokens in a cell: path-like code spans plus bare paths with a known suffix."""
+    found: set[str] = set()
+    for span in re.findall(r"`([^`\n]+)`", cell):
+        s = span.strip()
+        if re.fullmatch(r"[\w.\-]+(?:/[\w.\-]+)*/?", s) and ("/" in s or re.search(r"\.[A-Za-z]{1,5}$", s)):
+            found.add(s)
+    found.update(BARE_PATH_RE.findall(cell))
+    return found
+
+
+def body_text(text: str) -> str:
+    """The text with fenced code blocks removed: an id inside a code sample is not prose."""
+    fences = fenced_lines(text)
+    return "\n".join(line for i, line in enumerate(text.splitlines(), 1) if i not in fences)
+
+
+def plan_findings(label: str, text: str, repo_root: Path) -> list[str]:
+    """C9 task-row grounding for one plan file: ID shape, status enum, code location."""
+    errors: list[str] = []
+
+    def at(row: list[str], i: int) -> str:
+        return row[i] if i < len(row) else ""
+
+    for header, rows in md_tables(text):
+        if not header or header[0] != "ID":
+            continue
+        if "代码落点" not in header or "状态" not in header:
+            errors.append(f"C9 plan: {label} 任务表缺少「代码落点」或「状态」列")
+            continue
+        loc_i, status_i = header.index("代码落点"), header.index("状态")
+        for row in rows:
+            task_id = at(row, 0).strip("`* ")
+            if not TASK_ID_RE.match(task_id):
+                errors.append(
+                    f"C9 plan 任务表: {label} ID 列非法「{task_id}」（须为 T/FT 编号，「待核实」不得占 ID 列）"
+                )
+                continue
+            status = at(row, status_i)
+            if not any(status.startswith(s) for s in TASK_STATUS_ENUM):
+                errors.append(f"C9 plan 状态: {label} {task_id} 状态「{status}」不在固定枚举内")
+            if status.startswith("— 本期不做"):
+                continue
+            loc = at(row, loc_i)
+            if PLACEHOLDER in loc:
+                continue
+            cands = path_candidates(loc)
+            if not cands:
+                errors.append(f"C9 plan 落点: {label} {task_id} 代码落点无仓库内路径且无「待核实」标记")
+                continue
+            for cand in sorted(cands):
+                if not (repo_root / cand.rstrip("/")).exists():
+                    errors.append(f"C9 plan 落点: {label} {task_id} 代码落点路径不存在: {cand}")
+    return errors
+
+
 def find_stage(files: list[Path], *parts: str) -> list[Path]:
     """All non-gitkeep .md files under <feature>/<parts...> (recursively)."""
     base = Path(*parts)
@@ -259,7 +388,7 @@ def find_stage(files: list[Path], *parts: str) -> list[Path]:
     ]
 
 
-def lint(feature_dir: Path) -> list[str]:
+def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     errors: list[str] = []
     if not feature_dir.is_dir():
         return [f"{feature_dir}: 目录不存在"]
@@ -267,16 +396,20 @@ def lint(feature_dir: Path) -> list[str]:
     files = sorted(feature_dir.rglob("*"))
     md_files = [f for f in files if f.is_file() and f.suffix == ".md" and f.name != ".gitkeep"]
     readme = feature_dir / "README.md"
+    all_text = {f: read(f) for f in md_files}
 
-    # C1 structure
-    for stage in ("proposal", "spec", "design", "plan"):
+    # C1 structure: a stage directory may be empty only when the batch README's 段落映射 names a
+    # landing for it (non-empty and not 「—」); otherwise it must hold a real document.
+    landing = stage_landing(all_text.get(readme, "")) if readme.is_file() else {}
+    for stage in STAGE_DIRS:
         stage_files = [f for f in md_files if stage in f.relative_to(feature_dir).parts]
-        if not stage_files:
-            errors.append(f"C1 结构: {stage}/ 下没有任何有效文档（仅 .gitkeep 占位）")
+        if stage_files:
+            continue
+        if landing.get(stage, "") not in ("", "—"):
+            continue  # 段落映射豁免
+        errors.append(f"C1 结构: {stage}/ 下没有任何有效文档（仅 .gitkeep 占位），且 README 段落映射未写明落点")
     if not readme.is_file():
         errors.append("C1 结构: 缺少 README.md 唯一入口")
-
-    all_text = {f: read(f) for f in md_files}
 
     # C2 entry gates
     if readme.is_file():
@@ -306,10 +439,14 @@ def lint(feature_dir: Path) -> list[str]:
     # C4/C5/C6/C7/C8 per-side design requirements
     be_files = find_stage(md_files, feature_dir / "design" / "be")
     fe_files = find_stage(md_files, feature_dir / "design" / "fe")
+    # C4/C5/C8 apply to a role when spec/<role>/ or design/<role>/ holds any document. An empty
+    # design/<role>/ therefore no longer skips the role's checks when the spec side has content.
+    be_applies = bool(be_files or find_stage(md_files, feature_dir / "spec" / "be"))
+    fe_applies = bool(fe_files or find_stage(md_files, feature_dir / "spec" / "fe"))
     be_text = "\n".join(all_text[f] for f in be_files) if be_files else ""
     fe_text = "\n".join(all_text[f] for f in fe_files) if fe_files else ""
 
-    if be_files:
+    if be_applies:
         kinds = mermaid_kinds(be_text)
         seq_with_alt = [b for b in kinds.get("sequenceDiagram", []) if re.search(r"^\s*alt\b", b, re.M)]
         if not seq_with_alt:
@@ -336,14 +473,15 @@ def lint(feature_dir: Path) -> list[str]:
                     m = re.match(r"^([A-Za-z]{1,3}\d{1,3})\b", first)
                     if m:
                         contract_ids.add(m.group(1).upper())
-        fe_ids = set(re.findall(r"\b([A-Za-z]{1,3}\d{1,3})\b", fe_text))
+        fe_body = "\n".join(body_text(all_text[f]) for f in fe_files)
+        fe_ids = set(re.findall(r"\b([A-Za-z]{1,3}\d{1,3})\b", fe_body))
         # accepted tolerance (review note a): \b fails on CJK-adjacent ids (e.g. `A1的`),
         # which over-reports C5 — the safe direction for a floor linter
         fe_ids = {i.upper() for i in fe_ids}
         missing = sorted(contract_ids - fe_ids)
         if contract_ids and missing:
             errors.append(f"C5 契约闭合: design/be 契约表声明的接口 {missing} 未在 design/fe 出现（缺异常矩阵行或调用）")
-    if fe_files:
+    if fe_applies:
         kinds = mermaid_kinds(fe_text)
         for kind in ("flowchart", "sequenceDiagram", "stateDiagram"):
             if kind not in kinds:
@@ -368,23 +506,11 @@ def lint(feature_dir: Path) -> list[str]:
     plan_files = find_stage(md_files, feature_dir / "plan")
     plan_text = "\n".join(all_text[f] for f in plan_files) if plan_files else ""
     if plan_files:
-        # task rows = table rows carrying a task id AND a write-back status cell; a row may
-        # satisfy grounding via a code path OR an explicit to-verify reference (unknown
-        # location must be pinned to a V-item, never left unexplained)
-        task_rows = [
-            line
-            for line in plan_text.splitlines()
-            if line.lstrip().startswith("|")
-            and re.search(r"\b(?:FT?\d{2}|T\d{1,2})\b", line)
-            and re.search(r"[☐☑◐⚠—]", line)
-            and "待核实" not in line.split("|")[1]
-        ]
-        path_or_v = re.compile(r"[\w./-]+\.(?:go|ts|tsx|vue|sql|py|md)\b|`[\w/.-]+/`|/`|\bV-F?\d+\b|/tmp")
-        for row in task_rows:
-            if not path_or_v.search(row):
-                errors.append(f"C9 plan 落点: 任务行缺少代码落点路径或待核实引用: {row.strip()[:80]}")
-        if not re.search(r"分支|branch|feature[-_]", plan_text):
-            errors.append("C9 plan: 未声明分支策略")
+        for f in plan_files:
+            rel = str(f.relative_to(feature_dir))
+            errors.extend(plan_findings(rel, all_text[f], repo_root))
+            if not BRANCH_HEADING_RE.search(all_text[f]):
+                errors.append(f"C9 plan: {rel} 未声明分支策略（需以「分支策略」为标题的节）")
         v_ids = set(re.findall(r"\bV-F?\d+\b", be_text + fe_text))
         for vid in sorted(v_ids):
             # no heading-anchored exemption: any V-id declared anywhere in design must be
@@ -443,9 +569,11 @@ def self_test() -> int:
     NOT trip. Fixes review finding F1 ("self-test vacuous for most checks"). Cases 27–34
     pin C14's positive/negative surface (paired forms, definition rows, code spans, the
     real-corpus 「IP 桶」 near-miss); cases 35–38 pin the --file text-form mode and its
-    mutual exclusion with the positional feature dir; cases 39–41 pin C13's
-    method-self-description scope and the planned-role exemption; case 34 documents why C15
-    stays clause-governed (see the note at CODE_SUBJECT_RE).
+    mutual exclusion with the positional feature dir; cases 39–43 pin C13's per-file exemption
+    and the planned-role exemption; cases 44–48 pin the C4/C8 applicability rule and C1's
+    段落映射豁免; cases 49–54 pin C9's task-row and 分支策略 rules; cases 55–56 pin C5's
+    prose-only id scan; case 34 documents why C15 stays clause-governed (see the note at
+    CODE_SUBJECT_RE).
     """
     import subprocess
     import tempfile
@@ -482,9 +610,12 @@ def self_test() -> int:
         "plan/be/p.md": (
             "# plan\n\n## 0. 分支策略 feature-x\n\n"
             "| ID | 任务 | 代码落点 | 依赖 | 状态 |\n| --- | --- | --- | --- | --- |\n"
-            "| T01 | 迁移 | `migrations/x.sql` | — | ☐ |\n\n"
+            "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |\n\n"
             "V-9 由 T02 承接\n"
         ),
+        # "@root/" keys are written under the fixture repo root (the feature dir's parent), so C9
+        # code-location paths resolve against a real file, not against this repository.
+        "@root/migrations/x.sql": "-- x\n",
     }
 
     def rep(files: dict, rel: str, old: str, new: str) -> dict:
@@ -498,10 +629,13 @@ def self_test() -> int:
             files = mutate(dict(base))
         d = Path(tempfile.mkdtemp()) / "feature"
         for rel, text in files.items():
-            p = d / rel
+            p = d.parent / rel[len("@root/"):] if rel.startswith("@root/") else d / rel
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(text, encoding="utf-8")
-        r = subprocess.run([sys.executable, str(linter), str(d)], capture_output=True, text=True)
+        r = subprocess.run(
+            [sys.executable, str(linter), "--root", str(d.parent), str(d)],
+            capture_output=True, text=True,
+        )
         out = r.stdout + r.stderr
         ok = r.returncode == expect_rc and all(w in out for w in want)
         results.append((name, ok))
@@ -711,21 +845,118 @@ def self_test() -> int:
     run_file_case("38 --file without a path is a usage error", 2, ["Usage"], "# 报告\n",
                   argv=["--file"])
 
-    # --- C13 scope + the planned-role exemption (cases 39–41). C13 is a defect in a deliverable
-    # and is skipped whole on a method-self-description surface: the same sentence must flip
-    # verdict on the path alone, and a spec may quote the words it forbids. A planned role name
-    # (Execution Coordinator) is neither.
-    run_file_case("39 C13 role word passes under docs/product/ (method-self-description surface)",
+    # --- C13 scope + the planned-role exemption (cases 39–43). C13 is a defect in a deliverable;
+    # it is skipped only on the files listed in C13_EXEMPT_FILES, one by one. The same sentence
+    # must flip verdict on the file alone, and a planned role name (Execution Coordinator) is
+    # neither a session word nor a reason to exempt.
+    run_file_case("39 C13 role word passes in an exempt defining file (product-design.md)",
                   0, ["PASS doc-chain --file"],
-                  "# method spec\n\nspec 由 supervisor 起草，独立评审门不可豁免。\n",
-                  sub="docs/product/spec/method-spec.md")
-    run_file_case("40 C13 is skipped whole under docs/product/ — a spec may quote the session "
-                  "words it forbids", 0, ["PASS doc-chain --file"],
-                  "# method spec\n\n表达纪律禁止 supervisor、TD、本轮评审 一类会话词。\n",
-                  sub="docs/product/spec/method-spec.md")
+                  "# product design\n\n| Supervisor（主会话） | 收口、委派 |\n",
+                  sub="docs/product/design/product-design.md")
+    run_file_case("40 C13 exempt file may quote the session words it defines as forbidden", 0,
+                  ["PASS doc-chain --file"],
+                  "# product design\n\n表达纪律禁止 supervisor、TD、本轮评审 一类会话词。\n",
+                  sub="docs/product/design/product-design.md")
     run_file_case("41 Execution Coordinator is a planned role name, not a session word", 0,
                   ["PASS doc-chain --file"],
                   "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n")
+    run_file_case("42 C13 exemption is per file: an unlisted skills/ file with a role word trips",
+                  1, ["C13 会话角色词"],
+                  "# 说明\n\n按 supervisor 的指示执行。\n",
+                  sub="skills/agentflow/references/unlisted.md")
+    run_file_case("43 C13 exemption is per file: a non-exempt docs/product stage doc trips",
+                  1, ["C13 会话角色词", "method-spec.md"],
+                  "# method spec\n\nspec 由 supervisor 起草。\n",
+                  sub="docs/product/spec/method-spec.md")
+
+    # --- C4/C5/C8 applicability (cases 44–46): a role's checks apply when spec/<role>/ or
+    # design/<role>/ holds a document, so an empty design/<role>/ cannot skip them.
+    def m_spec_be_only(f):
+        f.pop("design/be/b.md")
+        f["spec/be/s.md"] = "# be spec\n"
+        return f
+    run_case("44 C4 applies when only spec/be holds a document and design/be is empty", 1,
+             ["C4 design/be: 缺少含失败分支（alt）的时序图"], m_spec_be_only, results)
+
+    def m_empty_be(f):
+        f.pop("design/be/b.md")
+        f["design/be/.gitkeep"] = ""
+        return f
+    run_case("45 C4 does NOT apply when design/be and spec/be are both empty", 0,
+             ["PASS doc-chain"], m_empty_be, results)
+
+    def m_spec_fe_only(f):
+        f.pop("design/fe/f.md")
+        f["spec/fe/s.md"] = "# fe spec\n"
+        return f
+    run_case("46 C8 applies when only spec/fe holds a document and design/fe is empty", 1,
+             ["C8 design/fe: 缺少 flowchart"], m_spec_fe_only, results)
+
+    # --- C1 段落映射豁免 (cases 47–48): an empty stage passes only with a named landing.
+    def m_landing_design(f):
+        f.pop("design/be/b.md")
+        f.pop("design/fe/f.md")
+        f["README.md"] += (
+            "\n| 链阶段 | 落点 | 说明 |\n| --- | --- | --- |\n"
+            "| design | `docs/product/design/product-design.md` | 产品设计 |\n"
+        )
+        return f
+    run_case("47 C1 段落映射豁免: empty design/ passes when README names a landing", 0,
+             ["PASS doc-chain"], m_landing_design, results)
+
+    def m_landing_dash(f):
+        f.pop("design/be/b.md")
+        f.pop("design/fe/f.md")
+        f["README.md"] += (
+            "\n| 链阶段 | 落点 | 说明 |\n| --- | --- | --- |\n"
+            "| design | — | 待定 |\n"
+        )
+        return f
+    run_case("48 C1: empty design/ with a 「—」 landing still trips C1", 1,
+             ["C1 结构: design/"], m_landing_dash, results)
+
+    # --- C9 task rows and branch section (cases 49–54).
+    run_case("49 C9 task row with 待核实 in the ID column is invalid", 1,
+             ["ID 列非法"],
+             lambda f: rep(f, "plan/be/p.md", "| T01 | 迁移 |", "| 待核实 | 迁移 |"), results)
+    run_case("50 C9 status outside the fixed enum trips", 1,
+             ["不在固定枚举内"],
+             lambda f: rep(f, "plan/be/p.md", "☐ 未开始 |", "完成 |"), results)
+    run_case("51 C9 code path that does not exist trips", 1,
+             ["代码落点路径不存在: migrations/nope.sql"],
+             lambda f: rep(f, "plan/be/p.md", "`migrations/x.sql`", "`migrations/nope.sql`"), results)
+    run_case("52 C9 待核实 in the location cell passes without a real path", 0,
+             ["PASS doc-chain"],
+             lambda f: rep(f, "plan/be/p.md", "`migrations/x.sql` | — | ☐ 未开始 |",
+                           "待核实 `db/schema.sql` | — | ☐ 未开始 |"), results)
+    run_case("53 C9 待核实 outside the location cell does NOT rescue an empty location", 1,
+             ["无仓库内路径且无「待核实」标记"],
+             lambda f: rep(f, "plan/be/p.md", "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |",
+                           "| T01 | 待核实迁移 | — | — | ☐ 未开始 |"), results)
+
+    run_case("57 C9 本期不做 row needs no landing; its ID and status are still checked", 0,
+             ["PASS doc-chain"],
+             lambda f: rep(f, "plan/be/p.md", "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |",
+                           "| T01 | 迁移 | — | — | — 本期不做 |"), results)
+
+    def add_plan_without_branch(f):
+        f["plan/be/q.md"] = "# plan q\n\n无任务表\n"
+        return f
+    run_case("54 C9 every plan file needs its own 分支策略 section", 1,
+             ["plan/be/q.md 未声明分支策略"], add_plan_without_branch, results)
+
+    # --- C5 ids counted from prose only (cases 55–56).
+    def m_id_only_in_fence(f):
+        rep(f, "design/fe/f.md", "A1 调用见异常矩阵\n", "")
+        rep(f, "design/fe/f.md", "| A1 | ok | 412 |", "| X1 | ok | 412 |")
+        f["design/fe/f.md"] += "```text\nA1 示例\n```\n"
+        return f
+    run_case("55 C5 contract id that appears only inside a code fence does NOT close", 1,
+             ["C5 契约闭合", "A1"], m_id_only_in_fence, results)
+
+    run_case("56 C5 contract id in fe prose closes (table row removed, prose mention kept)", 0,
+             ["PASS doc-chain"],
+             lambda f: rep(f, "design/fe/f.md", "| A1 | ok | 412 |", "| X1 | ok | 412 |"), results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:
@@ -753,6 +984,12 @@ def lint_file(path: Path) -> int:
 def main(argv: list[str]) -> int:
     if len(argv) == 1 and argv[0] == "--self-test":
         return self_test()
+    root = REPO_ROOT
+    if argv[:1] == ["--root"]:
+        if len(argv) < 2 or argv[2:3] == ["--file"]:
+            print(__doc__)
+            return 2
+        root, argv = Path(argv[1]), argv[2:]
     if argv and argv[0] == "--file":
         if len(argv) != 2:
             print(__doc__)
@@ -761,7 +998,7 @@ def main(argv: list[str]) -> int:
     if len(argv) != 1:
         print(__doc__)
         return 2
-    errors = lint(Path(argv[0]))
+    errors = lint(Path(argv[0]), root)
     if errors:
         print(f"FAIL doc-chain ({len(errors)} findings)")
         for e in errors:

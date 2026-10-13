@@ -7,7 +7,8 @@
 
 ## 段落到落点映射
 
-本批次的五段不重复造册——提案 / 规格 / 设计三段由 `docs/product/` 链承载，计划在本目录：
+本批次的段落不重复造册：提案 / 规格 / 设计三段的落点在 `docs/product/`（段落映射豁免，规则见
+[`docs/features/README.md`](../README.md)），本目录实际只存在 `plan/` 与本 README；计划段在本目录的 `plan/`，门禁勾选在 `docs/product/README.md`。
 
 | 链阶段 | 落点 | 说明 |
 | --- | --- | --- |
@@ -31,4 +32,4 @@
 - ☑ 产品提案（`docs/product/proposal/proposal.md`）
 - ◐ 方法规格与验收矩阵（`docs/product/spec/`；需求评审门未跑，修复轮待排——见 `docs/PENDING-DECISIONS.md` 第 1 条）
 - ◐ 产品设计（`docs/product/design/product-design.md` 成稿；技术方案评审门未跑）
-- ◐ 执行计划（`plan/`：PLAN-PRODUCT-001 与 PLAN-LOOP-SMOKE-001 在册；PLAN-LOOP-SMOKE 5/9 任务完成，T10 已失对象）
+- ◐ 执行计划（`plan/`：PLAN-PRODUCT-001 与 PLAN-LOOP-SMOKE-001 在册；PLAN-LOOP-SMOKE 5/9 任务完成，T06–T08 与 T10 已失对象（评测装置随 ISS-2026-052 删除，本期不做）；PLAN-PRODUCT 6/12 完成）

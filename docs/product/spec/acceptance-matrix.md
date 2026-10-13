@@ -11,7 +11,7 @@
 | S2 十步流程 | episode 落盘过编译（material 变更必带 `review_roundtrips`） | `validate.py artifacts` + episode schema | 绿（抽查可复核） |
 | S3 委派契约 | 候选 diff 触碰保护门被拒；越界写入被 `check-diff` 拒绝 | `isolation.py check-diff`、`contracts.md` | 绿（/tmp 注入实验历史证据见台账） |
 | S4 独立评审门 | 无 `review_roundtrips` 的 material episode 编译失败 | episode schema + `validate.py artifacts` | 绿 |
-| S5 失败语义 | 三类语义文本在 contracts 单点成文（作者不自证/超预算重试=supervisor 缺陷） | 人工评审 + episode 抽查 | 绿（文本）/ 注入演练未做 |
+| S5 失败语义 | 三类语义文本在 contracts 单点成文（作者不自证/超预算重试=主会话 缺陷） | 人工评审 + episode 抽查 | 绿（文本）/ 注入演练未做 |
 | S6 记录体系 | 每类记录样例过 schema；坏记录（如引用断链）编译失败 | `validate.py schemas` + `artifacts` | 绿 |
 | S7 改进环 | ~~未知/重复 `--case-ids` 退出 1；digest 对贴被 policy 拒；候选碰保护门被拒~~ | 原 `eval_runner.py` + `policy.py`（已删） | **机制已停用**（2026-10-12：改进三件套、发布记录与评测装置整线退役） |
 | S8 确定性验证面 | 任一检查红则 `all` 退出非 0；CI 缺门则 `protected` 失败 | `validate.py all` + `.github/` | 绿 |

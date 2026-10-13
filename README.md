@@ -21,11 +21,12 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。当前发布提供：
 
-- 一个共享的开发 Skill 与十四个角色档案：前端/后端一对、Technical Director、
+- 一个共享的开发 Skill 与<!-- count:agents -->14<!-- /count -->个角色档案：前端/后端一对、Technical Director、
   Reviewer、Investigator → Fixer → Recorder bug 链、Plan Architect、Test
   Planner/Executor 链，以及改进环的 Feedback Analyst、Candidate Engineer、Evaluator 与
   Release Governor；
-- 机器可读的 bug、计划、episode、候选、评测用例、评测结果与发布记录 schema；
+- 机器可读的记录契约 schema：bug 记录、计划、再犯分类、评审记录、测试计划与测试执行
+  （`schemas/`），以及 episode、候选与发布记录（`skills/improve/references/`）；
 - Codex、Claude Code、ZCode 与可移植的 Agent Plugin 清单。
 
 实现型角色声明显式的工具白名单（`Read, Glob, Grep, Write, Edit, Bash`），因此
@@ -47,9 +48,10 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套检查——schema、
-examples、记录产物、受保护清单、manifest 一致性、
-文档面（含断链与退役路径扫描）、文档链 linter 的判别自测，以及仓库自身的回归测试。
+`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套九项检查——schema、
+examples、记录产物、受保护清单、五份 manifest 一致性、文档面（含版本散文守卫与断链 /
+退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测，以及文档链 linter 对活文档面
+（`docs/product/`、`docs/features/`）的扫描。失败即编译错误：修好它，或把输出退回 worker。
 
 三个 Bug 角色是可选择的能力，而不是每个问题都必须走的固定仪式。对 material、
 不确定、反复出现、跨层或高风险的 bug，使用完整的
@@ -61,32 +63,37 @@ Supervisor 授权并协调执行。独立的 Execution Coordinator 预留给未�
 SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权威，且不使用向量数据库。跨会话遥测、持久
 检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现。人工批准是默认的发布边界。
 
-工作区包含 P0 实现切片：Bug Record 与 Plan 契约、脱敏的正/反例、十五个公开评测用例、
-一个无依赖的契约校验器（含安装快照漂移检查）、一个显式的宿主适配器结果协议、
-隔离检查、一个 fail-closed 的 Codex/Claude 宿主适配器包装器，以及一个确定性策略评估器。
-真实模型 dogfood、私有 holdout 服务与安装/发布切换仍在有意待办。
+工作区包含一组确定性的门与工具（`tools/lab/`）：一个无依赖的契约与记录校验器
+`validate.py`（九项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性、
+文档面、仓库回归测试、文档链自测与活面扫描，外加安装快照漂移检查 `installed`）、
+一个文档链 linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
+产物摘要工具（`artifact_digest.py`）；`record_store.py` 提供记录的一次性 SQLite FTS5
+词法检索，`trend.py` 把改进环已有的信号（再犯档位、活面发现数、评审发现数、套件规模）
+追加记录到 `docs/trend.jsonl`。真实模型 dogfood、私有 holdout 服务与安装/发布切换
+仍在有意待办；评测装置已于 2026-10-12 裁撤（见
+[`docs/design-decisions.md`](docs/design-decisions.md) §3）。
 
 ## 仓库布局
 
-| 路径 | 内容 |
-| --- | --- |
-| `agents/` | 宿主加载的十四个角色档案（公开角色面） |
-| `skills/` | `agentflow`（开发工作流）与 `improve`（受治理的自迭代环），及其参考契约 |
-| `schemas/` | 编译步骤强制执行的记录与结果契约（受保护） |
-| `tools/lab/` | 确定性门与工具：`validate.py`、`doc_chain.py`、`isolation.py`、`record_store.py`、`artifact_digest.py`（受保护） |
-| `tests/` | 门工具的钉住回归测试（受保护） |
-| `index.md` | 唯一的文档索引：场景 → 入口、维护纪律、迁移清单 |
-| `features/` | 按批次的文档链：`feature-<date>-<topic>/{README, proposal, spec, design, plan, reviews, testing, episodes, improvement}` |
-| `docs/issues/` | 缺陷与事项流：平铺的 `ISS-<YYYY>-<NNN>-<slug>.md` 记录、`recurrence/` 台账、`归档/` 存放被拒记录；看板与规则见 `docs/issues/README.md` |
-| `episodes/` | 任务级决策记录（`EP-*.json`）——改进环的燃料（规则见 `episodes/README.md`） |
-| `docs/features/` | 批次目录（五段骨架；含批次内计划 `<batch>/plan/<plan_id>.md`；规则见 `docs/features/README.md`） |
-| `docs/releases/` | 在途批次索引（`todo.md`）与待验收清单（`pending-test.md`）；逐版本发布记录已停用，版本史见 `CHANGELOG.md` |
-| `reviews/` | 外部仓库的评审记录（`<project>-<feature-slug>/review-<date>-<NNN>.md` 加归档快照；规则见 `reviews/README.md`） |
-| `examples/` | 校验器 fixture——正例、反例与完整示例 |
-| `docs/` | 设计、指南与事实文档：产品设计链、体系使用指南、宿主平台事实 |
-| `packaging/` | 生成的 ZCode 安装面（`build_runtime.py` → `runtime/`）；marketplace 的 `source` 指向这里 |
-| `protected-paths.txt` | 候选门面，只声明一次 |
-| manifests | `plugin.json`、`marketplace.json`、`.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/` |
+全仓只有一份文档索引：[`index.md`](index.md)，按「场景 → 入口」说明每类东西放在哪。
+本文件不再手工复制目录树与计数——那样会和真实结构漂移。要看清各目录内部的形状，
+看各目录自己的 `README.md`（`tools/lab/`、`schemas/`、`docs/features/`、`docs/issues/`、
+`reviews/`、`episodes/`、`packaging/` 各有一份）。
+
+粗线条，按面记：
+
+- **交付给宿主的面**：`agents/`（角色档案）、`skills/`（`agentflow` 开发工作流与
+  `improve` 自迭代环），以及五份 manifest（`plugin.json`、`marketplace.json`、
+  `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`）。
+- **契约与门**：`schemas/` 是记录契约；`tools/lab/` 是确定性的检查与工具——
+  `validate.py`（全套检查）、`doc_chain.py`（文档链 linter）、`isolation.py`（候选禁区检查）、
+  `artifact_digest.py`（产物摘要）、`record_store.py`（记录的一次性 FTS5 检索）、
+  `trend.py`（改进环信号趋势）；`tests/` 是这些门工具的回归测试；`examples/` 是校验器的正反例。
+  这一面的多数在 [`protected-paths.txt`](protected-paths.txt) 内，改动即门变更。
+- **记录**：`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/`。
+- **文档**：`index.md` 加 `docs/` 下的产品链、`docs/system-guide.md`、`docs/design-decisions.md`、
+  `docs/host-platform-facts.md`。
+- **打包**：`packaging/` 生成 ZCode 的安装快照，`marketplace.json` 的 `source` 指向它。
 
 日常走查从 [`docs/system-guide.md`](docs/system-guide.md) 开始——工作流怎么流转、
 改进环怎么运行、什么记录到哪里、失败如何处理（含图示与完整示例）；角色路由见

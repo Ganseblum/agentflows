@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/bug-record.schema.json",
   "title": "Agentflow bug record frontmatter",
-  "description": "Contract for the YAML frontmatter of a Markdown issue record under issues/ (flat: issues/ISS-<YYYY>-<NNN>-<slug>.md, where the slug is a Chinese or ASCII description; rejected records move to issues/归档/<YYYY-MM-DD>/).",
+  "description": "Contract for the YAML frontmatter of a Markdown issue record at the root of docs/issues/ (flat: docs/issues/ISS-<YYYY>-<NNN>-<slug>.md, where the slug is a Chinese or ASCII description; rejected records move to docs/issues/归档/<YYYY-MM-DD>/).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -55,7 +55,7 @@
       ]
     },
     "provenance": {
-      "description": "Where the flawed behavior or artifact came from — the field that decides whether this record is Agentflow evidence. agentflow: Agentflow's own surface (a clause, role, gate, evaluation, brief discipline, or tool under tools/lab/). session-artifact: produced ad hoc inside the session and covered by no Agentflow clause (the agent's own plan, analysis, decision, or code). user-input: supplied by the user. external: pre-existing product code, host, tool, or environment. undetermined: not yet established — the record must name the missing evidence and resolve it before the improvement loop consumes the record.",
+      "description": "Where the flawed behavior or artifact came from — the field that decides whether this record is Agentflow evidence. agentflow: Agentflow's own surface (a clause, role, gate, evaluation, brief discipline, or tool under tools/lab/). session-artifact: produced ad hoc inside the session and covered by no Agentflow clause (the agent's own plan, analysis, decision, or code). user-input: supplied by the user. external: pre-existing product code, host, tool, or environment. undetermined: not yet established — the record must name the missing evidence and resolve it before the improvement loop consumes the record. NOTE: this is a string enum on issue records; the episode record's same-named provenance field (skills/improve/references/episode.schema.json) is a different field — an object holding the evidence carrier and its sanitization flag. They are not interchangeable and neither is derived from the other.",
       "enum": ["agentflow", "session-artifact", "user-input", "external", "undetermined"]
     },
     "project": { "type": "string", "minLength": 1 },
@@ -71,7 +71,7 @@
       "items": { "type": "string", "minLength": 1 }
     },
     "class_id": {
-      "description": "Failure class this record belongs to; the recurrence ledger lives at issues/recurrence/<class_id>.md.",
+      "description": "Failure class this record belongs to; the recurrence ledger lives at docs/issues/recurrence/<class_id>.md.",
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]*$"
     },
