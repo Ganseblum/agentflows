@@ -25,7 +25,7 @@ updated_at: 2026-10-13T21:10:00+08:00
 | T01 | 记录基线：`validate.py all` 输出（去行号）、退出码、单元测试数、ruff/mypy 数量 | P0 | `tools/lab/validate.py` | — | ☑ 已完成 | `/tmp/quality-baseline/validate-all.txt`（sha256 `2bd7e2ca…a60ea78`）：9 PASS；单元测试 78 OK；ruff 49、mypy 27（工具装于仓库外虚拟环境 `/tmp/qtools`） |
 | T02 | M-A 门禁拆分：`validate.py` 变为薄入口，检查函数迁入 `tools/lab/gate/` 各模块，单模块 ≤ 600 行；输出逐行与基线一致 | P0 | `tools/lab/validate.py`、`tests/test_lab_contracts.py` | T01 | ◐ 进行中 | 待回写 |
 | T03 | M-C 计数脚本：新增 `tools/lab/counts.py`，文档计数用标记包裹，门禁比对 | P1 | `README.md`、`index.md`；新增 `tools/lab/counts.py`（待核实：创建后改为真实路径） | T01 | ◐ 进行中 | 待回写 |
-| T04 | M-E 角色场景：每个角色两条「必须拒绝」场景，存于 `examples/roles/<角色>/` | P1 | `examples/`（新增 `roles/` 子目录，待核实：创建后改为真实路径） | — | ◐ 进行中 | 待回写 |
+| T04 | M-E 角色场景：每个角色两条「必须拒绝」场景，以测试计划形式存放 | P1 | `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/plan-2026-10-13-001.md` | — | ◐ 进行中 | 28 个用例已生成，输入块与原场景逐字一致，`validate.py artifacts` PASS；未执行，M-E-AC-02 未验证 |
 | T05 | M-B 变异测试：`tools/lab/mutate.py`，副本内施加变异，统计存活；清理存活项 | P0 | `tools/lab/validate.py`（待测对象）；新增 `tools/lab/mutate.py`（待核实：创建后改为真实路径） | T02 | ☐ 未开始 | 待回写 |
 | T06 | 静态检查进门禁：ruff、mypy 基线清零后纳入 `validate.py all` | P0 | `tools/lab/validate.py`、`protected-paths.txt` | T02 | ☐ 未开始 | 待回写 |
 | T07 | 门禁受保护面：`tools/lab/gate/`、`mutate.py`、`counts.py` 纳入 `protected-paths.txt` 与必需条目 | P0 | `protected-paths.txt`、`tools/lab/validate.py` | T02、T03、T05 | ☐ 未开始 | 待回写 |

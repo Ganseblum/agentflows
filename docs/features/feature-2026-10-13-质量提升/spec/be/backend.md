@@ -65,7 +65,7 @@ stateDiagram-v2
 | M-B 变异测试 | 新增 `tools/lab/mutate.py`：算子集、对每个检查项施加变异、在副本中运行并统计存活 | M-A（需要稳定的检查项边界） | P0 |
 | M-C 计数脚本 | 新增 `tools/lab/counts.py`：计算测试数、schema 数、角色数、批次数、`validate.py` 行数；门禁比对文档标记 | 无 | P1 |
 | M-D 运行态同步 | 用户重装插件后，`validate.py installed` 退出码为 0 | 用户重装 | P0 |
-| M-E 角色场景 | 每个角色至少两个「必须拒绝」场景，存放于 `examples/roles/<角色>/`，由子代理运行并记录结果 | 无 | P1 |
+| M-E 角色场景 | 每个角色至少两个「必须拒绝」场景，以测试计划形式存放于 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/plan-2026-10-13-001.md`，执行结果另行记录 | 无 | P1 |
 | M-F 实验 harness | 新增 `tools/lab/experiment.py`，提供 `run` 与 `compare` 子命令；记录写入 `docs/features/feature-2026-10-13-质量提升/testing/<项目>-<特性>/`（文档链允许的测试子目录） | Q-01、Q-03 | P1（阻塞执行） |
 
 ## 6. M-F 实验记录字段契约
