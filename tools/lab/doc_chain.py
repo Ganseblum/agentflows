@@ -248,6 +248,11 @@ def mermaid_kinds(text: str) -> dict[str, list[str]]:
     return out
 
 
+# A prototype HTML file must carry at least this many bytes to exempt the C7 wireframe floor.
+# A name is not a prototype; a placeholder file must not be able to buy an exemption.
+PROTOTYPE_MIN_BYTES = 64
+
+
 def find_stage(files: list[Path], *parts: str) -> list[Path]:
     """All non-gitkeep .md files under <feature>/<parts...> (recursively)."""
     base = Path(*parts)
@@ -267,16 +272,25 @@ def lint(feature_dir: Path) -> list[str]:
     files = sorted(feature_dir.rglob("*"))
     md_files = [f for f in files if f.is_file() and f.suffix == ".md" and f.name != ".gitkeep"]
     readme = feature_dir / "README.md"
+    all_text = {f: read(f) for f in md_files}
 
-    # C1 structure
-    for stage in ("proposal", "spec", "design", "plan"):
+    # C1 structure — with the lightweight track the chain contract allows.
+    # document-chain.md lets a batch declare 轻量模式：无 spec/design 轨 in its README meta line
+    # and ship only an entry document plus a proposal. Until 2026-10-13 C1 demanded all four
+    # stage directories unconditionally, so every such batch failed the very linter the contract
+    # told it to run before declaring the chain done: the降级 path existed on paper only. The
+    # exemption is declaration-gated (the README must say so), never inferred from emptiness —
+    # and it narrows the stage requirement to proposal + plan, it does not switch C1 off.
+    readme_text = all_text.get(readme, "")
+    lightweight = bool(re.search(r"轻量模式[：:][^\n]*无\s*spec/design\s*轨", readme_text))
+    required_stages = ("proposal", "plan") if lightweight else ("proposal", "spec", "design", "plan")
+    for stage in required_stages:
         stage_files = [f for f in md_files if stage in f.relative_to(feature_dir).parts]
         if not stage_files:
-            errors.append(f"C1 结构: {stage}/ 下没有任何有效文档（仅 .gitkeep 占位）")
+            suffix = "（已声明轻量模式）" if lightweight else ""
+            errors.append(f"C1 结构: {stage}/ 下没有任何有效文档（仅 .gitkeep 占位）{suffix}")
     if not readme.is_file():
         errors.append("C1 结构: 缺少 README.md 唯一入口")
-
-    all_text = {f: read(f) for f in md_files}
 
     # C2 entry gates
     if readme.is_file():
@@ -293,13 +307,17 @@ def lint(feature_dir: Path) -> list[str]:
         if ("不合规项" in text) or ("反审" in text):
             audit_found = True
         for line in text.splitlines():
-            # accepted tolerance (review note b): the whole-line 非阻塞 skip can also
-            # suppress a 阻塞-status row whose text merely mentions 非阻塞 —
-            # false-negative direction, acceptable for a floor linter
-            if "非阻塞" in line:
+            if not (line.lstrip().startswith("|") and "阻塞" in line and "☐" in line):
+                continue
+            # The exemption is a status-cell claim, not a whole-line keyword. Until 2026-10-13
+            # the check dropped any line containing 非阻塞 anywhere, so a row whose status cell
+            # read 阻塞 but whose prose merely mentioned 非阻塞 was silently exempt — a false
+            # negative the checker's own comment admitted and its self-test then pinned as
+            # correct behaviour. Only a cell that starts with 非阻塞 exempts the row.
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if any(cell.startswith("非阻塞") for cell in cells):
                 continue  # non-blocking rows may stay open pending review confirmation
-            if line.lstrip().startswith("|") and "阻塞" in line and "☐" in line:
-                errors.append(f"C3 反审门: {f.relative_to(feature_dir)} 存在未关闭的阻塞项: {line.strip()[:80]}")
+            errors.append(f"C3 反审门: {f.relative_to(feature_dir)} 存在未关闭的阻塞项: {line.strip()[:80]}")
     if spec_files and not audit_found:
         errors.append("C3 反审门: spec/ 下没有任何文件包含「不合规项/反审」checklist")
 
@@ -353,8 +371,16 @@ def lint(feature_dir: Path) -> list[str]:
             for b in re.findall(r"```text\n(.*?)```", fe_text, re.S)
             if any(c in b for c in BOX_CHARS)
         ]
-        has_prototype = any(f.suffix == ".html" and "prototype" in str(f.relative_to(feature_dir)).lower()
-                            for f in md_files + [x for x in files if x.is_file() and x.suffix == ".html"])
+        # A prototype exempts the wireframe floor only if it is a prototype: until 2026-10-13 any
+        # zero-byte file named *prototype*.html satisfied it, because the check tested the path
+        # name and never looked at the bytes.
+        has_prototype = any(
+            x.is_file()
+            and x.suffix == ".html"
+            and "prototype" in str(x.relative_to(feature_dir)).lower()
+            and x.stat().st_size >= PROTOTYPE_MIN_BYTES
+            for x in files
+        )
         if len(wireframes) < 2 and not has_prototype:
             errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）且无 prototype HTML 原型")
         for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", fe_text, re.M):
@@ -570,9 +596,25 @@ def self_test() -> int:
     def strip_wireframes(f):
         # remove all text-wireframe blocks (fence-to-fence), keep everything else
         f["design/fe/f.md"] = re.sub(r"```text\n.*?```", "", f["design/fe/f.md"], flags=re.S)
-        f["design/fe/prototype.html"] = "<html>定时任务原型</html>"
+        f["design/fe/prototype.html"] = (
+            "<html>\n<body>\n<div data-testid=\"task-list\">定时任务列表原型</div>\n"
+            "<div data-testid=\"task-retry\">重试</div>\n</body>\n</html>\n"
+        )
         return f
-    run_case("18 html prototype alone satisfies C7", 0, ["PASS doc-chain"], strip_wireframes, results)
+    run_case("18 a real html prototype alone satisfies C7", 0, ["PASS doc-chain"],
+             strip_wireframes, results)
+
+    def empty_prototype(f):
+        f = strip_wireframes(dict(base))
+        f["design/fe/prototype.html"] = ""
+        return f
+    run_case("45 a zero-byte prototype.html no longer buys the C7 exemption (the name is not "
+             "the artefact)", 1, ["C7 design/fe"], empty_prototype, results)
+    run_case("46 a 阻塞-status row whose prose mentions 非阻塞 still trips C3 (the exemption is "
+             "a status-cell claim, not a whole-line keyword)", 1, ["C3 反审门"],
+             lambda f: rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                           "| B-2 | y | 阻塞（非阻塞项已另行列示） | ☐ 待评审确认 |\n"),
+             results)
 
     def add_marker(f):
         f["README.md"] = f["README.md"] + "\n本 feature 文档链由 agentflow 文档链方法生成（2026-09-20）\n"
@@ -726,6 +768,31 @@ def self_test() -> int:
     run_file_case("41 Execution Coordinator is a planned role name, not a session word", 0,
                   ["PASS doc-chain --file"],
                   "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n")
+
+    def m_lightweight(f):
+        f.pop("spec/s.md")
+        f.pop("design/be/b.md")
+        f.pop("design/fe/f.md")
+        f["README.md"] = base["README.md"] + "\n轻量模式：无 spec/design 轨\n"
+        return f
+    run_case("42 declared lightweight chain (no spec/design track) passes C1", 0,
+             ["PASS doc-chain"], m_lightweight, results)
+
+    def m_lightweight_no_proposal(f):
+        f = m_lightweight(dict(base))
+        f.pop("proposal/p.md")
+        return f
+    run_case("43 declared lightweight chain still trips C1 when proposal is missing "
+             "(the exemption narrows the stage set, it does not switch C1 off)", 1,
+             ["C1 结构"], m_lightweight_no_proposal, results)
+
+    def m_undeclared_thin(f):
+        f.pop("design/be/b.md")
+        f.pop("design/fe/f.md")
+        return f
+    run_case("44 an undeclared chain whose design track is empty still trips C1 (the exemption "
+             "is declaration-gated, never inferred from emptiness)", 1,
+             ["C1 结构"], m_undeclared_thin, results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

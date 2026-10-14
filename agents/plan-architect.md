@@ -50,7 +50,7 @@ disallowedTools: Bash
 字段、fixture、错误路径——并把端到端检查放在评审门之前。
 
 对于带用户可见行为的特性，计划还要带一个指派给 `test-planner` 的测试设计任务，
-在 `features/<批次>/testing/<项目>-<功能>/` 下产出用例库
+在 `docs/features/<批次>/testing/<项目>-<功能>/` 下产出用例库
 （契约：`skills/agentflow/references/test-records.md`），且 验证命令 章节引用该计划的
 smoke 集；端到端用例在评审门关闭前通过。面向用户的计划缺少测试设计任务即为不完整。
 

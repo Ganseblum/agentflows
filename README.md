@@ -55,7 +55,7 @@ examples、记录产物、受保护清单、manifest 一致性、
 不确定、反复出现、跨层或高风险的 bug，使用完整的
 Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现的小型低风险 bug，
 Supervisor 可以合并诊断或记录环节，同时保持同样的证据门。Plan Architect 写计划；
-Supervisor 授权并协调执行。独立的 Execution Coordinator 预留给未来的持久控制面。
+Supervisor 授权并协调执行。独立的 Execution Coordinator 预留给未来的持久控制面——该角色当前不存在，不是可委派的能力，不得写进委派简报。
 
 改进工作流是一个受治理的骨架。用 `python3 tools/lab/record_store.py index` 构建一次性的
 SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权威，且不使用向量数据库。跨会话遥测、持久
@@ -76,7 +76,7 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
 | `tools/lab/` | 确定性门与工具：`validate.py`、`doc_chain.py`、`isolation.py`、`record_store.py`、`artifact_digest.py`（受保护） |
 | `tests/` | 门工具的钉住回归测试（受保护） |
 | `index.md` | 唯一的文档索引：场景 → 入口、维护纪律、迁移清单 |
-| `features/` | 按批次的文档链：`feature-<date>-<topic>/{README, proposal, spec, design, plan, reviews, testing, episodes, improvement}` |
+| `docs/features/` | 按批次的文档链：`feature-<date>-<topic>/{README, proposal, spec, design, plan, reviews, testing, episodes, improvement}` |
 | `docs/issues/` | 缺陷与事项流：平铺的 `ISS-<YYYY>-<NNN>-<slug>.md` 记录、`recurrence/` 台账、`归档/` 存放被拒记录；看板与规则见 `docs/issues/README.md` |
 | `episodes/` | 任务级决策记录（`EP-*.json`）——改进环的燃料（规则见 `episodes/README.md`） |
 | `docs/features/` | 批次目录（五段骨架；含批次内计划 `<batch>/plan/<plan_id>.md`；规则见 `docs/features/README.md`） |
@@ -88,7 +88,8 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
 | `protected-paths.txt` | 候选门面，只声明一次 |
 | manifests | `plugin.json`、`marketplace.json`、`.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/` |
 
-日常走查从 [`docs/system-guide.md`](docs/system-guide.md) 开始——工作流怎么流转、
+第一次用这套方法，先读 [`docs/quickstart.md`](docs/quickstart.md)——先判断要不要走流程、走哪条
+路、哪些规矩不能省，五分钟内可以开始。日常走查从 [`docs/system-guide.md`](docs/system-guide.md) 开始——工作流怎么流转、
 改进环怎么运行、什么记录到哪里、失败如何处理（含图示与完整示例）；角色路由见
 [`skills/agentflow/references/roles.md`](skills/agentflow/references/roles.md)。然后参见
 [`docs/design-decisions.md`](docs/design-decisions.md) 了解产品边界、宿主形态与自迭代的设计决策，

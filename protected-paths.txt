@@ -52,7 +52,13 @@ tests/test_record_store.py
 tools/lab/artifact_digest.py
 tools/lab/doc_chain.py
 tools/lab/isolation.py
+tools/lab/record_store.py
 tools/lab/trend.py
 tools/lab/validate.py
+
+# The build script decides what the installed surface contains: a candidate that edits how
+# packaging/runtime is assembled can ship a role set or schema set different from the one the
+# gate compiled. Added 2026-10-13 (gate change, human-directed) — it decides what gets judged.
+packaging/build_runtime.py
 
 protected-paths.txt

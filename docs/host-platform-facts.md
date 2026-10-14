@@ -2,7 +2,7 @@
 
 下表每一行都在本机直接观察得到，除非其证据标记为 `doc`；`doc` 行来自宿主官方指南，尚未经运行检验。每行都标明其证据与适用范围。不得把一条事实推广到超出其适用范围。重新验证请重跑该行指名的检查，而不是编辑本文件。
 
-最后验证：2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）。
+最后验证：2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
 ## ZCode（桌面版）
 
@@ -39,7 +39,7 @@
 | C10 | 为 `claude --print` 提供服务的第三方网关在模型调用上失败关闭：2026-09-14 一次最小 AF-007 冒烟两次返回结构化 `API Error: 502`（约 195 秒、约 203 秒）；2026-09-19 一次单词探测立即返回 `API Error: 502 status code (no body)`，20 秒后的一次重试挂起超过 180 秒且无输出，2026-09-19T12:46Z 的重新验证挂起 90 秒、stdout/stderr 皆空（`TimeoutExpired`，退出码 124）；2026-09-19T14:15Z/14:17Z 的另外两次探测（各 90 秒超时、相隔 20 秒）都挂起且流为空。本机为该 CLI 只配置了一个端点（`~/.claude/settings.json` 中单一 `ANTHROPIC_BASE_URL`；未配置备选）。 | 直接经 `claude --print --output-format json` 观察（502 当天：shell 退出码 0，`is_error: true`；挂起当天：无 JSON 体）。 | 本机网关（`fable`→`anthropic-ccmax/...` 系列） | 端点问题（U-01）不是形式主义：权威评估与 C9 现场验证都卡在一个能完成调用的网关上。在任何评估会话之前，重跑单词探测来重新验证。切换端点需要用户提供的 URL + token；本地不存在。 |
 | C11 | 本安装的认证解析与失败语义：`--settings <file>` 的 `env` 块覆盖用户 `settings.json` 的 `env`，后者覆盖进程环境（一次 `--settings` 探测到达了新端点并得到其快速 401；一次仅用进程环境的探测仍命中已配置的中继并挂起）。伪造的 base URL 会挂起（连接重试）；可达端点配空 key 或无效 key 会快速返回 HTTP 401，CLI 将其渲染为 `result: "Not logged in · Please run /login"`，并带 `terminal_reason: api_error`。 | Observed 2026-09-19: 针对 `https://open.bigmodel.cn/api/anthropic` 的临时配置探测（settings env / `ANTHROPIC_API_KEY` / 整个 config-dir 副本 / `--settings` / 进程环境 / 伪造 URL）外加一次 curl 认证矩阵；除两类挂起外，所有延迟均为 1 秒。 | 本机上的 `claude --print`，CLI `2.1.268`；目标端点的响应措辞来自 bigmodel | 端点切换必须经由 `--settings` 或用户 settings 文件——仅靠进程环境无效。快速 401 与挂起可区分坏 key 与死端点；在任何评估会话之前用这一点判断。重新验证：一次故意用坏 key 的探测与一次用伪造 URL 的探测。 |
 
-| C12 | 端点切换后的一词探测恢复：`claude --print` 在 `ANTHROPIC_BASE_URL=https://api.360.cn`（凭证与模型映射同在 `settings.json` 的 `env`）上 3/3 返回 `pong`（21.6s / 23.7s / 23.1s，`stop_reason: end_turn`，单次约 $0.02）；隔离对照：空 scratch `CLAUDE_CONFIG_DIR` 快速失败（rc=1，1.5s），scratch 目录内置一份 `settings.json` 副本的变体成功（39.6s）。 | Observed 2026-10-10：三次一词探测 + 隔离变体 A/B 对照；同日 AF-001×3 试水实跑完成（3 轮 21.7 分钟，结果 manifest 解析正常）。 | 本机 `claude --print`，CLI `2.1.268`，`api.360.cn` 网关 | U-01 解除（C10/C11 的当时结论按其时效保留）；试水采用「scratch + settings 副本」变体，且为 C9 组合（stream-json × `--json-schema`）的首个现场验证（`--strict-mcp-config` 未随行）；`host_adapter` 隔离路径的空目录认证失败待处置（`plans/PENDING-DECISIONS.md`「隔离路径」条）。重新验证：一词探测 ×1。 |
+| C12 | 端点切换后的一词探测恢复：`claude --print` 在 `ANTHROPIC_BASE_URL=https://api.360.cn`（凭证与模型映射同在 `settings.json` 的 `env`）上 3/3 返回 `pong`（21.6s / 23.7s / 23.1s，`stop_reason: end_turn`，单次约 $0.02）；隔离对照：空 scratch `CLAUDE_CONFIG_DIR` 快速失败（rc=1，1.5s），scratch 目录内置一份 `settings.json` 副本的变体成功（39.6s）。 | Observed 2026-10-10：三次一词探测 + 隔离变体 A/B 对照；同日 AF-001×3 试水实跑完成（3 轮 21.7 分钟，结果 manifest 解析正常）。 | 本机 `claude --print`，CLI `2.1.268`，`api.360.cn` 网关 | U-01 解除（C10/C11 的当时结论按其时效保留）；试水采用「scratch + settings 副本」变体，且为 C9 组合（stream-json × `--json-schema`）的首个现场验证（`--strict-mcp-config` 未随行）；`host_adapter` 隔离路径的空目录认证失败：随 2026-10-12 评测装置裁撤已失去对象（runner/adapter/policy 整线删除），原待决条目不在当前拍板清单内（`docs/PENDING-DECISIONS.md` 现仅保留第 1、4 两条；路径口径于 2026-10-13 由 `plans/` 更正为 `docs/`）。重新验证：一词探测 ×1。 |
 
 ## Codex CLI
 
@@ -47,6 +47,13 @@
 | --- | --- | --- | --- | --- |
 | X1 | `codex exec` 支持 `--ephemeral`、`--skip-git-repo-check`、`--cd`、`--model`、`--sandbox`、`--output-schema`、`--output-last-message`、`--color`。 | 0.154.0 上的 `codex exec --help`（组合使用属 `flag`）；2026-09-19 现场单词探测：`codex exec --ephemeral --skip-git-repo-check` 在约 20 秒内返回 `pong`（模型 `gpt-5.6-luna`，provider `openai`，沙箱 `workspace-write`）。 | `codex exec` | 适配器命令形态兼容；一次最小的真实 Codex 模型运行现已完成（单词、ephemeral，2026-09-19），而 claude 系列网关在同一时间窗内挂起——codex 是本机唯一可用的模型端点，但按 X2 它无法评估候选。完整 dogfood 仍待进行。 |
 | X2 | Codex 没有每次调用的本地插件绑定；候选源评估按设计失败关闭。 | `host_adapter.validate_request` 在 codex 上拒绝 `source_kind=candidate`；记录于 `tools/lab/adapter-protocol.md`。 | 当前 Codex CLI | Codex 只能评估已安装基线；绝不要把已安装源的结果标为候选结果。 |
+
+## WorkBuddy（CodeBuddy IDE，macOS 桌面版）
+
+| # | 事实 | 证据 | 适用范围 | 后果 |
+| --- | --- | --- | --- | --- |
+| W1 | 会话内可直接执行 Bash / Read / Edit / Write / Grep / Glob 并派生子代理；本仓的确定性检查、安装构建与检索工具都能在该会话内运行并观察到原始输出。 | Observed 2026-10-13（本仓工作树，`fb98b21`）：`python3 tools/lab/validate.py all` → 9 项全 PASS、退出码 0；`python3 -m unittest discover -s tests` → `Ran 60 tests` / `OK`；`python3 packaging/build_runtime.py` → 退出码 0 并生成 `packaging/runtime`（14 个角色 + 6 份 schema + 四份 manifest）；`python3 tools/lab/record_store.py index` → 索引 106 条记录，`query` 返回带上下文的 FTS5 命中。 | WorkBuddy 会话（本安装），对插件仓工作树的命令执行 | 该宿主足以承载 agentflow 的门、构建与检索面——跑门不必依赖 Claude Code / Codex CLI 端点。它不提供插件安装面，因此 Z1–Z11 / C1–C12 / X1–X2 各行不适用于它。 |
+| W2 | agentflow 插件未在该宿主上安装：未观察到角色加载、技能触发或 frontmatter 工具白名单被宿主强制执行的任何行为。 | 未实际触发——该宿主无插件安装通道，本次只做门与工具层面的执行 | WorkBuddy | 不得把「门在本会话跑绿」外推为「角色在该宿主上按契约运行」。角色面、技能触发与工具白名单的强制执行仍待 dogfood；README 的 dogfood 前置条件（先跑 `validate.py installed` 并记录结果）不变。 |
 
 ## 重新验证
 

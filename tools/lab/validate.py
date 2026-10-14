@@ -65,8 +65,10 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/artifact_digest.py",
     "tools/lab/doc_chain.py",
     "tools/lab/isolation.py",
+    "tools/lab/record_store.py",
     "tools/lab/trend.py",
     "tools/lab/validate.py",
+    "packaging/build_runtime.py",
     "protected-paths.txt",
     ".github/workflows/validate.yml",
 }
@@ -1360,6 +1362,48 @@ def validate_schemas() -> list[ValidationError]:
         if not isinstance(document.get("$id"), str) or not document["$id"]:
             errors.append(ValidationError(str(path), "must declare a non-empty $id"))
         errors.extend(check_schema_refs(document, path))
+        errors.extend(validate_schema_shape(document, path))
+    return errors
+
+
+def validate_schema_shape(document: dict[str, Any], path: Path) -> list[ValidationError]:
+    """Check a record contract's own shape, not just its meta-declarations.
+
+    The 2026-10-13 audit found this check shallow: it only confirmed `$schema`, `$id` and that
+    `$ref` targets exist, so a contract could drop every required key, accept arbitrary extra
+    keys, or stop being an object contract at all and still pass. These are the properties that
+    make a contract a contract — and the ones a candidate has an incentive to loosen, since the
+    compile step measures candidate records against them (hard boundary 6).
+    """
+    errors: list[ValidationError] = []
+    if document.get("type") != "object":
+        errors.append(ValidationError(str(path), "must declare type: object"))
+    properties = document.get("properties")
+    if not isinstance(properties, dict) or not properties:
+        errors.append(ValidationError(str(path), "must declare a non-empty properties map"))
+    required = document.get("required")
+    if (
+        not isinstance(required, list)
+        or not required
+        or not all(isinstance(item, str) and item for item in required)
+    ):
+        errors.append(
+            ValidationError(str(path), "must declare a non-empty required list of property names")
+        )
+    if document.get("additionalProperties") is not False:
+        errors.append(
+            ValidationError(
+                str(path),
+                "must set additionalProperties: false — a contract that silently accepts extra "
+                "keys can be loosened without the compile step noticing",
+            )
+        )
+    if isinstance(properties, dict) and isinstance(required, list):
+        for name in required:
+            if isinstance(name, str) and name not in properties:
+                errors.append(
+                    ValidationError(str(path), f"required property {name!r} is not declared in properties")
+                )
     return errors
 
 
@@ -1490,6 +1534,64 @@ def validate_examples() -> list[ValidationError]:
         )
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
+    errors.extend(validate_doc_chain_examples())
+    return errors
+
+
+# Example document chains the compile gate lints end-to-end: (directory, expected exit code,
+# findings the linter must report). The dense chain is the positive fixture — the shape every
+# delivered chain must reach; the thin one is the 2026-09-20 failure shape (every stage exists,
+# nothing has density), which must fail with the findings the density floor names.
+DOC_CHAIN_EXAMPLES = (
+    ("good/feature-demo", 0, ()),
+    ("bad/feature-demo-thin", 1, ("C4 design/be", "C7 design/fe", "C9 plan 落点")),
+)
+
+
+def validate_doc_chain_examples() -> list[ValidationError]:
+    """Run the doc-chain structure checks (C1–C11) against the shipped example chains.
+
+    `validate_doc_chain` pins the linter's self-test and `validate_doc_chain_live` points its
+    text checks at the live document surfaces — but until 2026-10-13 nothing ever ran C1–C11,
+    the structure and density checks the linter was built for, against any real chain. The tree's
+    only feature directory has no proposal/spec/design track, so it could never pass them and was
+    never asked to; the checks therefore had no live exercise at all and could rot while every
+    gate stayed green. These fixtures carry that load on every compile run.
+    """
+    errors: list[ValidationError] = []
+    linter = ROOT / "tools" / "lab" / "doc_chain.py"
+    if not linter.is_file():
+        return [ValidationError("examples", "tools/lab/doc_chain.py is missing")]
+    for name, expected_rc, want in DOC_CHAIN_EXAMPLES:
+        target = ROOT / "examples" / "doc-chain" / name
+        relative = target.relative_to(ROOT)
+        if not target.is_dir():
+            errors.append(ValidationError(str(relative), "declared doc-chain example is missing"))
+            continue
+        completed = subprocess.run(
+            [sys.executable, str(linter), str(relative)],
+            cwd=str(ROOT),
+            text=True,
+            capture_output=True,
+            timeout=120,
+            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        )
+        output = f"{completed.stdout}\n{completed.stderr}"
+        if completed.returncode != expected_rc:
+            errors.append(
+                ValidationError(
+                    str(relative),
+                    f"doc-chain linter exited {completed.returncode}, expected {expected_rc}",
+                )
+            )
+            continue
+        for finding in want:
+            if finding not in output:
+                errors.append(
+                    ValidationError(
+                        str(relative), f"expected doc-chain finding {finding!r} was not reported"
+                    )
+                )
     return errors
 
 
@@ -2030,6 +2132,19 @@ def validate_protected_paths(list_path: Path | None = None) -> list[ValidationEr
                 ValidationError(
                     str(list_path),
                     f"required gate path {required!r} is no longer covered by any declared prefix",
+                )
+            )
+    # Coverage alone is a string comparison: a typo, a renamed file, or a path that never existed
+    # still "covers" the required entry because the prefix text matches. The 2026-10-13 audit
+    # flagged this — the list could protect nothing while every check stayed green. Every declared
+    # entry must resolve to something real in this repository.
+    for entry in sorted(normalized):
+        if not (ROOT / entry).exists():
+            errors.append(
+                ValidationError(
+                    str(list_path),
+                    f"declared protected path {entry!r} does not exist in this repository — "
+                    "the gate surface cannot protect a path that is not there",
                 )
             )
     return errors

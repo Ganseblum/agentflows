@@ -31,11 +31,11 @@ flowchart TB
 
     subgraph EVIDENCE["证据层 记录根"]
         BUGS["issues/ 缺陷记录 + recurrence/ 类台账 + 归档/"]
-        PLANS["features/<批次>/plan/ 版本化计划（看板）"]
+        PLANS["docs/features/<批次>/plan/ 版本化计划（看板）"]
         EPIS["episodes/ 任务级决策（JSON）"]
         REVIEWS["reviews/ 评审桥"]
         IMPR["改进环产物落点由 Supervisor 指派（三件套已停用）"]
-        TESTS["features/<批次>/testing/ 测试计划与执行记录"]
+        TESTS["docs/features/<批次>/testing/ 测试计划与执行记录"]
     end
 
     subgraph GATE["确定性门 tools/lab/（保护区）"]
@@ -74,7 +74,7 @@ flowchart TB
 | Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` |
 | 小 Bug 有验证复现 | Supervisor 合并诊断/修复，Recorder 视沉淀价值 | 同上 |
 | 纯规划 | 专家并行 → Plan Architect | 批次 `plan/<plan_id>.md` |
-| 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `features/<批次>/testing/<项目>-<功能>/` |
+| 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `docs/features/<批次>/testing/<项目>-<功能>/` |
 | 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `reviews/<项目>-<功能>/` |
 | 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | episode（三件套记录根已停用，落点由 Supervisor 指派） |
 
@@ -190,10 +190,10 @@ sequenceDiagram
 flowchart LR
     subgraph WRITTEN["人写（会话里产生）"]
         B["issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>现象/问题代码/根因/修复/变更记录"]
-        P["features/&lt;批次&gt;/plan/&lt;plan_id&gt;.md<br/>进展概览+任务表+未决项"]
+        P["docs/features/&lt;批次&gt;/plan/&lt;plan_id&gt;.md<br/>进展概览+任务表+未决项"]
         E["episodes/<日期>/EP-*.json<br/>目标/outcome/claims/evidence"]
         RV["reviews/<项目>-<功能>/review-*.md<br/>+ archive/ 逐字快照"]
-        T["features/<批次>/testing/<项目>-<功能>/{plan,run}-*.md"]
+        T["docs/features/<批次>/testing/<项目>-<功能>/{plan,run}-*.md"]
         I["改进环产物落点由 Supervisor 指派"]
     end
     subgraph COMPILED["机器校验（写完就编，FAIL 即编译错误）"]

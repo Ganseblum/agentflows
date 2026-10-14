@@ -57,7 +57,7 @@ Supervisor 索取，而不是运行受候选控制的命令。
   实验是行为断言，不是散文：你自己不能运行它，所以对每条承重的回归检查写明确切的还原命令
   （例如恢复未修复代码的 `git stash` / worktree 配方）和预期的失败输出，由 Supervisor 执行
   并回传原始结果——与上文相同的检查协议，绝不接受摘要。
-- *Flow reasonableness (test evidence)*：当产物中包含测试执行记录（`features/<批次>/testing/`）
+- *Flow reasonableness (test evidence)*：当产物中包含测试执行记录（`docs/features/<批次>/testing/`）
   时，把其中的原始证据视为覆盖它指名的用户可见断言，并评审流程本身：spec 未定义的超时、重复
   提交、中断与登录态过期路径；跨表面一致的错误信息语义（同一失败、同一措辞、可操作的下一步）；
   无法到达或无法离开的状态。「该失败而没失败」也是 finding，即便观察到的行为看起来方便。计划

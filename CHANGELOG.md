@@ -1,5 +1,42 @@
 # 变更日志
 
+## 0.11.0 — 2026-10-14
+
+> 2026-10-13 全仓八维度评分审计后的低分修复批（用户指示「列出实际的低分点……直接帮我完整修复，
+> 完全修复它，然后整体达到 8 分或者 8 分以上的效果」，并显式授权本仓增删改与推送）。
+> `measurement: none`（方法级改动，无仪器化业务任务）。
+
+- **架构：轻量链与 linter 的硬冲突修复（ISS-2026-053）**：链契约允许批次声明
+  `轻量模式：无 spec/design 轨` 只出入口文档与一份 proposal，但 `doc_chain.py` 的 C1 无条件要求
+  proposal/spec/design/plan 四个目录非空，契约又要求宣布完成前必须跑 linter——降级路径只存在
+  于纸面。C1 改为**声明门禁**的豁免（README 声明轻量时阶段要求收窄为 proposal + plan），豁免
+  靠声明不靠空目录推断；自测新增 case 42/43/44 三个方向钉住。
+- **门：保护面补齐与两处浅检查加深（ISS-2026-054，门变更经用户显式授权）**：`validate.py protected`
+  新增「声明条目必须在盘」判据（修订前拼错或已改名的路径同样算「覆盖」）；新增
+  `validate_schema_shape`——`type: object`、`properties` 非空、`required` 非空字符串数组、
+  `additionalProperties: false`、且 required 项必须在 properties 中声明（修订前删掉全部 required
+  仍 PASS，而编译步骤正是用它判定候选记录）；`protected-paths.txt` 与 `REQUIRED_PROTECTED_PATHS`
+  补入 `tools/lab/record_store.py` 与 `packaging/build_runtime.py`（后者决定安装面装什么）。
+- **门：两处自承 false-negative 收紧（ISS-2026-054）**：C3 的整行「非阻塞」跳过改为**状态单元格**
+  判定（修订前状态为「阻塞」但行文提到「非阻塞」的行被静默放过）；C7 的 prototype 豁免改为要求
+  文件真实存在且不少于 64 字节（修订前零字节的 `*prototype*.html` 即可买断两张线框）。自测新增
+  case 45/46。
+- **门：结构判据（C1–C11）首次跑在真实链上**：此前 `all` 只跑 linter 的自测与文本检查，C1–C11
+  从未对任何真实链执行过（本仓唯一的 feature 目录没有 spec/design 轨，结构上不可能通过）。新增
+  `examples/doc-chain/` 正反例（密链必须 PASS、2026-09-20 形状的薄链必须 FAIL 且报出 C4/C7/C9），
+  由 `validate.py examples` 每次编译实跑。`--self-test` 41 → 46 case。
+- **记录面：台账回写与四项根因立账（ISS-2026-055 / 056）**：`unverified-behavior-claims` 的
+  `occurrences` 补 ISS-2026-039、`consolidated_in` 由 0.3.4 回写为 0.8.4、删除孤立列表项
+  （此前计数 1 与正文「再犯」结论矛盾，`recurrence` 档位因此错判为 single）；活面路径统一为
+  `docs/features/<批次>/…`（README / SKILL / system-guide / reviews / 四个角色文件，历史记录按
+  硬边界 8 不回改）；`execution-coordinator` 三处引用加「当前不存在、不得写进委派简报」限定。
+- **文档：新增 `docs/quickstart.md`**（5 分钟上手：先判断要不要走流程、三条路径、两条不能省的
+  规矩、收尾必跑的三条命令），README 与 index.md 注册入口；记录面补本次会话 episode
+  （EP-20261014-001）。
+- 真实宿主观察入档 `docs/host-platform-facts.md`（W1/W2：WorkBuddy 会话内可跑门、构建与检索工具；
+  插件未安装，角色加载与工具白名单强制执行仍属未验证）。
+- 全量门 9×PASS、`unittest` 60 OK、`doc_chain --self-test` 46/46；故障注入一律在 `/tmp` 副本执行。
+
 ## 待发布 — 2026-10-10
 
 > 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。

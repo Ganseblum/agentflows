@@ -29,11 +29,11 @@ Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目�
 
 对于 material、不确定、反复出现、跨层或高风险的 Bug，使用完整的有界序列 `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`。Investigator 确立可复现的症状与归因，Fixer 只在指派的候选工作区改动代码，Reviewer 检查修复，Recorder 在验证后写下被接受的 Bug 记录。对于已有验证复现的小范围低风险 Bug，Supervisor 可合并 Investigator 或 Recorder 环节，但必须保留同样的诊断、回归、评审与状态证据。绝不让 Fixer 批准或关闭它自己的 Bug。
 
-对于规划任务，并行运行所需的前端与后端专家，把它们的输出与 Technical Director 的接口决策交给 `plan-architect`，由它在显式的 `docs/features/<批次>/plan/` 路径下写出最终计划。Plan Architect 只写计划；计划是否获批由 Supervisor 决定，它还负责指派执行、集成结果，并拥有最终的停止或回滚决策。未来的 `execution-coordinator` 可负责持久队列、租约、依赖、重试与可恢复并行批次，但它不是当前角色。计划必须承载进展看板与任务表（逐任务状态、依赖、证据回写）、它经过的接口与共享机制、其评审门，以及带回滚点的发布顺序——形态定义于 `docs/features/README.md`，机器校验。计划是执行合同，不是改动代码的授权。对 material 特性，计划还要承载来自[契约](references/contracts.md)的设计完备性产物：关键链路时序（以步骤表为基准）、每条关键路径一份异常矩阵，以及与回滚点配对的发布顺序。
+对于规划任务，并行运行所需的前端与后端专家，把它们的输出与 Technical Director 的接口决策交给 `plan-architect`，由它在显式的 `docs/features/<批次>/plan/` 路径下写出最终计划。Plan Architect 只写计划；计划是否获批由 Supervisor 决定，它还负责指派执行、集成结果，并拥有最终的停止或回滚决策。未来的 `execution-coordinator` 可负责持久队列、租约、依赖、重试与可恢复并行批次，但它不是当前角色——该角色当前不存在，不得作为委派对象、产物落点或任务归属写进任何简报；今天这些职责由 Supervisor 承担。计划必须承载进展看板与任务表（逐任务状态、依赖、证据回写）、它经过的接口与共享机制、其评审门，以及带回滚点的发布顺序——形态定义于 `docs/features/README.md`，机器校验。计划是执行合同，不是改动代码的授权。对 material 特性，计划还要承载来自[契约](references/contracts.md)的设计完备性产物：关键链路时序（以步骤表为基准）、每条关键路径一份异常矩阵，以及与回滚点配对的发布顺序。
 
 ## 自动化测试
 
-当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），边界覆盖并声明未覆盖的类别，以及用于 spec 未定义行为的 `## 流程疑点`（契约：`skills/agentflow/references/test-records.md`）。`test-executor` 执行它：先做脚本化自动化（Playwright 或项目自有的 e2e 套件，headless），API 用例走命令，宿主浏览器 UI 步骤由 Supervisor 在主对话中按 Executor 的步骤脚本执行——浏览器自动化在 Claude Code 与 ZCode 上是主对话专属——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、证据与汇总计数。失败的用例带可直接复现的 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用项目级 Playwright 方案；Supervisor 驱动的路线是兜底，不是目标。
+当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），边界覆盖并声明未覆盖的类别，以及用于 spec 未定义行为的 `## 流程疑点`（契约：`skills/agentflow/references/test-records.md`）。`test-executor` 执行它：先做脚本化自动化（Playwright 或项目自有的 e2e 套件，headless），API 用例走命令，宿主浏览器 UI 步骤由 Supervisor 在主对话中按 Executor 的步骤脚本执行——浏览器自动化在 Claude Code 与 ZCode 上是主对话专属——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、证据与汇总计数。失败的用例带可直接复现的 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用项目级 Playwright 方案；Supervisor 驱动的路线是兜底，不是目标。
 
 ## 外部文档二次评审
 
@@ -81,7 +81,7 @@ Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目�
 
 若有界重试后修复/评审循环仍无法通过，带证据上报阻塞，并给出需要用户做的最小决策。不要让 Agent 在不变的输入上持续空转。
 
-编排中途中断的会话从 `docs/features/<批次>/plan/` 下的版本化计划恢复（Markdown 看板：每个任务行带有状态与证据，状态可重新推导），而不是靠记忆：重新下简报前，先从工作区重新推导每个工作包的状态（对委派基线的 diff、检查、评审决策），没有观察到证据的包视为未开始。持久队列、租约与可恢复并行批次是未来 `execution-coordinator` 角色的职责；今天计划文件加仓库状态就是唯一的 checkpoint。
+编排中途中断的会话从 `docs/features/<批次>/plan/` 下的版本化计划恢复（Markdown 看板：每个任务行带有状态与证据，状态可重新推导），而不是靠记忆：重新下简报前，先从工作区重新推导每个工作包的状态（对委派基线的 diff、检查、评审决策），没有观察到证据的包视为未开始。持久队列、租约与可恢复并行批次是未来 `execution-coordinator` 角色的职责（该角色当前不存在，不承载任何职责）；今天计划文件加仓库状态就是唯一的 checkpoint。
 
 ## 保持控制与可追溯性
 
