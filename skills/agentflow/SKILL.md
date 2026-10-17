@@ -12,7 +12,7 @@ description: Use for cross-layer features, architecture changes, parallel invest
 ## 绑定宿主
 
 - 在 **Codex** 中，使用原生子代理。每个子代理只给一个角色和一份任务简报。以主任务作为 Supervisor。
-- 在 **Claude Code** 与 **ZCode** 中，仅当[路由表](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；`agents/` 下的文件是可选能力。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。ZCode 从已安装的插件快照加载角色，因此源码编辑只有重装后才生效——运行 `python3 tools/lab/validate.py installed` 查看漂移。
+- 在 **Claude Code** 与 **ZCode** 中，仅当[路由表](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；**插件根目录 `agents/` 下的角色文件**是可选能力（`.zcode-plugin/plugin.json` 以 `"agents": "agents"` 声明；`skills/agentflow/agents/` 下只有宿主展示字段 `openai.yaml`，没有角色文件）。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。ZCode 从已安装的插件快照加载角色，因此源码编辑只有重装后才生效——运行 `python3 tools/lab/validate.py installed` 查看漂移。
 - 在其它兼容 Agent Skills 的宿主中，使用其内置委派机制。若不存在，则顺序执行同样的阶段，并说明独立执行不可用。
 
 ## 首次接入（Init）
@@ -87,7 +87,7 @@ Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目�
 
 - 遵循宿主的权限与沙箱规则。委派绝不扩大权限。
 - 无会话内既有授权的 push、部署、发布、远端数据删除或对外发消息一律不做。**集成他人改动与改写历史是同一类动作**：`git merge`、`rebase`、`cherry-pick`，或把远端改动拉进共享分支，都需要当次用户授权，不得从先前的指令推断。推送被拒时，默认动作是只读汇报——`git fetch` 加 `log`/`diff` 列出远程新增了哪些提交与文件、重叠面在哪——由用户选择集成方式；不要自行选 merge 或 rebase、解冲突并推送。
-- **目标仓会话不读写插件仓的内部记录**：skill 与 references 里提到的 `issues/`、`episodes/`、`plans/`、`reviews/` 等记录根，是 **Agentflow 插件自身仓库**（方法开发仓）的记录；在目标仓里工作时不要到插件仓里检索或写入它们——方法契约在 skill 文本内自包含。目标仓的文档与记录落 Init 确认的文档枢纽（feature 目录、`issues/`、`releases/`）；角色档案里的记录根与产物路径（如 `docs/features/<批次>/plan/`、`features/<批次>/testing/`）属插件仓约定，写进委派简报前映射为该枢纽下的确切路径。
+- **目标仓会话不读写插件仓的内部记录**：skill 与 references 里提到的 `issues/`、`episodes/`、`plans/`、`reviews/` 等记录根，是 **Agentflow 插件自身仓库**（方法开发仓）的记录；在目标仓里工作时不要到插件仓里检索或写入它们——方法契约在 skill 文本内自包含。目标仓的文档与记录落 Init 确认的文档枢纽（feature 目录、`issues/`、`releases/`）；角色档案里的记录根与产物路径（如 `docs/features/<批次>/plan/`、`docs/features/<批次>/testing/`）属插件仓约定，写进委派简报前映射为该枢纽下的确切路径。
 - 使用稳定的任务名，并把父目标带入每一份委派简报。
 - 记录决策与证据，而不是隐藏的思维链。默认以宿主的任务与对话历史作为留痕。仅当用户要求持久的项目产物时才创建仓库留痕文件。
 - 让 Supervisor 保持有用：它应解决冲突并作最终裁决，而不只是汇总 worker 消息。

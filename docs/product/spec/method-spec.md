@@ -59,13 +59,13 @@
 
 ### S4 独立评审门
 
-- **陈述**：material 变更必须过独立评审；supervisor 自己写了部分时该门不可豁免；评审者
+- **陈述**：material 变更必须过独立评审；主会话 自己写了部分时该门不可豁免；评审者
   给 `approved` / `changes_requested` / `blocked` 且不静默修码；评审前端到端主路径至少
   真实执行一次。
 - **验收口径**：material 变更的 episode 里 `review_roundtrips` 可追溯；用户可见路径有
   执行证据。
 - **标尺**：episode schema 的 `review_roundtrips` 必填约束（0.8.0 起）+ `validate.py artifacts`。
-- **状态**：生效（浏览器等主会话专属通道的"端到端执行"以 Supervisor 代跑 + 原始证据移交
+- **状态**：生效（浏览器等主会话专属通道的"端到端执行"以 主会话 代跑 + 原始证据移交
   评审为准）。
 
 ### S5 失败语义
@@ -73,8 +73,8 @@
 - **陈述**：worker 失败三类成文——crash → `blocked` + 具名原因（先做环境 vs 工作分诊）；
   timeout → `partial` 且丢弃未验证的在途工作；empty/invalid return → 带缺陷名退回一次再
   记 bug。编排层**不做**保底执行路径；降级 = 结果降级（partial/blocked + 丢弃在途）。
-  由 supervisor 依证据分类，崩溃的 worker 不自分类；超预算静默重试或给 crash 换标签是
-  supervisor 缺陷。
+  由 主会话 依证据分类，崩溃的 worker 不自分类；超预算静默重试或给 crash 换标签是
+  主会话 缺陷。
 - **验收口径**：任一 worker 失败事件能归入三类之一且有对应记录动作。
 - **标尺**：`contracts.md` Worker failure semantics 节 + episode 落盘。
 - **状态**：生效（条款面），`待验证`（真实 crash/timeout 注入演练未做——登记 design §2）。
@@ -99,7 +99,7 @@
   comparison / policy 建议）且全部过编译门；发布由用户 `approved` 触发。
 - **标尺（停用前口径）**：原 `validate.py evals` + runner + policy；`isolation.py check-diff` 保留为通用工具。
 - **状态**：**已停用**（2026-10-12 用户拍板：改进三件套记录根与逐版本发布记录退役；
-  方法级改动一律 `measurement: none`；恢复仪器化时落点由 Supervisor 显式指派）。
+  方法级改动一律 `measurement: none`；恢复仪器化时落点由 主会话 显式指派）。
 
 ### S8 确定性验证面
 
@@ -129,8 +129,10 @@
   fail-closed；请求级 `allowed_tools` 与 `isolate_host_config` 为运行前置；claude 侧
   `observed_permission_denials` 宿主观测通道，缺失键 = 未观测而绝非 0。
 - **状态**：**已裁撤**（2026-10-12 用户拍板「保公开、裁业务」）：`evals/business/`、
-  `seed_grader.py` 与相关机器已删除，原文留存备查；公开套件（`evals/public/`，15 用例）
-  保留为仪器存量。
+  `seed_grader.py` 与相关机器已删除，原文留存备查。同批公开套件也一并裁撤——
+  `evals/public/`（15 用例）与 `evals/` 整树、runner/adapter/policy 及三个相关 schema
+  已于同日**删除**，不再保留为仪器存量；恢复条件与重建清单见
+  [`docs/design-decisions.md`](../../design-decisions.md) §3。
 
 ### S11 文档交付链（对外生成）
 
@@ -148,7 +150,7 @@
 
 - **陈述**：一份"宿主测量证书"= 针对单一宿主的一次公开套件实跑记录：声明宿主与适配器、
   套件 revision、用例集、每用例结果与原始证据、guardrail 观测值，落在
-  Supervisor 指派的落点并过编译门（三件套记录根已停用）。方法文本全宿主通用；**证书按宿主逐个发**，
+  主会话 指派的落点并过编译门（三件套记录根已停用）。方法文本全宿主通用；**证书按宿主逐个发**，
   未发证书的宿主只声明"骨架兼容"，不声明行为等价。顺序：Claude 先、ZCode 次、Codex 基线证。
 - **验收口径**：每个声称"已在宿主 X 验证"的结论能指到一份该宿主的 evaluation 记录；
   指不出的按未验证处理。

@@ -28,16 +28,16 @@ description: Use only when the user asks to evolve, optimize, evaluate, version,
 ## 运行改进环
 
 1. **冻结基线**：确定当前插件版本、源码 revision、相关 Skill 与 Agent 文件与宿主/模型设置（原「评测套件 revision」随 2026-10-12 装置裁撤；恢复仪器化时按 `docs/design-decisions.md` §3 重建）。
-2. **收集 episode**：使用明确的用户反馈、验收结果、测试结果、reviewer 决策、回归、回退、事故，以及可得任务摘要。Bug 记录带有必填的 `provenance` 字段：只有 `provenance: agentflow` 的记录是关于 Agentflow 自身的候选证据；`session-artifact`（agent 自己即兴产出、无条款覆盖的计划、分析、决策或代码）、`user-input` 与 `external` 记录是上下文，不是 Agentflow 证据，`undetermined` 记录必须先解决归属才能使用。再犯类台账（`issues/recurrence/`）是一等 episode 来源：档位为 `escalated` 的类——occurrence 记录在比其 `consolidated_in` 更新版本上的类——是本环最强的信号，先前的归纳必须视为不充分（重新归纳它，通常配一条 eval 用例）。没有投诉不等于成功。不要声称能访问宿主无法暴露的过往会话。
+2. **收集 episode**：使用明确的用户反馈、验收结果、测试结果、reviewer 决策、回归、回退、事故，以及可得任务摘要。Bug 记录带有必填的 `provenance` 字段：只有 `provenance: agentflow` 的记录是关于 Agentflow 自身的候选证据；`session-artifact`（agent 自己即兴产出、无条款覆盖的计划、分析、决策或代码）、`user-input` 与 `external` 记录是上下文，不是 Agentflow 证据，`undetermined` 记录必须先解决归属才能使用。再犯类台账（`docs/issues/recurrence/`）是一等 episode 来源：档位为 `escalated` 的类——occurrence 记录在比其 `consolidated_in` 更新版本上的类——是本环最强的信号，先前的归纳必须视为不充分（重新归纳它，本环当前以条款加固为主，不再配自动 eval 用例）。没有投诉不等于成功。不要声称能访问宿主无法暴露的过往会话。
 3. **保护语料**：移除凭据与不必要的个人或项目数据。保留来源与同意元数据，但不把敏感转录内容复制进插件。
 4. **归因失败**：把提示词或角色策略失败与上下文缺失、工具失败、模型局限、仓库缺陷、环境失败区分开。记录的 `provenance` 是门：`agentflow` 表示行为归 Agentflow 自身表面所有（条款、角色、门、评测或工具）；其它任何取值——`session-artifact`、`user-input`、`external`，或未解决的 `undetermined`——不能单独支撑源码改动。只有证据指向 Agentflow 时才改 Agentflow。
 5. **写一个假设**：写明观察到的模式、提议机制、受影响文件、预期改进、回归风险与否决标准。
-6. **预先声明评测**：在实现候选前选定主成功指标、护栏、任务切片、最低证据与 holdout 用例。
+6. **预先声明评测**：在实现候选前声明主成功指标、护栏与受保护任务切片，以及什么算最低可接受证据、什么算否决。注意这些字段当前是**声明的意图，不是机器测量的指标**——公开套件与 holdout 已随评测装置裁撤，没有可挂载它们的 runner；恢复仪器化时才重新产生可测量的 holdout 用例。
 7. **创建候选**：编辑规范源码，或隔离的分支/worktree。不要编辑已安装的运行副本。把 evaluator 规则、已声明的受保护路径与 holdout 答案保持在候选写范围之外。先冻结父 revision，然后在评测前从受信源码 checkout 运行 `isolation.py check-diff --candidate <tree> --base <frozen-parent-revision>`，使已提交、已暂存、未暂存、已删除、重命名、被忽略与未跟踪的改动都被比较。该检查始终读取受信 checkout 的 `protected-paths.txt`，因此门表面是声明出来的而不是靠回忆；改动受保护文件来源或使用覆盖策略，本身就是需人工审查的门变更。
-8. **公平比较**：让隔离的 runner 在相同用例与设置上执行 Baseline 与 Candidate。包含代表性的成功、已知失败、边界情况与对抗性用例。给 evaluator 不可变的结果记录，而不是允许它运行受候选控制的命令。runner 把结果与比较记录逐字写到 Supervisor 指派的落点（改进三件套记录根已随 2026-10-12 瘦身批停用；启用对照时由 Supervisor 指派批次目录或临时落点）；evaluator 读取它们，且不得编辑它们。记录任务级结果、可得的成本/时延，以及不确定性。
-9. **消费产物前先编译**：环中交换的每一条记录——候选记录、评测结果、比较、发布决策——在下一角色读取前先对其 schema 校验（`tools/lab/validate.py`）。方法级改动一律 `measurement: none` 口径，不产出仪器化三件套；若未来恢复仪器化，落点由 Supervisor 显式指派并声明契约，只有在 `python3 tools/lab/validate.py artifacts` 与装置自身的校验通过后才算可读。非法记录是编译错误：修记录，绝不把它作为证据引用或转发。冻结 runner 无法产出的结果记为无结果。
-10. **独立评审**：evaluator 报告证据而不修复候选。release governor 返回 `promote`、`revise`、`reject` 或 `rollback`。
-11. **准备发布**：递增版本，记录父版本、变更组件、证据、评测结果、批准、发布策略与回滚目标——完成后的发布记录落在 `releases/` 下。
+8. **公平比较（仅在仪器化度量可用时）**：评测套件与隔离 runner 已随 2026-10-12 装置裁撤，今天没有可跑的对照；恢复仪器化后，让隔离的 runner 在相同用例与设置上执行 Baseline 与 Candidate，包含代表性的成功、已知失败、边界情况与对抗性用例。给 evaluator 不可变的结果记录，而不是允许它运行受候选控制的命令。runner 把结果与比较记录逐字写到 Supervisor 指派的落点（改进三件套记录根已随 2026-10-12 瘦身批停用；启用对照时由 Supervisor 指派批次目录或临时落点）；evaluator 读取它们，且不得编辑它们。记录任务级结果、可得的成本/时延，以及不确定性。
+9. **消费产物前先编译**：环中交换的每一条记录——候选记录、发布决策——在下一角色读取前先对其 schema 校验（`tools/lab/validate.py`）。当前装置下可编译的改进契约只有 `candidate.schema.json` 与 `release-record.schema.json`（评测结果与比较的原契约已随装置裁撤删除）。方法级改动一律 `measurement: none` 口径，不产出仪器化三件套；若未来恢复仪器化，落点由 Supervisor 显式指派并声明契约，只有在 `python3 tools/lab/validate.py artifacts` 与装置自身的校验通过后才算可读。非法记录是编译错误：修记录，绝不把它作为证据引用或转发。冻结 runner 无法产出的结果记为无结果。
+10. **独立评审**：evaluator 报告证据而不修复候选。release governor 返回 `promote`、`revise`、`reject` 或 `rollback`。晋升按[证据与发布规则](references/evidence-and-release.md)的同一条规则判定：`measurement: complete` 时需 `evaluation_result: better`；`measurement: none` 的方法级改动需 `basis` 写为人工评审并附评审引用。
+11. **准备发布**：递增版本，记录父版本、变更组件、证据、评测结果、批准、发布策略与回滚目标——完成后的发布记录写入 Supervisor 指派的落点（`docs/releases/` 现只保留在途索引与待验收这类工作文件；逐版本发布 JSON 已随 2026-10-12 瘦身批停用）。
 12. **请求门**：默认模式下，把完整候选与评测呈现给用户做一次最终晋级决策。在该批准之前不得发布、重装或替换当前生效的版本。
 13. **晋级后监控**：把 canary 结果与基线护栏比较。已声明阈值不达标时回滚到不可变的上一版本。
 
@@ -50,7 +50,9 @@ description: Use only when the user asks to evolve, optimize, evaluate, version,
 
 对权限、工具访问、hook、MCP 连接、发布策略、evaluator 指令、holdout 数据或自动晋级阈值的改动，一律需人工审查。绝不让候选放松用来批准它自己的门。
 
-**度量范围。** 公开套件与业务切片、评测装置已于 2026-10-12 整线裁撤：**当前没有任何自动回归度量**。改变角色在*业务仓库内*行为的方法级候选——reviewer 清单、简报纪律、验收步骤——其证据是推理加上触发它的任何事故或评审发现，其发布记录必须写明 `measurement: none`，且不得表述为已验证的改进；恢复度量按 `docs/design-decisions.md` §3 的重建清单执行。
+**度量范围与晋升规则。** 公开套件与业务切片、评测装置已于 2026-10-12 整线裁撤：**当前没有任何自动回归度量**。改变角色在*业务仓库内*行为的方法级候选——reviewer 清单、简报纪律、验收步骤——其证据是推理加上触发它的任何事故或评审发现，其发布记录必须写明 `measurement: none`，且不得表述为已验证的改进；恢复度量按 `docs/design-decisions.md` §3 的重建清单执行。
+
+该状态下的晋升规则（[release-record.schema.json](references/release-record.schema.json) 与[证据与发布规则](references/evidence-and-release.md)同一条）：**`measurement: none` 时，`promote` 要求 `basis` 写为人工评审并附评审引用（approvals 中至少一条 `approved` 带 `evidence_ref`），`evaluation_result` 不再被要求为 `better`；当度量恢复为 `measurement: complete` 时，`promote` 重新要求 `evaluation_result: better`。** 一条记录不能同时声称 `none` 与 `better`——那是把「无人评审的推断」记成「已验证的改进」。
 
 **预算字段是声明的，不是强制的。** agent frontmatter 中的 `maxTurns` 并非在每个宿主上都被验证（在 ZCode 上声明但未验证）。各角色提示词里的预算纪律——最后一轮留给结果，目标未成返回 `partial`——才是生效约束；frontmatter 数字按意图元数据对待，不当作保证的截断。
 

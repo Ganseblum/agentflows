@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/improvement/release-record.schema.json",
   "title": "Agentflow improvement release record",
+  "description": "The completed gate's record. Promotion rule (the same rule stated in skills/improve/SKILL.md and references/evidence-and-release.md): with measurement.status 'complete' a promote needs evaluation_result 'better'; with measurement.status 'none' (every method-level change since the 2026-10-12 apparatus removal) a promote needs measurement.basis to name the human review and an approved approval carrying an evidence_ref — no instrumented 'better' exists to point at. Baseline and candidate result sets are required only when measurement.status is 'complete'.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "candidate",
-    "baseline_results",
-    "candidate_results",
+    "measurement",
     "evaluation_result",
     "decision",
     "approvals",
@@ -149,9 +149,157 @@
           "measurement": {
             "properties": {
               "basis": {
-                "pattern": "none|not measured|no instrument"
+                "pattern": "none|not measured|no instrument|[Hh]uman[ _-]?[Rr]eview|人工评审"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "measurement": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "required": [
+          "baseline_results",
+          "candidate_results"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "measurement": {
+            "properties": {
+              "status": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "measurement"
+        ]
+      },
+      "then": {
+        "properties": {
+          "evaluation_result": {
+            "not": {
+              "enum": [
+                "better"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "promote"
+          },
+          "measurement": {
+            "properties": {
+              "status": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "decision",
+          "measurement"
+        ]
+      },
+      "then": {
+        "properties": {
+          "measurement": {
+            "properties": {
+              "basis": {
+                "pattern": "[Hh]uman[ _-]?[Rr]eview|人工评审"
+              }
+            }
+          },
+          "approvals": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "const": "approved"
+                },
+                "evidence_ref": {
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "decision",
+                "evidence_ref"
+              ]
+            },
+            "minContains": 1
+          },
+          "rollout": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "human-gated",
+                  "canary",
+                  "automatic"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "promote"
+          },
+          "measurement": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "decision",
+          "measurement"
+        ]
+      },
+      "then": {
+        "properties": {
+          "evaluation_result": {
+            "const": "better"
           }
         }
       }
@@ -169,9 +317,6 @@
       },
       "then": {
         "properties": {
-          "evaluation_result": {
-            "const": "better"
-          },
           "approvals": {
             "contains": {
               "type": "object",

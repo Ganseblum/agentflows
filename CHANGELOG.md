@@ -42,6 +42,7 @@
 > 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
 > `measurement: none`（方法级改动，无仪器化业务任务）。
 
+- **2026-10-13 更正批（文档与门禁对齐，用户指示「全部处理」）**：`doc_chain.py` 接受段落映射豁免，C4/C8 按 spec 或 design 任一存在即适用，C9 要求每份计划有 `## 分支策略` 节，「本期不做」任务行不要求落点，C13 由整面豁免收窄为逐文件豁免；`doc_chain_live` 对每个 feature 批次跑完整结构检查。`validate.py` 修复未决项审批绕过、绝对路径与越界 `files` 引用、三处静默通过、schema 的 else 分支缺陷，`tests/` 子目录内的 .py 改为失败；`packaging/build_runtime.py` 纳入受保护清单；`trend.py` 缺「发现摘要」即报错。删除 `docs/project-structure.md` 与 `document-chain-templates.md` 指针文件，历史 issue 记录中的引用改为「已删除」说明。现行文档中已裁撤的评测装置描述改为现状，`hub/index.md` 路径改为 `docs/issues/`。CI 以 `origin/<默认分支>` 解析基线（PR 检出为分离 HEAD，未在 CI 实跑验证）。单元测试由 60 增至 78 项。`validate.py installed` 仍为红：源码与宿主安装快照不一致，需用户刷新 marketplace 并重装后复跑。
 - **审计修复批：门覆盖补齐与文本残留清理（用户指示「全部处理修复」）**：补齐 2026-10-13 审计量到的
   「门保护检查器、不保护被检物」缺口——`validate.py` 新增 `doc_chain_live` 项（`all` 8→9），把文档链
   linter 跑在 `docs/product/` 与 `docs/features/` 的**文档**上（结构检查 C1–C11 除外，面缺失即门红）；

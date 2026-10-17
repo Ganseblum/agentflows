@@ -20,8 +20,8 @@ README、安装方式、版本与发布对象保持歧义。用户安装和使�
 
 **仓库边界**（现状）：运行时面 = `agents/` + `skills/` + `schemas/` + 五份 manifest + 宿主包装 +
 `protected-paths.txt`，由 `packaging/build_runtime.py` 生成瘦快照；实验室面 = `tools/lab/`、`tests/`、
-`evals/`、`examples/`、`docs/`；记录面 = `docs/issues/`、`docs/features/`、`docs/releases/`、
-`episodes/`、`reviews/`（布局见 [`project-structure.md`](project-structure.md)）。
+`examples/`、`docs/`；记录面 = `docs/issues/`、`docs/features/`、`docs/releases/`、
+`episodes/`、`reviews/`（布局见 [`index.md`](../index.md)）。
 
 **宿主职责划分**：Codex / Claude Code 负责模型、认证、代码工具、权限、对话与子 Agent 生命周期；
 Agentflow 负责角色、协作步骤、交接契约、评审门、自迭代规则与版本治理。
@@ -186,7 +186,7 @@ adapter 扫描工具结果计数写入 `observed_permission_denials`（**缺失 
 
 ## 对外口径（版本号以五份 manifest 为准）
 
-已具备受治理自迭代的工作流契约与数据契约（十条主工作流、14 角色能力库、14 条硬边界、独立评审门、
+已具备受治理自迭代的工作流契约与数据契约（十条主工作流、<!-- count:agents -->14<!-- /count --> 角色能力库、14 条硬边界、独立评审门、
 确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役，方法级
 改动一律 `measurement: none` 口径——当前的改进闭环是**受治理的人工闭环**，不表述为已验证的自动
 学习系统。评测装置已整线裁撤（设计知识与恢复清单见 §3）；持久反馈检索与自动发布控制面仍待实现。

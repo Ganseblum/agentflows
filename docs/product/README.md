@@ -16,8 +16,8 @@
 
 - 产品名称：Agentflow（宿主原生多角色协作方法插件）
 - 主实施仓：本仓库（方法、角色、仪器、记录契约同仓）
-- 分发形态：ZCode / Claude Code / Codex 宿主插件，marketplace 源指向
-  `packaging/build_runtime.py` 生成的瘦快照
+- 分发形态：ZCode / Claude Code / Codex 宿主插件，[`marketplace.json`](../../marketplace.json) 的
+  `source` 指向 `./packaging/runtime`（由 `packaging/build_runtime.py` 生成的瘦快照）
 - 最后更新时间：`2026-10-12`
 
 ## 推进进度

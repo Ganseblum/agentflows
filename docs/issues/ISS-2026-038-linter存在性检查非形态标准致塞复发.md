@@ -10,11 +10,12 @@ provenance: agentflow
 project: agentflow
 files:
   - skills/agentflow/references/document-chain.md
-  - skills/agentflow/references/document-chain-templates.md
   - tools/lab/doc_chain.py
 recorded_at: 2026-09-21T14:26:00+08:00
 source_revision: agentflow@7a235b5 (0.8.3+方法整合候选)
 agentflow_version: 0.8.3
+class_id: crammed-contract-table-form
+occurrence: "2"
 ---
 
 ## 现象

@@ -38,7 +38,7 @@
       "enum": ["approved", "changes_requested", "blocked"]
     },
     "findings": {
-      "description": "bug_ids of the defect records filed from this review; each must exist under issues/.",
+      "description": "bug_ids of the defect records filed from this review; each must exist under docs/issues/.",
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }

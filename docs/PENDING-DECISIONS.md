@@ -10,11 +10,16 @@
 > 2026-10-10：原十项已全部拍板/执行完毕（证据：提交 `4c767eb`、`6d10b14`、EP-20261010-001/002、
 > `CHANGELOG`「待发布」节），已从本表移出。2026-10-12 精简批：第 5 条已随 mock/ 整体裁撤关闭
 > （证据随本批提交）；业务尺子随本批裁撤，原第 2/3 条失去对象关闭；当前保留 2 条未决。
+>
+> 2026-10-13 核实：两条未决仍成立——产品链需求评审门（`docs/product/README.md` 第 3 节）仍是
+> `☐`，`method-spec.md` 的会话角色词命中仍在；回溯独立评审在 `reviews/` 下无对应记录。
+> 第 1 条的复审命令已更新为现行活面门（旧写法 `doc_chain.py docs/product` 需该目录另有 `plan/`
+> 才可能通过，而产品链计划落在 `docs/features/<批次>/plan/`，故换用 `validate.py doc_chain_live`）。
 
 | # | 来源 | 待决问题 | 推荐 | 状态 |
 | --- | --- | --- | --- | --- |
-| 1 | `reviews/agentflow-product-chain/review-2026-10-10-001.md`（REV-20261010-001） | 产品链需求评审 `changes_requested`（6 P1 + 6 P2）：修复轮怎么排 | 一轮直改 12 项文本（F1–F12）→ 复跑三条 `doc_chain.py --file` 与 `doc_chain.py docs/product` → 复审勾门 | 未决 |
-| 4 | 本地化批、youc 吸收批与 2026-10-12 结构改造五批 | 受保护面改动的回溯独立评审：validator（`validate.py` 多次）、`tests/`、角色文件、规则书与 `protected-paths.txt` 覆盖面 | 排一轮 reviewer 复核上述提交的受保护面 diff（`4c767eb`、`6d10b14` 与 2026-10-12 改造批提交） | 未决（范围已并入 2026-10-12 五批） |
+| 1 | `reviews/agentflow-product-chain/review-2026-10-10-001.md`（REV-20261010-001） | 产品链需求评审 `changes_requested`（6 P1 + 6 P2）：修复轮怎么排 | 一轮直改 12 项文本（F1–F12）→ 复跑 `python3 tools/lab/validate.py doc_chain_live`（现行活面门，逐文件跑文本形态检查）与 `doc_chain.py --file` 三份 → 复审勾门。注：F3（硬边界 12→14）已随 2026-10-12 内容质量批改完；F5（会话角色词 6 处，`method-spec.md` 六处仍在）与 F1/F2/F4/F6 及其余 P2 仍待修 | 未决 |
+| 4 | 本地化批、youc 吸收批与 2026-10-12 结构改造五批 | 受保护面改动的回溯独立评审：validator（`validate.py` 多次）、`tests/`、角色文件、规则书与 `protected-paths.txt` 覆盖面 | 排一轮 reviewer 复核上述提交的受保护面 diff（`4c767eb`、`6d10b14` 与 2026-10-12 改造批提交）。核实 2026-10-13：`reviews/` 下仍只有两条既有评审记录，本题尚无对应回合 | 未决（范围已并入 2026-10-12 五批） |
 
 > 2026-10-12：原第 5 条（examples/mock 计划样板逐字节重复的单源化）已关闭——本批直接删除整个
 > `mock/`（用户授权的精简批），examples/ 侧自然成为唯一样例；`MOCK_RECORD_ROOTS` 与 mock 检查

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/plan.schema.json",
   "title": "Agentflow execution plan frontmatter",
-  "description": "Contract for the YAML frontmatter of a Markdown execution plan at plans/<plan_id>.md. Hybrid form: the frontmatter carries the machine-checked envelope; the body carries the human narrative (progress overview, task table with per-task status and evidence write-back, contracts, gates, verification commands). Body assertions enforced by the validator: task IDs unique, dependency references resolve and are acyclic, task statuses are a fixed enum, blocking unresolved decisions are closed before status approved, required body sections exist.",
+  "description": "Contract for the YAML frontmatter of a Markdown execution plan at docs/features/<批次>/plan/<plan_id>.md — a plan lives inside its feature batch, not in a top-level plans/ root (that root was dissolved). Hybrid form: the frontmatter carries the machine-checked envelope; the body carries the human narrative (progress overview, task table with per-task status and evidence write-back, contracts, gates, verification commands). Body assertions enforced by the validator: task IDs unique, dependency references resolve and are acyclic, task statuses are a fixed enum, blocking unresolved decisions are closed before status approved, required body sections exist.",
   "type": "object",
   "additionalProperties": false,
   "required": [

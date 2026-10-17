@@ -14,7 +14,7 @@ worker 结果契约与评审结果契约各自只写一次；出现第二份副�
 4. worker 摘要绝不构成验证；只有复现出来的确定性检查才是。无法复现的检查计为未运行。
 5. 未通过其编译步骤的产物一律退回，绝不通过谈判被接受。
 6. 绝不让 agent 编辑评判自己工作的门：evaluator 规则、发布策略、批准阈值与 holdout 数据都在任何实现者的范围之外。候选禁区面在 [`protected-paths.txt`](../../../protected-paths.txt) 中单点声明；`isolation.py check-diff` 必须对照冻结的父 revision 比较，并拒绝触碰它的候选 diff，清单不再覆盖某个必需门路径时 `validate.py protected` 失败。编译步骤强制的记录契约就在这道门内——bug 记录（`schemas/bug-record.schema.json`）、再犯类台账（`schemas/recurrence.schema.json`）、评审记录（`schemas/review.schema.json`）和 episode（`skills/improve/references/episode.schema.json`）：放宽候选被据以度量的 schema，就是编辑候选自己的门。修改声明的清单、它的来源或豁免策略，是需要人工评审的门变更。
-7. 绝不只凭提示词文本声称隔离；隔离是宿主强制措施的一个属性，没有强制就不存在。诚实的现状注记（0.8.0）：`evaluator` 与 `release-governor` 角色由只读工具 frontmatter、不同的简报和受保护的门相互区分——与其它角色同一模型、同一宿主会话族、同一工作区。这是**角色分离，不是环境隔离**；把它们描述为隔离的裁判，在它们真正以不同模型或上下文运行之前都属硬边界 7 违规（这是产品决策，有意推迟）。
+7. 绝不只凭提示词文本声称隔离；隔离是宿主强制措施的一个属性，没有强制就不存在。诚实的现状注记：`evaluator` 与 `release-governor` 角色由只读工具 frontmatter、不同的简报和受保护的门相互区分——与其它角色同一模型、同一宿主会话族、同一工作区。这是**角色分离，不是环境隔离**；把它们描述为隔离的裁判，在它们真正以不同模型或上下文运行之前都属硬边界 7 违规（这是产品决策，有意推迟）。纪律的逐版本来源见 `CHANGELOG.md`。
 8. 已记录的证据绝不为了改善结果而改写；更正采用追加。
 9. 没有具体工作就不启动角色：本地的低风险改动不会配前端、后端或架构角色。
 10. agent 绝不在未变的输入上空转：同一原因的连续两次失败即停止循环，触发重新规划或升级。
@@ -64,7 +64,7 @@ risks: unresolved issues or assumptions
 next_action: smallest useful follow-up
 ```
 
-**Worker 失败语义（0.8.1）。** 没有产出结果的 worker 仍然会带来一个分类，该分类归 supervisor 负责——绝不归崩溃的 worker。三个可观察类别，从证据（退出码、adapter 进度记录、产物缺失）推导，而不是来自任何人的自我报告：
+**Worker 失败语义。** 没有产出结果的 worker 仍然会带来一个分类，该分类归 supervisor 负责——绝不归崩溃的 worker。三个可观察类别，从证据（退出码、adapter 进度记录、产物缺失）推导，而不是来自任何人的自我报告：
 
 - `crash` —— 宿主或进程在结构化结果出现之前死亡。该委派是 `blocked`，不是 `partial`：先分诊宿主/环境（「从停滞的工作恢复」中的基线对照分诊把环境失败与工作失败分开），只有把指名的原因带进新简报之后才重新委派。
 - `timeout` —— 声明的预算耗尽。结果按定义是 `partial`，绝不是 `complete`；在途且从未验证的工作被丢弃，不是静默保留。

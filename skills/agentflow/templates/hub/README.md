@@ -5,7 +5,7 @@
 
 | 目录 | 职责 |
 | --- | --- |
-| `features/` | 需求全生命周期：`feature-<日期>-<主题>/`（proposal → spec → design → plan → 回写）；feature 的 README 是唯一入口 |
+| `features/` | 需求全生命周期：`feature-<日期>-<主题>/`（proposal → spec → design → plan → 回写）；批次 README 是唯一入口，其段落映射表逐段声明落点 |
 | `issues/` | 缺陷与事项流：开放条目平铺 + `归档/`；小修在条目内解决，中/大问题经用户确认后升格为 Feature |
 | `releases/` | 发布验收记录：`todo.md`（待办）、`pending-test.md`（待验收） |
 | `index.md` | 唯一文档索引 |

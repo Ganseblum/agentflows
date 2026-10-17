@@ -20,7 +20,7 @@ python3 tools/lab/validate.py all
 各根 README 与 `docs/releases/` 下两个声明的工作文件（`todo.md`、
 `pending-test.md`）按声明放行，其余路径仍按「意外条目」拒绝；`all` 包含它。
 这是 supervisor 产物验收的编译步骤：在接受 worker 的记录之前对真实文件运行它，并把失败当作编译
-错误。测试记录位于功能批次目录（`features/<batch>/testing/`），本遍历尚未巡检那里。
+错误。测试记录位于功能批次目录（`features/<batch>/testing/`），本遍历同样巡检那里的计划与运行记录。
 
 `validate.py protected` 检查 [`protected-paths.txt`](../../protected-paths.txt) 是否仍覆盖每一条必需
 的门路径——evaluator 与 governor 角色、评测套件、测量路径、发布规则、记录 schema，以及门工具的
@@ -82,8 +82,10 @@ python3 tools/lab/trend.py --help
 
 候选工作树与私有 holdout 必须位于
 公开仓库之外，且互不包含。`isolation.py` 检查该布局，并在发布门
-之前拒绝被禁止的候选路径。`isolation.py check-diff` 始终从受信任的检查器仓库读取
-`protected-paths.txt`，以 NUL 分帧解析 Git 路径，拒绝检查器根与候选根重叠，并要求
-`--base <frozen-parent-revision>`。base 是强制的，这样已提交、已暂存、未暂存、已删除、已重命名、
-被忽略与未跟踪的变更都会被考虑；受保护集合没有命令行替代方式。请从受信任的源码检出调用该脚本，
-而不是从候选控制的工具副本或受保护清单副本调用。
+之前拒绝被禁止的候选路径。`isolation.py check-diff` 读取的 `protected-paths.txt` 来自
+`--checker-root` 所指的检查器检出；该检查器根由调用方（监督者）指定，并不由 check-diff 自行证明可信。
+它的保证是：候选工作树不能改写它所用的受保护清单，因为清单取自调用方指定的检查器根而非候选树；
+检查器根与候选根必须互不重叠。check-diff 以 NUL 分帧解析 Git 路径，并要求 `--base <frozen-parent-revision>`。
+base 是强制的，这样已提交、已暂存、未暂存、已删除、已重命名、被忽略与未跟踪的变更都会被考虑；
+受保护集合没有命令行替代方式。CI 中由工作流克隆默认分支的可信检出作为检查器根；本地运行时，
+请从受信任的源码检出调用该脚本，而不是从候选控制的工具副本或受保护清单副本调用。

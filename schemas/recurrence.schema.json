@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentflow.dev/schemas/recurrence.schema.json",
   "title": "Agentflow bug recurrence ledger frontmatter",
-  "description": "Contract for the YAML frontmatter of a class ledger under issues/recurrence/. One file per failure class that recurred or was consolidated; plain single-occurrence bugs do not get a ledger. The occurrence list holds bug_ids only — versions live on the referenced records so there is a single source of truth.",
+  "description": "Contract for the YAML frontmatter of a class ledger under docs/issues/recurrence/. One file per failure class that recurred or was consolidated; plain single-occurrence bugs do not get a ledger. The occurrence list holds bug_ids only — versions live on the referenced records so there is a single source of truth.",
   "type": "object",
   "additionalProperties": false,
   "required": ["class_id", "title", "status", "first_record", "occurrences", "recorded_at"],

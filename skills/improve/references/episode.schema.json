@@ -241,13 +241,16 @@
       "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
     },
     "host": {
+      "description": "Host that ran the episode. codex / claude-code / zcode are the supported hosts; use other for anything else.",
       "enum": [
         "codex",
         "claude-code",
+        "zcode",
         "other"
       ]
     },
     "provenance": {
+      "description": "Where this episode's evidence came from — an object naming the carrier and whether it was sanitized. NOTE: this is a different field from the same-named provenance on issue records (schemas/bug-record.schema.json), which is a string enum classifying the flawed behavior's origin (agentflow / session-artifact / user-input / external / undetermined). This object is episode bookkeeping about the evidence source; it does not classify attribution and is not interchangeable with the issue-record enum.",
       "type": "object",
       "additionalProperties": false,
       "required": [

@@ -4,23 +4,29 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the trusted checker below clones the default branch, and the
+          # protected-diff check resolves the base revision against it.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Trusted protected-diff check
         run: |
           git clone --no-local "$GITHUB_WORKSPACE" "$RUNNER_TEMP/trusted-checker"
-          git -C "$RUNNER_TEMP/trusted-checker" checkout --detach "${{ github.event.repository.default_branch }}"
+          git -C "$RUNNER_TEMP/trusted-checker" checkout --detach "origin/${{ github.event.repository.default_branch }}"
           python3 "$RUNNER_TEMP/trusted-checker/tools/lab/isolation.py" check-diff \
             --checker-root "$RUNNER_TEMP/trusted-checker" \
             --candidate "$GITHUB_WORKSPACE" \
-            --base "${{ github.event.repository.default_branch }}"
+            --base "origin/${{ github.event.repository.default_branch }}"
+      # `all` already runs the regression suite (validate_unit_tests), so there is no separate tests step.
       - name: Contract, record, and gate validation
         run: python3 tools/lab/validate.py all
-      - name: Regression tests
-        run: python3 tools/lab/validate.py tests
