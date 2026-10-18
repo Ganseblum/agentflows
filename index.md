@@ -28,6 +28,7 @@
 
 ## 迁移与清理记录
 
+- 2026-10-18 合并批：`workbuddy/main-b0d8652c`（2026-10-12 历史线）并入 `main`；按用户拍板保留 `main` 的裁撤（评测装置不复活），只并入记录类内容——本批两份评审/优化报告留存仓库根（`AGENTFLOW-EVALUATION-2026-10-12.md`、`AGENTFLOW-OPTIMIZATION-2026-10-12.md`，其中提及的评测装置均指裁撤前状态）；缺口收尾 episode 重编为 `episodes/2026-10-12/EP-20261012-008.json` 与 `EP-20261012-009.json`（避开 `main` 已占用的 001–007）；收尾计划归位 `docs/features/feature-2026-09-19-产品线完善/plan/PLAN-OPT-CLOSEOUT-001.md`。
 - 2026-10-13 文档面校正批：删除手写目录树 `docs/project-structure.md`（计数多处失实，且与 `index.md`、
   `README.md` 重复），引用改指 `README.md`「仓库布局」节与 `tools/lab/README.md`；同步修正 README、
   AGENTS、host-platform-facts、design-decisions、system-guide、product 链与待拍板清单的失实内容。

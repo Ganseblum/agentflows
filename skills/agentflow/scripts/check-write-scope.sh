@@ -38,13 +38,29 @@ if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
   exit 2
 fi
 
+tmp_diff="$(mktemp)" || exit 2
+tmp_others="$(mktemp)" || exit 2
+cleanup() { rm -f "$tmp_diff" "$tmp_others"; }
+trap cleanup EXIT
+
+# 使用 -z 输出原始（非 C-quote）路径，避免含非 ASCII 字符（如中文）的路径被 git 转义后
+# 与 scope 模式失配而误判越界；并显式检查 git 退出码，git 失败时 fail-closed 而非静默 OK。
+if ! git diff --name-only --no-renames -z "$base" >"$tmp_diff" 2>/dev/null; then
+  echo "error: git diff failed for base: $base" >&2
+  exit 1
+fi
+if ! git ls-files --others --exclude-standard -z >"$tmp_others" 2>/dev/null; then
+  echo "error: git ls-files failed" >&2
+  exit 1
+fi
+
 changed=()
-while IFS= read -r path; do
+while IFS= read -r -d '' path; do
   [ -n "$path" ] && changed+=("$path")
-done < <(git diff --name-only --no-renames "$base")
-while IFS= read -r path; do
-  changed+=("$path")
-done < <(git ls-files --others --exclude-standard)
+done <"$tmp_diff"
+while IFS= read -r -d '' path; do
+  [ -n "$path" ] && changed+=("$path")
+done <"$tmp_others"
 
 # `case` 模式不会进行路径名展开，这与 `[ ]` 内不加引号的 `*` 不同。
 in_scope() {

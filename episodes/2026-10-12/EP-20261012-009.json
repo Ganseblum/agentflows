@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261012-009",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（缺口收尾批：G1–G9/G12 十项修复 + 12 个回归测试 + 缺口表收口；随本批提交）",
+    "base": "86c6f406fd34aacef696b01f5c1e6aef147ccfe2"
+  },
+  "run": {
+    "run_id": "session-20261012-gap-closure",
+    "started_at": "2026-10-12T15:10:00+08:00",
+    "ended_at": "2026-10-12T16:05:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户指示「先全部修复处理」+「看看之前说的评分看看怎么处理」后：①对 2026-10-12 深度评审做优化后复评（综合 7.1→7.8，证据逐条实证）；②按复评缺口表执行全部可动修复（G1–G9/G12），其中 4 项在保护路径内；③独立评审门把关闭合后才提交。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_instruction",
+      "value": "先全部修复处理（授权缺口清单全部项目，含保护路径）；看看之前说的评分看看怎么处理",
+      "evidence_ref": "plans/PLAN-OPT-CLOSEOUT-001.md；AGENTFLOW-EVALUATION-2026-10-12.md 第十三节"
+    },
+    {
+      "kind": "incident",
+      "value": "复评提交一度落入 detached HEAD——根因：本工作树是 linked worktree（.git 为文件，gitdir 指向 ~/Desktop/TestProject/agentflows/.git/worktrees/main-b0d8652c），此前在 /tmp 副本（cp -R 连 .git 文件一并复制）里跑 git checkout 作用于共享 HEAD；分支与提交本为快进关系，git checkout -B 无损归位；逐 commit 验证改用 git archive（只读）重做，8 个 commit 全绿结论不变",
+      "evidence_ref": "本会话 git reflog 与修复记录；教训已入仓库 memory 2026-10-12 日志"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "复评（同作者、证据逐条实证）：六维 架构 7→7.5 / 目录 8→8 / 文档 7.5→8 / 代码 7.5→8.5 / Agent-Skill 7→7.5 / 整体 6.5→7.5，综合 7.1→7.8",
+      "status": "verified",
+      "check": "AGENTFLOW-EVALUATION-2026-10-12.md 第十三节；每条分数变动附当前文件实证（复评前对全部残留项逐条重跑检查）",
+      "evidence_ref": "AGENTFLOW-EVALUATION-2026-10-12.md §13"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "G1（原评审标记「最严重」的 schema 子集静默失明）已修：词汇表白名单 + 全位置 walker 接入 validate_schemas；AST 机械比对 blocked-legal=[]、silent-passthrough=[]",
+      "status": "verified",
+      "check": "validate.py schemas PASS；test_whitelist_matches_the_validator_dispatch（双向断言）；MUT-G1/V3 变异 FAILED",
+      "evidence_ref": "tools/lab/validate.py；tests/test_lab_contracts.py GapClosureRegressionTests"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "G2/G3 已修且各有专测：digest 加 --no-renames --no-textconv（rename/textconv 两个半场独立成测）；CLI --target-docs append 透传（单旗/多旗两测）",
+      "status": "verified",
+      "check": "MUT-G2/V6、MUT-G3/V7 六组变异全部 FAILED 对应测试；全量 175 测试（163+12），errors=2 全为 EEXIST 环境假红",
+      "evidence_ref": "tools/lab/host_adapter.py；tools/lab/seed_grader.py；tests/test_lab_contracts.py"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "G4–G9/G12 已修；G5 按仓内明文约定（CHANGELOG 多次记载）同步中文镜像 docs/agent-roles.md——首轮独立评审 F1（P1）正抓在漏同步，修复后 delta 轮 approved",
+      "status": "verified",
+      "check": "独立评审两轮记录；docs/agent-roles.md 四处与 SKILL.md/roles.md 同源比对一致；validate.py docs PASS",
+      "evidence_ref": "docs/agent-roles.md；skills/agentflow/SKILL.md；skills/agentflow/references/roles.md"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "提交纪律：两批主题提交（门健全 e51c035 / 角色文档 8becbc0），受保护路径改动在提交信息标注人工授权来源；未 push",
+      "status": "verified",
+      "check": "git log --oneline 两批在位；git status 工作树干净（仅被忽略文件）",
+      "evidence_ref": "仓库 git 历史"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "evaluation_report",
+      "ref": "AGENTFLOW-EVALUATION-2026-10-12.md（第十三节复评 + 13.3 缺口表收口，新增 G14）"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "plan",
+      "ref": "plans/PLAN-OPT-CLOSEOUT-001.md（收尾计划；T01–T04 完成、T03 阻塞）"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "test_suite",
+      "ref": "tests/test_lab_contracts.py GapClosureRegressionTests（12 测试）+ 六组变异实验原始输出（会话留存）"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "commits",
+      "ref": "e51c035（门健全批）、8becbc0（角色/文档/计划面）"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-12T15:40:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "F1（P1）：G5/G7/G8 未同步中文镜像 docs/agent-roles.md，G5 裁决在镜像中缺席且构成直接矛盾（仓内约定见 CHANGELOG 多次记载）；F2（P2）$anchor 为无实现的白名单死条目；F4（P2）walker 不覆盖数组式 items；F5（P2）测试深度缺口（textconv/append/嵌套位置/白名单加法方向无承重）",
+      "resolution": "F1 已修（镜像四处同步）并经 delta 轮复核；F2 移除 $anchor（V4 silent-passthrough 转空为证）；F4 数组式 items 显式拒绝；F5 四个补强测试 + V3/V6/V7 变异证明承重",
+      "evidence_ref": "首轮评审报告（会话留存）"
+    },
+    {
+      "at": "2026-10-12T15:58:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读，delta 轮）",
+      "decision": "approved",
+      "finding": "零 P0–P2 finding：F1 四处与源文件同源一致；F5a/b/c/d 补强真实闭合（V3/V6/V7 承重；AST 双向断言覆盖两个方向的漂移）；F2/F4 修复确认；无搭车编辑",
+      "resolution": "approved/complete；残余风险两项均不阻塞（EEXIST 环境假红 confined 于既有审计类、镜像漂移无机器守卫属已知备注）",
+      "evidence_ref": "delta 评审报告（会话留存）"
+    }
+  ],
+  "feedback_summary": "用户两句话驱动：①「先全部修复处理」——授权缺口清单全部项目（含 4 项保护路径）；②「看看之前说的评分看看怎么处理」——最优处理=有证据的复评而非拍脑袋改分。产出：复评 7.1→7.8（每条实证）、G1–G9/G12 十项修复、两轮独立评审（首轮抓出真问题 F1）、12 个变异证明的回归测试、两批授权标注齐全的提交。仍在：G10 宿主 hooks、G11 BT 三样输入、G13 文档清理、G14 format 粒度（潜伏）。",
+  "agentflow_version": "0.10.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "WorkBuddy 会话（主对话）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-12T16:05:00+08:00"
+}

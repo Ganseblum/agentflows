@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: Independently compares an Agentflow candidate with its frozen baseline on predeclared cases, task slices, metrics, guardrails, and regression checks.
+description: Independently reviews an Agentflow candidate's frozen baseline/candidate result records — never runs commands, never writes files. Verifies host/model/permissions/fixture parity, declared metrics, protected slices and guardrails, then returns better/neutral/worse/invalid from the records alone.
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep
