@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261018-001",
+  "source_type": "review",
+  "revision": {
+    "source": "merge be72093（feature-quality-2026-10-13 → main，2026-10-17T11:54:49+08:00）+ merge f76094a（workbuddy/main-b0d8652c → main，2026-10-18T20:18:29+08:00）",
+    "base": "f76094a50b60a5425347d6b30d9d6e3c15a8018"
+  },
+  "run": {
+    "run_id": "session-20261019-merge-batch-backfill",
+    "started_at": "2026-10-17T11:54:49+08:00",
+    "ended_at": "2026-10-18T20:18:29+08:00",
+    "status": "complete"
+  },
+  "objective": "补记两次合并批（质量提升批合入 main、workbuddy 分支并入 main）的意图、保留/丢弃判据、合并后门与测试状态、回滚点。两次合并当时均未写 episode，本文件是 2026-10-19 依据提交历史与当次门输出的事后补记（PENDING-DECISIONS 第 8 条 ④ 选「一份合并 episode 覆盖两次合并」）。回溯记录只承载可从 git 与门输出核实的事实，未参与当时的决策过程。",
+  "outcome": "partial",
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "两次合并提交存在，且父提交与提交信息声明的方向一致：be72093 的第一父为 be772cb（main 侧）、第二父为 1fb0898（feature 分支）；f76094a 的第一父为 be72093、第二父为 9e30460（workbuddy 侧）。",
+      "status": "verified",
+      "check": "git log -1 --format='%h parents=%p %s' be72093 f76094a",
+      "evidence_ref": "git 提交历史（be72093 parents=be772cb 1fb0898；f76094a parents=be72093 9e30460）"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "f76094a 的提交信息称「保留 main 的裁撤，只并入记录类内容」，但该合并相对第一父实际改动 14 个文件，其中 6 个不是记录类：agents/evaluator.md、packaging/build_runtime.py、skills/agentflow/SKILL.md、skills/agentflow/references/roles.md、skills/agentflow/scripts/check-write-scope.sh、tools/lab/isolation.py。其中 agents/evaluator.md 与 tools/lab/isolation.py 属 protected-paths.txt 的保护面。",
+      "status": "failed",
+      "check": "git diff --name-only be72093 f76094a → 14 个路径；按 docs/ episodes/ reviews/ index.md CHANGELOG.md AGENTS.md README.md 前缀过滤后仍剩 6 个非记录类路径；git diff --stat 显示合计 +33/-11",
+      "evidence_ref": "git diff --stat be72093 f76094a"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "合并提交 f76094a 本身通过全门与测试。",
+      "status": "unverified",
+      "check": "需在纯 f76094a 快照（git worktree add / 干净检出）上运行 python3 tools/lab/validate.py all 与 python3 -m unittest discover -s tests 并留存原始输出。2026-10-19 的 9/9 PASS 与 96 tests OK 是在 f76094a 加上未提交工作树上取得的，不构成对本 claim 的验证。",
+      "evidence_ref": "当前工作树 2026-10-19T18:1x 门输出（不等同于本 claim 的被测对象）"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "两次合并当时都没有写 episode，episodes/ 下不存在 2026-10-17 与 2026-10-18 目录。",
+      "status": "verified",
+      "check": "ls episodes/ → 2026-10-09 / 2026-10-10 / 2026-10-12 / 2026-10-14 / 2026-10-19",
+      "evidence_ref": "episodes/ 目录清单"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "f76094a 引入的受保护面改动（agents/evaluator.md 一行、tools/lab/isolation.py 两行）没有对应的独立评审记录；两份 2026-10-19 评审（REV-20261019-002）覆盖的是 4c767eb / 6d10b14 / 8996016，不含 f76094a。",
+      "status": "verified",
+      "check": "对比 REV-20261019-002 的 reviewed_docs 与 source_revision 字段（列 4c767eb/6d10b14/8996016）与 f76094a 的 diff 文件清单；reviews/ 下无覆盖 f76094a 的记录",
+      "evidence_ref": "docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-002.md"
+    }
+  ],
+  "signals": [
+    {
+      "kind": "merge_scope_mismatch",
+      "value": "f76094a 声明「只并入记录类内容」，实际带入 6 个非记录类文件（+33/-11），含 2 个受保护面文件",
+      "evidence_ref": "git diff --stat be72093 f76094a"
+    },
+    {
+      "kind": "gate_status",
+      "value": "当前工作树 validate.py all 9/9 PASS（2026-10-19 18:1x 实测，含未提交改动）",
+      "evidence_ref": "python3 tools/lab/validate.py all 输出"
+    },
+    {
+      "kind": "test_count",
+      "value": "python3 -m unittest discover -s tests → Ran 96 tests, OK（2026-10-19 实测，工作树含未提交改动）",
+      "evidence_ref": "unittest 原始输出"
+    },
+    {
+      "kind": "review_coverage_gap",
+      "value": "f76094a 的两处受保护面改动无独立评审记录；REV-20261019-002 覆盖的是另外三个提交",
+      "evidence_ref": "REV-20261019-002 frontmatter"
+    }
+  ],
+  "review_roundtrips": [],
+  "feedback_summary": "补记得出的三条判据，供下次合并使用：① 合并提交信息不得用于描述合并范围——范围以 git diff 第一父为准，声明「只并入记录类」时必须先用 --name-only 核对；② 合并同样会带入受保护面改动（本例 agents/evaluator.md、tools/lab/isolation.py），因此合并批也要走独立评审门，不能因为「只是合并」跳过；③ 合并批的 episode 应在合并当天写，事后补记只能承载 git 可核事实，参与不了当时的决策（本文件即此情形，故 outcome 记 partial 而非 accepted）。",
+  "agentflow_version": "0.11.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "本仓 git 提交历史 + 2026-10-19 门与测试原始输出",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-18T20:18:29+08:00"
+}
