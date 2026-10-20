@@ -61,7 +61,7 @@ stateDiagram-v2
 ## 5. 工程模块清单
 | 模块 | 内容 | 依赖 | 优先级 |
 | --- | --- | --- | --- |
-| M-A 门禁拆分 | `validate.py` 拆为 `tools/lab/gate/` 下的 schema、records、doc、workspace、manifests 五个模块；`validate.py` 保留为薄入口 | 无 | P0 |
+| M-A 门禁拆分 | `validate.py` 拆为 `tools/lab/gate/` 下的检查模块（实际落地 13 个：checks、common、docs、examples、installed、manifests、plan、records、reports、schema、testing、workspace 与 `__init__`）；`validate.py` 保留为薄入口 | 无 | P0 |
 | M-B 变异测试 | 新增 `tools/lab/mutate.py`：算子集、对每个检查项施加变异、在副本中运行并统计存活 | M-A（需要稳定的检查项边界） | P0 |
 | M-C 计数脚本 | 新增 `tools/lab/counts.py`：计算测试数、schema 数、角色数、批次数、`validate.py` 行数；门禁比对文档标记 | 无 | P1 |
 | M-D 运行态同步 | 用户重装插件后，`validate.py installed` 退出码为 0 | 用户重装 | P0 |

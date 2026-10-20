@@ -4,6 +4,7 @@
 > 凡原评价报告路径/事实有误的，已在本文件"勘误"一节标明，不沿用错误行号。
 > 本文件同样故意排除在受治理文档面之外（不碰 protected-paths.txt），可随时删除。
 > **2026-10-18 合并说明**：本文件随 `workbuddy/main-b0d8652c` 并入 `main`（用户拍板只并入记录类内容），落点已在 `index.md`「迁移与清理记录」登记一行；其中提及的 `policy.py`、`eval_runner.py`、`host_adapter.py`、`evals/`、`improvements/` 均指 2026-10-12 裁撤前状态，现行结构以 `docs/design-decisions.md` §3 为准。
+> **2026-10-19 现状指针**：§7 汇总表中 G1/G2 的「已修」结论同样只对 `workbuddy/main-b0d8652c` 成立，未随合并带入 `main`；`main` 上的现行状态以 [`docs/PENDING-DECISIONS.md`](docs/PENDING-DECISIONS.md) 第 7 条为准。
 
 ---
 

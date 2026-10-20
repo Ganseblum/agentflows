@@ -5,6 +5,7 @@
 > 方法：6 路并行只读子代理逐文件精读 + 门实跑（validate.py all / unittest）+ 竞品横向调研（16 次检索 + 12 次 GitHub API）
 > 注：本报告是交付件，**未触碰 `protected-paths.txt`**，故意排除在受治理文档面之外；可任意移动/删除。
 > **2026-10-18 合并说明**：本报告随 `workbuddy/main-b0d8652c` 并入 `main`（用户拍板只并入记录类内容），落点已在 `index.md`「迁移与清理记录」登记一行；其中提及的评测装置均指 2026-10-12 裁撤前状态。
+> **2026-10-19 现状指针**：§13.3 缺口表中 G1/G2 标为「已修复」是 `workbuddy/main-b0d8652c` 分支线上的事实，未随合并带入 `main`（G14 亦复核未修）；`main` 上的现行状态以 [`docs/PENDING-DECISIONS.md`](docs/PENDING-DECISIONS.md) 第 7 条为准。
 
 ---
 

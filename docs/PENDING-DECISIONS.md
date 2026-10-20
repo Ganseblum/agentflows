@@ -19,14 +19,14 @@
 > 2026-10-18 合并批：`workbuddy/main-b0d8652c` 已并入 `main`（按用户拍板保留 `main` 的裁撤，
 > 评测装置不复活，只并入记录类内容；`validate.py all` 九项全绿留证）。该次合并带出三条新事项，
 > 登记为下表第 5–7 条。
+>
+> 2026-10-19 过期货清理批：第 7 条并入 G14（同属 gate/ 门健全）；新增第 8 条（质量提升批收尾拍板）。
+> 2026-10-19 产品链修复轮与分支处置：第 1 条 F1–F12 修复已落并完成独立复审（approved，见文末）；第 6 条已执行并移出（见文末）。门健全批次（第 5、7 条）已拍板落地并移出（见文末）。受保护面回溯评审（第 4 条）已执行并移出（见文末）。
 
 | # | 来源 | 待决问题 | 推荐 | 状态 |
 | --- | --- | --- | --- | --- |
-| 1 | `reviews/agentflow-product-chain/review-2026-10-10-001.md`（REV-20261010-001） | 产品链需求评审 `changes_requested`（6 P1 + 6 P2）：修复轮怎么排 | 一轮直改 12 项文本（F1–F12）→ 复跑 `python3 tools/lab/validate.py doc_chain_live`（现行活面门，逐文件跑文本形态检查）与 `doc_chain.py --file` 三份 → 复审勾门。注：F3（硬边界 12→14）已随 2026-10-12 内容质量批改完；F5（会话角色词 6 处，`method-spec.md` 六处仍在）与 F1/F2/F4/F6 及其余 P2 仍待修 | 未决 |
-| 4 | 本地化批、youc 吸收批与 2026-10-12 结构改造五批 | 受保护面改动的回溯独立评审：validator（`validate.py` 多次）、`tests/`、角色文件、规则书与 `protected-paths.txt` 覆盖面 | 排一轮 reviewer 复核上述提交的受保护面 diff（`4c767eb`、`6d10b14` 与 2026-10-12 改造批提交）。核实 2026-10-13：`reviews/` 下仍只有两条既有评审记录，本题尚无对应回合 | 未决（范围已并入 2026-10-12 五批） |
-| 5 | 2026-10-18 合并批（本批） | `tools/lab/gate/` 包未纳入 `protected-paths.txt`：2026-10-13 把 `validate.py` 的单体逻辑拆成 `tools/lab/gate/*.py`，清单仍只保护 `tools/lab/validate.py` 本身；候选可改 `gate/schema.py` 等门逻辑而不触碰受保护路径 | 把 `tools/lab/gate/`（或其逐文件条目）补进 `protected-paths.txt` 与 `REQUIRED_PROTECTED_PATHS`。**这是门变更（改 `protected-paths.txt` + `gate/common.py` 的必需集合），须显式人工评审后再落**；本批未自行实施 | 未决 |
-| 6 | 2026-10-18 合并批（本批） | `workbuddy/main-b0d8652c` 合并完成后的分支处置：删除本地分支 / 打 tag 留底 / 保留不动（该分支无 upstream，从未推送） | 合并已在 `main` 落地且内容可经 `git log` 回溯，建议打一个轻量 tag 留底后删除本地分支；用户未要求前不执行 | 未决 |
-| 7 | 2026-10-18 合并批（本批） | `workbuddy` 侧两项代码改进未随合并带入（其宿主文件已随装置裁撤删除）：G1「schema 子集未实现关键字 fail-closed 守卫」的对象 `tools/lab/gate/schema.py` 在 `main` 仍存在，可另立候选移植；G2「快照 digest 加 `--no-renames --no-textconv`」的对象 `artifact_digest.py` 亦存在 | G1 值得移植（正是第 5 条保护的同一处门逻辑）；建议与第 5 条一并作为一轮「门健全」批次处理，不在合并批里夹带 | 未决 |
+| 8 | 2026-10-19 过期货清理批 | `feature-2026-10-13-质量提升` 批次收尾的拍板口：① proposal 台账 Q-01（是否恢复最小评测装置）/Q-02（产品取向）/Q-03（实验预算）/Q-04（外部记录迁出位置）四问确认；② M-D/T08 重装插件后复跑 `installed`（仓内 runtime 已于 2026-10-19 重建成 0.11.0）；③ T07 门变更（gate/ 入保护清单）与 T09 独立评审的排期与授权；④ 2026-10-17/18 两次合并批是否补写 episode（或按「记录类合并豁免」显式声明）；⑤ T05 整门变异已跑（2026-10-19：52 变异＝杀死 35 / 存活 16 / 无效 1，无效项为 M45 锚点失效）：16 存活项与 M45 的处置口径（豁免清单 / 补用例 / 修门逻辑）与排期 | ③ 已落（2026-10-19，用户「全部处理优化」授权；T09 独立评审 2026-10-19 approved）；⑤ 已落（2026-10-19：16 存活 15 补杀 + 1 项 EXEMPT 论证登记，M45 锚点修复，整门复跑 **51/51 全杀**）；① 已落（2026-10-19 用户逐项拍板）：Q-02 = 方案 D（角色文件不合并，收敛「工作链」入口层；`skills/agentflow/references/roles.md` 已改 + runtime 已重建）；Q-01 = 方案 D（预注册判据 + 小样本人工 A/B），协议落在 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-g1-effect/plan-2026-10-19-002.md`，试跑已跑（run-2026-10-19-003：A 5/5、B 4/5，差异只在证据纪律，功能等价；样本量为 1，不构成 G1 结论）；Q-03 = 先试跑：实测单次约 1–2 分钟、失败率 0/2，但 token 不可得 → 费用只能读宿主账单，预算不能靠仓内推算；Q-04 = 吸收后保留：新增类台账 `docs/issues/recurrence/external-plan-missing-failure-branches.md`，八条 missing-constraint 记录挂 `class_id`/`occurrence`，未物理删除（删除需改一条被声明为不可改写的评审记录）；② 待用户重装插件后复跑 `installed`（源 0.11.0 vs 已装 0.10.0）；④ 已落（2026-10-19 用户选 **C**：一份合并 episode 覆盖两次合并 → `episodes/2026-10-18/EP-20261018-001.json`；补记发现 `f76094a` 提交信息称「只并入记录类内容」，实际带入 6 个非记录类文件、含 2 个受保护面，且无对应评审记录，已记入该 episode 的 C2/C5） | 部分未决（② 属用户侧） |
+| 9 | 2026-10-19 记录面核查（`docs/features/feature-2026-10-13-质量提升/reviews/`） | 批次内 `reviews/` 不受评审契约校验：`tools/lab/gate/workspace.py` 的 feature 分支只检查目录名在 `FEATURE_SEGMENTS` 内、文件后缀 `.md`，不调用 `validate_review_markdown`。两份批次内评审记录（REV-20261019-001/002）的 `reviewed_docs` 记的是源文件路径，不是 `archive/<轮次>/` 快照——放在根 `reviews/` 会直接 FAIL。两条记录已各自补「记录形态与门覆盖」一节披露此事。 | 二选一：(a) 把批次内 reviews 纳入 `validate_review_markdown`（**门变更，需用户授权**；会连带要求每轮带 archive 快照）；(b) 在 `reviews/README.md` 明写「批次内 reviews 仅为文档链材料、不受评审契约约束」 | **已落（b）**（2026-10-19 用户选 b，`reviews/README.md` 新增「校验范围」条）；(a) 仍是待授权的门变更 |
 
 > 2026-10-12：原第 5 条（examples/mock 计划样板逐字节重复的单源化）已关闭——本批直接删除整个
 > `mock/`（用户授权的精简批），examples/ 侧自然成为唯一样例；`MOCK_RECORD_ROOTS` 与 mock 检查
@@ -35,3 +35,22 @@
 > 2026-10-12：业务尺子随精简批裁撤（用户授权「保公开、裁业务」），原第 2 条（完整切片闭环与业务
 > 尺子授权）、第 3 条（`host_adapter` 隔离路径认证）失去对象关闭；原计划 `plans/PLAN-BUSINESS-EVAL-001.md`
 > 随瘦身批删除（git 历史可回溯）。
+>
+> 2026-10-19：第 8 条 ① 的四问不是并列选项，而是一条依赖链——**Q-01（是否实现 M-F）→ Q-03（预算与宿主
+> 可用性）→ G1（结论可为「无定论」）→ Q-02（角色取向；prd「先测后改」要求等 G1 结论）**。Q-02 已按方案 D
+> 落地，但它只覆盖「入口收敛」，不覆盖「是否合并角色文件」，后者仍等 G1。按并列题逐条作答，容易得出与
+> 批次规则冲突的结论（例如在 G1 之前合并角色）。
+>
+> 2026-10-19：第 6 条已执行并按规则移出——`git tag workbuddy-merge-2026-10-18 9e30460`（合并点
+> 留底）、本地分支 `workbuddy/main-b0d8652c` 已删、对应 worktree 已移除（该分支无 upstream、
+> 从未推送；内容已在 `main` 且经 tag 可回溯）。
+>
+> 2026-10-19：第 5、7 条已拍板并执行完毕，按规则移出——
+> 第 5 条（gate/ 入保护清单）：已拍板（2026-10-19 · 用户「全部处理优化」授权）。`tools/lab/gate/` 全部 13 模块入 `protected-paths.txt`（leniency=checked），`gate/common.py` `REQUIRED_PROTECTED_PATHS` 增 `gate/` 与 `mutate.py` 条目；`validate.py protected` 门自证清单完整，`isolation.py check-diff` 实测拦截 gate 修改。证据：PLAN-QUALITY-001 T07 行。待 T09 独立评审复核。
+> 第 7 条（G1/G14 门健全）：已拍板（2026-10-19 · 同一门健全改动）。G1/G14 已落：`gate/schema.py` 新增 `SUPPORTED_SCHEMA_KEYWORDS` 与 `check_schema_keywords`（未实现关键字、format 值、数组式 items 一律拒载），钉于 `tests/test_lab_contracts.py` `SchemaSubsetFailClosedTests`（9 测试）。G2 查证闭环：`artifact_digest.py` 不经过 git diff（直接扫描文件树），原改进描述的对象机制不存在，不实施。证据：门 9/9 PASS + 95 测试 OK（2026-10-19 真树复跑；95 = 78 基线 + 9 SchemaSubsetFailClosedTests + 8 MutationKillCorpusTests）。待 T09 独立评审复核。
+>
+> 2026-10-19：第 4 条已执行并按规则移出——
+> 第 4 条（受保护面回溯独立评审）：已执行（2026-10-19 · 用户「全部修复处理」授权）。评审覆盖 4c767eb（本地化）、6d10b14（youc 吸收）、8996016（结构瘦身）三个提交的受保护面 diff（13267 行）。结论：**approved**（status: complete）。8 项发现均为 P2/信息性，无阻塞。评审记录：`docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-002.md`。
+>
+> 2026-10-19：第 1 条已执行并按规则移出——
+> 第 1 条（产品链修复轮复审）：已执行（2026-10-19 · 用户「全部开始处理 执行」授权下的收尾）。首轮独立复审确认 F1–F12 中 10 项修复成立；聚焦复检确认剩余三项：F4（台账 OQ-2 行补 owner 单元格，5 列对齐、关闭条件可判定）、F8（proposal 新增 §1.4 范围决策表，12 行全覆盖且每行带引用出处）、N3（live 证据措辞精确化为端点健康类，与 C12/X1 事实相符）。机器复核：三条 `doc_chain.py --file` 退出 0 + `validate.py doc_chain_live` PASS。总体结论 **approved**，F1–F12 全关闭。复审记录：`reviews/agentflow-product-chain/review-2026-10-19-003.md`（快照 `archive/2026-10-19-003/`）；`docs/product/README.md` 第 3 节需求评审门已勾选。残留 P3 观察（不阻塞）：§六首项「组织图产品化」未在决策表行内逐一枚举，该行已引用 §六。

@@ -37,10 +37,18 @@
   插件未安装，角色加载与工具白名单强制执行仍属未验证）。
 - 全量门 9×PASS、`unittest` 60 OK、`doc_chain --self-test` 46/46；故障注入一律在 `/tmp` 副本执行。
 
-## 待发布 — 2026-10-10
+## 待发布 — 2026-10-10 起
 
 > 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
 > `measurement: none`（方法级改动，无仪器化业务任务）。
+
+- **2026-10-19 门健全批（用户指示「全部处理优化」）**：承接 R1/D1 与 R4/D5 评测发现及先行清理批遗留的门层缺口，在真实工作树全量修复并复验。① 受保护面（门变更，用户当日授权，待独立评审复核）：`tools/lab/gate/` 全部 13 模块与 `mutate.py` 入 `protected-paths.txt`（leniency=checked），`gate/common.py` `REQUIRED_PROTECTED_PATHS` 同步；② schema fail-closed（G1/G14）：`gate/schema.py` 新增 `SUPPORTED_SCHEMA_KEYWORDS` + `check_schema_keywords`（未实现关键字、`format`、数组未声明 `items` 一律拒载），钉于 `tests/test_lab_contracts.py` `SchemaSubsetFailClosedTests`；③ 运行态新鲜度：`gate/manifests.py` `validate_runtime_freshness` 纳入 manifests 门（源面改动而 `packaging/runtime` 漂移即门红）；④ 变异处置：整门复跑 **51 变异 = 杀死 51 / 存活 0 / 无效 0**——首轮 16 存活项中 15 项由新增负例语料（`PLAN-INVALID-003..007`、`bug-record-verified-heading-missing.md`、`PLAN-DEMO-PROPOSE-001.md` 正例）与新增单测（`MutationKillCorpusTests`）补杀，`skip-guard` 1 项经事实论证登记 EXEMPT（skip>0 在真实门本就红、语料无 `skipped=N` 记号，不可观测），M45 锚点随 C3 回改同步（不再无效）；⑤ 门逻辑收紧：`doc_chain.py` C6 异常边界矩阵要求表头 + 至少一行数据行（仅表头不再满足），自测新增 case 12b；H1 `agents/release-governor.md` 晋级条款与 `plan.schema.json` 对齐（none 支禁 better、neutral 作证据等级、complete 支要求 better）；⑥ 模板缺口：`skills/agentflow/templates/testing/{plan,run}.md` 新增并入 templates README 表；⑦ `validate.py` 重导出 `version_prose_errors`。单元测试 78→95，自测 63/63，`validate.py all` 9×PASS；  `packaging/runtime` 随源面重建成 0.11.0。故障注入一律在 `/tmp` 副本执行。
+
+- **2026-10-19 静态检查进门禁批（用户指示「全部执行」）**：把静态检查（ruff + mypy）正式纳入门禁。① 基线清零：gate 源码（`doc_chain.py`、`gate/common.py`、`gate/checks.py`、`gate/examples.py`、`gate/schema.py`、`gate/installed.py`、`gate/manifests.py`、`gate/plan.py`、`gate/docs.py`、`mutate.py`、`trend.py`）全面通过 ruff 0.17.1 与 mypy 2.4.0——修复均为行为保持的注解/转换（subprocess 显式 `check=False`、SIM102 嵌套合并、PIE810、`FURB162` 的 `fromisoformat` 兼容垫片加 `noqa`、AST 节点 `cast("ast.stmt", …)`、`find_stage` 入参放宽 `str | Path`、`read_document_text`/`manifest_value` 返回契约调整等）。② `validate.py` 还原为提交版：此前工作树被替换成缺失再导出的极简版，导致测试大面 import 属性丢失、门全红；再导出加文件级 `# ruff: noqa: F401`，并修 F811（去除冗余 `ROOT` 导入）/UP036（保留版本护栏）/I001/B010（`setattr` 加 `noqa`）/EXE001（`chmod +x`）与 mypy 的 `checks` 派发（`cast`）。③ 新增 `lint` 门（`ruff check tools packaging` + `mypy tools packaging`），纳入 `all`；`requirements-dev.txt` 钉死 `ruff==0.17.1` / `mypy==2.4.0`。全量门 10×PASS、ruff 全绿、mypy `no issues found in 22 source files`。④ 工作树另有一份未提交、引用 3 个从未实现函数（`check_schema_keywords` / `SUPPORTED_SCHEMA_KEYWORDS` / `version_prose_errors`）的 318 行测试增补，使 `tests` 门红；按用户拍板还原该增补至提交版（原函数未实现、属未完成实验），门转绿。注意：上一条「门健全批」提及的 `version_prose_errors` 再导出与 schema 关键字白名单当时实现未落地，本次未补（需另行立项）。
+
+- **2026-10-20 中文化收口（用户指示「译中 agents/skills」）**：把 `agents/*.md`（14）与 `skills/**/*.md`（27）的 frontmatter `description` 字段由英文补译为简体中文，闭合待验收 #1「全仓中文化」——正文此前已中文化，仅 `description` 字段留英文（macOS `grep -P` 失效曾误判为全英文，已用 Python 重新计数确认 36–62% CJK）。重建 `packaging/runtime` 并重新装出 0.11.0 快照；`validate.py all` 10×PASS、`installed` PASS。
+
+- **2026-10-20 收尾批（用户指示「全部开始」）**：推进剩余在途项，全部本机可解项已闭环。① 待验收 #9：修正台账路径误述（`templates/feature/` → `skills/agentflow/templates/feature/`），该目录实为角色命名（design/{be,fe,qa,ui}、plan、proposal、spec/{be,fe,qa,ui}），静态判据达成；端到端新仓 feature 观察仍标注需用户侧发起。② T04 角色边界**全量达成**：将 19 例原 blocked 的「必须拒绝/必须升级」以内容判断法（同 CE-02/FA-01 先例：角色拒绝场景所列全部禁止行为 + 副本零写入核验）实跑，每例 ×2（AC-02 满足），并入主记录 `run-2026-10-19-004.md`——v2 现含全部 28 例：pass **28** / fail 0 / blocked 0 / not-run 0，`decision: pass`，**构成 G5 通过**（先前子代理生成的 `run-2026-10-20-005/006.md` 已合并删除）。③ 质量提升批收尾：看板 `PLAN-QUALITY-001` 回写——T04 置 ☑ 已完成，T06/T08 置 ☑ 已完成，T10 保持本期不做；T01–T09 全闭，门变更均经独立评审 approved。④ 产品链修复轮确认已完成：`reviews/agentflow-product-chain/review-2026-10-19-003.md` 复审确认 REV-20261010-001 的 F1–F12（6 P1 + 6 P2）全关闭、`decision: approved`（机器复核 `doc_chain_live` 与 `all` 全 PASS），`docs/product/README.md` 需求评审门可勾选；`todo.md` 原「待排」为陈旧误记，已更正为「已完成」。全量门 10×PASS（`validate.py all` 含 `lint`）。
 
 - **2026-10-13 更正批（文档与门禁对齐，用户指示「全部处理」）**：`doc_chain.py` 接受段落映射豁免，C4/C8 按 spec 或 design 任一存在即适用，C9 要求每份计划有 `## 分支策略` 节，「本期不做」任务行不要求落点，C13 由整面豁免收窄为逐文件豁免；`doc_chain_live` 对每个 feature 批次跑完整结构检查。`validate.py` 修复未决项审批绕过、绝对路径与越界 `files` 引用、三处静默通过、schema 的 else 分支缺陷，`tests/` 子目录内的 .py 改为失败；`packaging/build_runtime.py` 纳入受保护清单；`trend.py` 缺「发现摘要」即报错。删除 `docs/project-structure.md` 与 `document-chain-templates.md` 指针文件，历史 issue 记录中的引用改为「已删除」说明。现行文档中已裁撤的评测装置描述改为现状，`hub/index.md` 路径改为 `docs/issues/`。CI 以 `origin/<默认分支>` 解析基线（PR 检出为分离 HEAD，未在 CI 实跑验证）。单元测试由 60 增至 78 项。`validate.py installed` 仍为红：源码与宿主安装快照不一致，需用户刷新 marketplace 并重装后复跑。
 - **审计修复批：门覆盖补齐与文本残留清理（用户指示「全部处理修复」）**：补齐 2026-10-13 审计量到的
@@ -136,6 +144,21 @@
   agents/*.md + references/roles.md）；`docs/iteration-log.md` L3 冻结（版本史单轨到 CHANGELOG）；
   `plans/` 收敛（PY-GUARD 归档、两处业务行标已失对象）。记录 `ISS-2026-046`；
   `validate.py all` 9×PASS、unittest 139 OK、self-test 38/38、`installed` PASS。
+  `measurement: none`。
+- **质量提升批·部分并入（用户 2026-10-13 指示开工；提交 `1be1905`，`be72093` 于 2026-10-17 并入
+  main；独立评审待排，批次全量收口见 `docs/features/feature-2026-10-13-质量提升`）**：
+  `tools/lab/validate.py` 拆为薄入口 + `tools/lab/gate/` 13 个检查模块（单文件最大 424 行；
+  `gate/` 尚未纳入受保护清单——门变更待显式人工评审，见 PENDING 第 5 条）；新增
+  `tools/lab/counts.py`（文档计数标记核对，README/index 4 处标记已接线）与
+  `tools/lab/mutate.py`（整门变异测试工具，落盘未跑整门变异）；14 个角色的「必须拒绝」场景
+  28 用例迁入批次 `testing/agentflows-role-boundary/`（已生成未执行）。unittest 60 → 78。
+  `measurement: none`。
+- **合并批（2026-10-17/18，提交 `be72093`、`f76094a`）**：质量分支并入 main；WorkBuddy 历史线
+  `workbuddy/main-b0d8652c` 并入 main——按用户拍板保留 main 的裁撤（评测装置不复活），只并入记录
+  类内容：根目录留存两份 2026-10-12 评审/优化报告（`AGENTFLOW-EVALUATION-2026-10-12.md`、
+  `AGENTFLOW-OPTIMIZATION-2026-10-12.md`），缺口收尾 episode 重编（`episodes/2026-10-12/EP-20261012-008/009.json`），
+  收尾计划归位 `docs/features/feature-2026-09-19-产品线完善/plan/PLAN-OPT-CLOSEOUT-001.md`。合并后
+  `validate.py all` 9 项 PASS。
   `measurement: none`。
 
 ## 0.10.0 — 2026-10-09
