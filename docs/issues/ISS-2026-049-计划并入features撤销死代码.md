@@ -1,7 +1,7 @@
 ---
 bug_id: ISS-2026-049
 title: 结构改造批四期——plan 归入 feature 批次、顶层 plans/ 撤销、改进环死代码清除（用户授权）
-status: fixed-pending-review
+status: verified
 severity: P2
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -20,6 +20,10 @@ source_revision: agentflows@cc03012 + 本批工作树（2026-10-12）
 agentflow_version: 0.10.0
 fix_revision: 随本批提交（agentflows，2026-10-12）
 regression_status: pass
+updated_at: 2026-10-19T21:45:00+08:00
+reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
+review_decision: approved
+closure_criteria: `docs/plans/` 不在盘 + 两份 PLAN 位于 feature 批次 plan/ 且过 artifacts 门 + validate.py 无 improvements 遍历分支与 validate_improvement_* 函数 + LIVE_RECORD_ROOTS 五根 + validate.py all PASS。
 ---
 
 ## 现象
@@ -48,6 +52,11 @@ regression_status: pass
 - 活面 `docs/plans` / `plans/PENDING-DECISIONS` / `plans/README` grep 零残留；批次内两份 PLAN 的计划契约在 artifacts 门内实测通过（含任务依赖图）。
 - `installed` 待 runtime 重建后复验（本批改动的 agents/reviewer.md、plan-architect.md 在安装面内）。
 
+## 审查
+
+2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对成立：两份 PLAN 位于 docs/features/feature-2026-09-19-产品线完善/plan/；`docs/plans/` 不在盘；PENDING-DECISIONS.md 提至 docs/ 根；改进环死代码零残留（validate_improvement_* 函数无命中）。回归证据：validate all 9×PASS、unittest 96 OK。review_decision：approved。
+
 ## 变更记录
 
 - 2026-10-12 · recorded + fixed · 四期落地（含用户停手令范围的脚本收尾一次性完成）；fix_revision 随本批提交
+- 2026-10-19 21:45 · 独立复审通过 · agentflow:reviewer 批量复审（只读）核对修复声称与回归证据成立，转 verified。

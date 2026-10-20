@@ -27,3 +27,10 @@ ISS-2026-032 已把拆列形态教进 `document-chain-templates.md`（design 模
 塞 10-13 字段——机器门验收存在性、用户标准是形态，缝隙处 Goodhart。另 design/fe §1.2 七列
 宽表复发（形态约束只在 be 模板，fe/qa 无同等条款）。修复：document-chain.md 明确「通过存在
 性检查≠满足形态标准」+ 模板 fe/qa 侧补形态约束（ISS-2026-038）。
+
+## 维护记录（2026-10-19）
+
+「归纳内容」节引用的 `document-chain-templates.md` 已于 2026-10-13 随文档面校正批删除（原为
+指针文件，见 `CHANGELOG.md` 该批条目），原文保留作历史。拆列形态要求的现行载体为
+`skills/agentflow/references/document-chain.md` 质量判据「存在性 ≠ 形态」条（ISS-2026-038
+修复落文）。

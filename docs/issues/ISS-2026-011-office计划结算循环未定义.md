@@ -5,6 +5,8 @@ status: open
 severity: P1
 error_kind: missing-constraint
 attribution: product_code
+class_id: external-plan-missing-failure-branches
+occurrence: 2
 provenance: external
 project: infinite-canvas
 files:

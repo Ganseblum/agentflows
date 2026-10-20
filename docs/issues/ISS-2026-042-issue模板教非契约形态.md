@@ -1,7 +1,7 @@
 ---
 bug_id: ISS-2026-042
 title: issue 模板教出记录契约之外的形态——无 frontmatter 的元信息表骨架，照抄产出被 artifacts 拒；templates 清单同时漏列 issue/releases
-status: fixed-pending-review
+status: verified
 regression_status: pass
 severity: P2
 error_kind: missing-constraint
@@ -15,6 +15,10 @@ recorded_at: 2026-10-10T16:05:00+08:00
 source_revision: agentflows@af1ba3d + uncommitted 修复工作树（2026-10-10）
 agentflow_version: 0.10.0
 fix_revision: 随本批提交（agentflows，2026-10-10）
+updated_at: 2026-10-19T21:45:00+08:00
+reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
+review_decision: approved
+closure_criteria: issue-template.md 含契约 frontmatter 全字段与固定章节字面量 + skills/agentflow/templates/README.md 列 issue/ 与 releases/ 两行 + validate.py artifacts PASS。
 ---
 
 ## 现象
@@ -34,7 +38,7 @@ fix_revision: 随本批提交（agentflows，2026-10-10）
 两条约束缺口叠加：① 0.9.0 增补模板时引入了 youc 风格的 issue 约定（元信息表），未对照本仓
 记录契约（`schemas/bug-record.schema.json` 与固定章节字面量）确认形态——与 ISS-2026-031
 （模板教出缺陷形态）同类；② 模板形态没有任何检查覆盖：`validate.py` 的 mock/examples/artifacts
-都不巡检 `templates/`，`templates/README.md` 的清单又只列 feature/* 十三件，issue 与 releases
+都不巡检 `templates/`，`skills/agentflow/templates/README.md` 的清单又只列 feature/* 十三件，issue 与 releases
 两个真文件既不在清单、也无形态校验（同批意图写明"真文件 + 清单（含 issue 模板、releases
 双文件）"，清单完整性也未落地）。
 
@@ -60,8 +64,13 @@ fix_revision: 随本批提交（agentflows，2026-10-10）
 - 同类先例 ISS-2026-031 同为模板文本修复；本例的回归定义为"填充样例在副本上编译通过"（观察级）。
   模板形态无常设自动化检查覆盖——如需门级覆盖（如按骨架生成本例并断言）属门变更，另批申报。
 - `mock/` 是 `validate.py mock` 的判别夹具（0.10.0 批已登记"删即砍门"），本次未动；模板清单
-  与完整样板的分工以 `templates/README.md` 新增行为准。
+  与完整样板的分工以 `skills/agentflow/templates/README.md` 新增行为准。
+
+## 审查
+
+2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对成立：issue-template.md 为契约形态（frontmatter 全字段占位 + 条件字段自述 + 固定章节字面量）；skills/agentflow/templates/README.md:16-17 列 issue/ 与 releases/ 清单行；mock 指针行已由 ISS-2026-046 批次合理移除。回归证据：validate.py artifacts PASS（真树退出 0）。review_decision：approved。
 
 ## 变更记录
 
 - 2026-10-10 16:05 · recorded + fixed · 模板重写 + 清单补全 + 填充模拟 `PASS artifacts`（副本留档 `/tmp/agentflow-template-check`）
+- 2026-10-19 21:45 · 独立复审通过 · agentflow:reviewer 批量复审（只读）核对修复声称与回归证据成立，转 verified。

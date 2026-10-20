@@ -1,8 +1,8 @@
 ---
 bug_id: ISS-2026-038
 title: 机器门存在性检查≠形态标准——为过 linter C4 补的契约总表为 cram 形态（ISS-2026-032 升级）；fe §1.2 宽表反模式跨模板漂移
-status: fixed-pending-review
-regression_status: not-run
+status: verified
+regression_status: pass
 severity: P2
 error_kind: other
 attribution: workflow_policy
@@ -16,6 +16,10 @@ source_revision: agentflow@7a235b5 (0.8.3+方法整合候选)
 agentflow_version: 0.8.3
 class_id: crammed-contract-table-form
 occurrence: "2"
+updated_at: 2026-10-19T21:45:00+08:00
+reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
+review_decision: approved
+closure_criteria: document-chain.md:291-293 存在性≠形态条款 + skills/agentflow/templates/feature/design/be/backend.md:60 与 skills/agentflow/templates/feature/design/fe/frontend.md:95 宽表格塞列不合格形态 grep 在场；doc_chain.py --self-test 63/63 退出 0；unittest OK；validate.py all 9 项 PASS 退出 0。
 ---
 
 ## 现象
@@ -33,6 +37,14 @@ Goodhart：时间压力下机器检查项（存在性）变成目标本身；lin
 
 1. `document-chain.md` 质量判据新增：**通过存在性检查不等于满足形态标准**；索引性总表（契约总表/清单表）只作导航，字段级契约的形态基准=逐字段拆列或代码块+注释；总表 cram 同样计缺陷（linter C4 保持存在性检查，形态归评审与自查条款）。
 2. `document-chain-templates.md` design/fe（及 qa，如涉及核心逻辑节）补与 be 同等的形态约束：核心算法与关键逻辑用「#### 小节+加粗标签分段」，宽表格塞列列为不合格形态。
-3. `doc_chain.py`：C4 语义注释明确其存在性定位，防后续把形态期望错挂到 C4（不新增形态解析——形态判断归评审人，避免不可靠的机器猜形态）。
+3. ~~`doc_chain.py`：C4 语义注释明确其存在性定位，防后续把形态期望错挂到 C4（不新增形态解析——形态判断归评审人，避免不可靠的机器猜形态）~~——2026-10-19 独立复审核对：git 全历史零命中，该项未落地，回写删除；功能修复由第 1、2 项承载（存在性≠形态条款 + 模板形态约束）。
 
 regression_status=not-run：条款与模板文本变更；形态对照面=下次文档链 design 阶段评审。
+
+## 审查
+
+2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对：第 1、2 项成立（document-chain.md:291-293 存在性≠形态条款、skills/agentflow/templates/feature/design/be/backend.md:60 与 skills/agentflow/templates/feature/design/fe/frontend.md:95 宽表格塞列不合格形态均在盘）；第 3 项（doc_chain.py C4 语义注释）经 git 全历史检索从未落地，回写删除该项声称——功能修复由第 1、2 项承载。回归证据：self-test 63/63、unittest 96 OK、validate all 9×PASS。review_decision：approved。
+
+## 变更记录
+
+- 2026-10-19 21:45 · 独立复审通过 · agentflow:reviewer 批量复审（只读）核对修复声称与回归证据成立，转 verified。

@@ -1,7 +1,7 @@
 ---
 bug_id: ISS-2026-053
 title: 契约允许轻量链（无 spec/design 轨），但 linter 的 C1 无条件要求四个阶段目录非空——降级路径只存在于纸面
-status: fixed-pending-review
+status: verified
 severity: P2
 error_kind: missing-constraint
 attribution: workflow_policy
@@ -15,6 +15,10 @@ source_revision: agentflows@fb98b21 + 本批工作树（2026-10-13 审计批）
 agentflow_version: 0.10.0
 fix_revision: 随本批提交（agentflows，2026-10-14）
 regression_status: pass
+updated_at: 2026-10-19T21:45:00+08:00
+reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
+review_decision: approved
+closure_criteria: doc_chain.py C1 对声明轻量的链收窄阶段集且 proposal 缺失仍红（self-test case 42/43）+ 未声明而 design 空的链仍红（case 63）+ document-chain.md 段落映射豁免与 linter 口径一致 + validate.py all PASS。
 ---
 
 ## 现象
@@ -65,6 +69,11 @@ python3 tools/lab/doc_chain.py <feature-dir>
 链契约每增加一种降级形态，判据与自测必须同批落地——降级不是文档里的形容词，是 linter 里
 的一条分支加一个 case。
 
+## 审查
+
+2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对成立：doc_chain.py:406-426 C1 轻量豁免（声明门禁 + required_stages 收窄为 proposal+plan，proposal 缺失仍红）在盘；自测 case 42/43/63 在册；契约已演进为段落映射统一形态，linter 两条豁免路径口径一致。回归证据：self-test 63/63、validate all 9×PASS、unittest 96 OK。review_decision：approved。
+
 ## 变更记录
 
 - 2026-10-14 · recorded + fixed · 轻量链豁免与三个自测 case 随本批提交（fix_revision 同上）
+- 2026-10-19 21:45 · 独立复审通过 · agentflow:reviewer 批量复审（只读）核对修复声称与回归证据成立，转 verified。

@@ -10,7 +10,7 @@ issues/
     unverified-behavior-claims.md
   归档/                        # rejected 记录，保留其日期目录
     2026-08-01/
-      ISS-2026-041-陈旧-flaky-测试.md
+      ISS-2026-999-陈旧-flaky-测试.md          # 示例编号，与现行记录不撞号
 ```
 
 ## 编号与看板
