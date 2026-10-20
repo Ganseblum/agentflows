@@ -49,9 +49,16 @@ schemas/
 tests/test_lab_contracts.py
 tests/test_record_store.py
 
+# The lab tools decide whether a candidate is measured or judged. tools/lab/gate/,
+# counts.py, and mutate.py were added 2026-10-19 (gate change, human-directed): the
+# 2026-10-13 split moved the check bodies into gate/ while this list still named only
+# validate.py, leaving the guard logic itself outside the protection.
 tools/lab/artifact_digest.py
+tools/lab/counts.py
 tools/lab/doc_chain.py
+tools/lab/gate/
 tools/lab/isolation.py
+tools/lab/mutate.py
 tools/lab/record_store.py
 tools/lab/trend.py
 tools/lab/validate.py

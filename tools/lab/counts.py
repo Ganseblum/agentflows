@@ -19,8 +19,8 @@ import argparse
 import ast
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[2]
 

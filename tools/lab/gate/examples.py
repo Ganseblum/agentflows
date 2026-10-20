@@ -9,10 +9,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .common import (ROOT, ValidationError, load_record_markdown)
-from .plan import (validate_plan_markdown)
-from .records import (validate_bug_markdown)
-from .testing import (parse_test_case_registry, validate_test_plan_markdown, validate_test_run_markdown)
+from .common import ROOT, ValidationError, load_record_markdown
+from .plan import validate_plan_markdown
+from .records import validate_bug_markdown
+from .testing import (
+    parse_test_case_registry,
+    validate_test_plan_markdown,
+    validate_test_run_markdown,
+)
 
 
 def validate_invalid_plan_example(path: Path) -> list[ValidationError]:
@@ -50,7 +54,13 @@ def validate_invalid_test_run_example(path: Path) -> list[ValidationError]:
 # do not add other negative families here without extending the validators that cover them.
 INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
     "bug-record-verified-without-review.md": ("bug-record", validate_bug_markdown),
+    "bug-record-verified-heading-missing.md": ("bug-record", validate_bug_markdown),
     "PLAN-INVALID-002.md": ("plan", validate_invalid_plan_example),
+    "PLAN-INVALID-003.md": ("plan", validate_invalid_plan_example),
+    "PLAN-INVALID-004.md": ("plan", validate_invalid_plan_example),
+    "PLAN-INVALID-005.md": ("plan", validate_invalid_plan_example),
+    "PLAN-INVALID-006.md": ("plan", validate_invalid_plan_example),
+    "PLAN-INVALID-007.md": ("plan", validate_invalid_plan_example),
     "test-run-bad-status.md": ("test-run", validate_invalid_test_run_example),
 }
 
@@ -165,6 +175,7 @@ def validate_doc_chain_examples() -> list[ValidationError]:
             text=True,
             capture_output=True,
             timeout=120,
+            check=False,
             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         )
         output = f"{completed.stdout}\n{completed.stderr}"

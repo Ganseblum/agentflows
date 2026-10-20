@@ -5,9 +5,16 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .common import (ROOT, ValidationError, heading_present, is_separator_row, load_record_markdown, parse_plan_task_row, validate_timestamp_order)
-from .schema import (SchemaValidator)
-
+from .common import (
+    ROOT,
+    ValidationError,
+    heading_present,
+    is_separator_row,
+    load_record_markdown,
+    parse_plan_task_row,
+    validate_timestamp_order,
+)
+from .schema import SchemaValidator
 
 PLAN_REQUIRED_HEADINGS = (
     "## 进展概览",
@@ -138,7 +145,7 @@ def validate_plan_markdown(path: Path) -> list[ValidationError]:
         # is not closed marks an open blocking decision — approval is then invalid.
         in_unresolved = False
         for index, line in enumerate(lines):
-            if line.startswith("## ") or line.startswith("### "):
+            if line.startswith(("## ", "### ")):
                 in_unresolved = "未决项" in line
                 continue
             if not in_unresolved:

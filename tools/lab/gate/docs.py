@@ -5,10 +5,15 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .common import (LIVE_RECORD_ROOTS, QUALIFIED_REF_PATTERN, ROOT, ValidationError, read_document_text)
+from .common import (
+    LIVE_RECORD_ROOTS,
+    QUALIFIED_REF_PATTERN,
+    ROOT,
+    ValidationError,
+    read_document_text,
+)
 
-
-ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.M)
+ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.MULTILINE)
 
 
 SKILL_ROLE_PATTERN = re.compile(r"agentflow:([a-z0-9-]+)")
@@ -250,15 +255,22 @@ def validate_doc_consistency() -> list[ValidationError]:
         if read_errors:
             errors.extend(read_errors)
             continue
-        for match in VERSION_LITERAL_PATTERN.finditer(text):
-            context = text[max(0, match.start() - 40) : match.end() + 40].replace("\n", " ")
-            errors.append(
-                ValidationError(
-                    str(path),
-                    f"version literal {match.group(0)!r} in prose ({context.strip()!r}); state "
-                    "the version only in the manifests and CHANGELOG and reference them here",
-                )
-            )
+        errors.extend(version_prose_errors(path, text))
 
     errors.extend(validate_live_doc_references(ROOT))
+    return errors
+
+
+def version_prose_errors(path: Path, text: str) -> list[ValidationError]:
+    """Flag an x.y.z version literal in the version-guarded prose files."""
+    errors: list[ValidationError] = []
+    for match in VERSION_LITERAL_PATTERN.finditer(text):
+        context = text[max(0, match.start() - 40) : match.end() + 40].replace("\n", " ")
+        errors.append(
+            ValidationError(
+                str(path),
+                f"version literal {match.group(0)!r} in prose ({context.strip()!r}); state "
+                "the version only in the manifests and CHANGELOG and reference them here",
+            )
+        )
     return errors

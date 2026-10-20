@@ -81,7 +81,7 @@ BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 # C13 session role words: a formal document must be readable without the session that wrote
 # it. Case-insensitive process-role names plus the literal session-bound phrases seen in the
 # 2026-09-21 corpus (TD 开放问题 etc.).
-ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.I)
+ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.IGNORECASE)
 ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话", "本会话")
 
 # C13 exemptions are per FILE, never per prefix. A listed file either defines the process role
@@ -134,7 +134,7 @@ TASK_STATUS_ENUM = ("☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻�
 TASK_ID_RE = re.compile(r"^(?:FT?\d{2}|T\d{1,2})$")
 PLACEHOLDER = "待核实"
 # 「分支策略」 section: a heading at level 2-4, optionally numbered ("## 分支策略", "### 0. 分支策略").
-BRANCH_HEADING_RE = re.compile(r"^#{2,4}\s+(?:\d+\.\s*)?分支策略(?:\s|$)", re.M)
+BRANCH_HEADING_RE = re.compile(r"^#{2,4}\s+(?:\d+\.\s*)?分支策略(?:\s|$)", re.MULTILINE)
 SEP_RE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
 BARE_PATH_RE = re.compile(
     r"(?<![\w./-])[\w.\-]+(?:/[\w.\-]+)*\.(?:go|ts|tsx|vue|sql|py|md|json|sh|html|yml|yaml|toml|txt|js|css)\b"
@@ -242,7 +242,7 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
         if check_c13:
             role_line = line
             for phrase in ROLE_WORD_EXEMPT_PHRASES:
-                role_line = re.sub(re.escape(phrase), " ", role_line, flags=re.I)
+                role_line = re.sub(re.escape(phrase), " ", role_line, flags=re.IGNORECASE)
             hits = [w for w in ROLE_PHRASES if w in line] + ROLE_WORD_RE.findall(role_line)
             for w in sorted(set(hits)):
                 errors.append(f"C13 会话角色词: {label}:{i} {w}")
@@ -259,7 +259,10 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
 
 
 def mermaid_blocks(text: str) -> list[str]:
-    blocks, lines, inside, buf = [], text.splitlines(), False, []
+    blocks: list[str] = []
+    lines = text.splitlines()
+    inside = False
+    buf: list[str] = []
     for line in lines:
         if line.strip() == "```mermaid":
             inside, buf = True, []
@@ -382,7 +385,7 @@ def plan_findings(label: str, text: str, repo_root: Path) -> list[str]:
     return errors
 
 
-def find_stage(files: list[Path], *parts: str) -> list[Path]:
+def find_stage(files: list[Path], *parts: str | Path) -> list[Path]:
     """All non-gitkeep .md files under <feature>/<parts...> (recursively)."""
     base = Path(*parts)
     return [
@@ -468,7 +471,7 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
 
     if be_applies:
         kinds = mermaid_kinds(be_text)
-        seq_with_alt = [b for b in kinds.get("sequenceDiagram", []) if re.search(r"^\s*alt\b", b, re.M)]
+        seq_with_alt = [b for b in kinds.get("sequenceDiagram", []) if re.search(r"^\s*alt\b", b, re.MULTILINE)]
         if not seq_with_alt:
             errors.append("C4 design/be: 缺少含失败分支（alt）的时序图")
         if "flowchart" not in kinds:
@@ -485,7 +488,7 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         # line and swallow the NEXT table (decision ids misread as contract ids).
         # accepted tolerance (review note): a table ending at EOF without a trailing
         # newline drops its last row's id here — false-negative direction, floor-safe
-        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", be_text, re.M):
+        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", be_text, re.MULTILINE):
             header = table.splitlines()[0]
             if "请求字段" in header and "响应字段" in header:
                 for row in table.splitlines()[2:]:
@@ -508,7 +511,7 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
                 errors.append(f"C8 design/fe: 缺少 {kind}")
         wireframes = [
             b
-            for b in re.findall(r"```text\n(.*?)```", fe_text, re.S)
+            for b in re.findall(r"```text\n(.*?)```", fe_text, re.DOTALL)
             if any(c in b for c in BOX_CHARS)
         ]
         # A prototype exempts the wireframe floor only if it is a prototype: until 2026-10-13 any
@@ -523,12 +526,19 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         )
         if len(wireframes) < 2 and not has_prototype:
             errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）且无 prototype HTML 原型")
-        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", fe_text, re.M):
-            header = table.splitlines()[0]
-            if ("成功" in header or "正常" in header) and ("失败" in header or "异常" in header):
+        matrix = False
+        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", fe_text, re.MULTILINE):
+            rows = table.splitlines()
+            header = rows[0]
+            if (
+                ("成功" in header or "正常" in header)
+                and ("失败" in header or "异常" in header)
+                and any(SEP_RE.match(row.strip()) is None for row in rows[1:])
+            ):
+                matrix = True  # a data row below the header separator: the matrix has content
                 break
-        else:
-            errors.append("C6 design/fe: 缺少接口异常边界矩阵（表头需同时覆盖 成功 与 失败/异常）")
+        if not matrix:
+            errors.append("C6 design/fe: 缺少接口异常边界矩阵（表头需同时覆盖 成功 与 失败/异常，且至少一行数据）")
 
     # C9 plan grounding
     plan_files = find_stage(md_files, feature_dir / "plan")
@@ -558,7 +568,7 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         be_heads = "\n".join(all_text[f] for f in be_files) if be_files else ""
         fe_heads = "\n".join(all_text[f] for f in fe_files) if fe_files else ""
         import re as _re
-        if not _re.search(r"^##+ .*(先说结论|关键决策速览|结论先行)", be_heads, _re.M):
+        if not _re.search(r"^##+ .*(先说结论|关键决策速览|结论先行)", be_heads, _re.MULTILINE):
             errors.append("C11 结构模板: design/be 缺固定标题（先说结论/关键决策速览）")
         if "影响面评估" not in be_heads:
             errors.append("C11 结构模板: design/be 缺「影响面评估」章")
@@ -575,8 +585,8 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         {f for stage in STAGE_DIRS for f in find_stage(md_files, feature_dir / stage)}
     )
     for f in stage_files:
-        rel = f.relative_to(feature_dir)
-        errors.extend(text_form_findings(str(rel), all_text[f], [f.parent, feature_dir]))
+        rel = str(f.relative_to(feature_dir))
+        errors.extend(text_form_findings(rel, all_text[f], [f.parent, feature_dir]))
 
     # C10 mermaid fence balance
     for f in md_files:
@@ -662,7 +672,7 @@ def self_test() -> int:
             p.write_text(text, encoding="utf-8")
         r = subprocess.run(
             [sys.executable, str(linter), "--root", str(d.parent), str(d)],
-            capture_output=True, text=True,
+            capture_output=True, text=True, check=False,
         )
         out = r.stdout + r.stderr
         ok = r.returncode == expect_rc and all(w in out for w in want)
@@ -719,6 +729,12 @@ def self_test() -> int:
              lambda f: rep(f, "design/fe/f.md",
                            "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n| A1 | ok | 412 |\n\n", ""),
              results)
+    run_case("12b C6 header-only matrix does NOT satisfy C6 (matrix needs a data row)", 1,
+             ["C6 design/fe: 缺少接口异常边界矩阵"],
+             lambda f: rep(f, "design/fe/f.md",
+                           "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n| A1 | ok | 412 |\n\n",
+                           "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n\n"),
+             results)
     run_case("13 C10 unclosed mermaid fence trips C10", 1, ["C10 mermaid"],
              lambda f: f.update({"design/be/b.md": f["design/be/b.md"] + "```mermaid\nflowchart X\n"}) or f,
              results)
@@ -731,7 +747,7 @@ def self_test() -> int:
              results)
     def strip_wireframes(f):
         # remove all text-wireframe blocks (fence-to-fence), keep everything else
-        f["design/fe/f.md"] = re.sub(r"```text\n.*?```", "", f["design/fe/f.md"], flags=re.S)
+        f["design/fe/f.md"] = re.sub(r"```text\n.*?```", "", f["design/fe/f.md"], flags=re.DOTALL)
         f["design/fe/prototype.html"] = (
             "<html>\n<body>\n<div data-testid=\"task-list\">定时任务列表原型</div>\n"
             "<div data-testid=\"task-retry\">重试</div>\n</body>\n</html>\n"
@@ -870,7 +886,7 @@ def self_test() -> int:
         d.parent.mkdir(parents=True, exist_ok=True)
         d.write_text(text, encoding="utf-8")
         cmd = [sys.executable, str(linter)] + (argv if argv is not None else ["--file", str(d)])
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True, check=False)
         out = r.stdout + r.stderr
         ok = r.returncode == expect_rc and all(w in out for w in want)
         results.append((name, ok))

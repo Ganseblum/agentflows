@@ -9,7 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
 

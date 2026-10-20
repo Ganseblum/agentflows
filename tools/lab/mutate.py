@@ -26,6 +26,7 @@ import sys
 import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import cast
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REPORT_DIR = Path("/tmp/mutation-report")
@@ -116,6 +117,7 @@ ITEMS: dict[str, tuple[str, str]] = {
 EXEMPT: dict[str, str] = {
     "reports.bug_report": "纯输出：只向 stdout 打印表格，返回值恒为空列表，不产生门禁错误，变异后的通过/失败结论无从观察",
     "reports.recurrence_report": "纯输出：只打印台账表，返回空列表；validate.py recurrence 的退出码恒为 0，不是门禁检查项",
+    "checks.skip-guard": "skip>0 本身就令真实门变红（跳过的测试被拒绝，仓库测试自禁跳过），=True 的单元测试输出又不带 skipped=N 记号——两个可观测状态在可用语料中都不存在",
 }
 
 
@@ -143,9 +145,9 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("records.bug-open-fix", 'if frontmatter.get("status") != "open" and not heading_present(body, "## 修复"):', "invert_cmp", "artifacts"),
     ("records.recurrence-name", 'if path.stem != frontmatter.get("class_id"):', "disable_if", "tests"),
     ("records.bug-layout", "elif len(parts) != 3:", "invert_cmp", "artifacts"),
-    ("workspace.issues-layout", "unexpected entry under issues/; live issue records", "drop_statement", "artifacts"),
+    ("workspace.issues-layout", "unexpected entry under issues/; live issue records", "drop_statement", "tests"),
     ("workspace.issues-depth", "if n > 1 and not archived:", "invert_cmp", "artifacts"),
-    ("workspace.files-walk", "files_entry_errors(entry, path)", "drop_statement", "artifacts"),
+    ("workspace.files-walk", "files_entry_errors(entry, path)", "drop_statement", "tests"),
     ("workspace.occurrence-unique", 'if occurrence in used_occurrences.setdefault(class_id, {}):', "disable_if", "artifacts"),
     ("common.files-containment", "if Path(entry).is_absolute():", "disable_if", "tests"),
     ("common.files-containment", "if path_inside_root(entry) is None:", "disable_if", "tests"),
@@ -161,7 +163,7 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("testing.fail-evidence", 'if status_cell in ("fail", "blocked") and evidence in NO_EVIDENCE_CELLS:', "disable_if", "tests"),
     ("testing.decision-pass", 'if frontmatter.get("decision") == "pass" and', "invert_cmp", "examples"),
     ("testing.case-registry", 'if case_id not in plan["cases"]:', "disable_if", "tests"),
-    ("docs.version-prose", "for match in VERSION_LITERAL_PATTERN.finditer(text):", "empty_iter", "docs"),
+    ("docs.version-prose", "for match in VERSION_LITERAL_PATTERN.finditer(text):", "empty_iter", "tests"),
     ("docs.retired-path", "if not preceded_by_word:", "disable_if", "tests"),
     ("docs.broken-link", "if not (path.parent / target_path).exists():", "disable_if", "tests"),
     ("manifests.version-agree", "if version != reference:", "invert_cmp", "tests"),
@@ -170,12 +172,11 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("manifests.protected-coverage", "if not covered:", "disable_if", "tests"),
     ("checks.unit-floor", "if count < MIN_UNIT_TEST_COUNT:", "invert_cmp", "tests"),
     ("checks.unit-empty", "if count == 0:", "invert_cmp", "tests"),
-    ("checks.skip-guard", "if skipped and int(skipped.group(1)) > 0:", "relax_strict", "tests"),
     ("checks.doc-chain-pair", "if passed != total or total == 0:", "invert_cmp", "doc_chain"),
     ("checks.doc-chain-floor", "if total < MIN_DOC_CHAIN_SELF_TEST_CASES:", "invert_cmp", "doc_chain"),
     ("doc_chain.C1", "下没有任何有效文档", "drop_statement", "doc_chain_selftest"),
     ("doc_chain.C2", 'if gate not in rtext:', "disable_if", "doc_chain_selftest"),
-    ("doc_chain.C3", 'if line.lstrip().startswith("|") and "阻塞" in line and "☐" in line:', "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C3", 'if not (line.lstrip().startswith("|") and "阻塞" in line and "☐" in line):', "disable_if", "doc_chain_selftest"),
     ("doc_chain.C4", "if not seq_with_alt:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C4", 'if "flowchart" not in kinds:', "disable_if", "doc_chain_selftest"),
     ("doc_chain.C5", "C5 契约闭合: design/be 契约表声明的接口", "drop_statement", "doc_chain_selftest"),
@@ -285,13 +286,16 @@ def apply_mutation(source: str, mutation: Mutation) -> str:
         ]
         if len(nodes) != 1:
             raise MutationError(f"anchor {mutation.anchor!r} selects {len(nodes)} statements, need exactly 1")
-        node = nodes[0]
+        node = cast("ast.stmt", nodes[0])
         first = lines[node.lineno - 1]
         indent = first[: len(first) - len(first.lstrip())]
         if node.col_offset != len(indent):
             raise MutationError("statement shares its line with other code")
-        _, eol = _split_eol(lines[node.end_lineno - 1])
-        lines[node.lineno - 1 : node.end_lineno] = [indent + "pass" + eol]
+        end = node.end_lineno
+        if end is None:
+            raise MutationError("statement has no end line")
+        _, eol = _split_eol(lines[end - 1])
+        lines[node.lineno - 1 : end] = [indent + "pass" + eol]
     elif mutation.op == "drop_continue":
         tree = ast.parse(source)
         nodes = [
@@ -301,10 +305,11 @@ def apply_mutation(source: str, mutation: Mutation) -> str:
         ]
         if len(nodes) != 1:
             raise MutationError(f"anchor {mutation.anchor!r} selects {len(nodes)} continue statements, need exactly 1")
-        body, eol = _split_eol(lines[nodes[0].lineno - 1])
+        target = cast("ast.stmt", nodes[0])
+        body, eol = _split_eol(lines[target.lineno - 1])
         if body.strip() != "continue":
             raise MutationError("selected line is not a bare continue")
-        lines[nodes[0].lineno - 1] = body[: len(body) - len(body.lstrip())] + "pass" + eol
+        lines[target.lineno - 1] = body[: len(body) - len(body.lstrip())] + "pass" + eol
     else:
         raise MutationError(f"unknown operator {mutation.op!r}")
     result = "".join(lines)

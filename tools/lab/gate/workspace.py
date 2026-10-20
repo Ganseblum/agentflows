@@ -6,11 +6,27 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .common import (LIVE_RECORD_ROOTS, ROOT, ValidationError, files_entry_errors, load_json, load_record_markdown)
-from .plan import (validate_plan_markdown)
-from .records import (BUG_ARCHIVE_DIR, RECURRENCE_DIR, validate_body_references, validate_bug_layout, validate_bug_markdown, validate_episode_document, validate_external_excerpts, validate_recurrence_markdown, validate_review_markdown)
-from .testing import (validate_test_plan_markdown, validate_test_run_markdown)
-
+from .common import (
+    LIVE_RECORD_ROOTS,
+    ROOT,
+    ValidationError,
+    files_entry_errors,
+    load_json,
+    load_record_markdown,
+)
+from .plan import validate_plan_markdown
+from .records import (
+    BUG_ARCHIVE_DIR,
+    RECURRENCE_DIR,
+    validate_body_references,
+    validate_bug_layout,
+    validate_bug_markdown,
+    validate_episode_document,
+    validate_external_excerpts,
+    validate_recurrence_markdown,
+    validate_review_markdown,
+)
+from .testing import validate_test_plan_markdown, validate_test_run_markdown
 
 # Segment directories a feature batch may hold (docs/features/README.md tree). The walk accepts only
 # these and README.md inside a batch; anything else under docs/features/ fails explicitly.

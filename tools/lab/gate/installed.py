@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+
 import artifact_digest
 
-from .common import (INSTALLED_COMPONENTS, INSTALLED_FILES, ROOT, ValidationError, load_json)
+from .common import (
+    INSTALLED_COMPONENTS,
+    INSTALLED_FILES,
+    ROOT,
+    ValidationError,
+    load_json,
+)
 
 
 def plugin_identity() -> tuple[str, str, str] | None:
@@ -20,7 +27,11 @@ def plugin_identity() -> tuple[str, str, str] | None:
     name = manifest.get("name")
     version = manifest.get("version")
     market_name = marketplace.get("name")
-    if not all(isinstance(value, str) and value for value in (name, version, market_name)):
+    if not (
+        isinstance(name, str) and name
+        and isinstance(version, str) and version
+        and isinstance(market_name, str) and market_name
+    ):
         return None
     return market_name, name, version
 
@@ -88,10 +99,10 @@ def validate_installed(path_value: str | None) -> tuple[str, list[ValidationErro
     else:
         if identity is None:
             return "fail", [ValidationError("plugin.json", "cannot read plugin identity for an install check")]
-        installed_root, versions, locate_errors = installed_plugin_roots()
+        located_root, versions, locate_errors = installed_plugin_roots()
         if locate_errors:
             return "fail", locate_errors
-        if installed_root is None:
+        if located_root is None:
             if versions:
                 marketplace, name, version = identity
                 return "fail", [
@@ -104,6 +115,7 @@ def validate_installed(path_value: str | None) -> tuple[str, list[ValidationErro
                     )
                 ]
             return "skip", []
+        installed_root = located_root
 
     source_manifest, source_errors = component_manifest(ROOT)
     if source_errors:

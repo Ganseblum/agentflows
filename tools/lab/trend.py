@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT / "tools" / "lab") not in sys.path:
     sys.path.insert(0, str(ROOT / "tools" / "lab"))
 
-import validate  # noqa: E402  (same directory; the checks live there)
+import validate
 
 TREND_LOG = ROOT / "docs" / "trend.jsonl"
 
@@ -87,6 +87,7 @@ def unittest_count() -> int | None:
         cwd=str(ROOT),
         text=True,
         capture_output=True,
+        check=False,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
     match = re.search(r"Ran (\d+) tests?", f"{completed.stderr}\n{completed.stdout}")
@@ -99,6 +100,7 @@ def collect() -> dict[str, object]:
             ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
             text=True,
             capture_output=True,
+            check=False,
         ).stdout.strip()
         or None
     )

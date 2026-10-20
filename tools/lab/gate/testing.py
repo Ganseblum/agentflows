@@ -6,10 +6,19 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .common import (TEST_PLAN_SCHEMA, TEST_RUN_SCHEMA, ValidationError, dated_id_errors, heading_present, is_separator_row, load_record_markdown, parse_plan_task_row, validate_timestamp_order)
-from .schema import (SchemaValidator)
-from .records import (validate_body_references)
-
+from .common import (
+    TEST_PLAN_SCHEMA,
+    TEST_RUN_SCHEMA,
+    ValidationError,
+    dated_id_errors,
+    heading_present,
+    is_separator_row,
+    load_record_markdown,
+    parse_plan_task_row,
+    validate_timestamp_order,
+)
+from .records import validate_body_references
+from .schema import SchemaValidator
 
 TEST_CASE_ID_PATTERN = re.compile(r"^TC-[A-Z0-9][A-Z0-9-]*$")
 

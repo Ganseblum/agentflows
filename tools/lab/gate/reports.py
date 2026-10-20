@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-
-from .common import (ROOT, ValidationError, load_record_markdown, version_tuple)
-from .records import (RECURRENCE_DIR)
+from .common import ROOT, ValidationError, load_record_markdown, version_tuple
+from .records import RECURRENCE_DIR
 
 
 def bug_report(

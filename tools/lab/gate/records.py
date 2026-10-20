@@ -6,9 +6,22 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .common import (BUG_RECORD_SCHEMA, EPISODE_SCHEMA, QUALIFIED_REF_PATTERN, RECURRENCE_SCHEMA, REVIEW_SCHEMA, ROOT, ValidationError, dated_id_errors, heading_present, load_json, load_record_markdown, record_date_of, validate_timestamp_order)
-from .schema import (SchemaValidator)
-
+from .common import (
+    BUG_RECORD_SCHEMA,
+    EPISODE_SCHEMA,
+    QUALIFIED_REF_PATTERN,
+    RECURRENCE_SCHEMA,
+    REVIEW_SCHEMA,
+    ROOT,
+    ValidationError,
+    dated_id_errors,
+    heading_present,
+    load_json,
+    load_record_markdown,
+    record_date_of,
+    validate_timestamp_order,
+)
+from .schema import SchemaValidator
 
 BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
 

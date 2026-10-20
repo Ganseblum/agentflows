@@ -8,7 +8,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -52,8 +51,22 @@ REQUIRED_PROTECTED_PATHS = {
     "tests/test_lab_contracts.py",
     "tests/test_record_store.py",
     "tools/lab/artifact_digest.py",
+    "tools/lab/counts.py",
     "tools/lab/doc_chain.py",
+    "tools/lab/gate/checks.py",
+    "tools/lab/gate/common.py",
+    "tools/lab/gate/docs.py",
+    "tools/lab/gate/examples.py",
+    "tools/lab/gate/installed.py",
+    "tools/lab/gate/manifests.py",
+    "tools/lab/gate/plan.py",
+    "tools/lab/gate/records.py",
+    "tools/lab/gate/reports.py",
+    "tools/lab/gate/schema.py",
+    "tools/lab/gate/testing.py",
+    "tools/lab/gate/workspace.py",
     "tools/lab/isolation.py",
+    "tools/lab/mutate.py",
     "tools/lab/record_store.py",
     "tools/lab/trend.py",
     "tools/lab/validate.py",
@@ -146,17 +159,19 @@ def load_json(path: Path) -> tuple[Any | None, list[ValidationError]]:
         return None, [ValidationError(str(path), f"invalid JSON: {exc}")]
 
 
-def read_document_text(path: Path) -> tuple[str | None, list[ValidationError]]:
+def read_document_text(path: Path) -> tuple[str, list[ValidationError]]:
     """Read a Markdown/text document for a doc-surface check; read failures are structured.
 
     Mirrors `load_json` for text: UnicodeDecodeError is a ValueError, not an OSError, so a
     file saved in a non-UTF-8 encoding (or a missing document) must surface as a
-    ValidationError instead of an uncaught traceback escaping the check.
+    ValidationError instead of an uncaught traceback escaping the check. On failure the text
+    is the empty string and the error list is non-empty, so callers that check `read_errors`
+    first never observe the empty text.
     """
     try:
         return path.read_text(encoding="utf-8"), []
     except (OSError, UnicodeDecodeError) as exc:
-        return None, [ValidationError(str(path), f"cannot read document: {exc}")]
+        return "", [ValidationError(str(path), f"cannot read document: {exc}")]
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, Any], str, list[str]]:
@@ -342,7 +357,7 @@ def validate_timestamp_order(document: dict[str, Any], path: Path) -> list[Valid
             parsed[name] = parse_rfc3339_date_time(raw)
         except ValueError:
             return [ValidationError(str(path), f"{name} must be an RFC 3339 date-time value")]
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     for name, value in parsed.items():
         if value > now + dt.timedelta(minutes=5):
             errors = [ValidationError(str(path), f"{name} is in the future; stamps must reflect real time")]
@@ -358,7 +373,7 @@ def record_date_of(frontmatter: dict[str, Any]) -> dt.date | None:
     if not isinstance(recorded, str):
         return None
     try:
-        return dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()
+        return dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()  # noqa: FURB162
     except ValueError:
         return None
 
@@ -400,7 +415,7 @@ def is_separator_row(line: str) -> bool:
     return bool(cells) and all(set(cell) <= {"-", ":", " "} and cell for cell in cells)
 
 
-def parse_plan_task_row(line: str) -> dict[str, str] | None:
+def parse_plan_task_row(line: str) -> dict[str, list[str]] | None:
     """Parse one Markdown table row of the plan task table into its cells."""
     stripped = line.strip()
     if not (stripped.startswith("|") and stripped.endswith("|")):

@@ -8,7 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .common import (EXPECTED_TEST_FILES, MIN_DOC_CHAIN_SELF_TEST_CASES, MIN_UNIT_TEST_COUNT, ROOT, ValidationError)
+from .common import (
+    EXPECTED_TEST_FILES,
+    MIN_DOC_CHAIN_SELF_TEST_CASES,
+    MIN_UNIT_TEST_COUNT,
+    ROOT,
+    ValidationError,
+)
 
 
 def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
@@ -122,6 +128,7 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
         text=True,
         capture_output=True,
         timeout=300,
+        check=False,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
     output = f"{completed.stdout}\n{completed.stderr}"
@@ -216,6 +223,7 @@ def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:
                 text=True,
                 capture_output=True,
                 timeout=120,
+                check=False,
                 env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
             )
             if completed.returncode == 0:

@@ -1,0 +1,6 @@
+# Dev dependencies for the validate.py gate's static-check ("lint") target.
+# Installed into the interpreter that runs tools/lab/validate.py:
+#   pip install -r requirements-dev.txt
+# Pinned so the ruff/mypy gate is reproducible across machines and CI.
+ruff==0.17.1
+mypy==2.4.0
