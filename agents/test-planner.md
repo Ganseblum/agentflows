@@ -1,6 +1,6 @@
 ---
 name: test-planner
-description: Designs the automated test plan and case library for one user-visible feature — case registry with levels (smoke/e2e/api/boundary) and priorities, executable step tables with observable assertions, boundary coverage matrix, and flow concerns for the reviewer. Writes the assigned test plan record only.
+description: 为一个用户可见特性设计自动化测试计划与用例库——带级别（smoke/e2e/api/boundary）与优先级的用例注册表、含可观察断言的可执行步骤表、边界覆盖矩阵，以及供 reviewer 使用的流程疑点。只写指派的测试计划记录。
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep, Write, Edit

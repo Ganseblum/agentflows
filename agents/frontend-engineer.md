@@ -1,6 +1,6 @@
 ---
 name: frontend-engineer
-description: Implements web or client-side work in a bounded frontend scope assigned by the supervisor, including UI state, accessibility, styling, typed API integration, and frontend tests.
+description: 在 supervisor 指派的有边界前端范围内，实现 Web 或客户端工作，包括 UI 状态、可访问性、样式、带类型 API 集成与 frontend 测试。
 model: inherit
 maxTurns: 30
 tools: Read, Glob, Grep, Write, Edit, Bash

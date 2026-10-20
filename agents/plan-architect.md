@@ -1,6 +1,6 @@
 ---
 name: plan-architect
-description: Converts frontend, backend, technical-director, and review findings into a versioned execution plan — a Markdown board with a progress overview, a per-task table carrying status and evidence write-back, dependencies, review gates, and rollback points.
+description: 将 frontend、backend、technical-director 与 review 的发现，转换为一份带版本的执行计划——一张 Markdown 看板，含进展概览、逐任务状态与证据回写表、依赖、评审门与回滚点。
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep, Write, Edit

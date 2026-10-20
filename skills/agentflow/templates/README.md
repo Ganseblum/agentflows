@@ -11,6 +11,7 @@
 | [feature/spec/be/backend.md](feature/spec/be/backend.md) · [fe](feature/spec/fe/frontend.md) · [qa](feature/spec/qa/acceptance.md) · [ui](feature/spec/ui/visual.md) | 各角色规格（`spec/<角色>/`） |
 | [feature/design/be/backend.md](feature/design/be/backend.md) · [fe](feature/design/fe/frontend.md) · [qa](feature/design/qa/testing.md) · [ui](feature/design/ui/visual.md) | 各角色技术方案（`design/<角色>/`） |
 | [feature/plan/execution.md](feature/plan/execution.md) | 执行契约（单文件；目标仓有自己的计划约定时用其约定） |
+| [testing/plan.md](testing/plan.md) · [testing/run.md](testing/run.md) | 测试用例库 / 执行记录骨架（frontmatter 信封固定字段）：复制到 `docs/features/<批次>/testing/<project>-<feature>/plan-<YYYY-MM-DD>-<NNN>.md` 与 `run-<YYYY-MM-DD>-<NNN>.md` |
 | [hub/README.md](hub/README.md) · [index.md](hub/index.md) · [issues-README.md](hub/issues-README.md) | 文档枢纽仓骨架（`<project>-workflow-ai/` 的 README、index、issues 看板） |
 | [issue/issue-template.md](issue/issue-template.md) | ISS 记录骨架（frontmatter 全字段 + 固定章节的契约形态）：复制到 `issues/ISS-<YYYY>-<NNN>-<slug>.md` |
 | [releases/todo.md](releases/todo.md) · [releases/pending-test.md](releases/pending-test.md) | 发布待办 / 待验收双文件骨架：复制到 `releases/`（这两个文件就是发布侧的现行载体） |

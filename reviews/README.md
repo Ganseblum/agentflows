@@ -10,6 +10,13 @@ agentflow 的 reviewer 契约做第二道评审，评审记录与证据回收到
   计划正文不算数。
 - 批次自身的评审记录放 `docs/features/<批次>/reviews/`；本目录用于评审外部仓库文档等跨项目
   轮次。
+- **校验范围（2026-10-19 补记）**：本目录（根 `reviews/`）的记录受 `schemas/review.schema.json`
+  的全套机器校验——`review_id` 格式、目录名形如 `<project>-<feature-slug>`、`reviewed_docs`
+  每个条目在记录旁存在（即 `archive/<轮次>/` 快照）、`findings` 的每个 `bug_id` 能在
+  `docs/issues/` 解析。批次内 `docs/features/<批次>/reviews/` **不受这四项校验**：门的 feature
+  分支只检查目录名在允许段落内、文件后缀是 `.md`，不调用评审契约。批次内记录因此是**文档链材料**
+  （人读、可引用），其合格性靠评审者自律与独立复核，不靠门。是否把批次内 reviews 也纳入契约
+  属门变更，登记在 `docs/PENDING-DECISIONS.md` 第 9 条。
 - **迁移说明**：历史评审记录（原记录树的 reviews 子树）已随 2026-10 结构改造迁移执行
   批次迁入本目录。
 

@@ -15,7 +15,8 @@ python3 tools/lab/validate.py all
 `docs/releases/`、`reviews/`）下的记录产物、
 角色/文档面与版本散文守卫、受保护门清单的完整性、文档链 linter 的判别自测、
 文档链 linter 对活文档面（`docs/product/`、`docs/features/`）的扫描、
-五份 manifest 的名字/版本一致性，以及 `tests/` 下仓库自身的回归测试——共九项。失败的检查
+五份 manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
+新鲜度——marketplace 装的就是这棵生成树，漂移即静默装出旧角色），以及 `tests/` 下仓库自身的回归测试——共九项。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
 其中的角色/文档面检查（`validate.py docs`）扫描的对象是：`agents/*.md`、两个 `SKILL.md`、

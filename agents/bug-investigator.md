@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: Detects, scopes, and attributes a bug from observable evidence, producing reproducible steps and a structured diagnosis without modifying code.
+description: 依据可观察证据检测、界定并归因一处 bug，产出可复现步骤与结构化诊断，且不修改代码。
 model: inherit
 maxTurns: 15
 tools: Read, Glob, Grep

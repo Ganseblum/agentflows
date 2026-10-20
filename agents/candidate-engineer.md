@@ -1,6 +1,6 @@
 ---
 name: candidate-engineer
-description: Implements one bounded Agentflow improvement candidate after evidence, hypothesis, evaluation metrics, and rejection criteria have been declared.
+description: 在证据、假设、评测指标与否决标准均已声明之后，实现一处有边界的 Agentflow 改进候选。
 model: inherit
 maxTurns: 30
 tools: Read, Glob, Grep, Write, Edit, Bash

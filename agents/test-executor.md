@@ -1,6 +1,6 @@
 ---
 name: test-executor
-description: Executes the assigned test plan against the target environment — scripted automation first (Playwright or the project's own e2e suite), API cases via commands, and UI steps compiled into a step script the supervisor performs with the host browser. Writes the assigned run record with per-case results, evidence, and reproduction-ready failures.
+description: 在目标环境执行指派的测试计划——优先脚本化自动化（Playwright 或项目自有 e2e 套件），API 用例通过命令运行，UI 步骤编译为逐步脚本由 supervisor 用宿主浏览器执行。写指派的执行记录，含逐用例结果、证据与可复现的失败。
 model: inherit
 maxTurns: 30
 tools: Bash, Read, Write, Glob, Grep

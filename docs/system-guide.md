@@ -225,7 +225,7 @@ flowchart LR
 | ~~`evals`~~ | 公开用例结构（装置已裁撤） | — |
 | `artifacts` | 各记录根实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
 | `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
-| `manifests` | 五份 manifest 名字版本一致 | 补 bump |
+| `manifests` | 五份 manifest 名字版本一致；`packaging/runtime` 生成树在场时与源面逐字节一致（marketplace 指向它，漂移即静默装出旧角色） | 补 bump，或重建生成树 `python3 packaging/build_runtime.py` |
 | `docs` | 角色/文档面一致性 + 版本散文守卫 + 断链与退役路径扫描 | 按报错修文档；版本号只活在 manifest/CHANGELOG |
 | `tests` | tests/ 目录内容受控 + 回归全绿 + 拒绝 skip | 测试红即门回归 |
 | `doc_chain` | 文档链 linter 判别自测（用例数下限守卫） | 自测红或用例数缩水即门红（缩水=门变更，需人审） |
@@ -240,6 +240,8 @@ python3 tools/lab/validate.py recurrence       # 类台账与推导档位
 python3 tools/lab/trend.py --append             # 追加一行改进环信号到 docs/trend.jsonl（无校验，仅观测）
 python3 tools/lab/record_store.py index        # 一次性 SQLite FTS5 索引（只读辅助）
 python3 tools/lab/record_store.py query '关键词'
+python3 tools/lab/counts.py                    # 核对文档计数标记（README/index 中带 HTML 注释包裹的计数）
+python3 tools/lab/mutate.py --list             # 门变异测试：先列变异，再逐检查项运行（副本内执行）
 python3 tools/lab/isolation.py check-diff --candidate <树> --base <冻结parent>
 bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...   # 硬边界 14
 # （原）python3 tools/lab/policy.py --candidate-record ... —— 已随评测装置裁撤
@@ -282,7 +284,7 @@ bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...  
 
 ### 例 3：你问"现在有什么高优任务？"（状态类问题的纪律）
 
-这类问题的教训是 BUG-20260917-03：**凭会话记忆回答状态类问题 = 没回答**（别的会话可能已推进）。
+这类问题的教训是 ISS-2026-009：**凭会话记忆回答状态类问题 = 没回答**（别的会话可能已推进）。
 现在的标准动作：Supervisor 先 `git fetch` + `log/status` 校准仓库事实，回答时**带证据命令**
 （如"以 `git log --oneline -5` 为准：…"）。你若发现回答没带证据命令，可以直接打回——这有记录撑腰。
 
@@ -319,6 +321,6 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 | worker 说做完了但 `validate.py` FAIL | 产物是编译错误 | 退回 worker，**绝不手收**；无法复现的检查记为未运行 |
 | `check-diff` FAIL：candidate changed a forbidden path | 候选碰了评判自己的门 | 立即停止；需要改门 = gate change，走人审 |
 | 评审说 `changes_requested` | 正常环 | 步骤 9 修复一轮再审；轮次进 episode |
-| `claude --print` 返回 502 / 挂起 | 第三方网关故障（C10，09-14 与 09-19 两次实测） | 换可用端点；权威评测/C9 验证都等它 |
+| `claude --print` 返回 502 / 挂起 | 第三方网关故障（C10，09-14 与 09-19 两次实测；2026-10-10 端点切换后恢复，见 C12） | 换可用端点（已切换至 `api.360.cn`，C12 一词探测 3/3 通过；U-01 解除） |
 | 记录被 `artifacts` 拒：缺 `review_roundtrips` | 字段必填（要求见 `episodes/README.md`） | 没开评审门写 `[]`；历史记录按回填约定加说明 signal |
 | 想引用仓库外的文件 | 可携带性规则 | 用 `仓库名@revision:路径` 限定，或把证据逐字嵌进记录 |

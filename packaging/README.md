@@ -7,6 +7,11 @@
 python3 packaging/build_runtime.py
 ```
 
+门会核对这棵生成树的新鲜度：`python3 tools/lab/validate.py manifests` 在 `packaging/runtime`
+存在时把它与源面逐字节对照（manifest 名字/版本 + 白名单内每个文件），漂移即门红并提示重建——
+因为 marketplace 装的就是这棵树，过期快照会静默装出旧角色，而其余八项检查对此毫无感知。
+改过 `agents/`、`skills/`、`schemas/` 或任何 manifest 之后重建它，再复跑该检查。
+
 该副本只复制一份白名单：`agents/`、`skills/`、`schemas/`、三个宿主插件目录（`.zcode-plugin/`、
 `.claude-plugin/`、`.codex-plugin/`），以及 `plugin.json`、`marketplace.json`、`protected-paths.txt`；
 除此之外的一切都不复制。生成后 `verify` 还会拒绝在顶层出现以下名称（它们是记录、实验或源码树）：

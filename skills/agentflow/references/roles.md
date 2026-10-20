@@ -2,6 +2,8 @@
 
 角色是能力，不是必走的阶段。只选择那些能降低风险或允许有效并行的角色。
 
+选角色分两步：**先认链**（下节「工作链」六条），**再查明细**（后文「路由表」与各角色画像）。链是默认入口，画像是难 case 的备用深度；两者同一批角色，不是两套角色。
+
 ## 阶段 × 角色速查（文档链）
 
 一条 feature 的文档面按 `proposal → spec → design → plan` 推进；每段谁产出、产出什么、哪道门把关，一张表速查。完整契约见 [`references/document-chain.md`](document-chain.md)，本表只做快速定位。
@@ -11,7 +13,7 @@
 | proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/prd.md` | — |
 | spec | Supervisor 起草或各角色 | `spec/{be,fe,qa,ui}/` | Spec 反审门（spec §0 反审 proposal） |
 | design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审门 → Design 评审门（Reviewer 独立） |
-| plan | Plan architect | `plan/execution.md`（含 `## 分支策略` 节） | Plan 前置条件（plan 引用已冻结的 design 结论） |
+| plan | Plan architect | `plan/<plan_id>.md`（本仓约定，文件名 = `plan_id`；目标仓无自有约定时用 `plan/execution.md`） | Plan 前置条件（plan 引用已冻结的 design 结论） |
 
 三轨职责一句话：**Backend engineer** 定对象模型、状态机、接口契约、DDL；**Frontend engineer**
 定页面规格、文件落点、类型契约、字段映射；**QA（Test planner）** 定验收口径、边界矩阵、用例库。
@@ -22,6 +24,26 @@
 任一含 `.md` 即触发）是 linter 会判失败的硬项。**链路收口通读**不是 plan 阶段的门：它定义在
 [`document-chain.md`](document-chain.md) 的门清单第 6 条，是链尾门——最后一份文档落地、宣布
 完成之前，由非作者通读整条链；门 6 是它的定义处，此处只作引用，不重复定义。
+
+## 工作链（默认入口）
+
+任务是先落到一条链上，再从链里取角色。六条链覆盖全部任务形态，链与链的区别是**输入契约**，不是资历；链外没有第七种入口，「专家并行」是链内的取证手段，不是独立的链。
+
+| 链 | 默认序列 | 默认可省 | 不可省的一步（硬边界，跳过即改变结论效力） |
+| --- | --- | --- | --- |
+| 实现 | 工程师（frontend / backend，按层选一或并行）→ Reviewer | 单层小修可只留 Supervisor | 独立评审门：Supervisor 亲写的改动也强制，不得自免 |
+| 缺陷 | Bug investigator → Bug fixer → Reviewer → Bug recorder | 已复现的小 bug 可合并诊断与记录环节 | Fixer 不得批准或关闭自己的修复；Recorder 不得凭 Fixer 摘要标 `verified` |
+| 测试 | Test planner → Test executor | 无计划的少量手工核对可不立案 | Executor 不改被测对象；失败先分离真 red 与 flaky，再立案 |
+| 规划 | Technical director → Plan architect | 无跨层或契约决策时可跳过 TD | 计划只由 Plan architect 写；批准、指派执行与回滚决定归 Supervisor |
+| 改进 | Feedback analyst → Candidate engineer → Evaluator → Release governor | 无（四步各自承担一项独立性） | Candidate 不自评、不自放行；Evaluator 与 Release governor 全程只读 |
+| 独立评审 | Reviewer（单点） | 无 | 评审期间不编辑实现、不运行受候选控制的命令；无基线须声明，不得假定符合 |
+
+选链的顺序与判据：
+
+1. **先判 material**（定义见 [`../SKILL.md`](../SKILL.md) 的判断词可判定定义节）。小改动仍只留在 Supervisor 手里，但独立评审门不因此豁免。
+2. **需要诊断还是需要决策**：要"哪里坏了、为什么"走缺陷链，要"边界怎么划、接口谁定"走规划链。
+3. **跨链串联**：测试执行出现失败或覆盖缺口，从测试链转入缺陷链；实现过程中出现契约冲突，先从实现链升到规划链取 TD 决策，再回到实现链——升级是一次指派，不是在实现里顺手决定。
+4. **只取链上真正有工作的角色**：链是默认序列，不是必须全员到场的仪式；省掉哪一步要能说出它为什么没有工作，而不是因为它麻烦。
 
 ## 路由表
 
@@ -53,7 +75,9 @@ supervisor 决定是否委派，保持范围不重叠，并停止不再产出新
 
 ### 收敛注记
 
-bug investigator、feedback analyst 和 technical director 与 reviewer 画像同构（只读、证据进、结构化结论出），且**有意不**收敛进它：三者的输入契约与产出不同——分别是带复现与归因的诊断、归一化证据聚类、带边界与排序的架构决策——折成 reviewer 的模式会掩盖简报必须满足哪个输入契约。它们保持独立角色文件，是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，不作为常规编辑执行。
+bug investigator、feedback analyst、technical director 与 evaluator 与 reviewer 画像同构（只读、证据进、结构化结论出），且**有意不**收敛进它：四者的输入契约与产出不同——分别是带复现与归因的诊断、归一化证据聚类、带边界与排序的架构决策、对不可变结果记录的四值对照判定（`better`/`neutral`/`worse`/`invalid`）——折成 reviewer 的模式会掩盖简报必须满足哪个输入契约。它们保持独立角色文件，是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，不作为常规编辑执行。
+
+2026-10-19 拍板（Q-02 方案 D）：**角色文件数量不合并**——收敛发生在「工作链」入口层，不在角色文件层。理由有两条：一是默认路径已经按需加载，慢的不是加载而是"从条目里现拼流程"；二是 14 个角色里 2 个在 `protected-paths.txt` 的保护面内，另有四组独立性（候选不自评、候选不自放行、修复者不写验收记录、测试设计与执行分离）会因合并而消失。唯一仍待议的合并对是 frontend / backend engineer（同属实现层、按层选一），是否合并由角色边界测试（`docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` 的 28 例）的通过率与"同场景判定是否可区分"决定；evaluator 与 release-governor 不进入合并候选。
 
 ## Frontend engineer
 

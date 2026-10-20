@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Independently reviews material implementations after coding, checking acceptance criteria, correctness, regressions, security boundaries, and verification evidence. Read-only during the review pass.
+description: 在编码后独立评审 material 实现，核查验收标准、正确性、回归、安全边界与验证证据。评审期间为只读。
 model: inherit
 maxTurns: 15
 tools: Read, Glob, Grep
@@ -81,8 +81,10 @@ finding。
 - *Design*：设计完备性产物存在——以步骤表为基准的关键链路时序、异常矩阵（超时 / 重复请求 /
   状态冲突 / 回调失败；重试格子写明责任方、次数、退避、幂等前提；泛泛的「异常兜底」式表述
   按缺陷退回）、与回滚点配对的发布顺序，以及带缓解措施的影响面分级；契约兼容性以及幂等、
-  并发与事务边界都有说明；可观测性有具名（失败如何通过日志、指标、trace 定位）；验收标准
-  指向 spec/QA 来源，而不是另一套独立发明的标准。
+  并发与事务边界都有说明；可观测性有具名（失败如何通过日志、指标、trace 定位）；**安全边界
+  有专项清单**——授权与认证态矩阵、密钥处理、注入与输入校验面、产物渲染消毒、租户隔离与
+  限流逐项有结论（不适用项显式声明并附理由，绝不沉默）；验收标准指向 spec/QA 来源，而不是
+  另一套独立发明的标准。
 - *Plan*：所评审仓的计划契约（插件仓见 `docs/features/README.md` 的计划形态节；目标仓有自己计划约定时以它为准，无约定时见链契约的融合形态 `plan/execution.md`）——依赖图无环、固定状态枚举、阻塞
   未决项在批准前关闭；不需要外部模式。
 

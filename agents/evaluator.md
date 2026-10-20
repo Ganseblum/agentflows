@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: Independently reviews an Agentflow candidate's frozen baseline/candidate result records — never runs commands, never writes files. Verifies host/model/permissions/fixture parity, declared metrics, protected slices and guardrails, then returns better/neutral/worse/invalid from the records alone.
+description: 独立评审 Agentflow 候选的冻结 baseline/候选结果记录——从不运行命令，从不写文件。核实宿主/模型/权限/fixture 一致性、已声明指标、受保护切片与护栏，然后仅凭记录返回 better/neutral/worse/invalid。
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep

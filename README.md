@@ -49,7 +49,7 @@ python3 tools/lab/isolation.py check-diff \
 ```
 
 `validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套九项检查——schema、
-examples、记录产物、受保护清单、五份 manifest 一致性、文档面（含版本散文守卫与断链 /
+examples、记录产物、受保护清单、五份 manifest 一致性（含 `packaging/runtime` 生成树新鲜度）、文档面（含版本散文守卫与断链 /
 退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测，以及文档链 linter 对活文档面
 （`docs/product/`、`docs/features/`）的扫描。失败即编译错误：修好它，或把输出退回 worker。
 
@@ -66,12 +66,14 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
 检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现。人工批准是默认的发布边界。
 
 工作区包含一组确定性的门与工具（`tools/lab/`）：一个无依赖的契约与记录校验器
-`validate.py`（九项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性、
-文档面、仓库回归测试、文档链自测与活面扫描，外加安装快照漂移检查 `installed`）、
-一个文档链 linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
+`validate.py`（九项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性与
+runtime 生成树新鲜度、文档面、仓库回归测试、文档链自测与活面扫描，外加安装快照漂移检查 `installed`；检查函数
+均已拆入 `tools/lab/gate/` 模块包，`validate.py` 保留为薄入口）、一个文档链
+linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
 产物摘要工具（`artifact_digest.py`）；`record_store.py` 提供记录的一次性 SQLite FTS5
 词法检索，`trend.py` 把改进环已有的信号（再犯档位、活面发现数、评审发现数、套件规模）
-追加记录到 `docs/trend.jsonl`。真实模型 dogfood、私有 holdout 服务与安装/发布切换
+追加记录到 `docs/trend.jsonl`，`counts.py` 核对文档里的计数标记，`mutate.py` 对门自身
+做变异测试。真实模型 dogfood、私有 holdout 服务与安装/发布切换
 仍在有意待办；评测装置已于 2026-10-12 裁撤（见
 [`docs/design-decisions.md`](docs/design-decisions.md) §3）。
 
@@ -88,9 +90,11 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
   `improve` 自迭代环），以及五份 manifest（`plugin.json`、`marketplace.json`、
   `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`）。
 - **契约与门**：`schemas/` 是记录契约；`tools/lab/` 是确定性的检查与工具——
-  `validate.py`（全套检查）、`doc_chain.py`（文档链 linter）、`isolation.py`（候选禁区检查）、
-  `artifact_digest.py`（产物摘要）、`record_store.py`（记录的一次性 FTS5 检索）、
-  `trend.py`（改进环信号趋势）；`tests/` 是这些门工具的回归测试；`examples/` 是校验器的正反例。
+  `validate.py` 薄入口 + `gate/` 检查模块包（全套检查）、`doc_chain.py`（文档链 linter）、
+  `isolation.py`（候选禁区检查）、`artifact_digest.py`（产物摘要）、`counts.py`（文档计数
+  标记核对）、`mutate.py`（门变异测试）、`record_store.py`（记录的一次性 FTS5 检索）、
+  `trend.py`（改进环信号趋势）；`tests/` 是这些门工具的回归测试；`examples/` 是校验器与
+  文档链 linter 的正反例。
   这一面的多数在 [`protected-paths.txt`](protected-paths.txt) 内，改动即门变更。
 - **记录**：`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/`。
 - **文档**：`index.md` 加 `docs/` 下的产品链、`docs/system-guide.md`、`docs/design-decisions.md`、
@@ -105,7 +109,8 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) 了解已观察到的宿主约束；
 每个版本为何变更见 [`CHANGELOG.md`](CHANGELOG.md) 各版本条目。
 
-源码检出的版本活在 manifest 中（`python3 tools/lab/validate.py manifests` 断言五份一致）。声明了
+源码检出的版本活在 manifest 中（`python3 tools/lab/validate.py manifests` 断言五份一致，
+并顺带核对 `packaging/runtime` 生成树与源面逐字节一致）。声明了
 版本本身并不证明某个宿主正在运行该版本：ZCode 加载安装快照，Codex 可能加载单独的插件缓存。
 dogfood 之前，用 `python3 tools/lab/validate.py installed
 --path <installed-plugin-root>`（或宿主特定的默认值）比对实际的宿主快照并记录结果。

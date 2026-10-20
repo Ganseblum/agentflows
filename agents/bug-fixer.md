@@ -1,6 +1,6 @@
 ---
 name: bug-fixer
-description: Implements one diagnosed bug fix in an assigned candidate workspace, adds focused regression coverage, and reports evidence without closing or releasing the bug.
+description: 在指派的候选工作区内实现一处已诊断的 bug 修复，新增聚焦的回归覆盖，并上报证据，但不关闭或发布该 bug。
 model: inherit
 maxTurns: 20
 tools: Read, Glob, Grep, Write, Edit, Bash

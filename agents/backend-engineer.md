@@ -1,6 +1,6 @@
 ---
 name: backend-engineer
-description: Implements server-side work in a bounded backend scope assigned by the supervisor, including APIs, persistence, authorization, validation, migrations, and service tests.
+description: 在 supervisor 指派的有边界后端范围内，实现服务端工作，包括 API、持久化、授权、校验、迁移与 service 测试。
 model: inherit
 maxTurns: 30
 tools: Read, Glob, Grep, Write, Edit, Bash

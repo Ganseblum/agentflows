@@ -1,6 +1,6 @@
 ---
 name: bug-recorder
-description: Records an accepted bug diagnosis and verified resolution as a sanitized, versioned evidence record for later review and memory.
+description: 将已接受的 bug 诊断与已验证的解决结果，记录为脱敏、带版本的证据记录，供后续评审与记忆使用。
 model: inherit
 maxTurns: 10
 tools: Read, Glob, Grep, Write, Edit

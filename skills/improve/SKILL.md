@@ -1,9 +1,9 @@
 ---
 name: improve
-description: Use only when the user asks to evolve, optimize, evaluate, version, promote, or roll back the Agentflow plugin or its role instructions. Runs a governed improvement cycle from explicit user feedback and real task outcomes: evidence triage, one bounded candidate, independent baseline comparison, and an auditable release or rollback decision.
+description: 仅当用户要求演进、优化、评测、版本化、晋级或回退 Agentflow plugin 或其角色指令时使用。它从明确的用户反馈与真实任务结果出发，运行一个受控的改进环：证据分诊、单个有界候选、独立基线对照，以及可审计的发布或回退决策。
 ---
 
-# Agentflow Improve
+# Agentflow 改进
 
 为 Agentflow 插件运行受控的改进环。模型、工具、权限与 Agent 均由当前宿主提供。不得调用独立的 Agentflow CLI。
 
