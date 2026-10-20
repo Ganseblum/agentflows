@@ -1,6 +1,6 @@
 # Agentflow 方法行为规格（spec）
 
-> 适用阶段：`spec/`。前置依赖：`proposal/proposal.md`（原文不改）、本目录 `README.md`。
+> 适用阶段：`spec/`。前置依赖：`proposal/proposal.md`（原文不改）、`../README.md`。
 > 文档状态：待需求评审（独立评审，文档模式 review spec）。
 > 冻结语义：本文件的条目即方法的行为承诺。条目变更 = 方法变更，走版本批（CHANGELOG）+
 > 独立评审；不悄悄改。当前版本以五份 manifest 与 `CHANGELOG.md` 为准，本文不复述版本号。
@@ -16,7 +16,7 @@
 | C-2 | §1.3「产品文档链」说四层，但没说产品线的 **plan 层放哪**（本仓 plan 契约在各批次 `plan/`，业务仓在目标仓约定位置） | 阻塞 | 由本 spec **S13** 承接：定义链条的目录映射 |
 | C-3 | 旧设计文档与本链的内容冲突裁决规则写在 `README.md` 而不在 proposal | 非阻塞 | 已在 `README.md` 声明，接受现状；若评审认为应上收，回填 proposal |
 | C-4 | §三 用户场景缺用户侧收益量化口径（OQ-1） | 非阻塞 | 已登记 proposal §五台账（OQ-1），待业务尺子跑通后定 |
-| C-5 | §五台账 U-02「调用授权与预算」没有授权粒度定义（按次/按批/按预算上限） | 非阻塞 | 属执行期用户决策，不属产品规格；保留在台账，由 `PLAN-LOOP-SMOKE-001` T09 人批门实操时定 |
+| C-5 | §五台账 U-02「调用授权与预算」没有授权粒度定义（按次/按批/按预算上限） | 非阻塞 | 属执行期用户决策，不属产品规格；评测装置与三件套 2026-10-12 裁撤后失去对象，台账行已同步关闭 |
 
 阻塞项 C-1、C-2 已由本文件承接关闭，本节全关。
 
@@ -24,16 +24,16 @@
 
 > 每条：陈述（承诺什么）→ 验收口径（怎么算做到）→ 标尺（机器或流程用什么验证）。
 > 状态枚举：`生效`（当前实现满足且有机器标尺）/ `在建`（实现或标尺缺一，缺什么写明）/
-> `待验证`（有实现有标尺，但未在真实条件下跑过——如 live 评测）。
+> `待验证`（有实现有标尺，但未在真实条件下跑过——如 live 评测）/ `已停用` / `已裁撤`（终态，注明日期与出处）。
 
 ### S1 触发与角色面
 
-- **陈述**：方法以 Skill 形式被宿主加载；14 个角色是按需取用的能力清单（backend /
-  frontend / plan-architect / technical-director / reviewer / test-planner / test-executor /
+- **陈述**：方法以 Skill 形式被宿主加载；14 个角色是按需取用的能力清单（backend-engineer /
+  frontend-engineer / plan-architect / technical-director / reviewer / test-planner / test-executor /
   bug-investigator / bug-fixer / bug-recorder / candidate-engineer / evaluator /
   feedback-analyst / release-governor），默认路径不启动不降低风险的角色。
-- **验收口径**：宿主会话中用户可不经点名获得正确路由；角色文件齐全且 frontmatter name 与
-  文件名一致。
+- **验收口径**：角色文件齐全且 frontmatter name 与文件名一致；「不经点名获得正确路由」为
+  设计意图——宿主侧未实测，按 S15 不作已验证声明。
 - **标尺**：`validate.py docs`（角色引用解析 + name 一致性）；`validate.py manifests`。
 - **状态**：生效。
 
@@ -44,7 +44,8 @@
 - **验收口径**：任意一次 material 改动能按十步还原出对应证据（计划、工件、评审、决定记录）。
 - **标尺**：episode 落盘契约（`skills/improve/references/episode.schema.json`）+ `validate.py
   artifacts`。
-- **状态**：生效（十步本身靠 dogfood 保障，无独立机器标尺——见 S15 诚实声明）。
+- **状态**：在建（缺：十步顺序本身的独立机器标尺；证据还原由 episode 契约与 `validate.py
+  artifacts` 覆盖，见 S15）。
 
 ### S3 委派契约与硬边界
 
@@ -77,11 +78,11 @@
   主会话 缺陷。
 - **验收口径**：任一 worker 失败事件能归入三类之一且有对应记录动作。
 - **标尺**：`contracts.md` Worker failure semantics 节 + episode 落盘。
-- **状态**：生效（条款面），`待验证`（真实 crash/timeout 注入演练未做——登记 design §2）。
+- **状态**：待验证（条款与落盘标尺在案；真实 crash/timeout 注入演练未做，登记 design §2）。
 
 ### S6 记录体系
 
-- **陈述**：记录各有 schema 与落点——bug（`docs/issues/`）、plan（批次内
+- **陈述**：记录各有 schema 与落点——bug（`docs/issues/`，含 `recurrence/` 再犯台账）、plan（批次内
   `docs/features/<批次>/plan/`）、review（`reviews/`）、episode（`episodes/`）、
   test-plan / test-run（`docs/features/<批次>/testing/`）、批次（`docs/features/<批次>/`）、
   在途与待验收工作文件（`docs/releases/`）。改进三件套与逐版本发布记录已停用
@@ -118,10 +119,13 @@
   skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除 `docs/`、`episodes/`、
   `reviews/` 与 tests / tools / evals / examples / packaging/CHANGELOG）；五份 manifest 是唯一
   版本事实源；源码编辑在重装前不改变宿主行为。
-- **验收口径**：生成目录存在且组件齐全；`validate.py installed` 逐文件 sha256 与源码一致；
-  克隆后先跑构建脚本（gitignore 产物）。
-- **标尺**：`validate.py installed`；`validate.py manifests`（名称/版本五处一致）。
-- **状态**：生效（瘦快照已重装核实）。
+- **验收口径**：生成目录存在且组件齐全，与源面逐字节一致（`validate.py manifests` 门内
+  新鲜度检查）；宿主安装面由 `validate.py installed` 在重装后核实；克隆后先跑构建脚本
+  （gitignore 产物）。
+- **标尺**：`validate.py manifests`（名称/版本五处一致 + runtime 与源面新鲜度）；`validate.py
+  installed`（宿主安装面，重装后适用）。
+- **状态**：生效（生成树与源逐字节一致）；宿主安装快照落后——2026-10-13 复核 `installed`
+  FAIL（cache 停留 0.10.0），重装后复跑核实（`PLAN-PRODUCT-001` T06）。
 
 ### S10 业务评测仪器（已裁撤）
 
@@ -132,7 +136,7 @@
   `seed_grader.py` 与相关机器已删除，原文留存备查。同批公开套件也一并裁撤——
   `evals/public/`（15 用例）与 `evals/` 整树、runner/adapter/policy 及三个相关 schema
   已于同日**删除**，不再保留为仪器存量；恢复条件与重建清单见
-  [`docs/design-decisions.md`](../../design-decisions.md) §3。
+  `docs/design-decisions.md` §3。
 
 ### S11 文档交付链（对外生成）
 
@@ -155,7 +159,9 @@
 - **验收口径**：每个声称"已在宿主 X 验证"的结论能指到一份该宿主的 evaluation 记录；
   指不出的按未验证处理。
 - **标尺**：`validate.py artifacts`（evaluation 编译门）。
-- **状态**：条款生效 / 尚无首份证书（claude 证书依赖 U-01；当前唯一 live 证据是 codex 一词探测，X1）。
+- **状态**：生效（条款）；尚无首份证书——U-01 已解除（C12）但评测装置 2026-10-12 裁撤、无采集
+  装置；现存 live 证据均为端点健康类（claude 侧一词探测 3/3 与 AF-001×3 试水见 C12；codex 侧
+  一词探测见 X1），无套件级评测证据。
 
 ### S13 产品文档链条目映射（承接 C-2）
 
@@ -191,17 +197,17 @@
 | 条目 | 一句话 | 状态 |
 | --- | --- | --- |
 | S1 | 14 角色能力库，默认路径短 | 生效 |
-| S2 | 十步主工作流 | 生效 |
+| S2 | 十步主工作流 | 在建（流程标尺缺口） |
 | S3 | 写/读范围分离 + 14 条硬边界 | 生效 |
 | S4 | 独立评审门（作者参与不可豁免） | 生效 |
-| S5 | 失败语义三类，编排层不做保底 | 生效（注入演练待做） |
+| S5 | 失败语义三类，编排层不做保底 | 待验证（注入演练未做） |
 | S6 | 记录体系 + 编译门 | 生效 |
 | S7 | 改进环：预声明 → 独立评测 → 人批门 | **已停用**（2026-10-12） |
 | S8 | 确定性检查全套 + 保护门 | 生效 |
-| S9 | 瘦快照打包，manifest 为版本事实源 | 生效 |
+| S9 | 瘦快照打包，manifest 为版本事实源 | 生效（重装复核待做） |
 | S10 | 业务尺子 | **已裁撤**（2026-10-12） |
 | S11 | 文档交付链（对外生成） | 生效 |
-| S12 | 宿主测量证书按宿主发 | 生效条款 / 尚无首份证书（U-01） |
+| S12 | 宿主测量证书按宿主发 | 生效（条款）；尚无证书（装置裁撤） |
 | S13 | 产品链目录映射 | 生效 |
 | S14 | 外部文档评审桥 | 生效 |
 | S15 | 诚实声明条款 | 生效 |

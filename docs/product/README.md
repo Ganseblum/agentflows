@@ -18,7 +18,7 @@
 - 主实施仓：本仓库（方法、角色、仪器、记录契约同仓）
 - 分发形态：ZCode / Claude Code / Codex 宿主插件，[`marketplace.json`](../../marketplace.json) 的
   `source` 指向 `./packaging/runtime`（由 `packaging/build_runtime.py` 生成的瘦快照）
-- 最后更新时间：`2026-10-12`
+- 最后更新时间：`2026-10-19`
 
 ## 推进进度
 
@@ -40,7 +40,7 @@
 
 ### 3. 需求评审 [门禁]
 
-- ☐ 需求评审通过（独立评审，文档模式 review proposal/spec；阻塞项全关后勾选）
+- ☑ 需求评审通过（独立评审，文档模式 review proposal/spec；阻塞项全关后勾选）——REV-20261010-001 修复轮复审 approved（REV-20261019-003，2026-10-19，F1–F12 全关闭）
 
 ### 4. Design [技术方案]
 
