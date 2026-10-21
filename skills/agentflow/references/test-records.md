@@ -33,7 +33,8 @@ frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校�
 - **计划解析**：执行记录的 `test_plan_id` 必须解析到同一 feature 目录下的一份计划记录，且
   `project` 匹配。当执行轮次钉住计划当前的 `test_version` 时，注册表中的每个用例都在结果表里
   有交代（针对旧版本的一次执行则记录它自己的覆盖情况）。
-- **Findings**：`findings` / `flow_findings` 列出必须存在于 `docs/issues/` 下的 `BUG-*` id。
+- **Findings**：`findings` / `flow_findings` 列出必须存在于 `docs/issues/` 下的 `ISS-*` id
+  （本仓缺陷编号家族是 `ISS-<YYYY>-<NNN>`；schema 以 `^ISS-\d{4}-\d{3,}$` 强制）。
   失败的用例带可直接复现的 findings（步骤、期望与实际、证据引用），让 supervisor 无需重新推导
   即可立 bug 记录；归因遵循标准规则（目标项目缺陷取 `external`，Agentflow 自身方法缺口取
   `agentflow`）。

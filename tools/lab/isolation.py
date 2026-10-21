@@ -119,7 +119,12 @@ def changed_paths(candidate: Path, base: str) -> list[str]:
             raise RuntimeError(completed.stderr.decode(errors="replace").rstrip() or "git diff failed")
         paths.update(item.decode("utf-8", errors="surrogateescape").replace("\\", "/")
                     for item in completed.stdout.split(b"\0") if item)
-    return sorted(paths)
+    # Python bytecode caches are a side effect of *running the gate itself* (PYTHONDONTWRITEBYTECODE
+    # is not always set by callers), not a candidate edit. tools/lab/gate/ is a protected prefix,
+    # so without this filter an honest candidate that ran the checks is blocked by its own
+    # __pycache__ (2026-10-20 evaluation G06). The tests/ prefix solved the same problem by
+    # protecting files individually; a global cache filter is the honest equivalent.
+    return sorted(path for path in paths if "__pycache__" not in Path(path).parts)
 
 
 def check_diff(args: argparse.Namespace) -> int:

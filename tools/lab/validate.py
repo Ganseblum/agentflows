@@ -262,6 +262,24 @@ def validate_static_checks(root: Path = ROOT) -> list[ValidationError]:
     return errors
 
 
+# The single source of truth for what `all` runs (and what `--list` prints). Every prose
+# reference to the check count should quote this list, never hand-count it — the 2026-10-20
+# evaluation (docs/evaluations/) found 28 lines / 13 files claiming "nine checks" after the
+# `lint` target made it ten.
+ALL_CHECKS: list[tuple[str, Callable[..., list[ValidationError]]]] = [
+    ("schemas", validate_schemas),
+    ("examples", validate_examples),
+    ("artifacts", validate_workspace_artifacts),
+    ("protected", validate_protected_paths),
+    ("manifests", validate_manifests),
+    ("docs", validate_doc_consistency),
+    ("tests", validate_unit_tests),
+    ("doc_chain", validate_doc_chain),
+    ("doc_chain_live", validate_doc_chain_live),
+    ("lint", validate_static_checks),
+]
+
+
 def main(argv: list[str] | None = None) -> int:
     # Hard floor: tests/ use PEP 604 syntax without a future import, so an
     # interpreter below 3.10 cannot run the suite — refuse loudly instead of
@@ -277,6 +295,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "target",
+        nargs="?",
+        default=None,
         choices=[
             "schemas",
             "examples",
@@ -296,6 +316,12 @@ def main(argv: list[str] | None = None) -> int:
         help="contract set to validate, or 'report'/'recurrence' for retrospective tables",
     )
     parser.add_argument(
+        "--list",
+        dest="list_checks",
+        action="store_true",
+        help="print the checks `all` runs (single source of truth for the count) and exit",
+    )
+    parser.add_argument(
         "--path",
         dest="installed_path",
         help="for 'installed', compare against this plugin copy instead of the ZCode cache",
@@ -306,6 +332,15 @@ def main(argv: list[str] | None = None) -> int:
         "--provenance", dest="report_provenance", help="for 'report', only records with this provenance"
     )
     args = parser.parse_args(argv)
+
+    if args.list_checks:
+        for label, _ in ALL_CHECKS:
+            print(label)
+        print(f"all runs {len(ALL_CHECKS)} checks")
+        return 0
+
+    if args.target is None:
+        parser.error("the following arguments are required: target (or pass --list)")
 
     if args.target == "report":
         errors = bug_report(
@@ -327,28 +362,17 @@ def main(argv: list[str] | None = None) -> int:
     checks = cast(
         "list[tuple[str, Callable[..., list[ValidationError]]]]",
         {
-            "schemas": [("schemas", validate_schemas)],
-            "examples": [("examples", validate_examples)],
-            "artifacts": [("artifacts", validate_workspace_artifacts)],
-            "protected": [("protected", validate_protected_paths)],
-            "manifests": [("manifests", validate_manifests)],
-            "docs": [("docs", validate_doc_consistency)],
-            "tests": [("tests", validate_unit_tests)],
-            "doc_chain": [("doc_chain", validate_doc_chain)],
-            "doc_chain_live": [("doc_chain_live", validate_doc_chain_live)],
-            "lint": [("lint", validate_static_checks)],
-            "all": [
-                ("schemas", validate_schemas),
-                ("examples", validate_examples),
-                ("artifacts", validate_workspace_artifacts),
-                ("protected", validate_protected_paths),
-                ("manifests", validate_manifests),
-                ("docs", validate_doc_consistency),
-                ("tests", validate_unit_tests),
-                ("doc_chain", validate_doc_chain),
-                ("doc_chain_live", validate_doc_chain_live),
-                ("lint", validate_static_checks),
-            ],
+            "schemas": ALL_CHECKS[:1],
+            "examples": ALL_CHECKS[1:2],
+            "artifacts": ALL_CHECKS[2:3],
+            "protected": ALL_CHECKS[3:4],
+            "manifests": ALL_CHECKS[4:5],
+            "docs": ALL_CHECKS[5:6],
+            "tests": ALL_CHECKS[6:7],
+            "doc_chain": ALL_CHECKS[7:8],
+            "doc_chain_live": ALL_CHECKS[8:9],
+            "lint": ALL_CHECKS[9:10],
+            "all": ALL_CHECKS,
         }[args.target],
     )
 

@@ -105,7 +105,8 @@
 ### S8 确定性验证面
 
 - **陈述**：`validate.py all` 全套检查（schemas / examples / artifacts / protected /
-  manifests / docs / tests / doc_chain 自测 / doc_chain_live 活面，9 项）全绿是任何交付的最低门槛；保护门清单
+  manifests / docs / tests / doc_chain 自测 / doc_chain_live 活面 / lint，项数以
+  `validate.py --list` 自报为准）全绿是任何交付的最低门槛；保护门清单
   （`protected-paths.txt`）覆盖评测官/发布官角色、测量路径、记录 schema、钉住
   回归测试；门变更须人工评审。
 - **验收口径**：`python3 tools/lab/validate.py all` 退出码 0；`validate.py protected`

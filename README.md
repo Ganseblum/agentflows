@@ -21,7 +21,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。当前发布提供：
 
-- 一个共享的开发 Skill 与<!-- count:agents -->14<!-- /count -->个角色档案：前端/后端一对、Technical Director、
+- 一个共享的开发 Skill 与<!-- count:agents -->15<!-- /count -->个角色档案：前端/后端一对、Technical Director、
   Reviewer、Investigator → Fixer → Recorder bug 链、Plan Architect、Test
   Planner/Executor 链，以及改进环的 Feedback Analyst、Candidate Engineer、Evaluator 与
   Release Governor；
@@ -48,10 +48,12 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套九项检查——schema、
+`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套十项检查——schema、
 examples、记录产物、受保护清单、五份 manifest 一致性（含 `packaging/runtime` 生成树新鲜度）、文档面（含版本散文守卫与断链 /
-退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测，以及文档链 linter 对活文档面
-（`docs/product/`、`docs/features/`）的扫描。失败即编译错误：修好它，或把输出退回 worker。
+退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测、文档链 linter 对活文档面
+（`docs/product/`、`docs/features/`）的扫描，以及 lint（ruff + mypy，依赖
+`requirements-dev.txt`）。项数以 `python3 tools/lab/validate.py --list` 自报为准。
+失败即编译错误：修好它，或把输出退回 worker。
 
 > 注意：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归——本会话即观察到此类环境假红。
 
@@ -65,9 +67,10 @@ Supervisor 授权并协调执行。独立的 Execution Coordinator 预留给未�
 SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权威，且不使用向量数据库。跨会话遥测、持久
 检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现。人工批准是默认的发布边界。
 
-工作区包含一组确定性的门与工具（`tools/lab/`）：一个无依赖的契约与记录校验器
-`validate.py`（九项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性与
-runtime 生成树新鲜度、文档面、仓库回归测试、文档链自测与活面扫描，外加安装快照漂移检查 `installed`；检查函数
+工作区包含一组确定性的门与工具（`tools/lab/`）：一个契约与记录校验器
+`validate.py`（十项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性与
+runtime 生成树新鲜度、文档面、仓库回归测试、文档链自测与活面扫描、lint，项数以
+`--list` 自报为准；另加安装快照漂移检查 `installed`；检查函数
 均已拆入 `tools/lab/gate/` 模块包，`validate.py` 保留为薄入口）、一个文档链
 linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
 产物摘要工具（`artifact_digest.py`）；`record_store.py` 提供记录的一次性 SQLite FTS5

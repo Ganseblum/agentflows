@@ -10,7 +10,7 @@
 
 | 阶段 | 谁产出 | 产出物（按角色镜像） | 门 |
 | --- | --- | --- | --- |
-| proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/prd.md` | — |
+| proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/proposal.md` | — |
 | spec | Supervisor 起草或各角色 | `spec/{be,fe,qa,ui}/` | Spec 反审门（spec §0 反审 proposal） |
 | design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审门 → Design 评审门（Reviewer 独立） |
 | plan | Plan architect | `plan/<plan_id>.md`（本仓约定，文件名 = `plan_id`；目标仓无自有约定时用 `plan/execution.md`） | Plan 前置条件（plan 引用已冻结的 design 结论） |
@@ -53,6 +53,7 @@
 | --- | --- |
 | 单层小修、复现明确 | Supervisor 自己做；任何 Supervisor 亲写的改动仍适用独立 Reviewer 门 |
 | 有界范围的前端或后端实现 | 一名工程师 + 改动重要时启用 Reviewer |
+| 用户行为事件的新增/修改、事件采集端点、事件表结构或看板聚合口径变更 | 工程师（按 `design/fe` 事件契约实现并自验 payload）+ Reviewer（埋点专项，清单见 [`telemetry.md`](telemetry.md)）；三条运行时判据只认端到端路径证据或网络日志 |
 | 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
 | 纯规划请求、暂不写码 | 专家并行 → Plan Architect |
 | 用户可见功能的自动化测试（用户点名，或计划带测试设计任务） | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行；禁 Edit，只写运行记录、不改被测对象）→ Reviewer（流程合理性模式） |
@@ -109,7 +110,7 @@ reviewer 独立于实现者。它检查验收标准、正确性、回归风险�
 
 findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补丁；评审缺少基线时，报告声明这一点，而不是假定符合。对行为改动，它在批准前走一遍改动触及的运行时路径——调用顺序、状态流转、失败分支。
 
-专项审计——安全、测试深度、文档准确性——走同一个 reviewer 角色，简报把范围限定到 reviewer 画像中对应的专项清单；它们不需要单独的角色。被评审的产物是外部文档时（二次评审桥），简报指明文档类型，reviewer 套用匹配的文档模式——proposal/PRD、spec 或 design——其清单在 reviewer 画像里；每一项都要引用原文才算通过。
+专项审计——安全、测试深度、文档准确性、**埋点**——走同一个 reviewer 角色，简报把范围限定到 reviewer 画像中对应的专项清单；它们不需要单独的角色。埋点专项的清单与隐私红线在 [`telemetry.md`](telemetry.md)，本画像不复述其内容；画像只声明其中三条属**运行时判据**——必须向 supervisor 索取端到端路径证据或网络请求日志，读代码不构成证据，拿不到就记为未验证。被评审的产物是外部文档时（二次评审桥），简报指明文档类型，reviewer 套用匹配的文档模式——需求提案、spec、design 或埋点——其清单在 reviewer 画像里；每一项都要引用原文才算通过。
 
 ## Bug investigator
 

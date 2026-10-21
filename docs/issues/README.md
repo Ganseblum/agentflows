@@ -8,8 +8,8 @@ issues/
   ISS-2026-001-claude-json-schema-被拒.md      # 编号逐项递增（缺陷与事项同一编号家族）
   recurrence/                 # 每个复发或已归纳的类一本台账
     unverified-behavior-claims.md
-  归档/                        # rejected 记录，保留其日期目录
-    2026-08-01/
+  归档/                        # rejected 记录，保留其日期目录（目录随首个 rejected
+    2026-08-01/                                  # 记录创建——当前 0 条 rejected，故尚不存在）
       ISS-2026-999-陈旧-flaky-测试.md          # 示例编号，与现行记录不撞号
 ```
 

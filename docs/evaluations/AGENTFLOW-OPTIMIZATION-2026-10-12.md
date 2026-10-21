@@ -4,7 +4,7 @@
 > 凡原评价报告路径/事实有误的，已在本文件"勘误"一节标明，不沿用错误行号。
 > 本文件同样故意排除在受治理文档面之外（不碰 protected-paths.txt），可随时删除。
 > **2026-10-18 合并说明**：本文件随 `workbuddy/main-b0d8652c` 并入 `main`（用户拍板只并入记录类内容），落点已在 `index.md`「迁移与清理记录」登记一行；其中提及的 `policy.py`、`eval_runner.py`、`host_adapter.py`、`evals/`、`improvements/` 均指 2026-10-12 裁撤前状态，现行结构以 `docs/design-decisions.md` §3 为准。
-> **2026-10-19 现状指针**：§7 汇总表中 G1/G2 的「已修」结论同样只对 `workbuddy/main-b0d8652c` 成立，未随合并带入 `main`；`main` 上的现行状态以 [`docs/PENDING-DECISIONS.md`](docs/PENDING-DECISIONS.md) 第 7 条为准。
+> **2026-10-19 现状指针**：§7 汇总表中 G1/G2 的「已修」结论同样只对 `workbuddy/main-b0d8652c` 成立，未随合并带入 `main`；`main` 上的现行状态以 [`PENDING-DECISIONS.md`](../PENDING-DECISIONS.md) 第 7 条为准。
 
 ---
 
@@ -12,7 +12,7 @@
 
 | # | 原报告说法 | 复核后事实 | 处置 |
 |---|---|---|---|
-| E1 | `resultSet` "四份拷贝"（报告二/3、十/5） | `grep` 实测 `resultSet` 仅在 `skills/improve/references/release-record.schema.json:358` 定义 1 次、`:26/:29` 以 `$ref` 复用（**良好做法**）；`schemas/` 下的 `evaluation-result`/`comparison` 是**独立顶层 schema**，其 `summary` 形状与 `resultSet` **同构但未用 `$ref`** | 撤回"四份拷贝"；改为 T2.12「8 指标 summary 形状跨文件重复，应抽共享 `$defs`」 |
+| E1 | `resultSet` "四份拷贝"（报告二/3、十/5） | `grep` 实测 `resultSet` 仅在 `skills/improve/references/release-record.schema.json:358` 定义 1 次、`:26/:29` 以 `$ref` 复用（**良好做法**）；当时 `schemas/` 下的 `evaluation-result`/`comparison` 是**独立顶层 schema**（两份均随 2026-10-12 评测装置裁撤删除），其 `summary` 形状与 `resultSet` **同构但未用 `$ref`** | 撤回"四份拷贝"；改为 T2.12「8 指标 summary 形状跨文件重复，应抽共享 `$defs`」 |
 | E2 | `isolation.py:124` base 以 `-` 开头会"静默 PASS（fail-open）"（报告二/2、五/3） | 实测 `git rev-parse --verify --help^{commit}` 与 `-x^{commit}` 均 **exit=128 → 抛 RuntimeError → check_diff 返回 1（fail-closed）** | 撤回"活动漏洞"措辞；保留 T0.3 作为**纵深加固**（补 `--` 终止符 + 拒绝 `-` 前缀） |
 | E3 | `docs/method-spec.md:52` "12 条硬边界"（报告四、十/7） | 该路径**不存在**；真实文件是 `docs/product/spec/method-spec.md:52`（及 reviews 归档副本）。"12 条"内容**属实**，仅路径写错 | T1.7 改真实路径 `docs/product/spec/method-spec.md:52` 与 `:194` 的"12 条"→"14 条" |
 | E4 | `templates/design/be/backend.md` 等"断号导致 linter 必红"（报告六、十/8） | 仓库根 `templates/**` Glob 返回**无文件**；真实模板在 `skills/agentflow/templates/`（feature/hub/issue/releases + index-template.md），**不存在 design/be/backend.md 等文件** | T2.10 撤回原说法；改为"先定位真实模板逐项核查"，本会话已核查见 T2.10 记录 |
@@ -90,9 +90,9 @@
 - **前后对比**：见"变更记录 T2.11"。
 
 ### T2.12 · 8 指标 summary 形状跨文件去重（E1 修正后）
-- **为什么改**：同一组 8 指标（acceptance_rate…latency_ms）在 `evaluation-result.schema.json#/summary` 与 `comparison.schema.json#/baseline_summary`、`#/candidate_summary`、`#/deltas` 重复定义。
+- **为什么改**：同一组 8 指标（acceptance_rate…latency_ms）在 evaluation-result schema 的 `#/summary` 与 comparison schema 的 `#/baseline_summary`、`#/candidate_summary`、`#/deltas` 重复定义（两份 schema 均随 2026-10-12 评测装置裁撤删除）。
 - **什么问题**：四处方块同构但不共享；指标增减须改四处。
-- **怎么改**：在 `schemas/` 下新增 `metrics.schema.json` 定义 `$defs/metricSummary` 与 `$defs/metricDeltas`，三处改 `$ref` 引用（保持 `additionalProperties:false` 与约束一致）。
+- **怎么改**：在 `schemas/` 下新增 `metrics` schema 定义 `$defs/metricSummary` 与 `$defs/metricDeltas`，三处改 `$ref` 引用（保持 `additionalProperties:false` 与约束一致）。
 - **前后对比**：见"变更记录 T2.12"。
 
 ## 四、T3 兑现核心差异点
@@ -207,7 +207,7 @@
 | T2.10 模板核查 | ✅ 已核查+已修 | **原报告路径错误**（真实在 `skills/agentflow/templates/feature/`）；真实文件 `design/be/backend.md` 缺 §3 属实，已补占位 §3；`spec/be/backend.md` 从 1.4 起为模板既有结构，未改；"照模板填必挂 C7/C8"**不成立**（C7/C8 只查 design/fe 线框/图） | 模板文件已更新 |
 | T2.11a document-chain 可选层 | ✅ 已修 | `document-chain.md` 可选层清单与 `templates/README.md` 统一并互引 | `validate.py docs` PASS |
 | T2.11b feature 批次链 | ✅ 已修 | `feature-2026-10-09-结构改造/README.md` 补"轻量模式：无 spec/design 轨"声明，闭合批次链规则 | `validate.py docs` PASS |
-| T2.12 8 指标 summary 去重 | ✅ 已修（**附带回退风险**） | 新建 `schemas/metrics.schema.json`（`$defs/metricSummary`+`metricDeltas`）；`evaluation-result.summary` 与 `comparison` 三处改 `$ref` | 外部 `$ref` 被自研校验器正确解析；`validate.py schemas/artifacts` PASS。**但 2026-10-12 复核实测发现一处我引入的真回归**：钉住测试 `test_metric_names_are_exactly_the_eight_contract_metrics`（tests/test_lab_contracts.py:729）裸读 `evaluation-result.schema.json` 原始 JSON 不解析 `$ref`，`summary["required"]` 撞 KeyError（`git show HEAD:` 实证改动前该键存在、测试可过）。新 `$defs/metricSummary` 形状与原 inline 完全一致，钉住意图未丢失，仅钉点位置迁移。**修复需改受保护测试，按治理提出方案待人工授权，见报告新增「八、T2.12 回归与修复方案」** |
+| T2.12 8 指标 summary 去重 | ✅ 已修（**附带回退风险**） | 新建 `schemas/` 下的 metrics schema（`$defs/metricSummary`+`metricDeltas`）；`evaluation-result.summary` 与 `comparison` 三处改 `$ref` | 外部 `$ref` 被自研校验器正确解析；`validate.py schemas/artifacts` PASS。**但 2026-10-12 复核实测发现一处我引入的真回归**：钉住测试 `test_metric_names_are_exactly_the_eight_contract_metrics`（tests/test_lab_contracts.py:729）裸读 `evaluation-result.schema.json` 原始 JSON 不解析 `$ref`，`summary["required"]` 撞 KeyError（`git show HEAD:` 实证改动前该键存在、测试可过）。新 `$defs/metricSummary` 形状与原 inline 完全一致，钉住意图未丢失，仅钉点位置迁移。**修复需改受保护测试，按治理提出方案待人工授权，见报告新增「八、T2.12 回归与修复方案」** |
 | T3.13 adapter 超时 | ✅ 已修 | `eval_runner.py` adapter `subprocess.run` 加 `timeout=600`，超时 fail-closed 返回 1 | py_compile 通过 |
 | T3.12 BT 首次对照 | ⚠️ 受阻（诚实结论） | BT-001/002/003 共 9 个夹具**全部完整可解析**，测量管线仪器就绪；但真实 baseline/candidate 对照需业务快照 + 可信端点 + `--allowed-tools`/`--isolate-host-config`，与本仓库 README 自述的阻塞条件一致，**本环境不可行，未伪造 measurement** | 夹具校验通过；运行待解锁 |
 
@@ -223,7 +223,7 @@
 
 - **现象**：`python3 -m unittest tests.test_lab_contracts.ContractPinTests.test_metric_names_are_exactly_the_eight_contract_metrics` → `KeyError: 'required'`（tests/test_lab_contracts.py:729）。
 - **根因**：T2.12 将 `evaluation-result.schema.json` 的 `properties.summary` 由 30 行 inline 对象改为 `{"$ref": "metrics.schema.json#/$defs/metricSummary"}`；该钉住测试用 `json.loads` **裸读 schema 原文、不解析 `$ref`**，`summary["required"]` 随之消失。
-- **归因实证**：`git show HEAD:schemas/evaluation-result.schema.json` 显示改动前 `summary.required` 存在且为同样 8 项 → 测试改动前可过，回归由 T2.12 引入。
+- **归因实证**：对当时位于 `schemas/` 下的 evaluation-result schema 跑 `git show HEAD:` 比对，显示改动前 `summary.required` 存在且为同样 8 项 → 测试改动前可过，回归由 T2.12 引入。
 - **影响面**：全库仅此一个测试裸读该 schema（tests/test_lab_contracts.py:726）；`comparison.schema.json` 无测试裸读。`validate.py` 自研校验器解析外部 `$ref` 正常，故 `validate.py schemas/artifacts` 不受影响。
 - **钉住意图未丢失**：`metrics.schema.json#/$defs/metricSummary` 的 `required`/`properties`/`additionalProperties` 与原 inline 完全一致（已逐项比对），只是单点定义位置迁移。
 

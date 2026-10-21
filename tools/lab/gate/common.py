@@ -71,6 +71,8 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/trend.py",
     "tools/lab/validate.py",
     "packaging/build_runtime.py",
+    "skills/agentflow/scripts/check-write-scope.sh",
+    "skills/agentflow/references/contracts.md",
     "protected-paths.txt",
     ".github/workflows/validate.yml",
 }

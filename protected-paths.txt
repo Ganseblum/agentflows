@@ -18,10 +18,10 @@
 # Three prefixes below are deliberately broad. `schemas/` covers the record contracts that
 # `validate.py` compiles candidate artifacts against: a candidate that loosens the schema it is
 # measured by has edited its own gate. `skills/improve/references/` is the improvement loop's
-# rulebook — the evidence-and-release rules and the episode, candidate, eval-case, and
-# release-record schemas (episode.schema.json is protected by this entry; it had been the one
-# governance schema a candidate could still edit). Both mean a legitimate contract or rule change
-# is a human-reviewed change rather than a candidate edit — that is the intended trade.
+# rulebook — the evidence-and-release rules plus the governance schemas that survive the
+# 2026-10-12 apparatus removal (episode, candidate, release-record; the eval-case schema was
+# retired with the apparatus itself). Both mean a legitimate contract or rule change is a
+# human-reviewed change rather than a candidate edit — that is the intended trade.
 #
 # The regression tests are protected by file, not by directory, and `validate.py tests` asserts
 # the directory holds exactly its declared entries. Protecting the whole directory instead would
@@ -67,5 +67,12 @@ tools/lab/validate.py
 # packaging/runtime is assembled can ship a role set or schema set different from the one the
 # gate compiled. Added 2026-10-13 (gate change, human-directed) — it decides what gets judged.
 packaging/build_runtime.py
+
+# The write-scope auditor and the worker-facing boundary contract ship with the plugin
+# (skills/agentflow/) and decide what a candidate is allowed to write. Until 2026-10-20 they sat
+# outside every protected prefix, so a candidate could rewrite the very script that audits its
+# write scope (evaluation G03). Added 2026-10-20 (gate change, human-directed).
+skills/agentflow/scripts/
+skills/agentflow/references/contracts.md
 
 protected-paths.txt

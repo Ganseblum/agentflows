@@ -17,7 +17,9 @@
 # 说明：
 #   - 委派时已经 dirty 的路径也会显示为变更；要么从干净的树委派，要么在阅读报告时
 #     减去已知的 dirty 路径。
-#   - 未跟踪文件会计入；被忽略的文件（按 .gitignore）不计入。
+#   - 未跟踪文件与被 .gitignore 忽略的文件都计入（2026-10-20 起与 `isolation.py
+#     check-diff` 同口径：worker 把产物写进被忽略的路径同样属于写范围事实，此前
+#     「被忽略的文件不计入」是覆盖面缺口）。
 #
 # 退出状态：所有变更路径都在范围内时为 0；任一变更路径在范围之外时为 1；
 # 用法错误时为 2。
@@ -40,7 +42,8 @@ fi
 
 tmp_diff="$(mktemp)" || exit 2
 tmp_others="$(mktemp)" || exit 2
-cleanup() { rm -f "$tmp_diff" "$tmp_others"; }
+tmp_ignored="$(mktemp)" || exit 2
+cleanup() { rm -f "$tmp_diff" "$tmp_others" "$tmp_ignored"; }
 trap cleanup EXIT
 
 # 使用 -z 输出原始（非 C-quote）路径，避免含非 ASCII 字符（如中文）的路径被 git 转义后
@@ -53,6 +56,12 @@ if ! git ls-files --others --exclude-standard -z >"$tmp_others" 2>/dev/null; the
   echo "error: git ls-files failed" >&2
   exit 1
 fi
+# 被忽略的文件同样计入（与 isolation.py check-diff 同口径）：写进 .gitignore 命中的
+# 路径（如构建产物目录、本地库文件）也是真实写入面，不是审计盲区。
+if ! git ls-files --others --ignored --exclude-standard -z >"$tmp_ignored" 2>/dev/null; then
+  echo "error: git ls-files --ignored failed" >&2
+  exit 1
+fi
 
 changed=()
 while IFS= read -r -d '' path; do
@@ -61,6 +70,9 @@ done <"$tmp_diff"
 while IFS= read -r -d '' path; do
   [ -n "$path" ] && changed+=("$path")
 done <"$tmp_others"
+while IFS= read -r -d '' path; do
+  [ -n "$path" ] && changed+=("$path")
+done <"$tmp_ignored"
 
 # `case` 模式不会进行路径名展开，这与 `[ ]` 内不加引号的 `*` 不同。
 in_scope() {

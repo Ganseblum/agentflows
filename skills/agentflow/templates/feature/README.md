@@ -1,14 +1,17 @@
 # `feature-<日期>-<主题>` Feature 总览
-<一句话：本 README 是当前 Feature 的唯一入口；推荐阅读顺序 proposal/prd → spec/{be,fe,qa} → design/{be,fe,qa} → plan/execution>
+<一句话：本 README 是当前 Feature 的唯一入口；推荐阅读顺序 proposal/需求提案 → spec/{be,fe,qa} → design/{be,fe,qa} → plan/execution>
 > 段落映射：逐段声明落点（下表），落点指向本目录之外的活文档时写对方路径；落点非空且非「—」的段落可缺目录，其余段落齐全。
 > 轻量降档：只在「元信息」的段落映射表里声明降档范围，不再另立标记行。
 > 落点形态：<文档枢纽仓（`<repo>/<name>-workflow-ai/`）｜普通业务仓（`docs/features/`）> 二选一，随接入约定。
 ## 元信息
 - 需求原文/页面链接：<路径或链接>；主实施仓：<仓>；相关系统/仓库：<仓>；UI 轨：<已启用（spec/ui/visual.md + design/ui/visual.md）｜未启用>；最后更新时间：<日期>
+- 视觉基线：<A 复用本仓既有基线（<token 源文件 path>）｜B 移植自 <仓/页面>｜C 冷启动新建基线 v1｜`N/A: 无 UI 改动`>
+- 原型：<`prototype/index.html`（结构稿 / 可点原型）｜`N/A: 无用户界面`｜`N/A: 复用 <页面> 既有结构`>
+- 埋点：<本期新增 n 个事件（design/fe §1.7）｜复用既有事件 <事件名>｜`N/A: 理由`>
 ## 段落映射
 | 段落 | 落点 | 说明 |
 | --- | --- | --- |
-| proposal | `proposal/prd.md` | 或指向本目录之外的活文档 |
+| proposal | `proposal/proposal.md` | 或指向本目录之外的活文档 |
 | spec | `spec/{be,fe,qa}/` | 不适用写「—」 |
 | design | `design/{be,fe,qa}/` | 不适用写「—」 |
 | plan | `plan/execution.md` | 目标仓有自己的计划约定时指向它 |

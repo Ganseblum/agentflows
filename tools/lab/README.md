@@ -39,13 +39,13 @@ bump 只会在宿主重装后才暴露。
 `unittest discover` 会导入子目录中发现的包，而导入期代码先于任何断言运行——新增子目录中的模块若
 替换了被钉住的测试方法，就能让坏掉的断言通过、让门返回 PASS。（一个游离的 `tests/__init__.py` 在
 `discover -s tests` 下是惰性的，只有在发现过程从仓库根启动时才会被导入；条目检查无论如何都会拒绝
-它。）在候选工作树内运行 lab 工具仍会把 `__pycache__` 条目留在 `check-diff` 的变更路径中，因为该
-检查包含被忽略的文件；它们会被列出，但不被阻塞。
+它。）在候选工作树内运行 lab 工具仍会留下 `__pycache__` 缓存目录，但 `check-diff` 的
+`changed_paths` 会过滤它们：缓存是「跑门本身」的副作用而非候选编辑，而 `tools/lab/gate/`
+是受保护前缀，不过滤会让诚实跑了检查的候选被自己的字节码缓存阻塞（2026-10-20 评测 G06）。
 
 `validate.py docs` 断言手工同步的角色/文档面：每个 agent 文件的 frontmatter name 等于其文件名，
 SKILL 引用的每个 `agentflow:<role>` 都解析到一个 agent 文件，docs/现行记录根/skills/agents 面上
-点名的每个 `schemas/*.schema.json` 路径都存在，且中文镜像的 schema 引用集合与 `contracts.md` 的
-相匹配。它还会扫描现行 Markdown 面（生成的运行时树之外的一切），查找损坏的相对
+点名的每个 `schemas/*.schema.json` 路径都存在，且 `AGENTS.md` 不携带早期 JSON 计划契约标记。它还会扫描现行 Markdown 面（生成的运行时树之外的一切），查找损坏的相对
 链接与已退役路径散文。非 mermaid 围栏块与行内代码是引文，保持豁免——mermaid 图属于内容，仍被
 扫描；`CHANGELOG.md` 作为历史载体保持豁免于 token 扫描。`all` 包含它。
 
@@ -78,6 +78,11 @@ python3 tools/lab/trend.py --help
 python3 tools/lab/counts.py          # 核对文档计数标记（HTML 注释包裹的计数）；--write 替换
 python3 tools/lab/mutate.py --list   # 门变异测试：列出算子与变异；--check <检查项> 在仓库副本内运行
 ```
+
+`mutate.py` 的退出码语义：0＝全部杀死；1＝有存活变异（语料缺少该违规类实例——门可能悄悄
+失效而无人变红，需补负例语料或登记 EXEMPT）；2＝有无效变异（锚点漂移，变异规格本身需要修）。
+2026-10-20 复跑基线：51 变异＝杀死 43 / 存活 6 / 无效 2（存活项为语料缺口，非门失效实证；
+两个无效项为 M25/M48 锚点漂移）。运行真实树只读、变异只在 `/tmp` 副本，报告写 `--report` 目录。
 
 `trend.py` 不做任何校验：它把改进环已有的信号（recurrence 档位、活面文档链发现数、评审记录里的
 发现数、回归套件规模）追加成一行 JSON 到 `docs/trend.jsonl`，让环的输入在会话之间可见。它记录的

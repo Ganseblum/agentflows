@@ -75,12 +75,20 @@ def index(roots: Path | Iterable[Path], db: Path) -> int:
 
 def query(db: Path, expression: str, limit: int = 20) -> list[tuple[str, str]]:
     connection = connect(db)
-    rows = connection.execute(
-        "SELECT path, snippet(records_fts, 2, '[', ']', ' … ', 18) "
-        "FROM records_fts WHERE records_fts MATCH ? ORDER BY rank LIMIT ?",
-        (expression, limit),
-    ).fetchall()
-    connection.close()
+    try:
+        rows = connection.execute(
+            "SELECT path, snippet(records_fts, 2, '[', ']', ' … ', 18) "
+            "FROM records_fts WHERE records_fts MATCH ? ORDER BY rank LIMIT ?",
+            (expression, limit),
+        ).fetchall()
+    except sqlite3.OperationalError as exc:
+        # A malformed FTS5 expression (unbalanced quotes, or a bare hyphenated term like this
+        # repository's own "fail-closed") surfaces as a query error, not a Python one. Report
+        # it as a usage failure instead of a traceback so the caller can tell "no matches"
+        # from "crashed" (2026-10-20 evaluation G21).
+        raise SystemExit(f"query: 无效的 FTS5 表达式 {expression!r}: {exc}") from exc
+    finally:
+        connection.close()
     return [(str(path), str(snippet)) for path, snippet in rows]
 
 

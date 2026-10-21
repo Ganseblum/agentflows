@@ -251,6 +251,15 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 if segment == "testing":
                     if n == 3 and path.is_dir() and is_project_feature_slug(under[2]):
                         continue
+                    # The testing-records contract (references/test-records.md) authorizes an
+                    # evidence/ directory (artifacts referenced by run records) and a scratch/
+                    # directory (throwaway automation scripts) beside the records. Until
+                    # 2026-10-20 the gate rejected both — instructions a worker follows
+                    # literally could not pass their own gate (evaluation G11).
+                    if n == 4 and under[3] in ("evidence", "scratch") and path.is_dir():
+                        continue
+                    if n == 5 and under[3] in ("evidence", "scratch"):
+                        continue
                     if n == 4 and path.is_file() and path.suffix == ".md":
                         if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):
                             testing_plans.append(path)
@@ -262,7 +271,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                         ValidationError(
                             str(path),
                             "unexpected entry under testing/; records are testing/<project>-<feature-slug>/"
-                            "plan-<date>-<NNN>.md and run-<date>-<NNN>.md",
+                            "plan-<date>-<NNN>.md and run-<date>-<NNN>.md, plus evidence/ and scratch/ directories",
                         )
                     )
                     continue

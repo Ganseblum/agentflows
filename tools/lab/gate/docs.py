@@ -95,7 +95,11 @@ HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md",)
 FENCED_BLOCK_PATTERN = re.compile(r"```(?P<info>[^\n`]*)\n.*?```", re.DOTALL)
 
 
-INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
+# Inline code runs on a single line: a backtick never pairs across a newline. The DOTALL-style
+# `[^`]*` predecessor let one "inline code" span swallow whole paragraphs when backticks were
+# unbalanced, hiding every link on the way (2026-10-20 evaluation G16 — CHANGELOG's four
+# relative links were invisible to this gate).
+INLINE_CODE_PATTERN = re.compile(r"`[^`\n]*`")
 
 
 LINK_TARGET_PATTERN = re.compile(r"\]\(([^)]+)\)")
@@ -177,12 +181,14 @@ def validate_doc_consistency() -> list[ValidationError]:
 
     The role/doc surface is synced by hand across twelve agent files, two SKILLs, the roles
     reference, the class READMEs under the live record roots, and the root AGENTS.md — the same
-    failure class as the missed manifest bump. Five assertion groups: every agent file's
+    failure class as the missed manifest bump. Four assertion groups: every agent file's
     frontmatter name equals its filename; every `agentflow:<role>` referenced by a SKILL
     resolves to an agent file; every `schemas/*.schema.json` path named anywhere in the
     docs/live-roots/skills/agents surface or in AGENTS.md exists; AGENTS.md carries no
-    pre-0.5.0 JSON plan contract markers; the Chinese mirror keeps section parity with its
-    English contract documents. Two live-surface scans close the 2026-10 residue classes:
+    pre-0.5.0 JSON plan contract markers. (A fifth group — "the Chinese mirror keeps section
+    parity with its English contract documents" — was claimed here until 2026-10-20 but never
+    implemented; the claim was removed rather than the check invented, evaluation G05.)
+    Two live-surface scans close the 2026-10 residue classes:
     relative Markdown links must resolve, and prose must not name a retired path (fenced and
     inline code are quotations — except mermaid diagrams, which are content — and
     `CHANGELOG.md` keeps its historical entries verbatim).
@@ -195,6 +201,10 @@ def validate_doc_consistency() -> list[ValidationError]:
     if agents_dir.is_dir() and not agent_files:
         errors.append(ValidationError(str(agents_dir), "agents/ holds no role files; the role surface is required"))
     for name, path in agent_files.items():
+        # The directory entry-point document (agents/README.md) carries no role frontmatter —
+        # it is the index, not a role. Every actual role file still must match name == filename.
+        if name == "README":
+            continue
         text, read_errors = read_document_text(path)
         if read_errors:
             errors.extend(read_errors)

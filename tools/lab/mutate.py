@@ -464,7 +464,13 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as exc:
         print(f"cannot write report to {report_dir}: {exc}", file=sys.stderr)
         return 1
-    return 1 if counts["无效"] else 0
+    # A surviving mutant means the corpus has no instance of the violation class that mutation
+    # simulates — the gate could be silently broken with nothing going red. That is a finding the
+    # caller must act on (add negative corpus or register an EXEMPT), so it exits nonzero; an
+    # invalid mutation (anchor drift) is a broken mutation spec, distinct from both.
+    if counts["无效"]:
+        return 2
+    return 1 if counts["存活"] else 0
 
 
 if __name__ == "__main__":

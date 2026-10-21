@@ -26,6 +26,24 @@ PLAN_REQUIRED_HEADINGS = (
 PLAN_TASK_ID_PATTERN = re.compile(r"^`?([A-Z][A-Z0-9._-]*)`?$")
 
 
+def _task_status_column(body: str) -> dict[str, int] | None:
+    """Column index by header name from the first ID task table; None when no named header.
+
+    Mirrors doc_chain's md_tables reading of the status column (C9) so the two gates agree on
+    which column is "status" regardless of a 优先级 column shifting positions.
+    """
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not cells or cells[0].strip("`* ") != "ID" or "状态" not in cells:
+            continue
+        if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            return {name: position for position, name in enumerate(cells)}
+    return None
+
+
 PLAN_TASK_STATUSES = ("未开始", "进行中", "已完成", "阻塞", "本期不做")
 
 
@@ -103,8 +121,19 @@ def validate_plan_markdown(path: Path) -> list[ValidationError]:
                 continue
             deps.append(dep)
         task_deps[task_id] = deps
-        if len(cells) >= 6:
+        # Read the status cell by column name when the table declares a header (C9 reads it
+        # the same way). Reading by fixed index broke the shipped template, whose task table
+        # carries a 优先级 column before 代码落点 — instructions and gate disagreed on which
+        # column was "status" (2026-10-20 evaluation G10). Fall back to index 5 only when no
+        # recognizable header exists.
+        status_columns = _task_status_column(body)
+        if status_columns is not None and "状态" in status_columns and len(cells) > status_columns["状态"]:
+            status_cell = cells[status_columns["状态"]].strip()
+        elif len(cells) >= 6:
             status_cell = cells[5].strip()
+        else:
+            status_cell = ""
+        if status_cell:
             mark = status_cell[:1]
             status_word = PLAN_TASK_STATUS_MARKS.get(mark, status_cell)
             if status_word not in PLAN_TASK_STATUSES:

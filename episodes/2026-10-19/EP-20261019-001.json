@@ -17,7 +17,7 @@
   "signals": [
     {
       "kind": "mutation_suite",
-      "value": "tools/lab/mutate.py 整门复跑：51 变异 = 杀死 51 / 存活 0 / 超时 0 / 无效 0（首轮 52 变异 = 杀死 35 / 存活 16 / 无效 1；报告 /tmp/mutation-report-v2/results.json）",
+      "value": "tools/lab/mutate.py 整门复跑当时报 51 变异 = 杀死 51 / 存活 0 / 无效 0（报告 /tmp/mutation-report-v2/results.json，已随 /tmp 清理散失不可复核）。2026-10-20 勘误：20724c0 副本重跑为 51 变异 = 杀死 43 / 存活 6 / 无效 2，存活为语料缺口非门失效实证；退出码语义已修复（存活=1、无效=2）",
       "evidence_ref": "/tmp/mutation-report-v2/summary.txt（会话原始输出）"
     },
     {
@@ -54,10 +54,10 @@
   "claims": [
     {
       "claim_id": "C1",
-      "claim": "整门变异 51/51 全杀：每个变异都在编译步骤（examples/artifacts/tests/doc_chain/doc_chain_selftest/docs 渠道之一）被观察到 exit≠0",
-      "status": "verified",
-      "check": "python3 -B tools/lab/mutate.py --report /tmp/mutation-report-v2 → 「总变异数 51 已杀死 51 存活 0（其中超时 0） 无效 0」；逐项 results.json 均标「已杀死」",
-      "evidence_ref": "/tmp/mutation-report-v2/summary.txt（会话原始输出）"
+      "claim": "整门变异当时报 51/51 全杀（2026-10-20 勘误降级：报告已随 /tmp 清理散失不可复核，同日树复跑 43 杀死 / 6 存活 / 2 无效，存活为语料缺口非门失效实证）",
+      "status": "failed",
+      "check": "python3 -B tools/lab/mutate.py --report <dir>（2026-10-20 复跑：总变异数 51 已杀死 43 存活 6 无效 2，退出码 2→修复后语义：存活=1、无效=2；报告目录可复核）",
+      "evidence_ref": "docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md（G08：51/51 不可复核，复跑 43/51）"
     },
     {
       "claim_id": "C2",
@@ -124,7 +124,7 @@
     }
   ],
   "review_roundtrips": [],
-  "feedback_summary": "用户指示「全部处理优化」：把评测轮与清理批发现的门层缺陷在真实工作树全量修复——gate/ 入受保护面（门变更经授权）、schema fail-closed、C6 收紧、governor 文本对齐、测试模板补齐；整门变异从「存活 16 / 无效 1」收敛到 51/51 全杀（15 补杀 + 1 EXEMPT 论证 + 锚点修复）；validate.py all 9×PASS、单测 95、自测 63/63。T08（installed 复跑）阻塞在外部条件：需用户刷新 marketplace 并重装插件（source 0.11.0 vs installed 0.10.0/0.8.x）；T09 独立评审未做（作者不自证，评审记录落 reviews/）。",
+  "feedback_summary": "用户指示「全部处理优化」：把评测轮与清理批发现的门层缺陷在真实工作树全量修复——gate/ 入受保护面（门变更经授权）、schema fail-closed、C6 收紧、governor 文本对齐、测试模板补齐；整门变异从「存活 16 / 无效 1」收敛到当时报 51/51 全杀（2026-10-20 勘误：报告散失不可复核，复跑 43/51，存活为语料缺口）；validate.py all（当时九项）PASS、单测 78（当时误记 95——95/96 从未进入被提交的历史树）、自测 63/63。T08（installed 复跑）阻塞在外部条件：需用户刷新 marketplace 并重装插件（source 0.11.0 vs installed 0.10.0/0.8.x）；T09 独立评审未做（作者不自证，评审记录落 reviews/）。",
   "agentflow_version": "0.11.0",
   "host": "other",
   "provenance": {

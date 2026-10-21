@@ -7,7 +7,7 @@
 | 场景 | 入口 |
 | --- | --- |
 | 开新需求 | `features/` 下建 `feature-<日期>-<主题>/`，按 proposal → spec → design → plan 推进；其 `README.md` 为唯一入口与进度板 |
-| 修缺陷 / 登记事项 | `docs/issues/README.md`（看板）＋ `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md`（开放条目）；已关闭或被拒的移入 `docs/issues/归档/<日期>/` |
+| 修缺陷 / 登记事项 | `issues/README.md`（看板）＋ `issues/ISS-<YYYY>-<NNN>-<slug>.md`（开放条目）；已关闭或被拒的移入 `issues/归档/<日期>/` |
 | 发版验收 | `releases/pending-test.md`（待验收）· `releases/todo.md`（待办与批次索引） |
 | 查 feature 进展 | 各批次的 `README.md` 进度板（复选框附文档链接才推进） |
 

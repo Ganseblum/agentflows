@@ -24,7 +24,7 @@
 
 | 阶段 | 状态 | 证据 |
 | --- | --- | --- |
-| proposal | 已冻结 | [prd.md](proposal/prd.md) |
+| proposal | 已冻结 | [proposal.md](proposal/proposal.md) |
 | spec | 已冻结 | [be](spec/be/backend.md) · [fe](spec/fe/frontend.md) · [qa](spec/qa/acceptance.md) |
 | design | 已冻结 | [be](design/be/backend.md) · [fe](design/fe/frontend.md) |
 | plan | 待执行 | [execution.md](plan/execution.md) |
