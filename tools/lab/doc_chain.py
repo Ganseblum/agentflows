@@ -28,10 +28,12 @@ Checks:
   C8  design/fe figures  >=1 flowchart, >=1 sequenceDiagram, >=1 stateDiagram
                        C4/C5/C8 apply to a role when spec/<role>/ or design/<role>/ holds any .md
   C9  plan grounding   every task row (table whose first header is ID) has a valid T/FT id, a
-                       status from the fixed enum, and a code location that is a repository path
-                       (every path token must exist) or carries 「待核实」 in the location cell;
-                       every plan file has a 「分支策略」 section; design's V-n open items are
-                       referenced by some plan
+                       status from the fixed enum — the labelled form (「☑ 已完成」) or the bare
+                       glyph (☑); a bare 「—」 counts as 本期不做, matching gate/plan.py — and a
+                       code location that is a repository path (every path token must exist,
+                       resolved against the README's declared 落点基准, repo root by default)
+                       or carries 「待核实」 in the location cell; every plan file has a
+                       「分支策略」 section; design's V-n open items are referenced by some plan
   C10 mermaid fences   every ```mermaid block is closed
   C11 structure template  chains whose README declares the agentflow marker carry the fixed
                        design headings (先说结论 / 影响面评估 / 评审前自检 / data-testid)
@@ -47,10 +49,31 @@ Checks:
                        its definition site — codes pair with the plain word (白话（代号）) in
                        prose; the schema-word form (「prepared 会话」) is C15 and is deliberately
                        clause-governed, not machine-checked (see the note at CODE_SUBJECT_RE)
+  C15 ledger-index     opt-in (file carries 「agentflow 问题台账」): a ledger row may not carry a
+                       status word (仍存在/已修复/…) unless it links an ISS; every ISS link in a
+                       row must resolve to docs/issues/<id>.md. Status lives only in the record.
+  C16 decision-record  opt-in (file carries 「agentflow 决策记录」): every decision-record table
+                       (header ⊇ 来源/待决问题/现状核验/推荐/关闭条件/优先级/影响范围/自动决策)
+                       must be machine-judgable — source resolves or is external, ≥2 options with
+                       cost, 核验 has date+command, 关闭条件 non-empty, P0–P3, 影响范围 lists
+                       concrete modules/projects, 自动决策 Y only on P3 with a rule recorded.
+  C17 staleness        opt-in (same marker as C16): an in-repo path referenced by a decision that
+                       was committed after its 核验 date is stale and must be re-verified. External
+                       references are not time-checked (declared per repo scope).
+  C18 ownership        opt-in (batch README carries 「agentflow 决策归属」): every open issue must
+                       appear in a batch 承接表 or carry disposition deferred/not-doing.
+  C19 qa acceptance    spec/ holds any document but spec/qa/ holds no acceptance document
+                       (declaration-gated exemption: README says 「qa 不适用」/「无 qa 轨」)
+  C20 埋点贯通        opt-in (README 埋点 row declares 本期新增): proposal carries a 埋点决策
+                       heading, spec carries a 埋点 heading, design/fe carries a 埋点 heading —
+                       the three-place tracking contract must exist before implementation
+  C21 ui-track prototype  opt-in (README UI 轨 row declares 已启用): a real prototype (≥64-byte
+                       .html named *prototype*) or ≥2 design/fe wireframes must exist
 
 Usage:
     python3 tools/lab/doc_chain.py [--root <repo-dir>] <feature-dir>
     python3 tools/lab/doc_chain.py --file <single-markdown-path>
+    python3 tools/lab/doc_chain.py --repo <repo-dir>
     python3 tools/lab/doc_chain.py --self-test
 
 Exit code 0 = all checks pass; 1 = findings; 2 = usage error. --file runs only the text-form
@@ -61,7 +84,9 @@ check (C1–C11) is skipped by design; --file and a positional feature dir are m
 
 from __future__ import annotations
 
+import datetime as _dt
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -131,6 +156,21 @@ STAGE_DIRS = ("proposal", "spec", "design", "plan")
 
 # C9 plan task rows: the fixed status enum and ID shape (docs/features/README.md 计划形态).
 TASK_STATUS_ENUM = ("☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻塞", "— 本期不做")
+# Bare-glyph dialect (2026-10-21 gate change, user-authorized): the labelled form and the bare
+# glyph are both legal — gate/plan.py already reads the status cell by its first character and
+# maps the bare marks, so C9 was the stricter of the two gates and the mismatch turned every
+# bare-glyph plan table into noise (160 findings on one cross-repo corpus). A bare 「—」 counts
+# as 本期不做, consistent with PLAN_TASK_STATUS_MARKS.
+TASK_STATUS_BARE = frozenset({"☐", "◐", "☑", "⚠", "—"})
+
+# README 落点基准 declaration: the directory C9 code-location paths resolve against. Values:
+# 「.」/「主实施仓根」/「仓根」/「目标仓根」 → repo root (default when undeclared);
+# 「本批次目录」 → the feature dir; anything else → a repo-root-relative directory that must
+# exist. An unfilled template placeholder (leading 「<」) is not a declaration.
+LOCATION_BASE_RE = re.compile(r"落点基准[：:]\s*([^\n]+)")
+UI_TRACK_RE = re.compile(r"UI 轨[：:]\s*([^\n]+)")
+TRACKING_RE = re.compile(r"埋点[：:]\s*([^\n]+)")
+QA_EXEMPT_RE = re.compile(r"qa 不适用|无 qa 轨")
 TASK_ID_RE = re.compile(r"^(?:FT?\d{2}|T\d{1,2})$")
 PLACEHOLDER = "待核实"
 # 「分支策略」 section: a heading at level 2-4, optionally numbered ("## 分支策略", "### 0. 分支策略").
@@ -346,9 +386,38 @@ def body_text(text: str) -> str:
     return "\n".join(line for i, line in enumerate(text.splitlines(), 1) if i not in fences)
 
 
-def plan_findings(label: str, text: str, repo_root: Path) -> list[str]:
+def _declared_base(value: str, repo_root: Path, feature_dir: Path) -> Path | None:
+    """Resolve a README 落点基准 value to a directory, or None when undeclared/placeholder."""
+    v = value.split("｜")[0].split("|")[0].strip()
+    if not v or v.startswith("<"):
+        return None  # unfilled template placeholder is not a declaration
+    v = re.sub(r"[（(][^）)]*[）)]\s*$", "", v).strip().rstrip("/")
+    if v in ("本批次目录",):
+        return feature_dir
+    if v in (".", "主实施仓根", "仓根", "目标仓根"):
+        return repo_root
+    return repo_root / v
+
+
+def location_base(readme_text: str, repo_root: Path, feature_dir: Path) -> tuple[Path, list[str]]:
+    """C9 落点基准: the directory code-location paths resolve against, plus declaration errors."""
+    errors: list[str] = []
+    base = repo_root
+    m = LOCATION_BASE_RE.search(readme_text)
+    if m:
+        declared = _declared_base(m.group(1), repo_root, feature_dir)
+        if declared is not None and not declared.is_dir():
+            errors.append(f"C9 落点基准: README 声明的落点基准 {m.group(1).strip()} "
+                          f"在目标仓根下不存在（路径按声明的基准解析，基准目录必须真实在盘）")
+        elif declared is not None:
+            base = declared
+    return base, errors
+
+
+def plan_findings(label: str, text: str, repo_root: Path, loc_base: Path | None = None) -> list[str]:
     """C9 task-row grounding for one plan file: ID shape, status enum, code location."""
     errors: list[str] = []
+    base = loc_base if loc_base is not None else repo_root
 
     def at(row: list[str], i: int) -> str:
         return row[i] if i < len(row) else ""
@@ -368,9 +437,9 @@ def plan_findings(label: str, text: str, repo_root: Path) -> list[str]:
                 )
                 continue
             status = at(row, status_i)
-            if not any(status.startswith(s) for s in TASK_STATUS_ENUM):
+            if not (any(status.startswith(s) for s in TASK_STATUS_ENUM) or status in TASK_STATUS_BARE):
                 errors.append(f"C9 plan 状态: {label} {task_id} 状态「{status}」不在固定枚举内")
-            if status.startswith("— 本期不做"):
+            if status.startswith("— 本期不做") or status == "—":
                 continue
             loc = at(row, loc_i)
             if PLACEHOLDER in loc:
@@ -380,7 +449,7 @@ def plan_findings(label: str, text: str, repo_root: Path) -> list[str]:
                 errors.append(f"C9 plan 落点: {label} {task_id} 代码落点无仓库内路径且无「待核实」标记")
                 continue
             for cand in sorted(cands):
-                if not (repo_root / cand.rstrip("/")).exists():
+                if not (base / cand.rstrip("/")).exists():
                     errors.append(f"C9 plan 落点: {label} {task_id} 代码落点路径不存在: {cand}")
     return errors
 
@@ -469,6 +538,21 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     be_text = "\n".join(all_text[f] for f in be_files) if be_files else ""
     fe_text = "\n".join(all_text[f] for f in fe_files) if fe_files else ""
 
+    # Wireframe/prototype state is shared by C7 (fe track) and C21 (UI-track gate), so it is
+    # computed once here regardless of whether the fe track applies.
+    wireframes = [
+        b
+        for b in re.findall(r"```text\n(.*?)```", fe_text, re.DOTALL)
+        if any(c in b for c in BOX_CHARS)
+    ]
+    has_prototype = any(
+        x.is_file()
+        and x.suffix == ".html"
+        and "prototype" in str(x.relative_to(feature_dir)).lower()
+        and x.stat().st_size >= PROTOTYPE_MIN_BYTES
+        for x in files
+    )
+
     if be_applies:
         kinds = mermaid_kinds(be_text)
         seq_with_alt = [b for b in kinds.get("sequenceDiagram", []) if re.search(r"^\s*alt\b", b, re.MULTILINE)]
@@ -509,21 +593,9 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         for kind in ("flowchart", "sequenceDiagram", "stateDiagram"):
             if kind not in kinds:
                 errors.append(f"C8 design/fe: 缺少 {kind}")
-        wireframes = [
-            b
-            for b in re.findall(r"```text\n(.*?)```", fe_text, re.DOTALL)
-            if any(c in b for c in BOX_CHARS)
-        ]
         # A prototype exempts the wireframe floor only if it is a prototype: until 2026-10-13 any
         # zero-byte file named *prototype*.html satisfied it, because the check tested the path
         # name and never looked at the bytes.
-        has_prototype = any(
-            x.is_file()
-            and x.suffix == ".html"
-            and "prototype" in str(x.relative_to(feature_dir)).lower()
-            and x.stat().st_size >= PROTOTYPE_MIN_BYTES
-            for x in files
-        )
         if len(wireframes) < 2 and not has_prototype:
             errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）且无 prototype HTML 原型")
         matrix = False
@@ -540,13 +612,56 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         if not matrix:
             errors.append("C6 design/fe: 缺少接口异常边界矩阵（表头需同时覆盖 成功 与 失败/异常，且至少一行数据）")
 
+    # C19 qa acceptance (2026-10-21 gate change, user-authorized): a spec that carries any
+    # content but no qa acceptance document is a chain that cannot be accepted. C1 only catches
+    # an EMPTY stage directory — it is silent when spec/ holds be/fe or unstructured docs while
+    # spec/qa is empty, which is exactly the half-gap the cross-repo review corpus fell into
+    # (one batch: spec holds one unstructured doc, qa empty). Exemption is declaration-gated
+    # (README says 「qa 不适用」/「无 qa 轨」), never inferred.
+    if not lightweight and spec_files:
+        qa_files = find_stage(md_files, feature_dir / "spec" / "qa")
+        if not qa_files and not (readme.is_file() and QA_EXEMPT_RE.search(readme_text)):
+            errors.append(
+                "C19 qa 验收: spec/ 有内容而 spec/qa/ 下没有任何验收文档"
+                "（README 声明「qa 不适用」或「无 qa 轨」可豁免）"
+            )
+
+    # C20 埋点贯通 / C21 ui 轨 (2026-10-21 gate change, user-authorized): opt-in via the README
+    # 元信息 rows the feature template ships. An unfilled placeholder (leading 「<」) is not a
+    # declaration and never fires, so legacy chains without those rows are unaffected.
+    if readme.is_file():
+        m_track = TRACKING_RE.search(readme_text)
+        if m_track and m_track.group(1).strip().startswith("本期新增"):
+            spec_text_all = "\n".join(all_text[f] for f in spec_files) if spec_files else ""
+            proposal_files = find_stage(md_files, feature_dir / "proposal")
+            proposal_text = "\n".join(all_text[f] for f in proposal_files) if proposal_files else ""
+            if not re.search(r"^#{2,6} .*埋点决策", proposal_text, re.MULTILINE):
+                errors.append("C20 埋点贯通: proposal 缺「埋点决策」节（提案不问要不要埋，落地自然跳过）")
+            if not re.search(r"^#{2,6} .*埋点", spec_text_all, re.MULTILINE):
+                errors.append("C20 埋点贯通: spec 缺埋点验收草案节（spec/fe §4）")
+            if not re.search(r"^#{2,6} .*埋点", fe_text, re.MULTILINE):
+                errors.append("C20 埋点贯通: design/fe 缺埋点事件契约节（§1.7）")
+        m_ui = UI_TRACK_RE.search(readme_text)
+        if (
+            m_ui
+            and m_ui.group(1).strip().startswith("已启用")
+            and len(wireframes) < 2
+            and not has_prototype
+        ):
+            errors.append(
+                "C21 ui 轨: README 声明 UI 轨已启用，但既无可直开原型"
+                "（prototype/*.html 且 ≥64 字节）也无 ≥2 张 design/fe 工程线框"
+            )
+
     # C9 plan grounding
     plan_files = find_stage(md_files, feature_dir / "plan")
     plan_text = "\n".join(all_text[f] for f in plan_files) if plan_files else ""
     if plan_files:
+        loc_base, base_errors = location_base(readme_text, repo_root, feature_dir)
+        errors.extend(base_errors)
         for f in plan_files:
             rel = str(f.relative_to(feature_dir))
-            errors.extend(plan_findings(rel, all_text[f], repo_root))
+            errors.extend(plan_findings(rel, all_text[f], repo_root, loc_base))
             if not BRANCH_HEADING_RE.search(all_text[f]):
                 errors.append(f"C9 plan: {rel} 未声明分支策略（需以「分支策略」为标题的节）")
         v_ids = set(re.findall(r"\bV-F?\d+\b", be_text + fe_text))
@@ -599,6 +714,272 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     return errors
 
 
+# --- Decision-traceability checks (C15-C18). Marker-gated and opt-in, mirroring how C11
+# gates the design-heading checks: a file only enters these checks when it carries the
+# matching marker. This keeps the linter safe to run over the whole repo — a decision ledger
+# that has not adopted the eight-column shape is not force-rewritten, and an open issue
+# without a batch attachment does not flood the gate. The mechanism is pinned by --self-test
+# and demonstrated on the opt-in example files (examples/decisions/).
+
+DECISION_MARKER = "agentflow 决策记录"
+LEDGER_MARKER = "agentflow 问题台账"
+OWNERSHIP_MARKER = "agentflow 决策归属"
+ISS_RE = re.compile(r"ISS-\d{4}-\d{3}(?:-[^\s|]+)?")
+
+DECISION_COLUMNS = ["来源", "待决问题", "现状核验", "推荐", "关闭条件", "优先级", "影响范围", "自动决策"]
+LEDGER_STATUS_WORDS = ("仍存在", "已修复", "已关闭", "已失效", "已修", "待修")
+PRIORITY_RE = re.compile(r"\bP[0-3]\b")
+LEVEL_RE = re.compile(r"(单功能|单模块|多模块|跨项目)")
+# 影响范围 must be 级别(具体模块/项目) — a level word alone (no parenthesised name) is a finding.
+IMPACT_RE = re.compile(r"(单功能|单模块|多模块|跨项目)\s*\(([^)]+)\)")
+OPTION_RE = re.compile(r"[A-C][\u3000\s]")
+AUTO_Y_RE = re.compile(r"自动规则|触发条件|判定结论")
+DATE_CMD_RE = re.compile(r"\d{4}-\d{2}-\d{2}.*`[^`]+`")
+
+
+def _ref_is_in_repo(repo_root: Path, path: str) -> bool | None:
+    """True if path's first segment is a real entry of this repo (so a missing file is a real
+    rot, not an external reference); False if it names a directory this repo does not have
+    (treat as a foreign-repo source and accept it without resolution); None if no first segment.
+    """
+    seg = path.split("/")[0].split(":")[0].split("#")[0].split("?")[0].strip()
+    if not seg:
+        return None
+    return (repo_root / seg).exists()
+
+
+def _source_refs(cell: str, repo_root: Path) -> tuple[list[str], list[str]]:
+    """Return (in_repo_missing, external) reference tokens from a 来源 cell.
+
+    A backtick path or an ``ISS-`` link is an "external" reference when its first segment is
+    not a real entry of this repo (e.g. ``planning/...`` belongs to another repo) and is
+    accepted without resolution. An in-repo path that does not exist on disk is "missing" and
+    must be reported. Cross-repo sources are legitimate — the decision's origin can live in a
+    different repository.
+    """
+    missing: list[str] = []
+    external: list[str] = []
+    for span in re.findall(r"`([^`\n]+)`", cell):
+        tok = span.strip()
+        if ISS_RE.search(tok):
+            target = repo_root / "docs" / "issues" / tok
+            if not target.is_file():
+                external.append(tok)
+            continue
+        p = tok.split("#")[0].split("?")[0].split(":")[0].strip()
+        if not p or p.startswith(("/", "http:", "https:", "mailto:")):
+            continue
+        in_repo = _ref_is_in_repo(repo_root, p)
+        if in_repo is None:
+            continue
+        if in_repo:
+            if not (repo_root / p).exists():
+                missing.append(tok)
+        else:
+            external.append(tok)
+    for m in ISS_RE.findall(cell):
+        full = m + ".md"
+        if not (repo_root / "docs" / "issues" / full).is_file() and full not in external:
+            external.append(full)
+    return missing, external
+
+
+def decision_record_findings(label: str, text: str, repo_root: Path) -> list[str]:
+    """C16 — every decision-record table (header ⊇ DECISION_COLUMNS) must be machine-judgable."""
+    errors: list[str] = []
+    for header, rows in md_tables(text):
+        if not all(col in header for col in DECISION_COLUMNS):
+            continue  # not a decision-record table; leave 选项对比 / before-after tables alone
+        for row in rows:
+            cells = {header[i]: (row[i] if i < len(row) else "") for i in range(len(header))}
+            src = cells.get("来源", "")
+            pend = cells.get("待决问题", "")
+            verify = cells.get("现状核验", "")
+            rec = cells.get("推荐", "")
+            close = cells.get("关闭条件", "")
+            prio = cells.get("优先级", "")
+            impact = cells.get("影响范围", "")
+            auto = cells.get("自动决策", "")
+            if not (re.search(r"`[^`]+`", src) or ISS_RE.search(src)):
+                errors.append(f"C16 decision-record {label} 决策行缺「来源」（须有 path:line 或 ISS 编号）")
+            else:
+                missing, _ext = _source_refs(src, repo_root)
+                for m in missing:
+                    errors.append(f"C16 decision-record {label} 来源引用在盘上不存在: {m}")
+            if len(OPTION_RE.findall(pend)) < 2:
+                errors.append(f"C16 decision-record {label} 待决问题少于 2 个选项（须 A/B/C… 且各带代价）")
+            if not DATE_CMD_RE.search(verify):
+                errors.append(f"C16 decision-record {label} 现状核验缺「日期 + 反引号命令」")
+            if not close.strip() or close.strip() in ("—", "无", "-"):
+                errors.append(f"C16 decision-record {label} 关闭条件为空或为「无」")
+            if not PRIORITY_RE.search(prio):
+                errors.append(f"C16 decision-record {label} 优先级非 P0–P3")
+            if not IMPACT_RE.search(impact):
+                if LEVEL_RE.search(impact):
+                    errors.append(
+                        f"C16 decision-record {label} 影响范围只写级别词未列具体模块/项目"
+                        f"（须 级别(具体模块/项目)，如 多模块(youc-admin 订单筛选页 + youc-canvas 支付组件)）"
+                    )
+                else:
+                    errors.append(f"C16 decision-record {label} 影响范围格式非法（须 级别(具体模块/项目)）")
+            am = auto.strip().upper()
+            if am not in ("Y", "N"):
+                errors.append(f"C16 decision-record {label} 自动决策须为 Y/N")
+            elif am == "Y":
+                if prio.strip() != "P3":
+                    errors.append(f"C16 decision-record {label} 自动决策=Y 仅允许 P3（现 {prio.strip() or '空'}）")
+                if not AUTO_Y_RE.search(rec):
+                    errors.append(
+                        f"C16 decision-record {label} 自动决策=Y 但推荐列缺「自动规则/触发条件/判定结论」"
+                    )
+    return errors
+
+
+def _last_commit(repo_root: Path, rel_path: str) -> tuple[int, str] | None:
+    """(commit epoch, short sha) of the last commit touching rel_path, or None if git/absent."""
+    try:
+        r = subprocess.run(
+            ["git", "log", "-1", "--format=%ct %h", "--", rel_path],
+            cwd=str(repo_root), capture_output=True, text=True, check=False,
+        )
+    except OSError:
+        return None
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    parts = r.stdout.strip().splitlines()[0].split(None, 1)
+    if len(parts) != 2:
+        return None
+    try:
+        return int(parts[0]), parts[1]
+    except ValueError:
+        return None
+
+
+def staleness_findings(label: str, text: str, repo_root: Path) -> list[str]:
+    """C17 — a decision's referenced in-repo path modified after its 核验 date is stale."""
+    errors: list[str] = []
+    for header, rows in md_tables(text):
+        if not all(col in header for col in DECISION_COLUMNS):
+            continue
+        for row in rows:
+            cells = {header[i]: (row[i] if i < len(row) else "") for i in range(len(header))}
+            verify = cells.get("现状核验", "")
+            m = re.search(r"(\d{4}-\d{2}-\d{2})", verify)
+            if not m:
+                continue
+            try:
+                v_ts = int(_dt.datetime.strptime(m.group(1), "%Y-%m-%d").timestamp())
+            except ValueError:
+                continue
+            for span in re.findall(r"`([^`\n]+)`", cells.get("来源", "")):
+                p = span.strip().split("#")[0].split("?")[0].split(":")[0].strip()
+                if not p or p.startswith(("/", "http:", "https:", "mailto:")):
+                    continue
+                if _ref_is_in_repo(repo_root, p) is not True:
+                    continue  # external refs are not time-checked (declared per repo scope)
+                if not (repo_root / p).exists():
+                    continue
+                commit = _last_commit(repo_root, p)
+                if commit and commit[0] > v_ts:
+                    errors.append(
+                        f"C17 staleness {label} 引用 {p} 在核验（{m.group(1)}）之后被修改: "
+                        f"{commit[1]} {_dt.datetime.fromtimestamp(commit[0]).strftime('%Y-%m-%d')} "
+                        f"—— 须重跑核验命令并刷新日期"
+                    )
+    return errors
+
+
+def ledger_index_findings(label: str, text: str, repo_root: Path) -> list[str]:
+    """C15 — a ledger row may not carry a status word unless it links an ISS; ISS links resolve."""
+    errors: list[str] = []
+    for _header, rows in md_tables(text):
+        for row in rows:
+            joined = " | ".join(row)
+            if any(w in joined for w in LEDGER_STATUS_WORDS) and not ISS_RE.search(joined):
+                errors.append(
+                    f"C15 ledger-index {label} 台账行自带状态词且无 ISS 链接"
+                    f"（状态只能写在记录 frontmatter）"
+                )
+            for iss in ISS_RE.findall(joined):
+                if not (repo_root / "docs" / "issues" / (iss + ".md")).is_file():
+                    errors.append(f"C15 ledger-index {label} 台账行引用 {iss} 但记录文件不存在")
+    return errors
+
+
+def _record_status(rec_text: str) -> tuple[str, str]:
+    """(status, disposition) from a record's YAML-ish frontmatter (no yaml dep)."""
+    if not rec_text.startswith("---"):
+        return "", ""
+    end = rec_text.find("\n---", 3)
+    if end == -1:
+        return "", ""
+    fm = rec_text[3:end]
+    st = re.search(r"^status:\s*(\S+)", fm, re.MULTILINE)
+    disp = re.search(r"^disposition:\s*(\S+)", fm, re.MULTILINE)
+    return (st.group(1) if st else ""), (disp.group(1) if disp else "")
+
+
+def ownership_findings(label: str, text: str, repo_root: Path) -> list[str]:
+    """C18 — every open issue must be attached to a batch 承接表 or carry deferred/not-doing."""
+    errors: list[str] = []
+    covered: set[str] = set()
+    for header, rows in md_tables(text):
+        if "记录编号" in header and "任务号" in header:
+            ci = header.index("记录编号")
+            for row in rows:
+                if ci < len(row):
+                    covered.update(ISS_RE.findall(row[ci]))
+    issues_dir = repo_root / "docs" / "issues"
+    if not issues_dir.is_dir():
+        return errors
+    for rec in sorted(issues_dir.glob("ISS-*.md")):
+        body = rec.read_text(encoding="utf-8", errors="ignore")
+        status, disp = _record_status(body)
+        if status != "open":
+            continue
+        iss_id = rec.stem  # e.g. ISS-2026-010-office计划缺异常矩阵
+        if iss_id in covered:
+            continue
+        if disp in ("deferred", "not-doing"):
+            continue
+        errors.append(
+            f"C18 ownership {label} {iss_id} 状态 open，但未出现在任何批次承接表，"
+            f"也无 deferred/not-doing 声明（须归属，否则登记当天即红）"
+        )
+    return errors
+
+
+def repo_policy_findings(repo_root: Path) -> list[str]:
+    """Run C15-C18 over opt-in files. Marker-gated so the whole repo can be scanned safely."""
+    errors: list[str] = []
+    skip_dirs = (repo_root / ".git", repo_root / "packaging" / "runtime")
+    md_files: list[Path] = []
+    for p in repo_root.rglob("*.md"):
+        if p.parent == skip_dirs[1] or any(s in p.parents for s in skip_dirs):
+            continue
+        md_files.append(p)
+    for p in md_files:
+        try:
+            t = p.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        rel = p.relative_to(repo_root).as_posix()
+        if DECISION_MARKER in t:
+            errors.extend(decision_record_findings(rel, t, repo_root))
+            errors.extend(staleness_findings(rel, t, repo_root))
+        if LEDGER_MARKER in t:
+            errors.extend(ledger_index_findings(rel, t, repo_root))
+    for p in repo_root.glob("docs/features/*/README.md"):
+        try:
+            t = p.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if OWNERSHIP_MARKER in t:
+            rel = p.relative_to(repo_root).as_posix()
+            errors.extend(ownership_findings(rel, t, repo_root))
+    return errors
+
+
 def self_test() -> int:
     """Per-check discrimination fixtures (reviewer-authored matrix, 2026-09-20).
 
@@ -611,7 +992,8 @@ def self_test() -> int:
     and the planned-role exemption; cases 44–48 pin the C4/C8 applicability rule and C1's
     段落映射豁免; cases 49–54 pin C9's task-row and 分支策略 rules; cases 55–56 pin C5's
     prose-only id scan; case 34 documents why C15 stays clause-governed (see the note at
-    CODE_SUBJECT_RE).
+    CODE_SUBJECT_RE); cases 73–85 pin the 2026-10-21 gate change (bare-glyph status dialect,
+    README 落点基准, C19 qa acceptance, C20 埋点贯通, C21 ui 轨, placeholder non-firing).
     """
     import subprocess
     import tempfile
@@ -625,6 +1007,9 @@ def self_test() -> int:
             "| # | 缺口 | 阻塞 | 状态 |\n| --- | --- | --- | --- |\n"
             "| B-1 | x | 阻塞 | ☑ 已关闭 |\n"
             "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n"
+        ),
+        "spec/qa/acceptance.md": (
+            "# qa\n\n## 1. 验收口径\n\n- AC-01 登录成功后跳转工作台\n"
         ),
         "design/be/b.md": (
             "# be\n\n"
@@ -1020,6 +1405,7 @@ def self_test() -> int:
 
     def m_lightweight(f):
         f.pop("spec/s.md")
+        f.pop("spec/qa/acceptance.md")
         f.pop("design/be/b.md")
         f.pop("design/fe/f.md")
         f["README.md"] = base["README.md"] + "\n轻量模式：无 spec/design 轨\n"
@@ -1042,6 +1428,170 @@ def self_test() -> int:
     run_case("63 an undeclared chain whose design track is empty still trips C1 (the exemption "
              "is declaration-gated, never inferred from emptiness)", 1,
              ["C1 结构"], m_undeclared_thin, results)
+
+    # --- C15-C18 decision traceability (marker-gated, 2026-10-21). Each case builds a tiny
+    # repo root with opt-in marker files and asserts repo_policy_findings discriminates. The
+    # proposal's self-prove section requires the gate to bite its own examples: good passes,
+    # mutations fail with the right check id.
+    def run_repo_case(name: str, expect: int, want: list[str], files: dict,
+                      with_issues: dict | None = None) -> None:
+        d = Path(tempfile.mkdtemp()) / "repo"
+        d.mkdir(parents=True, exist_ok=True)
+        for rel, text in files.items():
+            p = d / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(text, encoding="utf-8")
+        if with_issues:
+            idir = d / "docs" / "issues"
+            idir.mkdir(parents=True, exist_ok=True)
+            for rel, text in with_issues.items():
+                (idir / rel).write_text(text, encoding="utf-8")
+        errs = repo_policy_findings(d)
+        ok = (len(errs) == expect) and all(w in "\n".join(errs) for w in want)
+        results.append((name, ok))
+        if not ok:
+            print(f"  wanted {expect} findings containing {want}, got {len(errs)}:\n"
+                  + "\n".join(f"  - {e}" for e in errs))
+
+    DEC_HEAD = ("| 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 |\n"
+                "| --- | --- | --- | --- | --- | --- | --- | --- |\n")
+    DEC_GOOD_ROW = ("| `docs/features/x/README.md:10` | A 改一 B 改二 | 2026-10-21 `grep x` | 选 A | 批次 T01 | "
+                    "P2 | 多模块(youc-admin 订单筛选 + youc-canvas 支付) | N |\n")
+
+    def dec_file(body: str) -> str:
+        return ("# 决策\n\n本文件由 agentflow 决策记录方法生成（2026-10-21）\n\n" + body)
+
+    run_repo_case("64 C16 compliant decision-record table passes", 0, [],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW)})
+    run_repo_case("65 C16 missing 来源 trips C16", 1, ["C16 decision-record", "缺「来源」"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", ""))})
+    run_repo_case("66 C16 impact level word without module name trips C16", 1,
+                  ["C16 decision-record", "只写级别词未列具体模块"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "多模块(youc-admin 订单筛选 + youc-canvas 支付)", "多模块"))})
+    run_repo_case("67 C16 auto=Y on non-P3 trips C16", 1,
+                  ["C16 decision-record", "自动决策=Y 仅允许 P3"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW
+                      .replace("P2", "P2").replace(" | N |", " | Y |")
+                      .replace("选 A", "选 A（自动规则 R1；触发条件 X；判定结论 Y）"))})
+    run_repo_case("68 C16 missing verify date trips C16", 1,
+                  ["C16 decision-record", "现状核验缺"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "2026-10-21 `grep x`", "`grep x`"))})
+
+    def ledger_file(body: str) -> str:
+        return ("# 台账\n\n本文件由 agentflow 问题台账方法生成\n\n" + body)
+
+    LED_HEAD = ("| 编号 | 一句话 | 记录链接 | 归属 |\n| --- | --- | --- | --- |\n")
+    run_repo_case("69 C15 ledger row with status word and no ISS trips C15", 1,
+                  ["C15 ledger-index", "台账行自带状态词"],
+                  {"docs/issues/README.md": ledger_file(LED_HEAD + "| #1 | 渠道知识已修复 |  | 批次 T07 |\n")},
+                  with_issues={"ISS-2026-001-x.md": "---\nstatus: fixed\n---\n"})
+    run_repo_case("70 C15 compliant ledger row (ISS link resolves) passes", 0, [],
+                  {"docs/issues/README.md": ledger_file(LED_HEAD + "| #1 | 渠道知识 | ISS-2026-001-x | 批次 T07 |\n")},
+                  with_issues={"ISS-2026-001-x.md": "---\nstatus: fixed\n---\n"})
+
+    OWN_HEAD = ("| 记录编号 | 任务号 | 说明 |\n| --- | --- | --- |\n")
+    run_repo_case("71 C18 open issue not attached to a batch 承接表 trips C18", 1,
+                  ["C18 ownership", "ISS-2026-001-x"],
+                  {"docs/features/batch-a/README.md":
+                   "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD + "| — | T01 | 收尾 |\n"},
+                  with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+    run_repo_case("72 C18 open issue covered by 承接表 passes", 0, [],
+                  {"docs/features/batch-a/README.md":
+                   "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD
+                   + "| ISS-2026-001-x | T01 | 收尾 |\n"},
+                  with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+
+    # --- C9 dialect / 落点基准 and C19-C21 (2026-10-21 gate change, user-authorized).
+    # Cases 73-84 pin: the bare-glyph status dialect (aligned with gate/plan.py's first-char
+    # read), the README 落点基准 declaration, the qa-acceptance presence check, and the two
+    # opt-in README-row gates (埋点贯通 / ui 轨原型).
+    def m_bare_status(f):
+        return rep(f, "plan/be/p.md", "| ☐ 未开始 |", "| ☑ |")
+    run_case("73 C9 bare-glyph status is legal (aligned with gate/plan.py first-char read)", 0,
+             ["PASS doc-chain"], m_bare_status, results)
+
+    def m_bare_dash(f):
+        return rep(f, "plan/be/p.md", "| ☐ 未开始 |", "| — |")
+    run_case("74 C9 bare dash counts as 本期不做 (no landing required)", 0,
+             ["PASS doc-chain"], m_bare_dash, results)
+
+    def m_free_text_status(f):
+        return rep(f, "plan/be/p.md", "| ☐ 未开始 |", "| 已完成 |")
+    run_case("75 C9 free-text status without a glyph still trips", 1,
+             ["不在固定枚举内"], m_free_text_status, results)
+
+    def m_base_ok(f):
+        f["@root/lib/util.py"] = "-- util\n"
+        f = rep(f, "plan/be/p.md", "`migrations/x.sql`", "`util.py`")
+        f["README.md"] = f["README.md"] + "\n- 落点基准：lib\n"
+        return f
+    run_case("76 C9 落点基准 declaration redirects path resolution", 0,
+             ["PASS doc-chain"], m_base_ok, results)
+
+    def m_base_missing(f):
+        f["@root/lib/util.py"] = "-- util\n"
+        return rep(f, "plan/be/p.md", "`migrations/x.sql`", "`util.py`")
+    run_case("77 C9 without a 落点基准 declaration the same cell trips", 1,
+             ["代码落点路径不存在: util.py"], m_base_missing, results)
+
+    def m_base_bad(f):
+        f["README.md"] = f["README.md"] + "\n- 落点基准：no-such-dir/\n"
+        return f
+    run_case("78 C9 落点基准 pointing at a missing directory trips", 1,
+             ["C9 落点基准"], m_base_bad, results)
+
+    def m_no_qa(f):
+        f.pop("spec/qa/acceptance.md")
+        return f
+    run_case("79 C19 spec with be/fe content but no qa acceptance trips", 1,
+             ["C19 qa 验收"], m_no_qa, results)
+
+    def m_no_qa_declared(f):
+        f.pop("spec/qa/acceptance.md")
+        f["README.md"] = f["README.md"] + "\n- 备注：qa 不适用（纯后端批）\n"
+        return f
+    run_case("80 C19 declared qa exemption passes", 0,
+             ["PASS doc-chain"], m_no_qa_declared, results)
+
+    def m_ui_track_bare(f):
+        f = rep(f, "design/fe/f.md", WF2, "")
+        f["README.md"] = f["README.md"] + "\n- UI 轨：已启用（spec/ui/visual.md + design/ui/visual.md）\n"
+        return f
+    run_case("81 C21 UI 轨 enabled without prototype or >=2 wireframes trips", 1,
+             ["C21 ui 轨"], m_ui_track_bare, results)
+
+    def m_ui_track_proto(f):
+        f = rep(f, "design/fe/f.md", WF2, "")
+        f["README.md"] = f["README.md"] + "\n- UI 轨：已启用（spec/ui/visual.md + design/ui/visual.md）\n"
+        f["prototype/index.html"] = "<!doctype html>\n<html><body>" + "x" * 80 + "</body></html>\n"
+        return f
+    run_case("82 C21 UI 轨 enabled with a real prototype passes", 0,
+             ["PASS doc-chain"], m_ui_track_proto, results)
+
+    def m_track_bare(f):
+        f["README.md"] = f["README.md"] + "\n- 埋点：本期新增 2 个事件（design/fe §1.7）\n"
+        return f
+    run_case("83 C20 埋点新增 declared without the three sections trips", 1,
+             ["C20 埋点贯通"], m_track_bare, results)
+
+    def m_track_ok(f):
+        f["README.md"] = f["README.md"] + "\n- 埋点：本期新增 2 个事件（design/fe §1.7）\n"
+        f["proposal/p.md"] = f["proposal/p.md"] + "\n## 6.2 埋点决策\n"
+        f["spec/s.md"] = f["spec/s.md"] + "\n### 4. 埋点验收草案\n"
+        f["design/fe/f.md"] = f["design/fe/f.md"] + "\n### 1.7 埋点事件契约\n"
+        return f
+    run_case("84 C20 埋点新增 with the three sections passes", 0,
+             ["PASS doc-chain"], m_track_ok, results)
+
+    # unfilled template placeholders never fire the opt-in gates
+    def m_track_placeholder(f):
+        f["README.md"] = f["README.md"] + "\n- 埋点：<本期新增 n 个事件（design/fe §1.7）｜复用既有事件 <事件名>｜N/A: 理由>\n- UI 轨：<已启用（spec/ui/visual.md + design/ui/visual.md）｜未启用>\n- 落点基准：<.（主实施仓根，默认）｜<相对目标仓根的路径>｜本批次目录>\n"
+        return f
+    run_case("85 unfilled README 落点基准/埋点/UI 轨 placeholders never fire", 0,
+             ["PASS doc-chain"], m_track_placeholder, results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:
@@ -1080,6 +1630,22 @@ def main(argv: list[str]) -> int:
             print(__doc__)
             return 2
         return lint_file(Path(argv[1]))
+    if argv and argv[0] == "--repo":
+        if len(argv) != 2:
+            print(__doc__)
+            return 2
+        root = Path(argv[1])
+        if not root.is_dir():
+            print(f"FAIL decision-gate: 目录不存在: {root}")
+            return 1
+        errors = repo_policy_findings(root)
+        if errors:
+            print(f"FAIL decision-gate ({len(errors)} findings)")
+            for e in errors:
+                print(f"  - {e}")
+            return 1
+        print("PASS decision-gate")
+        return 0
     if len(argv) != 1:
         print(__doc__)
         return 2

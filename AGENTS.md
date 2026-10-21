@@ -17,7 +17,8 @@ python3 tools/lab/validate.py all
 文档链 linter 对活文档面（`docs/product/`、`docs/features/`）的扫描、
 五份 manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
 新鲜度——marketplace 装的就是这棵生成树，漂移即静默装出旧角色）、`tests/` 下仓库自身的回归测试，
-以及 lint（ruff + mypy 静态检查，依赖 `requirements-dev.txt`）——共十项；以
+以及 lint（ruff + mypy 静态检查，依赖 `requirements-dev.txt`）、decision_gate（决策可追溯
+C15–C18，标记启用）——共十一项；以
 `python3 tools/lab/validate.py --list` 自报为准，文档不得手写计数。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
@@ -100,6 +101,23 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
   应改为把它连同证据、范围与再验证方法记录进
   [docs/host-platform-facts.md](docs/host-platform-facts.md)。
 
+## 决策记录与台账
+
+决策类产出走固定形态，检查由 `validate.py decision_gate`（C15–C18，标记启用）机械把关：
+
+- **拍板口条目用八列**：`来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策`。
+  模板见 [skills/agentflow/templates/decision/decision-record.md](skills/agentflow/templates/decision/decision-record.md)
+  与 `decision-brief.md`（分类头 + 九段简报，≥3 个方案、每个选项写做/不做两种后果）。
+  文件加上标记 `agentflow 决策记录` 即进入检查：来源必须可回溯、核验必须带日期+命令、
+  影响范围必须列**具体模块/项目名**（只写「单模块」这类级别词会红）、`自动决策=Y` 仅允许 P3。
+- **台账只做索引**：问题台账（差异清单、缺陷索引）行内不写状态结论，只给
+  `编号 | 一句话 | 记录链接 | 归属`；状态权威在记录 frontmatter。加标记
+  `agentflow 问题台账` 进入检查（C15）：无 ISS 链接的行不得携带状态词。
+- **核验会过期**：条目「现状核验」引用的仓内路径若在核验日期之后被提交修改过，
+  C17 会红，须重跑核验命令并刷新日期——不允许拿旧清单直接问人拍板。
+- **未决问题必须有归属**（C18，批次 README 加标记 `agentflow 决策归属` 后检查）：
+  `status: open` 的记录要么挂进批次承接表，要么显式 `disposition: deferred/not-doing`。
+
 ## 表达与沉淀纪律
 
 - **面向人的输出白话优先**：给用户的文档、报告与会话交付物，写给没跟过这套流程的读者。
@@ -125,3 +143,9 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
   恢复，正如无法复现的检查记为未运行。
 - 对于任何你打算声称成功的命令，不得屏蔽命令输出（`2>/dev/null` 及同类写法）。
   关于工具行为的主张需要退出码与逐字输出，而不是推理（硬边界 12）。
+- 存在性结论不得用裸 `grep` 下结论：BSD grep 对中文关键词与部分 `--include` 组合会**静默漏报**
+  （同一检索换 Python 脚本命中数不同；跨仓复盘曾据此误判「某功能不存在」，后被代码事实推翻）。
+  用可计数、可打印命中文件与计数的脚本检索。
+- 检查 / 验收脚本必须先打印命中原文再判 PASS/FAIL；否定式表述与验收条目自身的引用式命中要
+  排除——关键词命中不等于缺陷。首轮误报要修正判据复跑，不得把误报当发现，也不得把真残留
+  当误报放行。

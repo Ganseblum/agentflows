@@ -35,6 +35,7 @@ import gate.workspace
 from gate.checks import (
     DOC_CHAIN_FEATURE_SURFACE,
     DOC_CHAIN_LIVE_ROOTS,
+    validate_decision_gate,
     validate_doc_chain,
     validate_doc_chain_live,
     validate_unit_tests,
@@ -276,6 +277,7 @@ ALL_CHECKS: list[tuple[str, Callable[..., list[ValidationError]]]] = [
     ("tests", validate_unit_tests),
     ("doc_chain", validate_doc_chain),
     ("doc_chain_live", validate_doc_chain_live),
+    ("decision_gate", validate_decision_gate),
     ("lint", validate_static_checks),
 ]
 
@@ -307,6 +309,7 @@ def main(argv: list[str] | None = None) -> int:
             "tests",
             "doc_chain",
             "doc_chain_live",
+            "decision_gate",
             "installed",
             "lint",
             "all",
@@ -371,7 +374,8 @@ def main(argv: list[str] | None = None) -> int:
             "tests": ALL_CHECKS[6:7],
             "doc_chain": ALL_CHECKS[7:8],
             "doc_chain_live": ALL_CHECKS[8:9],
-            "lint": ALL_CHECKS[9:10],
+            "decision_gate": ALL_CHECKS[9:10],
+            "lint": ALL_CHECKS[10:11],
             "all": ALL_CHECKS,
         }[args.target],
     )

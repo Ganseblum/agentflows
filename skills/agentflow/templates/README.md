@@ -13,6 +13,7 @@
 | [feature/design/be/backend.md](feature/design/be/backend.md) · [fe](feature/design/fe/frontend.md) · [qa](feature/design/qa/testing.md) · [ui](feature/design/ui/visual.md) | 各角色技术方案（`design/<角色>/`） |
 | [feature/plan/execution.md](feature/plan/execution.md) | 执行契约（单文件；目标仓有自己的计划约定时用其约定） |
 | [feature/prototype/index.html](feature/prototype/index.html) · [README](feature/prototype/README.md) | 可直开线框/原型骨架：复制到 `<feature 目录>/prototype/index.html`，浏览器双击即见结构稿；四态可切换、页签自动生成、零依赖 |
+| [decision/decision-record.md](decision/decision-record.md) · [decision-brief.md](decision/decision-brief.md) | 决策记录八列表（拍板口逐条占行，C16 机器可判）与决策简报骨架（出处/选项/影响/关闭条件）：记录落 `docs/PENDING-DECISIONS.md` 等拍板口，检查由 `validate.py decision_gate` 承载 |
 | [testing/plan.md](testing/plan.md) · [testing/run.md](testing/run.md) | 测试用例库 / 执行记录骨架（frontmatter 信封固定字段）：复制到 `docs/features/<批次>/testing/<project>-<feature>/plan-<YYYY-MM-DD>-<NNN>.md` 与 `run-<YYYY-MM-DD>-<NNN>.md` |
 | [hub/README.md](hub/README.md) · [index.md](hub/index.md) · [issues-README.md](hub/issues-README.md) | 文档枢纽仓骨架（`<project>-workflow-ai/` 的 README、index、issues 看板） |
 | [issue/issue-template.md](issue/issue-template.md) | ISS 记录骨架（frontmatter 全字段 + 固定章节的契约形态）：复制到 `issues/ISS-<YYYY>-<NNN>-<slug>.md` |

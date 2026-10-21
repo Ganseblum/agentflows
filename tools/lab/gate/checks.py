@@ -181,6 +181,42 @@ DOC_CHAIN_LIVE_ROOTS = ("docs/product", "docs/features")
 DOC_CHAIN_FEATURE_SURFACE = "docs/features"
 
 
+def validate_decision_gate(root: Path = ROOT) -> list[ValidationError]:
+    """Run the decision-traceability policy checks (C15-C18) over opt-in files.
+
+    Companion to validate_doc_chain: that check pins the linter's *feature-chain* self-test;
+    this one runs the linter's `--repo` mode, which scans the repository for files that opted
+    into the decision-traceability contract via markers (「agentflow 决策记录」 /
+    「agentflow 问题台账」 / 「agentflow 决策归属」) and applies C15 ledger-index, C16
+    decision-record, C17 staleness and C18 ownership to them. Marker-gating keeps the scan
+    safe on a tree whose ledgers have not adopted the eight-column shape: unmarked files are
+    never force-rewritten by the gate, and the checker itself is pinned by the self-test that
+    validate_doc_chain already runs. A missing linter fails loudly.
+    """
+    linter = root / "tools" / "lab" / "doc_chain.py"
+    if not linter.is_file():
+        return [ValidationError("decision_gate", "tools/lab/doc_chain.py is missing")]
+    completed = subprocess.run(
+        [sys.executable, str(linter), "--repo", str(root)],
+        cwd=str(root),
+        text=True,
+        capture_output=True,
+        timeout=300,
+        check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    if completed.returncode == 0:
+        return []
+    findings = [
+        line.strip()[2:].strip()
+        for line in completed.stdout.splitlines()
+        if line.strip().startswith("- ")
+    ]
+    if not findings:
+        findings = [f"decision-gate linter exited {completed.returncode} with no findings"]
+    return [ValidationError("decision_gate", finding) for finding in findings]
+
+
 def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:
     """Run the doc-chain linter over the live document surfaces; any finding fails the gate.
 
