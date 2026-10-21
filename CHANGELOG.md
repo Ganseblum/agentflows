@@ -37,10 +37,13 @@
   插件未安装，角色加载与工具白名单强制执行仍属未验证）。
 - 全量门 9×PASS、`unittest` 60 OK、`doc_chain --self-test` 46/46；故障注入一律在 `/tmp` 副本执行。
 
-## 待发布 — 2026-10-10 起
+## 0.12.0 — 2026-10-21
 
-> 本节记录尚未定版本号的改动（多批）；五份 manifest 的版本 bump 与本节改号随下次发布批执行。
-> `measurement: none`（方法级改动，无仪器化业务任务）。
+> 发布批（用户指示「升级吧」）：五份 manifest（`plugin.json`、`marketplace.json`、
+> `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/` 的 plugin.json）0.11.0 → 0.12.0，
+> `packaging/runtime` 随发版重建。本节由原「待发布 — 2026-10-10 起」改号而来，收录自
+> 0.11.0 发布（2026-10-14）起累积、以及部分早于该发布但未消耗版本号的批次，条目按日期
+> 倒序自明。`measurement: none`（方法级改动，无仪器化业务任务）。
 
 - **2026-10-21 门变更批·跨仓吸收四项（用户当日显式授权，AskUserQuestion 四项全选）**：承接同日
   `AGENTFLOW-YOUC-ADOPTION-REVIEW-2026-10-21.md` 复盘，把跨仓实跑暴露的门层缺口修进 `doc_chain.py`。
