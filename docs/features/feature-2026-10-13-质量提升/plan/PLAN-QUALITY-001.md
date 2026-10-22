@@ -1,20 +1,23 @@
 ---
 plan_id: PLAN-QUALITY-001
 plan_version: 0.1.0
-status: proposed
+status: approved
 objective: 把 agentflow 从「门禁绿但效果未测」推进到 8 分：门禁可自证、计数可核、运行态同步、角色行为可测，并按预先写定的判据完成一次效果实验
 recorded_at: 2026-10-13T20:30:00+08:00
-updated_at: 2026-10-19T11:50:00+08:00
+updated_at: 2026-10-22T00:00:00+08:00
 ---
 
 # 质量提升批 — 执行计划（PLAN-QUALITY-001）
 
+> **2026-10-22 状态更正**：T01–T09 已全部执行、T10 本期不做，frontmatter `status` 由
+> `proposed` 更正为 `approved`；任务行与证据回写保持原样。
+>
 > 执行契约，不是改代码授权。每完成一项，在「证据」列回写命令与原始输出的关键行。
 > 基线（2026-10-13 记录，存于仓库外 `/tmp/quality-baseline/`）：`validate.py all` 9 项 PASS、退出码 0；单元测试 78 项 OK；ruff（默认规则）49 条、mypy 27 条；`tools/lab/validate.py` 2733 行。
 
 ## 进展概览
 - 总任务 10 项：☑ 9 项已完成（T01–T09），— 1 项本期不做（T10，用户选 Q-01 方案 D 不实现 M-F）。（复核回写：T04 于 2026-10-20 全量实跑 28/28 达成、G5 通过，置完成；T06 静态检查进门禁、T08 运行态同步 2026-10-20 置完成；T07 门变更经用户授权落地且 T09 独立评审 approved。）
-- 阻塞：M-D 已解决（2026-10-20 重装 0.11.0 快照，`validate.py installed` PASS，T08 完成）；M-F 结论为「不做」（用户选 Q-01 方案 D），T10 保持本期不做。T04 余下的 19 例工具面类已于 2026-10-20 以内容判断法实跑通过（G5 达成）；T07 门变更已落地且 T09 独立评审 approved。本批唯一残留为 T10（不做）与 G1 正式实验（由 `testing/agentflows-g1-effect/` 协议承载，非本计划必交付）。
+- 阻塞：M-D 已解决（2026-10-22 复核 0.12.0 快照，`validate.py installed` PASS，T08 完成）；M-F 结论为「不做」（用户选 Q-01 方案 D），T10 保持本期不做。T04 余下的 19 例工具面类已于 2026-10-20 以内容判断法实跑通过（G5 达成）；T07 门变更已落地且 T09 独立评审 approved。本批唯一残留为 T10（不做）与 G1 正式实验（由 `testing/agentflows-g1-effect/` 协议承载，非本计划必交付）。
 
 ## 分支策略
 本批在 `main` 上直接执行：不新建分支。提交与推送须经用户明确授权（仓库 AGENTS.md：未经指示不提交、不推送）。门禁相关改动（`tools/lab/`、`protected-paths.txt`、`.github/`）完成后须经独立评审，作者不验收自己的改动。

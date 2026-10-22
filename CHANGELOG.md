@@ -1,41 +1,22 @@
 # 变更日志
 
-## 0.11.0 — 2026-10-14
+## 未发布 — 2026-10-22
 
-> 2026-10-13 全仓八维度评分审计后的低分修复批（用户指示「列出实际的低分点……直接帮我完整修复，
-> 完全修复它，然后整体达到 8 分或者 8 分以上的效果」，并显式授权本仓增删改与推送）。
-> `measurement: none`（方法级改动，无仪器化业务任务）。
-
-- **架构：轻量链与 linter 的硬冲突修复（ISS-2026-053）**：链契约允许批次声明
-  `轻量模式：无 spec/design 轨` 只出入口文档与一份 proposal，但 `doc_chain.py` 的 C1 无条件要求
-  proposal/spec/design/plan 四个目录非空，契约又要求宣布完成前必须跑 linter——降级路径只存在
-  于纸面。C1 改为**声明门禁**的豁免（README 声明轻量时阶段要求收窄为 proposal + plan），豁免
-  靠声明不靠空目录推断；自测新增 case 42/43/44 三个方向钉住。
-- **门：保护面补齐与两处浅检查加深（ISS-2026-054，门变更经用户显式授权）**：`validate.py protected`
-  新增「声明条目必须在盘」判据（修订前拼错或已改名的路径同样算「覆盖」）；新增
-  `validate_schema_shape`——`type: object`、`properties` 非空、`required` 非空字符串数组、
-  `additionalProperties: false`、且 required 项必须在 properties 中声明（修订前删掉全部 required
-  仍 PASS，而编译步骤正是用它判定候选记录）；`protected-paths.txt` 与 `REQUIRED_PROTECTED_PATHS`
-  补入 `tools/lab/record_store.py` 与 `packaging/build_runtime.py`（后者决定安装面装什么）。
-- **门：两处自承 false-negative 收紧（ISS-2026-054）**：C3 的整行「非阻塞」跳过改为**状态单元格**
-  判定（修订前状态为「阻塞」但行文提到「非阻塞」的行被静默放过）；C7 的 prototype 豁免改为要求
-  文件真实存在且不少于 64 字节（修订前零字节的 `*prototype*.html` 即可买断两张线框）。自测新增
-  case 45/46。
-- **门：结构判据（C1–C11）首次跑在真实链上**：此前 `all` 只跑 linter 的自测与文本检查，C1–C11
-  从未对任何真实链执行过（本仓唯一的 feature 目录没有 spec/design 轨，结构上不可能通过）。新增
-  `examples/doc-chain/` 正反例（密链必须 PASS、2026-09-20 形状的薄链必须 FAIL 且报出 C4/C7/C9），
-  由 `validate.py examples` 每次编译实跑。`--self-test` 41 → 46 case。
-- **记录面：台账回写与四项根因立账（ISS-2026-055 / 056）**：`unverified-behavior-claims` 的
-  `occurrences` 补 ISS-2026-039、`consolidated_in` 由 0.3.4 回写为 0.8.4、删除孤立列表项
-  （此前计数 1 与正文「再犯」结论矛盾，`recurrence` 档位因此错判为 single）；活面路径统一为
-  `docs/features/<批次>/…`（README / SKILL / system-guide / reviews / 四个角色文件，历史记录按
-  硬边界 8 不回改）；`execution-coordinator` 三处引用加「当前不存在、不得写进委派简报」限定。
-- **文档：新增 `docs/quickstart.md`**（5 分钟上手：先判断要不要走流程、三条路径、两条不能省的
-  规矩、收尾必跑的三条命令），README 与 index.md 注册入口；记录面补本次会话 episode
-  （EP-20261014-001）。
-- 真实宿主观察入档 `docs/host-platform-facts.md`（W1/W2：WorkBuddy 会话内可跑门、构建与检索工具；
-  插件未安装，角色加载与工具白名单强制执行仍属未验证）。
-- 全量门 9×PASS、`unittest` 60 OK、`doc_chain --self-test` 46/46；故障注入一律在 `/tmp` 副本执行。
+- **2026-10-22 文档面收尾批（用户指示「全部开始处理」）**：按全仓冗余/过时审计清单逐项回写。
+  ① **角色计数口径修正**（门变更，用户授权）：`tools/lab/counts.py` 的 `count_agents` 排除
+  `agents/README.md`（索引不是角色），角色数回到 14，四处计数标记与文案同步；此前 README/
+  system-guide/design-decisions/index 把索引算成第 15 个角色。② **安装状态回写**：`validate.py
+  installed` 实测 PASS（0.12.0 快照），`method-spec` S9、`acceptance-matrix` S9、
+  `PLAN-PRODUCT-001` T06 与 `PENDING-DECISIONS` 第 8 条由「0.10.0/重装待做」更正为已闭合。
+  ③ **批次状态回写**：产品线批次的需求评审改为已通过（REV-20261019-003）；质量提升批的
+  Q-01–Q-04 已拍板、T09 已 approved、T01–T09 已完成，README 不再写「待确认/未做」。④ **门清单
+  补齐**：`system-guide` 与 `method-spec` 的检查枚举补 `decision_gate` 与 `lint`，去掉已裁撤的
+  `evals` 行；`system-guide` 的只读角色数由三改四（含 evaluator），改进环图改为人工评审口径。
+  ⑤ **索引瘦身**：`index.md` 的迁移与清理记录由 15K 历史叙事压成批次索引（明细留在本文件与
+  git 历史），删除逐字重复条目；`pending-test`/`todo`/`quickstart`/README 的重复枚举与过期计数
+  同步收敛。⑥ **数据清理**：`docs/trend.jsonl` 去除同 revision 重复行；批次内 5 份未挂链的
+  Q-01–Q-04 分析件登记进批次 README。终验：`validate.py all` 十项 PASS（`lint` 环境红）、
+  `counts.py` 4 处标记一致、`doc_chain.py --self-test` 85/85、`installed` PASS。
 
 ## 0.12.0 — 2026-10-21
 
@@ -191,6 +172,43 @@
   收尾计划归位 `docs/features/feature-2026-09-19-产品线完善/plan/PLAN-OPT-CLOSEOUT-001.md`。合并后
   `validate.py all` 9 项 PASS。
   `measurement: none`。
+
+## 0.11.0 — 2026-10-14
+
+> 2026-10-13 全仓八维度评分审计后的低分修复批（用户指示「列出实际的低分点……直接帮我完整修复，
+> 完全修复它，然后整体达到 8 分或者 8 分以上的效果」，并显式授权本仓增删改与推送）。
+> `measurement: none`（方法级改动，无仪器化业务任务）。
+
+- **架构：轻量链与 linter 的硬冲突修复（ISS-2026-053）**：链契约允许批次声明
+  `轻量模式：无 spec/design 轨` 只出入口文档与一份 proposal，但 `doc_chain.py` 的 C1 无条件要求
+  proposal/spec/design/plan 四个目录非空，契约又要求宣布完成前必须跑 linter——降级路径只存在
+  于纸面。C1 改为**声明门禁**的豁免（README 声明轻量时阶段要求收窄为 proposal + plan），豁免
+  靠声明不靠空目录推断；自测新增 case 42/43/44 三个方向钉住。
+- **门：保护面补齐与两处浅检查加深（ISS-2026-054，门变更经用户显式授权）**：`validate.py protected`
+  新增「声明条目必须在盘」判据（修订前拼错或已改名的路径同样算「覆盖」）；新增
+  `validate_schema_shape`——`type: object`、`properties` 非空、`required` 非空字符串数组、
+  `additionalProperties: false`、且 required 项必须在 properties 中声明（修订前删掉全部 required
+  仍 PASS，而编译步骤正是用它判定候选记录）；`protected-paths.txt` 与 `REQUIRED_PROTECTED_PATHS`
+  补入 `tools/lab/record_store.py` 与 `packaging/build_runtime.py`（后者决定安装面装什么）。
+- **门：两处自承 false-negative 收紧（ISS-2026-054）**：C3 的整行「非阻塞」跳过改为**状态单元格**
+  判定（修订前状态为「阻塞」但行文提到「非阻塞」的行被静默放过）；C7 的 prototype 豁免改为要求
+  文件真实存在且不少于 64 字节（修订前零字节的 `*prototype*.html` 即可买断两张线框）。自测新增
+  case 45/46。
+- **门：结构判据（C1–C11）首次跑在真实链上**：此前 `all` 只跑 linter 的自测与文本检查，C1–C11
+  从未对任何真实链执行过（本仓唯一的 feature 目录没有 spec/design 轨，结构上不可能通过）。新增
+  `examples/doc-chain/` 正反例（密链必须 PASS、2026-09-20 形状的薄链必须 FAIL 且报出 C4/C7/C9），
+  由 `validate.py examples` 每次编译实跑。`--self-test` 41 → 46 case。
+- **记录面：台账回写与四项根因立账（ISS-2026-055 / 056）**：`unverified-behavior-claims` 的
+  `occurrences` 补 ISS-2026-039、`consolidated_in` 由 0.3.4 回写为 0.8.4、删除孤立列表项
+  （此前计数 1 与正文「再犯」结论矛盾，`recurrence` 档位因此错判为 single）；活面路径统一为
+  `docs/features/<批次>/…`（README / SKILL / system-guide / reviews / 四个角色文件，历史记录按
+  硬边界 8 不回改）；`execution-coordinator` 三处引用加「当前不存在、不得写进委派简报」限定。
+- **文档：新增 `docs/quickstart.md`**（5 分钟上手：先判断要不要走流程、三条路径、两条不能省的
+  规矩、收尾必跑的三条命令），README 与 index.md 注册入口；记录面补本次会话 episode
+  （EP-20261014-001）。
+- 真实宿主观察入档 `docs/host-platform-facts.md`（W1/W2：WorkBuddy 会话内可跑门、构建与检索工具；
+  插件未安装，角色加载与工具白名单强制执行仍属未验证）。
+- 全量门 9×PASS、`unittest` 60 OK、`doc_chain --self-test` 46/46；故障注入一律在 `/tmp` 副本执行。
 
 ## 0.10.0 — 2026-10-09
 

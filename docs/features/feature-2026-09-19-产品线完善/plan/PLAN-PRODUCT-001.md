@@ -4,7 +4,7 @@ plan_version: 0.1.0
 status: proposed
 objective: 把 Agentflow 做成跨宿主方法插件：记下架构结论、收口第一次 improve 噪声底、再按产品卫生与宿主认证完善，不重做运行时
 recorded_at: 2026-09-19T10:31:00Z
-updated_at: 2026-10-10T15:20:00+08:00
+updated_at: 2026-10-22T00:00:00+08:00
 ---
 
 # Agentflow 产品完善路线
@@ -19,9 +19,9 @@ updated_at: 2026-10-10T15:20:00+08:00
 
 ## 进展概览
 
-**本期进度**：**6 / 12 已完成** · **2 进行中** · **0 阻塞** · **1 未开始** · **3 本期不做**（T10、T11、T12）
-**统计口径**：按任务表 T01–T12 逐行计数（12 项：☑6 / ◐2 / ☐1 / —3）；T13–T14 同为本期不做，不计入上述分母。概览表前两行是已经发生的事实（架构拍板 + 噪声底离线），对应任务格只有 T01。
-（2026-10-10 回写：T04/T05 按实况置完成——版本与提交已随后续批次发生；T02 置进行中——端点复测通过、试水实跑启动。2026-10-13 复核：T06 状态由「未开始」改为「进行中」，T10/T12 因 `host_adapter.py` 已删除改为「本期不做」。）
+**本期进度**：**7 / 12 已完成** · **1 进行中** · **0 阻塞** · **1 未开始** · **3 本期不做**（T10、T11、T12）
+**统计口径**：按任务表 T01–T12 逐行计数（12 项：☑7 / ◐1 / ☐1 / —3）；T13–T14 同为本期不做，不计入上述分母。概览表前两行是已经发生的事实（架构拍板 + 噪声底离线），对应任务格只有 T01。
+（2026-10-10 回写：T04/T05 按实况置完成——版本与提交已随后续批次发生；T02 置进行中——端点复测通过、试水实跑启动。2026-10-13 复核：T06 状态由「未开始」改为「进行中」，T10/T12 因 `host_adapter.py` 已删除改为「本期不做」。2026-10-22 回写：T06 安装快照已同步到 0.12.0，`installed` PASS，置完成。）
 
 | 序号 | 业务侧解读 | 技术侧解读 | 交付效果（完成后可验证） | 状态 |
 | --- | --- | --- | --- | --- |
@@ -32,8 +32,8 @@ updated_at: 2026-10-10T15:20:00+08:00
 | 5 | 换宿主方法不断 | 方法写一次，测量证书一个一个发 | Claude 先；ZCode 次；Codex 只发基线证 | ☐ |
 | 6 | 方法改动有业务尺子 | `evals/business` smoke 对照（已随精简批退役，待替代） | `measurement: complete` 或仍诚实标 none | ☐ |
 
-**我们在哪**：架构已评、打包与默认路径已落、T04/T05 按实况回写；端点 2026-10-10 复测通过（U-01 解除），第一次噪声底试水实跑已启动；2026-10-12 评测装置随 ISS-2026-052 整线删除，噪声底的执行对象已失（见 `PLAN-LOOP-SMOKE-001`）。2026-10-13 `validate.py installed` 复核 FAIL，T06 重装核实未闭合。
-**下一步**：（1）用户决定 T02 是否随评测装置删除改为「本期不做」；（2）刷新 marketplace 重装后复跑 `validate.py installed` 核实 T06。
+**我们在哪**：架构已评、打包与默认路径已落、T04/T05 按实况回写；端点 2026-10-10 复测通过（U-01 解除），第一次噪声底试水实跑已启动；2026-10-12 评测装置随 ISS-2026-052 整线删除，噪声底的执行对象已失（见 `PLAN-LOOP-SMOKE-001`）。2026-10-22 复核：宿主安装快照已同步到 0.12.0，`validate.py installed` PASS，T06 闭合。
+**下一步**：（1）T02 随评测装置裁撤收口（已失对象）；（2）T09 日常 Intake 检索作为后续可选假设。
 **阻塞/风险**：无阻塞；生成目录 gitignore，克隆后需先跑 `packaging/build_runtime.py`。
 
 ### 已拍板（2026-09-19）
@@ -66,7 +66,7 @@ updated_at: 2026-10-10T15:20:00+08:00
 | 仓库外候选树 | 不入仓 | `check-diff` blocked=[]；仅五份 manifest |
 
 源码基线（历史基线，2026-09-19）：`plugin.json` `0.8.1`，HEAD `ceb639f56c940939c36c745e739c237167048159`。ZCode 安装快照当时仍为 `0.8.0`。
-当前基线（2026-10-13 复核）：`plugin.json` 与 `.claude-plugin/plugin.json` 均为 `0.10.0`；复核时 HEAD `fb98b21eca7ad608e124c8cd94fba00f7219f47a`（`main`）。ZCode 安装缓存目录为 `0.10.0`，但 `validate.py installed` 当前 FAIL（21 项差异，见 T06 证据列）。
+当前基线（2026-10-22 复核）：五份 manifest 均为 `0.12.0`；ZCode 安装缓存目录为 `0.12.0`，`validate.py installed` PASS。
 
 ### 没做
 
@@ -97,7 +97,7 @@ updated_at: 2026-10-10T15:20:00+08:00
 | `T03` | 独立评审 `--case-ids` 门变更（作者不审自己） | P0 | 待核实：`tools/lab/eval_runner.py` 已随 ISS-2026-052 删除；`tests/test_lab_contracts.py` | `T01` | ☑ 已完成 | 独立 Task 评审 `approved`；`CaseIdSubsetTests` 6 OK；`suite_revision` 不由 id 列表改写；残余见评审（CLI help / 业务套件 / 已加载套件内重复 id 未测） |
 | `T04` | 源码版本 bump 与 CHANGELOG：记下门变更与 `measurement: none`（live 未出前不得写成已验证改进） | P1 | 五份 manifest、`CHANGELOG.md`（待核实：原 `docs/iteration-log.md` 已删） | `T03` | ☑ 已完成 | 由后续发布批覆盖（0.8.2–0.10.0 均完成 bump + CHANGELOG 且 `measurement: none`）；本批相关的 `--case-ids` 条目缺口经 2026-10-10 复核确认并按书面豁免（不改写历史条目）；2026-10-10 `CHANGELOG`「待发布」节已含新批 |
 | `T05` | 用户授权后再提交本批；默认不 push | P1 | 待核实（无固定代码落点：提交步骤） | `T03` | ☑ 已完成 | 用户授权提交：3f902a3（PLAN-LOOP-SMOKE-001 T01 的 `--case-ids` 门变更）/ 4543b69（PLAN-PRODUCT-001 打包批）（2026-09-19）及后续批次（4ae68bd、4c767eb 等）均已落地。a6fd485 为 PLAN-PY-GUARD-001 的解释器守卫修复（`validate.py`），与本批无关，已移出本批归属（2026-10-13 更正） |
-| `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 待核实（安装快照位于宿主缓存，不在仓库内） | `T04` | ◐ 进行中 | 2026-10-13 复核：`PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py installed` FAIL（0.10.0 缓存与源树 21 项差异，含 `skills/agentflow/SKILL.md`、`agents/*.md`）。此前记录「cache/0.10.0 已同步且 installed PASS」与当前结果不符，已撤销；`pending-test.md` 第 18 行所记「2026-10-10 16:22 客户端重装已完成」未被本地快照佐证。需用户侧刷新 marketplace 并重装后复跑 `installed` 核实（非阻塞） |
+| `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 待核实（安装快照位于宿主缓存，不在仓库内） | `T04` | ☑ 已完成 | 2026-10-22 复核：ZCode 缓存已有 `0.12.0` 快照，`PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py installed` → PASS（exit 0）；`manifests` → PASS。2026-10-13 记录的 0.10.0 差异已随 0.11.0/0.12.0 重装闭合 |
 | `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `source`=`./packaging/runtime`；生成树仅含运行时面，`docs/`、`episodes/`、`reviews/`、`tests/`、`tools/`、`evals/` 均排除；独立评审 `approved`；评审后补目的地禁写源码树 |
 | `T08` | 默认路径缩短：Skill 强调只启用有工作的角色；14 角色留作可选能力 | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | `T01` | ☑ 已完成 | Bind 段不再枚举 14 个 `agentflow:*`；独立评审 `approved`；`validate.py docs` PASS；ZCode 重装提示保留 |
 | `T09` | 日常 Intake 显式检索再犯类（FTS5）；不作为向量 RAG | P2 | `skills/agentflow/SKILL.md`、`tools/lab/record_store.py` | `T02` | ☐ 未开始 | 适合噪声底之后的第一个真假设候选 |

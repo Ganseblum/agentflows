@@ -64,7 +64,7 @@ sequenceDiagram
 ## 6. 验证命令
 | 命令 | 覆盖什么 |
 | --- | --- |
-| `PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py all` | 九项门禁 |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py all` | 全套门禁（项数以 `--list` 自报为准，当前 11 项） |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests` | 单元测试 |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/doc_chain.py --self-test` | 文档链 linter 自测 |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py installed` | 宿主安装快照同步 |

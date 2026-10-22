@@ -72,8 +72,8 @@ def count_schemas() -> int:
 
 
 def count_agents() -> int:
-    """agents/*.md 文件数（角色文件）。"""
-    return len(list((ROOT / "agents").glob("*.md")))
+    """agents/*.md 角色文件数（排除目录索引 README.md）。"""
+    return len([p for p in (ROOT / "agents").glob("*.md") if p.name != "README.md"])
 
 
 def count_batches() -> int:

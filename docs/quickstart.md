@@ -42,13 +42,14 @@
 - **作者不是验证者**：你写了改动的一部分，就必须让别人（或独立评审角色）验证它，不能自己签字。
 - **摘要不是证据**：worker 说「测试通过了」不算数，要在真实文件上跑出检查输出才算。
 
-## 3. 收尾前必跑的三条命令
+## 3. 收尾前必跑的两条命令
 
 ```sh
-python3 tools/lab/validate.py all        # 门：schema / 样例 / 产物 / 保护面 / 版本 / 文档 / 测试 / 文档链
-python3 -m unittest discover -s tests    # 门工具自身的回归测试
+python3 tools/lab/validate.py all        # 全套门（已含 tests/ 回归；项数以 --list 为准）
 python3 tools/lab/doc_chain.py <feature-dir>   # 文档链（宣布一条链完成之前）
 ```
+
+需要单独定位测试失败时，再跑 `python3 -m unittest discover -s tests`——`all` 已经包含它。
 
 门红了怎么办：失败是编译错误，退回修，不与摘要谈判；无法复现的检查记为「未运行」，绝不算通过。
 

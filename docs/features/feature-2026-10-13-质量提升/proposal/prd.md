@@ -13,7 +13,7 @@
 ### 1.1 背景
 现状（均可复跑）：
 - 门禁：`python3 tools/lab/validate.py all` 9 项全部 PASS。单元测试 78 项全部 OK。文档链自测 57/57。
-- 运行态：`python3 tools/lab/validate.py installed` FAIL。源码与宿主已安装的 0.10.0 快照不一致，需用户重装插件后复跑。
+- 运行态：`python3 tools/lab/validate.py installed` FAIL。源码与宿主已安装的 0.10.0 快照不一致，需用户重装插件后复跑。（2026-10-22 复核：0.12.0 快照已同步，`installed` PASS——原问题已闭合，保留为提案时的现状记录。）
 - 效果：仓库里没有任何实测数据。CHANGELOG 记录的 32 个版本，全部标注 `measurement: none`。2026-10-12 评测装置整线删除，目前没有可用的测量路径。
 - 代码：`tools/lab/validate.py` 为 2733 行单文件。CI 工作流 `.github/workflows/validate.yml` 从未在真实 runner 上运行过。
 - 文档：计数手写在多处。历史 CHANGELOG 与发布看板中的测试数字曾互相矛盾，现已追加更正，旧条目未改写。

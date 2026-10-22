@@ -15,7 +15,7 @@
 | S6 记录体系 | 每类记录样例过 schema；坏记录（如引用断链）编译失败 | `validate.py schemas` + `artifacts` | 绿 |
 | S7 改进环 | ~~未知/重复 `--case-ids` 退出 1；digest 对贴被 policy 拒；候选碰保护门被拒~~ | 原 `eval_runner.py` + `policy.py`（已删） | **机制已停用**（2026-10-12：改进三件套、发布记录与评测装置整线退役） |
 | S8 确定性验证面 | 任一检查红则 `all` 退出非 0；CI 缺门则 `protected` 失败 | `validate.py all` + `.github/` | 绿 |
-| S9 打包安装 | 生成树缺组件、与源面不一致或 sha256 对不上即 FAIL | `validate.py manifests`（新鲜度）+ `installed` | 绿（生成树与源逐字节一致）；宿主重装后复跑 `installed`（T06） |
+| S9 打包安装 | 生成树缺组件、与源面不一致或 sha256 对不上即 FAIL | `validate.py manifests`（新鲜度）+ `installed` | 绿（生成树与源逐字节一致；2026-10-22 `installed` PASS，0.12.0 快照） |
 | S10 业务仪器 | ~~被测树含 seeds 即 fail-closed；缺 allowed-tools/隔离参数被大声拒绝~~ | 原 `seed_grader.py` 与 `evals/` 已删 | **已裁撤**（2026-10-12：用户拍板「保公开、裁业务」） |
 | S11 文档交付链 | 契约文件存在且被 SKILL 引用；本目录自身即首个全链样例 | `validate.py docs`（引用存在性）+ 人工评审门 | 绿（成稿）/ 评审门未跑 |
 | S12 宿主证书 | 声称"宿主 X 已验证"须能指到该宿主 evaluation 记录，否则编译/评审可判失败 | `validate.py artifacts` | 当前无任何宿主证书（诚实状态：live 证据均为端点健康类——claude 侧一词探测 3/3 与 AF-001×3 试水见 C12、codex 侧一词探测见 X1；采集装置已随评测装置裁撤） |

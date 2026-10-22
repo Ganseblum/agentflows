@@ -1,7 +1,7 @@
 # Agentflow 方法行为规格（spec）
 
 > 适用阶段：`spec/`。前置依赖：`proposal/proposal.md`（原文不改）、`../README.md`。
-> 文档状态：待需求评审（独立评审，文档模式 review spec）。
+> 文档状态：需求评审已通过（REV-20261019-003，2026-10-19）；条目变更仍走版本批 + 独立评审。
 > 冻结语义：本文件的条目即方法的行为承诺。条目变更 = 方法变更，走版本批（CHANGELOG）+
 > 独立评审；不悄悄改。当前版本以五份 manifest 与 `CHANGELOG.md` 为准，本文不复述版本号。
 
@@ -105,8 +105,8 @@
 ### S8 确定性验证面
 
 - **陈述**：`validate.py all` 全套检查（schemas / examples / artifacts / protected /
-  manifests / docs / tests / doc_chain 自测 / doc_chain_live 活面 / lint，项数以
-  `validate.py --list` 自报为准）全绿是任何交付的最低门槛；保护门清单
+  manifests / docs / tests / doc_chain 自测 / doc_chain_live 活面 / decision_gate 决策可追溯 /
+  lint，项数以 `validate.py --list` 自报为准）全绿是任何交付的最低门槛；保护门清单
   （`protected-paths.txt`）覆盖评测官/发布官角色、测量路径、记录 schema、钉住
   回归测试；门变更须人工评审。
 - **验收口径**：`python3 tools/lab/validate.py all` 退出码 0；`validate.py protected`
@@ -125,8 +125,8 @@
   （gitignore 产物）。
 - **标尺**：`validate.py manifests`（名称/版本五处一致 + runtime 与源面新鲜度）；`validate.py
   installed`（宿主安装面，重装后适用）。
-- **状态**：生效（生成树与源逐字节一致）；宿主安装快照落后——2026-10-13 复核 `installed`
-  FAIL（cache 停留 0.10.0），重装后复跑核实（`PLAN-PRODUCT-001` T06）。
+- **状态**：生效（生成树与源逐字节一致）；宿主安装快照已同步——2026-10-22 复核
+  `validate.py installed` PASS（cache 0.12.0）。
 
 ### S10 业务评测仪器（已裁撤）
 
@@ -205,7 +205,7 @@
 | S6 | 记录体系 + 编译门 | 生效 |
 | S7 | 改进环：预声明 → 独立评测 → 人批门 | **已停用**（2026-10-12） |
 | S8 | 确定性检查全套 + 保护门 | 生效 |
-| S9 | 瘦快照打包，manifest 为版本事实源 | 生效（重装复核待做） |
+| S9 | 瘦快照打包，manifest 为版本事实源 | 生效（2026-10-22 `installed` PASS，0.12.0 快照） |
 | S10 | 业务尺子 | **已裁撤**（2026-10-12） |
 | S11 | 文档交付链（对外生成） | 生效 |
 | S12 | 宿主测量证书按宿主发 | 生效（条款）；尚无证书（装置裁撤） |

@@ -21,7 +21,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。当前发布提供：
 
-- 一个共享的开发 Skill 与<!-- count:agents -->15<!-- /count -->个角色档案：前端/后端一对、Technical Director、
+- 一个共享的开发 Skill 与<!-- count:agents -->14<!-- /count -->个角色档案：前端/后端一对、Technical Director、
   Reviewer、Investigator → Fixer → Recorder bug 链、Plan Architect、Test
   Planner/Executor 链，以及改进环的 Feedback Analyst、Candidate Engineer、Evaluator 与
   Release Governor；
@@ -69,9 +69,8 @@ SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权�
 检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现。人工批准是默认的发布边界。
 
 工作区包含一组确定性的门与工具（`tools/lab/`）：一个契约与记录校验器
-`validate.py`（十一项检查：schema、示例、记录产物、受保护清单、五份 manifest 一致性与
-runtime 生成树新鲜度、文档面、仓库回归测试、文档链自测与活面扫描、决策可追溯 decision_gate、lint，项数以
-`--list` 自报为准；另加安装快照漂移检查 `installed`；检查函数
+`validate.py`（全套检查，项数与内容以 `python3 tools/lab/validate.py --list` 为准；
+另加安装快照漂移检查 `installed`；检查函数
 均已拆入 `tools/lab/gate/` 模块包，`validate.py` 保留为薄入口）、一个文档链
 linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
 产物摘要工具（`artifact_digest.py`）；`record_store.py` 提供记录的一次性 SQLite FTS5

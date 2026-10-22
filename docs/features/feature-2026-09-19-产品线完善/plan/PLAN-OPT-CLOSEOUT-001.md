@@ -1,14 +1,17 @@
 ---
 plan_id: PLAN-OPT-CLOSEOUT-001
 plan_version: 0.1.0
-status: proposed
+status: approved
 objective: 收尾 2026-10-12 全仓评审优化批——把 16 处已落盘改动按主题提交入库、修复 T2.12 引入的钉住测试回归、推进 BT 首次真实对照、处理治理收尾小项
 recorded_at: 2026-10-12T06:27:17Z
-updated_at: 2026-10-12T06:27:17Z
+updated_at: 2026-10-22T00:00:00+08:00
 ---
 
 # 评审优化批收尾 — 提交 / 回归修复 / BT 对照
 
+> **2026-10-22 状态更正**：任务表已全部闭合（T01/T02/T04 完成，T03 本期不做），frontmatter
+> `status` 由 `proposed` 更正为 `approved`；任务行与证据回写保持原样。
+>
 > **2026-10-18 合并说明**：本计划随 `workbuddy/main-b0d8652c` 分支并入 `main`。其中提及的
 > 8 指标单点 schema、BT 对照装置、`policy.py` 裁决、逐版本结果 JSON 等，均指 2026-10-12
 > 评测装置裁撤（ISS-2026-052）**之前**的状态，仅作历史参照，不代表现行仓库结构；现存替代与

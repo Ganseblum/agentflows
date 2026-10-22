@@ -5,8 +5,8 @@
 > 落点形态：普通业务仓（`docs/features/`），本仓即为该形态。
 
 ## 元信息
-- 需求原文/页面链接：2026-10-13 用户原话，逐字保留于 `proposal/prd.md` 文档信息节；主实施仓：本仓（agentflows）；相关系统/仓库：无；UI 轨：未启用；最后更新时间：2026-10-19
-- 状态：部分实施（计划看板 `plan/PLAN-QUALITY-001.md` 为唯一权威状态源；本 README 为批次入口索引）。T09 独立评审已执行（2026-10-19 approved，`reviews/` 与 episode 留证）；T08 `installed` 已随 2026-10-20 重装 PASS。2026-10-20 评测复核后另立修复批（见 `index.md` 迁移记录与 `docs/evaluations/`）。
+- 需求原文/页面链接：2026-10-13 用户原话，逐字保留于 `proposal/prd.md` 文档信息节；主实施仓：本仓（agentflows）；相关系统/仓库：无；UI 轨：未启用；最后更新时间：2026-10-22
+- 状态：T01–T09 已完成、T10 本期不做（计划看板 `plan/PLAN-QUALITY-001.md` 为唯一权威状态源；本 README 为批次入口索引）。T09 独立评审已执行（2026-10-19 approved，`reviews/` 与 episode 留证）；T08 `installed` 已随 0.12.0 重装 PASS（2026-10-22 复核）。2026-10-20 评测复核后另立修复批（见 `CHANGELOG.md` 0.12.0 与 `docs/evaluations/`）。
 
 ## 段落映射
 | 段落 | 落点 | 说明 |
@@ -14,7 +14,7 @@
 | proposal | `proposal/prd.md` | 需求提案，含问题台账 Q-01 至 Q-04 |
 | spec | `spec/be/`、`spec/qa/` | 工程需求（be）与验收标准（qa）；无前端范围，不建 spec/fe |
 | design | `design/be/`、`design/qa/` | 工具链技术方案与验证方案；无前端范围，不建 design/fe |
-| plan | `plan/PLAN-QUALITY-001.md` | 执行计划（草案，待独立评审） |
+| plan | `plan/PLAN-QUALITY-001.md` | 执行计划（T01–T09 已闭；T10 本期不做；状态见计划看板） |
 
 ## 推进进度
 > 规则：完成即将行首 ☐ 改 ☑；不适用改 ☑ 并写 (N/A: 原因)；评审类门禁只能由独立评审勾选。
@@ -27,7 +27,7 @@
 ☑ spec/qa 已起草（`spec/qa/acceptance.md`），判据预先写定，未经实验验证
 
 ### 3. 需求评审 [门禁]
-☐ 待独立评审；阻塞项 Q-01、Q-03 关闭后方可进入执行
+☐ 待独立评审勾选；阻塞项 Q-01、Q-03 已于 2026-10-19 拍板关闭
 
 ### 4. Design [按角色]
 ☑ design/be 已起草（`design/be/backend.md`）
@@ -37,25 +37,31 @@
 ☐ 待独立评审；前置为需求评审门
 
 ### 6. Plan [执行契约]
-☑ 已起草（`plan/PLAN-QUALITY-001.md`），待独立评审
+☑ 已执行（`plan/PLAN-QUALITY-001.md`，T01–T09 已闭；T10 本期不做；状态见计划看板）
 
 ### 7. 实施与验证 / 8. 收口
-☐ 未开始
+◐ 实施与验证已完成（T01–T09）；收口待批次关闭（T10 本期不做）
 
 ## 当前步骤
-部分实施已落到 `main`（2026-10-17 并入：M-A 门禁拆分「gate/ 13 模块」、M-C 计数脚本与文档标记、mutate.py 落盘未跑整门变异）。下一步：用户确认 Q-01（是否恢复最小评测装置）、Q-02（产品取向）、Q-03（实验预算）、Q-04（外部记录迁出位置）；T05 整门变异跑已完成（首轮 52＝35 杀死/16 存活/1 无效；处置后当时报 51/51 全杀——2026-10-20 评测复核为 43 杀死/6 存活/2 无效，存活为语料缺口，见计划 T05 行勘误）；T07 门变更已落地且经 T09 独立评审复核（approved）；T08 `installed` 已随 2026-10-20 重装 PASS（M-D 完成）。
+T01–T09 已落到 `main`（M-A 门禁拆分「gate/ 13 模块」、M-C 计数脚本与文档标记、T05 整门变异）；Q-01–Q-04 已于 2026-10-19 全部拍板（见 `docs/PENDING-DECISIONS.md` 历史记录），T10 本期不做。T05 整门变异已完成（首轮 52＝35 杀死/16 存活/1 无效；2026-10-20 评测复核为 43 杀死/6 存活/2 无效，存活为语料缺口，见计划 T05 行勘误）；T07 门变更已落地且经 T09 独立评审复核（approved）；T08 `installed` 已随 0.12.0 重装 PASS（M-D 完成）。
 
 ## 模块进度总览
 | 模块 | 负责人 | 状态 | 做到哪 | 还差什么 |
 | --- | --- | --- | --- | --- |
-| M-A 门禁拆分 | 后端 | ☑ | 已并入 main（`1be1905`/`be72093`），2026-10-19 复跑全部检查 PASS（当时九项，`lint` 同日加入后为十项） | T09 独立评审；基线逐行比对因 `/tmp` 基线散失未复验 |
+| M-A 门禁拆分 | 后端 | ☑ | 已并入 main（`1be1905`/`be72093`），2026-10-19 复跑全部检查 PASS（当时九项，`lint` 同日加入后为十项，2026-10-21 起为十一项，以 `--list` 为准） | 基线逐行比对因 `/tmp` 基线散失未复验；T09 已 approved |
 | M-B 变异测试 | 后端 | ☑ | mutate.py 落盘并跑整门变异（计划 T05 已完成；2026-10-20 复核 43 杀死/6 存活/2 无效，存活为语料缺口，处置见 T05 行） | 存活项语料补齐或 EXEMPT 登记（后续批次） |
-| M-C 计数脚本 | 后端 | ☑ | counts.py 并入 main，4 处文档标记与计数一致（2026-10-19） | T09 独立评审 |
+| M-C 计数脚本 | 后端 | ☑ | counts.py 并入 main，4 处文档标记与计数一致（2026-10-19；2026-10-22 修正角色计数口径后仍一致） | 无 |
 | M-D 运行态同步 | 用户 | ☑ | 2026-10-20 落实：runtime 拷贝进宿主缓存（等价重装），`validate.py installed` PASS（计划 T08 已完成） | 无 |
 | M-E 角色场景 | 测试 | ☑ | 28 用例 v2 全量实跑（×2 零写入核验），`decision: pass`（计划 T04 已完成） | 无 |
 | M-F 实验 harness | 后端 | — | Q-01 已拍板方案 D（预注册判据 + 小样本人工 A/B，不实现 M-F）；G1 由 `testing/agentflows-g1-effect/` 协议承载（计划 T10 本期不做） | 无（口径已拍板，见 `docs/evaluations/README.md`） |
 
+## 评审与分析记录
+
+- 独立评审：`reviews/review-2026-10-19-001.md`（门禁改动，approved）、`reviews/review-2026-10-19-002.md`（受保护面回溯，approved）
+- Q-01–Q-04 决策分析：`reviews/q01-eval-harness-restoration-analysis.md`、`q02-role-consolidation-analysis.md`、`q03-experiment-budget-analysis.md`、`q04-external-records-migration-analysis.md`
+- episode 豁免分析：`reviews/episode-exemption-analysis.md`
+
 ## 当前实施仓与分支基线
-实施在 `main` 直接执行（无独立分支），部分件已并入（`1be1905` → `be72093`，2026-10-17）；批次整体未收口，独立评审未做。2026-10-19 复核：`validate.py all`（当时九项）PASS，单元测试 78 项 OK。
+实施在 `main` 直接执行（无独立分支），部分件已并入（`1be1905` → `be72093`，2026-10-17）；批次整体未收口（T10 本期不做），T09 独立评审已执行（approved）。2026-10-19 复核：`validate.py all`（当时九项）PASS，单元测试 78 项 OK。
 
 文档链按 agentflow 文档链方法编写（2026-10-13）。结构模板标记未启用：本批无前端轨，C11 要求 design/fe 的固定章节，不适用（待用户裁决，见 proposal 台账）

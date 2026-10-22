@@ -10,7 +10,7 @@
 
 ## 1. 一张图看懂体系
 
-体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（<!-- count:agents -->15<!-- /count --> 个角色文件，宿主从安装快照加载）、
+体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（<!-- count:agents -->14<!-- /count --> 个角色文件，宿主从安装快照加载）、
 **证据层**（`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/` 里人和机器都能校验的记录；改进三件套已停用）、**门**（确定性工具，判定产物合不合格）。
 
 ```mermaid
@@ -78,8 +78,8 @@ flowchart TB
 | 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `reviews/<项目>-<功能>/` |
 | 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | episode（三件套记录根已停用，落点由 Supervisor 指派） |
 
-三个只读角色（Investigator / Feedback Analyst / Technical Director）与 Reviewer 同构但**有意不合并**——
-输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策），合并与否是保留的产品决策（版本史见 [`CHANGELOG.md`](../CHANGELOG.md)）。
+四个只读角色（Investigator / Feedback Analyst / Technical Director / Evaluator）与 Reviewer 同构但**有意不合并**——
+输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策 ≠ 对不可变结果记录的对照判定），合并与否是保留的产品决策（版本史见 [`CHANGELOG.md`](../CHANGELOG.md)）。
 
 ---
 
@@ -156,8 +156,8 @@ sequenceDiagram
     participant FA as Feedback Analyst
     participant CE as Candidate Engineer
     participant IS as isolation.py check-diff
-    participant EV as Evaluator（原 eval_runner，已裁撤）
-    participant RG as Release Governor（原 policy.py，已裁撤）
+    participant EV as Evaluator（只读评审证据记录）
+    participant RG as Release Governor（按人工评审口径判定）
     participant RE as Bug Recorder / episodes
 
     U->>SU: 反馈 / 复盘 / 新需求
@@ -167,9 +167,9 @@ sequenceDiagram
     SU->>CE: 授权候选（candidate worktree，禁区外改动）
     CE->>IS: check-diff（对照冻结 parent revision，触碰禁区即 FAIL）
     IS-->>EV: 干净的候选树
-    EV->>EV: baseline vs candidate 对照
-    EV-->>RG: 两份结果 + 比较清单
-    RG->>RG: 原 policy.py 判定（better→promote / 无改善→revise / 回归→reject）——装置已裁撤，<br/>流程留存为设计知识（design-decisions §3）
+    EV->>EV: 审阅候选与证据记录（装置裁撤后无仪器化对照）
+    EV-->>RG: 证据结论 + 评审引用
+    RG->>RG: 判定 promote / revise / reject / rollback（measurement: none 时以人工评审为依据）<br/>原 policy.py 自动判定已裁撤，流程留存为设计知识（design-decisions §3）
     RG-->>U: 决策建议（required_human_approval: true）
     U->>SU: 批准 / 否决
     SU->>RE: promote 后回写台账 consolidated_in（否则该类永远误挂 escalated）<br/>版本 bump 五 manifest + CHANGELOG
@@ -222,7 +222,6 @@ flowchart LR
 | --- | --- | --- |
 | `schemas` | 契约文件本身合法 | 看报错改 schema（gate change，需人审） |
 | `examples` | 正反例与契约同步 | 反例必须真的能被拒 |
-| ~~`evals`~~ | 公开用例结构（装置已裁撤） | — |
 | `artifacts` | 各记录根实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
 | `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
 | `manifests` | 五份 manifest 名字版本一致；`packaging/runtime` 生成树在场时与源面逐字节一致（marketplace 指向它，漂移即静默装出旧角色） | 补 bump，或重建生成树 `python3 packaging/build_runtime.py` |
@@ -230,6 +229,8 @@ flowchart LR
 | `tests` | tests/ 目录内容受控 + 回归全绿 + 拒绝 skip | 测试红即门回归 |
 | `doc_chain` | 文档链 linter 判别自测（用例数下限守卫） | 自测红或用例数缩水即门红（缩水=门变更，需人审） |
 | `doc_chain_live` | 活面扫描：对声明域（docs/product、docs/features）跑文档链文本形态，FAIL 即门红 | 按报错修文档；这是被检查物体检，不是检查器自检 |
+| `decision_gate` | 决策可追溯（C15–C18，标记启用：台账索引 / 决策记录 / 核验过期 / 未决归属） | 按报错修记录或台账；门变更需人审 |
+| `lint` | ruff + mypy 静态检查（依赖 `requirements-dev.txt`） | 装依赖或修代码 |
 
 其他日常命令：
 
