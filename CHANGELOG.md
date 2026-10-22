@@ -2,8 +2,8 @@
 
 ## 0.13.0 — 2026-10-23
 
-> 发布批（用户指示「按照你说的提一个feature，然后开始修复完善并发版升级」，门变更与发版范围经
-> AskUserQuestion 当次授权）：五份 manifest（`plugin.json`、`marketplace.json`、`.zcode-plugin/`、
+> 发布批（用户逐字指示「按照你说的提一个feature，然后开始修复完善并发版升级」；门变更与发版范围经
+> 同次会话内问答选定，选项说明文本由作者撰写——第二轮评审要求把「书面授权」改成本实况表述）：五份 manifest（`plugin.json`、`marketplace.json`、`.zcode-plugin/`、
 > `.claude-plugin/`、`.codex-plugin/` 的 plugin.json）0.12.0 → 0.13.0，`packaging/runtime` 随发版重建。
 > 本节收录 2026-10-22 文档面收尾批（未消耗版本号的那批）与 2026-10-23 追溯闭环与证据在场批。
 > `measurement: none`（方法级改动，无仪器化业务任务度量；证据是推理加触发它的走查发现与评审记录）。
@@ -32,15 +32,12 @@
   过时决策标注、`docs/system-guide.md` 的 `archive/` 与 `docs/issues/归档/` 混用、
   `agents/README.md` 与 `roles.md` 的工作链表双源且列数已分歧、`agents/reviewer.md` 与
   `document-chain.md` 的表达纪律双源、`AGENTS.md`/`README.md` 手写门项计数、文件名口径、
-  `doc_chain.py` 里 C15 的编号歧义。⑥ **自曝的七条实现期偏差**（计划 DEV-01…07）：plan 扫描非递归使
+  `doc_chain.py` 里 C15 的编号歧义。⑥ **自曝的八条实现期偏差**（计划 DEV-01…08）：plan 扫描非递归使
   C23 对子目录失明、任务号常量遮蔽破坏 C9 方言、反引号 ID 使整条历史批次静默通过（评审 P0 的同一根因，
   立为 ISS-2026-060 并按再犯纪律挂账 `unverified-behavior-claims` 第 3 次、`consolidated_in` → 0.13.0）、
   5 处改动未声明 + 3 处声明未改（写范围双向对照）、落点列仍带「待核实」旧名、三次估时间戳被
-  `stamps must reflect real time` 拒。自测 85 → 106 例，单测 78 → 89 项，门禁项集合不变
-  （以 `validate.py --list` 自报）；终验 `/tmp/qtools-312/bin/python tools/lab/validate.py all` 十一项全 PASS。
-  独立评审第一轮 `changes_requested`（1 P0 + 1 P1 + 11 P2，记录
-  `docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md`），逐项修复后
-  待第二轮在冻结 revision 上复跑。**明确不做**：领域模板（威胁建模 / 性能与容量 / 无障碍）另批立项
+  `stamps must reflect real time` 拒。自测 85 → 106 例，单测 78 → 92 项，门禁项集合不变（以 `--list` 自报）。**终验口径按两次实测写**：第一轮 11 项 PASS 后提交 `861b6ef`；第二轮在该冻结提交上复跑发现 `decision_gate` 为红——C17 把核验日解析成当日 00:00，任何同日提交都判「过期」，即当天写完核验、当天推进就永远不可能绿。经用户授权把 C17 改为**日粒度**比较（同日不误伤、隔日仍抓），并把 C18 表头纳入同一列名归一化、「环境无 git」按承诺写进 finding 文案，三项各配回归测试；复验后 11 项 PASS。
+  独立评审**两轮**：第一轮 `changes_requested`（1 P0 + 1 P1 + 11 P2，`reviews/review-2026-10-23-001.md`）；逐项修复并配夹具 100–106 与变异 M57/M58 后提交 `861b6ef`；第二轮在冻结提交上自建 harness 复验，仍给 `changes_requested`（2 P0 + 4 P1 + 14 P2 共 20 条，`reviews/review-2026-10-23-002.md`），其中 P0 直指「把门全 PASS 写成事实依据」——与本批立项要消灭的缺陷同名，被自己的评审抓出。20 条同样逐项修完随本批落地。**明确不做**：领域模板（威胁建模 / 性能与容量 / 无障碍）另批立项
   （用户当次拍板）；效果测量维持 `measurement: none`（2026-10-19 方案 D）；历史批次不强制接入 C22；
   「声明落点 vs 实际改动面」与「变异锚点漂移」进门尚未做，方向已写入计划偏差节。
 

@@ -98,6 +98,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -890,7 +891,7 @@ def staleness_findings(label: str, text: str, repo_root: Path) -> list[str]:
             if not m:
                 continue
             try:
-                v_ts = int(_dt.datetime.strptime(m.group(1), "%Y-%m-%d").timestamp())
+                v_date = _dt.datetime.strptime(m.group(1), "%Y-%m-%d").date()
             except ValueError:
                 continue
             for span in re.findall(r"`([^`\n]+)`", cells.get("来源", "")):
@@ -902,11 +903,16 @@ def staleness_findings(label: str, text: str, repo_root: Path) -> list[str]:
                 if not (repo_root / p).exists():
                     continue
                 commit = _last_commit(repo_root, p)
-                if commit and commit[0] > v_ts:
+                if not commit:
+                    continue
+                # 日粒度比较。用秒比对会把「当天写核验、当天又改到被引用文件」永远判过期，
+                # 于是 2026-10-23 的门在数学上不可能同日转绿（独立评审第二轮 P1-1 实证）；
+                # 条款要防的是「拿几天前的清单来问人拍板」，不是同批次内的正常推进。
+                c_date = _dt.datetime.fromtimestamp(commit[0]).date()
+                if c_date > v_date:
                     errors.append(
-                        f"C17 staleness {label} 引用 {p} 在核验（{m.group(1)}）之后被修改: "
-                        f"{commit[1]} {_dt.datetime.fromtimestamp(commit[0]).strftime('%Y-%m-%d')} "
-                        f"—— 须重跑核验命令并刷新日期"
+                        f"C17 staleness {label} 引用 {p} 在核验（{m.group(1)}）之后的日期被修改: "
+                        f"{commit[1]} {c_date.isoformat()} —— 须重跑核验命令并刷新日期"
                     )
     return errors
 
@@ -946,11 +952,11 @@ def ownership_findings(label: str, text: str, repo_root: Path) -> list[str]:
     errors: list[str] = []
     covered: set[str] = set()
     for header, rows in md_tables(text):
-        if "记录编号" in header and "任务号" in header:
-            ci = header.index("记录编号")
+        cell = None
+        if _has_columns(header, ["记录编号", "任务号"]):
             for row in rows:
-                if ci < len(row):
-                    covered.update(ISS_RE.findall(row[ci]))
+                cell = _cells(header, row)
+                covered.update(ISS_RE.findall(_col(cell, "记录编号")))
     issues_dir = repo_root / "docs" / "issues"
     if not issues_dir.is_dir():
         return errors
@@ -996,6 +1002,10 @@ BLOCKED_GLYPH = "⚠"
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
 REPO_REV_RE = re.compile(r"[\w.-]+@[0-9a-f]{7,40}:[^\s|`]+")
 NA_RE = re.compile(r"N/A[:：]\s*\S")
+
+
+def git_available() -> bool:
+    return shutil.which("git") is not None
 
 
 def _git_commit_present(repo_root: Path, sha: str) -> bool:
@@ -1111,6 +1121,8 @@ def evidence_presence_findings(
             continue
         if not evidence.strip():
             detail = "证据列为空"
+        elif SHA_RE.search(evidence) and not git_available():
+            detail = "环境无 git，提交号不可核（失败关闭：无 git 时提交号不算可复核载体）"
         elif "/tmp/" in evidence or re.search(r"(^|[\s`])/(Users|home|var)/", evidence):
             detail = "证据只指向临时目录或机器绝对路径，已不在盘"
         else:

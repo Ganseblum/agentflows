@@ -218,14 +218,17 @@ def goal_traceability_findings(feature_dir, repo_root):
 
 | 接口 | 方法 | 变更类型 | 说明 |
 | --- | --- | --- | --- |
-| `tools/lab/doc_chain.py` | 目录模式命令行 | 行为新增 | 打标批次额外执行 C22、C23；未打标行为不变 |
-| `tools/lab/doc_chain.py` | `--repo` 模式 | 行为新增 | 仓扫时对打标批次 README 所在目录执行 C22/C23（G1-AC-05） |
+| `tools/lab/doc_chain.py` | 目录模式命令行 | 行为新增 | 每个批次额外执行 C23（证据在场，不设标记）；C22 仅对打 `agentflow 目标承接` 标记的批次生效，其余批次行为不变 |
+| `tools/lab/doc_chain.py` | `--repo` 模式 | 行为新增 | 仓扫遍历 `docs/features/*/` 全部批次目录（不以「有没有 README」为门槛）执行同一实现；其中 C22 仍按标记启用（G1-AC-05） |
 | `tools/lab/doc_chain.py` | `--self-test` | 用例新增 | 新增 C22/C23 判别夹具，用例数只增 |
 | `schemas/bug-record.schema.json` | 记录契约 | 兼容新增 | 可选 `disposition`，老记录不填仍通过 |
 | `tools/lab/gate/plan.py`、`gate/records.py` | 计划与记录校验 | 不变 | 状态枚举与必填集合不动 |
 
-反向说明：外部若 `import doc_chain` 调用其函数会拿到新增的两个函数，既有函数签名不变。仓内
-除 `gate/checks.py` 与 `tests/` 外无其他调用方（2026-10-22 检索：`grep -rn "doc_chain" tools tests`）。
+反向说明：`doc_chain.py` 的**被 import 方**只有 `tests/test_lab_contracts.py`（全仓检索 `import doc_chain` 命中 1 处）；
+它同时被五个位置当**子进程**调用（`tools/lab/validate.py`、`tools/lab/mutate.py`、`tools/lab/gate/checks.py`、
+`tools/lab/gate/examples.py`、`tools/lab/trend.py`，按 `grep -rn "doc_chain" tools tests` 计 106 行命中，逐条看过）。
+新增函数只增不改既有签名，因此子进程调用面不变；两条口径分开陈述，是因为第二轮评审指出原句用「调用方」
+一词把 import 与 subprocess 混成一件事，且用裸 grep 下了存在性结论（`AGENTS.md` 明令禁止）。
 
 #### 1.4.3 关键接口契约
 
@@ -237,28 +240,30 @@ def goal_traceability_findings(feature_dir, repo_root):
 | `repo_root` | 路径 | 是 | 用于把反引号路径解析到仓根；无法解析的段按外部引用处理 |
 | 返回 | `list[str]` | 是 | 每条以 `C22 目标承接:` 开头，点名批次、目标号或任务号；未打标返回空表 |
 
-`evidence_presence_findings(plan_label, plan_text, repo_root)` 的入参与返回：
+`evidence_presence_findings(plan_label, plan_text, repo_root, batch_dir=None)` 的入参与返回：
 
 | 参数 | 类型 | 必填 | 错误语义 |
 | --- | --- | --- | --- |
 | `plan_label` | 相对路径字符串 | 是 | 出现在 finding 文本里，便于定位 |
 | `plan_text` | 计划正文 | 是 | 无任务表时返回空（形态缺失由 C9 负责，不重复报） |
 | `repo_root` | 路径 | 是 | 路径与提交号解析基准 |
+| `batch_dir` | 路径 | 否 | 批次目录；证据列里的路径也按它试一次（存量写法两种都有） |
 | 返回 | `list[str]` | 是 | 每条以 `C23 证据在场:` 开头，含任务号与缺失类别 |
 
 接口契约总览（下表只是导航；字段级契约的形态基线是上面两张逐字段表，别把字段塞进本表）：
 
 | 接口（函数与调用位置） | 请求字段 | 响应字段 | 错误语义 |
 | --- | --- | --- | --- |
-| `goal_traceability_findings()`，由 `lint()` 与 `repo_policy_findings()` 调用 | `feature_dir`、`repo_root` | `list[str]` findings，前缀 `C22 目标承接:` | 未打标返回空表；缺表或缺列返回点名 finding，不抛异常 |
-| `evidence_presence_findings()`，由 `lint()` 调用 | `plan_label`、`plan_text`、`repo_root` | `list[str]` findings，前缀 `C23 证据在场:` | 无任务表返回空；仅临时目录载体返回 finding |
-| `_carrier_present()`（内部共用） | 证据单元格文本、`repo_root` | 布尔与缺失类别标签 | git 不可用时对提交号类返回「不可核」，不静默放行 |
+| `goal_traceability_findings()`，经 `batch_traceability_findings()` 被两种模式各调一次 | `feature_dir`、`repo_root` | `list[str]` findings，前缀 `C22 目标承接:` | 未打标返回空表；缺表或缺列返回点名 finding，不抛异常 |
+| `evidence_presence_findings()`，由 `batch_traceability_findings()` 调用 | `plan_label`、`plan_text`、`repo_root`、`batch_dir` | `list[str]` findings，前缀 `C23 证据在场:` | 无任务表返回空；仅临时目录载体返回 finding |
+| `evidence_carriers(cell, repo_root, batch_dir=None)`（内部共用） | 证据单元格文本、`repo_root`、可选批次目录 | `list[str]` 命中的载体类别（空表即无载体） | 无 git 时提交号不计入载体（失败关闭）；`/tmp` 与绝对路径永不算 |
 
 #### 1.4.4 运行逻辑
 
-目录模式：`lint()` 在既有 C1 至 C21 之后追加两个函数调用（承接与在场都属目录级判定）。
-仓扫模式：`repo_policy_findings()` 遍历 `docs/features/*/README.md`，带 `TRACE_MARKER` 的取其父目录
-执行同一实现；因此同一批次被两种模式跑到时判据完全一致，不存在两套口径。
+两种模式都通过同一个入口 `batch_traceability_findings(批次目录, 仓根)` 进入判定，因此**判据**不可能分叉；
+差别只在**批次集合**：目录模式跑被指定的那一个目录，仓扫跑 `docs/features/*/` 下全部目录。
+finding 文本的标签形态不同（目录模式相对批次目录、仓扫相对仓根），实质结论一致——这一点由
+`tests/test_lab_contracts.py` 的双模式对照断言钉住，不靠本段文字自证。
 
 #### 1.4.5 错误、幂等与状态约束
 
@@ -269,7 +274,9 @@ def goal_traceability_findings(feature_dir, repo_root):
 | 计划里没有任何 ☑ 行 | C23 返回空（本批不要求计划必须有已完成行才可跑） |
 | 提交号存在但 git 不可调用 | finding（失败关闭），并写明「环境无 git，提交号不可核」 |
 | 同一批次同时被目录与仓扫模式跑 | 结果一致；两次运行不写任何文件（检查器幂等、只读） |
-| 承接表状态列与看板聚合不符 | finding 点名不一致的任务号与实际字形 |
+| 承接表状态列与看板聚合不符 | finding 点名不一致的任务号与实际字形（过报与漏报两个方向都判） |
+| 表头写成 `**目标**` 之类装饰形态 | 列名按 `_norm_col()` 归一化后照常校验，不得退化成「缺表」 |
+| 批次目录没有 README.md | C22 无从判定即跳过；C23 仍读它 `plan/` 下的任务表 |
 
 ### 1.5 外部依赖改动需求
 
@@ -283,9 +290,10 @@ def goal_traceability_findings(feature_dir, repo_root):
 
 #### 1.6.1 影响等级
 
-本批定级 **L2（中）**：触及受保护路径 `tools/lab/doc_chain.py`、`tools/lab/gate/checks.py`（只调
-其调用的实现，不改门禁项集合）与 `schemas/bug-record.schema.json`；对外命令形态不变。授权来源为
-用户 2026-10-22 当次指示，终审由独立评审与用户保留。
+本批定级 **L2（中）**。实际改动的受保护路径共 5 个：`tools/lab/doc_chain.py`、
+`tools/lab/gate/examples.py`（反例登记表）、`tools/lab/mutate.py`（新判据的变异覆盖）、
+`schemas/bug-record.schema.json`、`tests/test_lab_contracts.py`（钉住测试）。
+`tools/lab/gate/checks.py` 与 `protected-paths.txt` 本批**没有**改动（门禁项集合不变）。对外命令形态不变。授权来源为用户 2026-10-22 会话内问答选定的「全部授权」（选项说明文本由作者撰写，非用户逐字列出改动项），终审由独立评审与用户保留。
 
 #### 1.6.2 变更兼容性分类
 
@@ -295,7 +303,7 @@ def goal_traceability_findings(feature_dir, repo_root):
 | `disposition` 进契约 | 非破坏（可选字段） | 老记录不填仍通过；新增反例夹具钉住非法值被拒 |
 | 拍板口改八列 | 破坏性（表结构变） | 内容逐条搬运并补齐现状核验与关闭条件，不改结论；`decision_gate` 当场复跑 |
 | 16 条记录追加 `disposition` 与变更记录行 | 非破坏（只追加） | 正文与状态不改写；`artifacts` 复跑 |
-| 文本收口（D-01 至 D-07） | 非破坏（文档） | 双源收口保留真源，另一处改指针；`validate.py docs` 复跑 |
+| 文本收口（D-01 至 D-08） | 非破坏（文档） | 双源收口保留真源，另一处改指针；`validate.py docs` 复跑 |
 
 #### 1.6.3 影响面 checklist
 
@@ -327,11 +335,11 @@ def goal_traceability_findings(feature_dir, repo_root):
 
 | 顺序 | 动作 | 判据 |
 | --- | --- | --- |
-| 1 | 记录改动前基线：`validate.py all`、两个活批次的目录模式输出 | 原始输出落 `testing/agentflows-gate-evidence/` |
+| 1 | 记录改动前基线：`validate.py all`、两个存量批次的目录模式输出 | 原始输出落 `testing/agentflows-gate-evidence/` |
 | 2 | 实现 C22/C23 与自测夹具（先负例后正例） | `--self-test` 全绿且用例数增加 |
 | 3 | 契约补 `disposition` 与正反例 | `validate.py schemas`、`examples` PASS |
 | 4 | 拍板口八列化、记录登记、批次打标 | `validate.py decision_gate` PASS 且扫描对象含活文件 |
-| 5 | 文本收口 D-01 至 D-07 | `validate.py docs`、`doc_chain_live` PASS |
+| 5 | 文本收口 D-01 至 D-08 | `validate.py docs`、`doc_chain_live` PASS |
 | 6 | 重跑整门变异并把报告与基线落盘，回写两批证据列 | C23 对两批计划 findings 为 0；报告在盘可核 |
 | 7 | 独立评审 → 版本 bump → 生成树重建 → 安装面比对 | 评审 `approved`；`manifests` 与 `installed` PASS |
 
@@ -344,12 +352,17 @@ def goal_traceability_findings(feature_dir, repo_root):
 
 ### 3.2 回滚
 
-| 步骤 | 回滚动作 | 数据后果 |
-| --- | --- | --- |
-| 1 | `git revert` C22/C23 与夹具的提交 | 无（检查器只读） |
-| 2 | `git revert` schema `disposition` 的提交 | 已登记的 16 条记录需同时回退该字段，否则 `artifacts` 红 |
-| 3 | `git revert` 拍板口与记录登记的提交 | 无（只追加内容被回退） |
-| 4 | 版本与生成树：还原五份 manifest 并重建 `packaging/runtime` | 宿主侧仍是旧快照，须重装才切换；本批不代用户执行 |
+与 §3.1 的七步逐条配对（一步一个回滚点，不写成概括）：
+
+| 顺序 | 动作（§3.1） | 回滚动作 | 数据后果 |
+| --- | --- | --- | --- |
+| 1 | 基线落盘 | 纯新增文件，删除即回滚 | 无 |
+| 2 | C22/C23 实现与夹具 | `git revert` 该提交 | 无（检查器只读，不写文件） |
+| 3 | `disposition` 进契约与正反例 | `git revert` 后需同批回退第 4 步的字段登记 | 只回退契约会让已登记记录 `artifacts` 红，故必须与第 4 步同进同退 |
+| 4 | 拍板口八列化、16 条记录登记、批次打标 | `git revert` 该提交 | 无（登记内容只追加，回退即消失） |
+| 5 | 文本收口 D-01 至 D-08（含 `agents/`、`skills/`） | `git revert` 后**必须**重跑第 7 步的生成树重建 | 否则安装面与源面漂移，`manifests` 红 |
+| 6 | 整门变异重跑与证据回写 | 回退两个存量批次计划的证据列改动，报告文件按只追加原则保留 | 报告留在盘上不产生错误，仅历史多一份产物 |
+| 7 | 独立评审 → 版本 bump → 生成树 → 安装面 | 评审未过则不进入 bump；已 bump 时还原五份 manifest 并重建 `packaging/runtime` | 宿主侧仍是旧快照，须用户重装才切换；本批不代做 |
 
 不可回退点：CHANGELOG 与 episode 条目按仓库规则只追加，发布说明若已写出不就地抹除，更正在下一版本说明。
 
@@ -357,7 +370,7 @@ def goal_traceability_findings(feature_dir, repo_root):
 
 | 开关 | 默认值 | 放量方式 | 回滚方式 |
 | --- | --- | --- | --- |
-| `TRACE_MARKER`（批次级） | 未打标（本批两个批次打标） | 后续批次逐个补标记 | 摘掉标记即退出检查范围，不影响其它判据 |
+| `TRACE_MARKER`（批次级） | 未打标（截至 0.13.0：本批一个批次打标；另有一处 `agentflow 决策记录` 打在 `docs/PENDING-DECISIONS.md`） | 后续批次逐个补标记 | 摘掉标记即退出检查范围，不影响其它判据 |
 | `disposition`（记录级） | 缺省不参与 | 逐条登记 | 删除字段即回到原行为（需同时回退 schema） |
 
 ### 3.4 监控告警与问题定位
@@ -375,6 +388,6 @@ def goal_traceability_findings(feature_dir, repo_root):
 - ☑ 证据判定形态有 flowchart，与 §6.2 字段口径逐类对应（§1.1.3.2）
 - ☑ 接口契约按参数逐项给出类型、必填与错误语义；无索引式汇总表（§1.4.3）
 - ☑ 影响面定级 L2 且依据写明（§1.6.1）
-- ☑ 发布顺序与回滚点逐条配对，含不可回退点声明（§3.1 与 §3.2）
+- ☑ 发布顺序与回滚点逐条配对（§3.1 七步 ↔ §3.2 七行），含不可回退点声明
 - ☑ 异常矩阵覆盖缺表、缺列、git 缺失、判据过宽、评审返工、结果与勘误不符六类
 - ☐ 「历史批次全量接入」的判据与范围待另批立项时确认，本批不承诺

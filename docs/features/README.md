@@ -80,5 +80,5 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
   批次 README 的「元信息」节写「升格来源：ISS-YYYY-NNN（原由）」。升格即留痕，不靠记忆。
 - **批次完成**：结论入 `CHANGELOG.md` 与 episode，批次目录删除（git 历史即归档）。
 
-证据列的形态要求（C23，2026-10-23 起）：标 ☑ 已完成的行必须留下可复核载体——仓内存在的路径、
-`仓库@修订:路径`、git 能解析的提交号，或 `N/A: 理由`；只在 `/tmp` 里存在过的证据不算。
+证据列的形态要求（C23，2026-10-23 起）：☑ 已完成的行必须留下可复核载体；**四类载体的定义单点在
+`skills/agentflow/references/document-chain.md` 的门 8**，本文件只引用不复述——复述就会长出第二个真源。

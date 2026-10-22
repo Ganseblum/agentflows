@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import datetime as _dt
 import io
 import json
 import os
@@ -1598,6 +1599,72 @@ class GoalTraceabilityEvidenceTests(unittest.TestCase):
         bad = validator.validate({**base, "disposition": "wontfix"})
         self.assertTrue(bad, "an out-of-set disposition must be rejected")
         self.assertTrue(any("deferred" in error.message for error in bad), bad)
+
+
+
+class ReviewRoundTwoFixTests(unittest.TestCase):
+    """第二轮评审三项门语义修复：C17 日粒度、C18 表头归一化、无 git 的失败关闭文案。"""
+
+    DEC_HEAD = ("| 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 |\n"
+                "| --- | --- | --- | --- | --- | --- | --- | --- |\n")
+
+    def _repo(self, directory: Path) -> None:
+        def git(*args: str) -> None:
+            subprocess.run(["git", "-c", "init.defaultBranch=main", "-c", "commit.gpgsign=false", *args],
+                           cwd=directory, check=True, capture_output=True)
+        git("init", "-q")
+        git("config", "user.email", "t@example.com")
+        git("config", "user.name", "t")
+
+    def _decision_text(self, verify_date: str) -> str:
+        row = (f"| `a.md` | A 选一 B 选二 | {verify_date} `grep x` | 选 A | 批次 T01 | "
+               f"P2 | 单模块(tools/lab/doc_chain.py) | N |\n")
+        return "# 决策\n\n本文件由 agentflow 决策记录方法生成\n\n" + self.DEC_HEAD + row
+
+    def test_c17_same_day_commit_is_not_stale(self) -> None:
+        today = _dt.date.today().isoformat()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._repo(root)
+            (root / "a.md").write_text("# a\n", encoding="utf-8")
+            when = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+0000")
+            env = dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when)
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True, env=env)
+            subprocess.run(["git", "commit", "-qm", "same day"], cwd=root, check=True,
+                           capture_output=True, env=env)
+            # 核验日期与提交同一天：不得判过期（秒比对时这里必然红）
+            self.assertEqual(doc_chain.staleness_findings("d.md", self._decision_text(today), root), [])
+            (root / "d.md").write_text(self._decision_text(today), encoding="utf-8")
+            earlier = (_dt.date.today() - _dt.timedelta(days=3)).isoformat()
+            errors = doc_chain.staleness_findings("d.md", self._decision_text(earlier), root)
+            self.assertTrue(errors and "C17 staleness" in errors[0] and "之后的日期被修改" in errors[0], errors)
+
+    def test_c18_accepts_decorated_ledger_header(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            issues = root / "docs" / "issues"
+            issues.mkdir(parents=True)
+            (issues / "ISS-2026-001-x.md").write_text("---\nstatus: open\n---\n", encoding="utf-8")
+            readme = ("# 批次\n\n本批启用 agentflow 决策归属 标记。\n\n"
+                      "| **记录编号** | `任务号` | 说明 |\n| --- | --- | --- |\n"
+                      "| ISS-2026-001-x | T01 | 承接 |\n")
+            (root / "docs" / "features" / "b").mkdir(parents=True)
+            self.assertEqual(
+                doc_chain.ownership_findings("b/README.md", readme, root), [],
+                "装饰过的表头不得让 covered 集合静默变空（过红方向同样是判据失真）")
+
+    def test_missing_git_is_reported_as_such(self) -> None:
+        original = doc_chain.git_available
+        doc_chain.git_available = lambda: False
+        try:
+            errors = doc_chain.evidence_presence_findings(
+                "plan/p.md",
+                "| ID | 任务 | 代码落点 | 依赖 | 状态 | 证据 |\n| --- | --- | --- | --- | --- | --- |\n"
+                "| T01 | x | `a.py` | — | ☑ 已完成 | deadbee 提交在历史里 |\n",
+                Path.cwd())
+        finally:
+            doc_chain.git_available = original
+        self.assertTrue(errors and "环境无 git" in errors[0], errors)
 
 
 if __name__ == "__main__":

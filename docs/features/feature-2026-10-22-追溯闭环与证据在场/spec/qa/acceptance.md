@@ -49,7 +49,7 @@
 | 新门确实照到活文件 | `doc_chain.py --repo .` 的扫描对象里，带 C15/C16/C18 或 C22 标记的**非夹具**文件数 ≥2，且这些文件当前 findings 为 0 | 不得靠摘掉标记转绿，须补齐载体 |
 | 新门有判别力 | C22、C23 各至少 1 正 1 负自测夹具，且负例的 finding 串含对应检查号 | 视为未实现，不接受「代码写了」的摘要 |
 | 既有行为不回退 | `validate.py all` 全套检查通过；`doc_chain.py docs/features/feature-2026-10-13-质量提升` 与 `docs/product` 的既有 findings 不因本批新增而变红 | 回退新增判据，或如实登记为放行项并说明 |
-| 证据可复核 | 两个活批次计划里每个 ☑ 行的证据列都能被 C23 判定为含可复核载体 | 补落盘证据或把状态改回真实值，不允许改判据 |
+| 证据可复核 | 三个批次计划里每个 ☑ 行的证据列都能被 C23 判定为含可复核载体 | 补落盘证据或把状态改回真实值，不允许改判据 |
 
 ## 4. 工程模块验收点
 
@@ -77,9 +77,9 @@
 | 验收点 | 验收目标 | 场景或条件 | 可观察结果 | 优先级 | 来源 |
 | --- | --- | --- | --- | --- | --- |
 | G3-AC-01 | 豁免通道进契约 | 记录加 `disposition: deferred` | `validate.py schemas` 与 `artifacts` PASS；非法值被拒 | P0 | proposal §1.1 实证三 |
-| G3-AC-02 | 拍板口八列化 | `docs/PENDING-DECISIONS.md` 表格 | 表头含八列且带 `agentflow 决策记录` 标记，`decision_gate` PASS 于该文件 | P0 | `AGENTS.md:108` |
+| G3-AC-02 | 拍板口八列化 | `docs/PENDING-DECISIONS.md` 表格 | 表头含八列且带 `agentflow 决策记录` 标记，`decision_gate` PASS 于该文件 | P0 | `AGENTS.md`「决策记录与台账」节（该节现位于 `AGENTS.md:110`，行号会随文档改动漂移，故按节名引用） |
 | G3-AC-03 | 开放记录有归属 | 16 条 open 记录 | 逐条含 `disposition` 与追加的变更记录行，`C18 ownership` findings 为 0 | P0 | proposal §1.2 G3 |
-| G3-AC-04 | 核验不过期 | 拍板口「现状核验」列引用同日改过的路径 | C17 若红则刷新日期与命令，不得摘标记 | P1 | `AGENTS.md` 决策记录节 |
+| G3-AC-04 | 核验不过期 | 拍板口「现状核验」引用被改动路径，且核验与改动同日 | 原语义在数学上不可能同日转绿（第二轮评审 P1-1）；已授权把 C17 改为**日粒度**比较，同日不误伤、隔日仍抓，并由 `tests/test_lab_contracts.py` 的 `ReviewRoundTwoFixTests` 钉住 | P1 | `AGENTS.md`「决策记录与台账」节 |
 
 ### G4 规范文本自洽（M-D）
 
@@ -95,13 +95,13 @@
 | --- | --- | --- | --- | --- | --- |
 | G5-AC-01 | 门基线与变异报告在盘 | 副本跑完落 `testing/agentflows-gate-evidence/` | 报告文件存在且被计划证据列引用 | P0 | proposal §1.2 G5 |
 | G5-AC-02 | 独立评审留证 | 门变更由只读评审者评审 | `reviews/` 下评审记录 `decision: approved`，episode 含轮次 | P0 | 硬边界 1 |
-| G5-AC-03 | 版本与快照一致 | 五份 manifest 同步、生成树重建 | `validate.py manifests` 与 `installed` PASS，逐字输出留档 | P0 | proposal §1.2 G5 |
+| G5-AC-03 | 版本与生成树一致；安装面差异如实登记 | 五份 manifest 同步、`packaging/build_runtime.py` 重建 | `validate.py manifests` PASS 且逐字留档；`validate.py installed` 的 FAIL 必须**写进待验收面并标注为未验证**，不写进本批的通过项 | P0 | proposal §1.2 G5（重装属范围外） |
 
 ## 5. 验收点与用例覆盖映射
 
 | 验收点 | 关联用例（见 `design/qa/testing.md` §2） | 状态 |
 | --- | --- | --- |
-| G1-AC-01、G1-AC-02、G1-AC-03 | TC-TRACE-01、TC-TRACE-02、TC-TRACE-03 | ☑ 已覆盖（`tools/lab/doc_chain.py --self-test` 用例 87/88/89，2026-10-23 实跑 98/98） |
+| G1-AC-01、G1-AC-02、G1-AC-03 | TC-TRACE-01、TC-TRACE-02、TC-TRACE-03 | ☑ 已覆盖（`tools/lab/doc_chain.py --self-test` 用例 87/88/89，2026-10-23 实跑 106/106） |
 | G1-AC-04、G1-AC-05 | TC-TRACE-04、TC-TRACE-05 | ☑ 已覆盖（用例 92 与 97 钉住「未打标不误伤」；`doc_chain.py --repo .` → `PASS decision-gate`；`docs/features/feature-2026-09-19-产品线完善` 目录模式 PASS） |
 | G2-AC-01、G2-AC-02 | TC-EVID-01、TC-EVID-02 | ☑ 已覆盖（用例 93/94 + `tests/test_lab_contracts.py` 的 `test_commit_sha_counts_only_when_git_can_resolve_it`） |
 | G2-AC-03、G2-AC-04 | TC-EVID-03、TC-EVID-04 | ☑ 已覆盖（无 git 时提交号判不可核；用例 95 与 `test_rows_that_are_not_done_carry_no_evidence_duty`） |
