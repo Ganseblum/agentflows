@@ -9,6 +9,7 @@
 | --- | --- | --- | --- |
 | 1 | 首次接入（Init）章节 + 表达与沉淀纪律（`skills/agentflow/SKILL.md`、`AGENTS.md`） | 阅读两处新增条款：Init 约定（五项）与「面向人的输出白话优先」；重装后由用户在新项目试用 | 条款在盘已核（2026-10-19：SKILL.md Init 五项与 AGENTS.md 表达纪律条款 grep 在场）；待用户在新项目试用（用户阅读向，仓内不可闭环） |
 | 2 | 接入 / 触发面修复 + 模板角色目录化 + 典型案例 | 重装后在新目标仓发起一个 feature 任务，观察：①先问产品前沿 ②落点建 `<repo>-workflow-ai/` 枢纽 ③对 feature 目录 `doc_chain.py` PASS；另抽查 `skills/agentflow/templates/feature/` 为角色目录命名 | 静态项已达成（2026-10-20：`installed` PASS；模板目录为 design/{be,fe,qa,ui}、plan、proposal、spec/{be,fe,qa,ui}）；端到端新仓 feature 任务观察仍待用户侧发起，判为「静态达成 / 端到端待用户」 |
+| 3 | 追溯闭环批的门变更（C22 目标承接闭环 + C23 证据在场 + 记录契约 `disposition`，2026-10-23） | ① 在真实新批次立项当天只打 `agentflow 目标承接` 标记、不写承接表，跑 `python3 tools/lab/doc_chain.py <批次目录>`，应报「标记启用却没有承接表」；② 把某已完成任务从承接表删掉，应报「孤儿任务」；③ 把某任务行的证据只写 `/tmp/x.txt`，应报 C23；④ 拿一个未打标记的历史批次跑同命令，确认不产生 C22 findings；⑤ 读 `docs/PENDING-DECISIONS.md` 的八列，判断是否真的能凭它拍板（不用回翻来源） | ①②③④已由 `tools/lab/doc_chain.py --self-test` 用例 86–98 与 `tests/test_lab_contracts.py` 的 `GoalTraceabilityEvidenceTests` 实跑覆盖（98/98、89 tests OK），⑤属阅读向判断，须用户本人确认（仓内不可闭环）；另：7 个变异存活项的逐项处置、以及「锚点漂移应做成机器判据」两项已分别登记为 `docs/issues/ISS-2026-059-变异存活项长期无逐项处置.md` 与 `docs/issues/ISS-2026-058-变异语料锚点漂移致判据不可观察.md` 的备注，本批不做 |
 
 ## 已验收（历史，2026-10-19/20）
 

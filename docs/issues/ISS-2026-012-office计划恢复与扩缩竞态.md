@@ -2,6 +2,8 @@
 bug_id: ISS-2026-012
 title: resume-per-turn 与「Runtime 可水平扩展」互相矛盾——同会话跨容器 transcript/工作区竞态未定义
 status: open
+disposition: deferred
+updated_at: 2026-10-23T00:18:22+08:00
 severity: P1
 error_kind: missing-constraint
 attribution: product_code
@@ -41,3 +43,5 @@ resume-per-turn 要求上一 run 的 transcript 先落定才能续接；同一�
 ## 变更记录
 
 - 2026-09-19 14:21 · 立录 · REV-20260919-001 finding F3，状态 open。
+
+- 2026-10-23 00:18 · 归属登记 · 补 `disposition: deferred`：该条属被评审项目（见 frontmatter `project`），本仓不承接；C18 归属检查要求显式声明，来源见 `docs/features/feature-2026-10-22-追溯闭环与证据在场/plan/PLAN-TRACE-001.md` T07。

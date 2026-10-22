@@ -2,6 +2,8 @@
 bug_id: ISS-2026-017
 title: 消息/事件双轨设计未定义合并去重规则——与目标仓 AGENTS.md 消息归属硬规则冲突
 status: open
+disposition: deferred
+updated_at: 2026-10-23T00:18:22+08:00
 severity: P2
 error_kind: ai-ignored-doc
 attribution: product_code
@@ -43,3 +45,5 @@ agentflow_version: 0.8.0
 ## 变更记录
 
 - 2026-09-19 14:21 · 立录 · REV-20260919-001 finding F8，状态 open。
+
+- 2026-10-23 00:18 · 归属登记 · 补 `disposition: deferred`：该条属被评审项目（见 frontmatter `project`），本仓不承接；C18 归属检查要求显式声明，来源见 `docs/features/feature-2026-10-22-追溯闭环与证据在场/plan/PLAN-TRACE-001.md` T07。

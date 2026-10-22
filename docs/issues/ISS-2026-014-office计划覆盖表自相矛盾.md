@@ -2,6 +2,8 @@
 bug_id: ISS-2026-014
 title: 覆盖对照表两处自评与正文自相矛盾（AskUserQuestion 标✅覆盖、checkpoint 标✅等效替代）
 status: open
+disposition: deferred
+updated_at: 2026-10-23T00:18:22+08:00
 severity: P2
 error_kind: logic-error
 attribution: product_code
@@ -45,3 +47,5 @@ checkpoint 的定义性能力就是回滚，自注「无 UI 级回滚」再标�
 ## 变更记录
 
 - 2026-09-19 14:21 · 立录 · REV-20260919-001 finding F5，状态 open。
+
+- 2026-10-23 00:18 · 归属登记 · 补 `disposition: deferred`：该条属被评审项目（见 frontmatter `project`），本仓不承接；C18 归属检查要求显式声明，来源见 `docs/features/feature-2026-10-22-追溯闭环与证据在场/plan/PLAN-TRACE-001.md` T07。

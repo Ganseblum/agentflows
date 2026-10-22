@@ -18,8 +18,10 @@ python3 tools/lab/validate.py all
 五份 manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
 新鲜度——marketplace 装的就是这棵生成树，漂移即静默装出旧角色）、`tests/` 下仓库自身的回归测试，
 以及 lint（ruff + mypy 静态检查，依赖 `requirements-dev.txt`）、decision_gate（决策可追溯
-C15–C18，标记启用）——共十一项；以
-`python3 tools/lab/validate.py --list` 自报为准，文档不得手写计数。失败的检查
+与追溯闭环 C15–C18 与 C22–C23，标记启用）。项数与内容以
+`python3 tools/lab/validate.py --list` 自报为准，本文件与 `README.md` 都不手写它——历史上手写过的
+计数在门项变化时都与实跑对不上（见 `docs/evaluations/AGENTFLOW-EVAL-REPORT-2026-10-20-redo.md` 的
+D1 与 D2 两节）。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
 其中的角色/文档面检查（`validate.py docs`）扫描的对象是：`agents/*.md`、两个 `SKILL.md`、

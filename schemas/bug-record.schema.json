@@ -26,6 +26,10 @@
     "status": {
       "enum": ["open", "fixed-pending-review", "verified", "rejected"]
     },
+    "disposition": {
+      "description": "Explicit ownership statement for a record no batch will pick up: deferred (belongs to another project or a later batch) or not-doing (decided against). Consumed only by the C18 ownership check in tools/lab/doc_chain.py: an open record that is neither cited by a marked batch 承接表 nor carrying this field is a finding. It is NOT part of the status machine — it never replaces status, never implies a fix, and an open record may carry it indefinitely.",
+      "enum": ["deferred", "not-doing"]
+    },
     "severity": {
       "description": "Priority grade: P0 = critical (data loss, security, release blocker), P1 = high, P2 = medium, P3 = low.",
       "enum": ["P0", "P1", "P2", "P3"]

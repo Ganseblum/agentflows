@@ -2,6 +2,8 @@
 bug_id: ISS-2026-023
 title: 三处验收断言不可判定——「秒级生效」「即时生效」无阈值/作用域，GPT 评测门禁无任务集与达标线
 status: open
+disposition: deferred
+updated_at: 2026-10-23T00:18:22+08:00
 severity: P3
 error_kind: other
 attribution: product_code
@@ -41,3 +43,5 @@ M1/M3 验收无法机器或人工客观判定，验收即争议。
 ## 变更记录
 
 - 2026-09-19 14:21 · 立录 · REV-20260919-001 finding F14，状态 open。
+
+- 2026-10-23 00:18 · 归属登记 · 补 `disposition: deferred`：该条属被评审项目（见 frontmatter `project`），本仓不承接；C18 归属检查要求显式声明，来源见 `docs/features/feature-2026-10-22-追溯闭环与证据在场/plan/PLAN-TRACE-001.md` T07。

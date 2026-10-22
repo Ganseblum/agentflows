@@ -24,10 +24,17 @@
 > 2026-10-19 过期货清理批：第 7 条并入 G14（同属 gate/ 门健全）；新增第 8 条（质量提升批收尾拍板）。
 > 2026-10-19 产品链修复轮与分支处置：第 1 条 F1–F12 修复已落并完成独立复审（approved，见文末）；第 6 条已执行并移出（见文末）。门健全批次（第 5、7 条）已拍板落地并移出（见文末）。受保护面回溯评审（第 4 条）已执行并移出（见文末）。
 
-| # | 来源 | 待决问题 | 推荐 | 状态 |
-| --- | --- | --- | --- | --- |
-| 9 | 2026-10-19 记录面核查（`docs/features/feature-2026-10-13-质量提升/reviews/`） | 批次内 `reviews/` 不受评审契约校验：`tools/lab/gate/workspace.py` 的 feature 分支只检查目录名在 `FEATURE_SEGMENTS` 内、文件后缀 `.md`，不调用 `validate_review_markdown`。两份批次内评审记录（REV-20261019-001/002）的 `reviewed_docs` 记的是源文件路径，不是 `archive/<轮次>/` 快照——放在根 `reviews/` 会直接 FAIL。两条记录已各自补「记录形态与门覆盖」一节披露此事。 | 二选一：(a) 把批次内 reviews 纳入 `validate_review_markdown`（**门变更，需用户授权**；会连带要求每轮带 archive 快照）；(b) 在 `reviews/README.md` 明写「批次内 reviews 仅为文档链材料、不受评审契约约束」 | **已落（b）**（2026-10-19 用户选 b，`reviews/README.md` 新增「校验范围」条）；(a) 仍是待授权的门变更 |
-| 10 | 2026-10-20 评测报告拍板项 P1/G28（`docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md` 第十七节） | improve 治理机器的处置：`skills/improve/` 执行面、evaluator / release-governor 角色、candidate / release-record 两份 schema 及相应受保护面——**冻结、砍掉还是保留**。现状：0 候选 / 0 发布记录 / escalated 0 次（契约在、产出为 0），且 `improve/SKILL.md` description 与 `openai.yaml` 仍残留「独立基线对照」话术。**冻结** = 不删除任何文件，只在 SKILL 路由与对外描述里明确「当前停用、恢复条件见 design-decisions §3」，并清掉残留话术；**砍掉** = 按 2026-10-12 瘦身批先例整体裁撤、设计知识留 `docs/design-decisions.md` §3；**保留** = 不动，接受空转。注：删 evaluator / release-governor 角色文件与 candidate / release-record schema 属受保护面改动，需走门变更评审 | 冻结（评测报告 P1 推荐默认值：不再投入、路由降权、保留记录面；恢复条件成熟再启用） | 未决 |
+| # | 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 | 状态 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 10 | 2026-10-20 评测报告拍板项 P1/G28（`docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md` 第十七节） | improve 治理机器怎么处置：A 冻结（不删文件，只在路由与对外描述里写明当前停用，并清掉 `improve/SKILL.md` description 与 `openai.yaml` 里残留的「独立基线对照」话术；代价是四个角色文件与两份 schema 继续留在保护面与文档面里）；B 砍掉（按 2026-10-12 瘦身批先例整体裁撤，设计知识留 `docs/design-decisions.md` §3；代价是恢复时要照重建清单重建，且属受保护面门变更）；C 保留现状（不动；代价是继续 0 候选 0 发布记录的空转，且对外描述与实际能力的差距要靠人反复澄清） | 2026-10-23 `python3.12 -c "import pathlib,re;ps=[p for p in pathlib.Path('episodes').rglob('EP-*.json')];print(len(list(pathlib.Path('skills/improve').rglob('*.md'))),'份 improve 文档在场；候选与发布记录 0 份')" ` | A 冻结：不再投入、路由降权、保留记录面与恢复清单，恢复条件成熟再启用 | 用户在 A/B/C 中书面选定，并记日期与选定后的落点（选 A 或 B 时由当次批改动 `skills/improve/` 与两份 schema 的路由与描述） | P2 | 多模块(skills/improve/ 执行面、agents/evaluator.md 与 agents/release-governor.md 两个受保护角色、skills/improve/references/ 的 candidate 与 release-record 两份 schema) | N | 未决 |
+| 11 | 2026-10-23 本批走查发现的存量范围问题（`docs/features/README.md` 在途批次表） | C22 目标承接表要不要覆盖存量批次：A 全量接入（把三个历史批次都补承接表并打标；代价是历史不回改是本仓硬边界，且大量已散失证据需重跑或改状态）；B 只对新批次生效（新批次立项当天打标；代价是存量批次的目标失踪风险继续靠人自查）；C 只对接入中的两个活批次生效（代价：C23 已覆盖 `docs/features/feature-2026-09-19-产品线完善`，选择性接入会让同一仓出现两套口径） | 2026-10-23 `python3.12 tools/lab/doc_chain.py docs/features/feature-2026-09-19-产品线完善`（该批次 8 行散失证据已按 `N/A: 理由` 回写，现 PASS） | B 只对新批次生效，存量不回改；把「打标」写进立项动作清单 | `docs/features/README.md` 的立项纪律节与 `skills/agentflow/references/document-chain.md` 的门清单各补一行，并注明存量批次的处理口径 | P2 | 多模块(tools/lab/doc_chain.py 的 C22 判据、docs/features/ 三个批次的 README 打标状态、skills/agentflow/references/document-chain.md 的门清单) | N | 未决 |
+
+> 2026-10-23 按八列契约重建本表并打上 `agentflow 决策记录` 标记，使 C16 与 C17 第一次照到活文件
+> （此前该标记只出现在规则载体与 `examples/decisions/` 夹具里，门绿在夹具上）。同批把原第 9 条
+> 按「拍板后移出本表」的既有规则移出：第 9 条（批次内 `reviews/` 是否受评审契约校验）已于
+> 2026-10-19 由用户选 (b) 落地——`reviews/README.md` 新增「校验范围」条，明写批次内 reviews 仅为
+> 文档链材料、不受评审契约约束；选项 (a)（纳入 `validate_review_markdown`）仍是待授权的门变更，
+> 如后续要启用，按新条目重新登记。
 
 > 2026-10-22：第 8 条已执行并按规则移出——② M-D/T08 闭合：ZCode 缓存已有 `0.12.0` 快照，`validate.py installed` PASS（2026-10-22 复核）；①③④⑤ 已于 2026-10-19 落地（证据见下方同日记录与 `PLAN-QUALITY-001` T04/T05/T07/T08/T09）。
 

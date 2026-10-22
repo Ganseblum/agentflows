@@ -69,6 +69,18 @@ Checks:
                        the three-place tracking contract must exist before implementation
   C21 ui-track prototype  opt-in (README UI 轨 row declares 已启用): a real prototype (≥64-byte
                        .html named *prototype*) or ≥2 design/fe wireframes must exist
+  C22 goal-traceability  opt-in (batch README carries 「agentflow 目标承接」): the batch README's
+                       承接表 (目标/spec 承接/plan 任务/状态) closes the chain both ways — every
+                       G-number declared in proposal/ appears in the table and vice versa, cited
+                       modules and AC ids exist in spec/, cited task ids exist in the plan board,
+                       every completed or blocked task row is cited by some row, and the table's
+                       status agrees with the board's glyphs (a README claiming done over ☐ rows
+                       fails the same day)
+  C23 evidence-presence  for rows marked ☑ 已完成 in the batch's plan/ files: the evidence cell
+                       must hold one of four re-checkable carriers — a repo path that exists, a
+                       repo-qualified `repo@rev:path`, a commit sha git can resolve, or an
+                       explicit `N/A: reason`. A /tmp path that has been cleaned away is not a
+                       carrier; no git means a sha claim fails closed rather than passing silently
 
 Usage:
     python3 tools/lab/doc_chain.py [--root <repo-dir>] <feature-dir>
@@ -194,10 +206,12 @@ BARE_PATH_RE = re.compile(
 # legend shape is the paired form).
 CODE_SUBJECT_RE = re.compile(r"(?<![A-Za-z0-9])([A-Z])[ \u3000]?桶")
 
-# C15 (schema words in prose — 「prepared 会话」「单次 Run 积分」) is deliberately NOT
-# implemented. The closed-set heuristic the improvement brief allowed (prepared/pending/
-# running/failed/… + CJK, outside code) was validated against a real reviewed chain and
-# flooded: state→visual mapping rows (「queued 灰 / running 蓝 / succeeded 绿」) are the
+# 模式词分域（散文里的 schema 词 — 「prepared 会话」「单次 Run 积分」）刻意**不**实现为机器检查。
+# 注意编号歧义：本文件的检查号 C15 指的是 ledger-index（台账行不得自带状态词），与这里说的
+# 模式词分域不是同一条，两者只在「靠条款而非靠正则」这一点上同法。2026-10-23 走查发现同一个
+# C15 在本文件里被两种含义使用，故此处改名并保留说明。原闭集启发式（prepared/pending/
+# running/failed/… + 中文，且不在代码语境）在一条真实被评审过的链上验证过，结果洪水：
+# state→visual mapping rows (「queued 灰 / running 蓝 / succeeded 绿」) are the
 # legend-class site the clause sanctions, while 「running 中禁发」「failed 可重试」 one line
 # away is the defect — a line-local heuristic cannot tell them apart without punishing one
 # side. The form stays governed by the clause text (document-chain.md 模式词分域), the
@@ -389,6 +403,9 @@ def body_text(text: str) -> str:
 def _declared_base(value: str, repo_root: Path, feature_dir: Path) -> Path | None:
     """Resolve a README 落点基准 value to a directory, or None when undeclared/placeholder."""
     v = value.split("｜")[0].split("|")[0].strip()
+    # 元信息常把多个字段写在同一行（`- UI 轨：未启用；落点基准：.（默认）；最后更新时间：…`）；
+    # 捕获到行尾会把后半句当成目录名，把合法声明判成假红，所以先按分号截断。
+    v = v.split("；")[0].split(";")[0].strip()
     if not v or v.startswith("<"):
         return None  # unfilled template placeholder is not a declaration
     v = re.sub(r"[（(][^）)]*[）)]\s*$", "", v).strip().rstrip("/")
@@ -711,6 +728,11 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         if opened != blocks:
             errors.append(f"C10 mermaid: {f.relative_to(feature_dir)} 有 {opened} 个 mermaid 围栏但仅 {blocks} 个闭合")
 
+    # C22/C23 (2026-10-23 gate change, user-authorized): goal traceability and evidence presence.
+    # Both entry points call the same implementation, so a batch cannot pass the directory run and
+    # then fail the repo run — two readings of one contract is exactly the defect this batch fixes.
+    errors.extend(batch_traceability_findings(feature_dir, repo_root))
+
     return errors
 
 
@@ -949,6 +971,300 @@ def ownership_findings(label: str, text: str, repo_root: Path) -> list[str]:
     return errors
 
 
+# --- Traceability and evidence-presence checks (C22-C23). Marker-gated like C15-C18: a batch
+# opts in by carrying 「agentflow 目标承接」 in its README. What differs from the 2026-10-21
+# batch is adoption: this repo's live batches opt in on the day the check ships, so the gate
+# bites real files instead of only the fixtures under examples/ — the 2026-10-22 walkthrough
+# found a proposal goal (CI on a real runner) that vanished from spec, acceptance points and
+# the plan task table with nothing turning red, and two ☑ rows whose only evidence was a
+# /tmp path that had already been cleaned away.
+
+TRACE_MARKER = "agentflow 目标承接"
+TRACE_COLUMNS = ["目标", "spec 承接", "plan 任务", "状态"]
+GOAL_RE = re.compile(r"\bG\d+\b")
+def trace_task_ids(cell: str) -> set[str]:
+    """任务号引用列里的编号集合，方言与 C9 的 `TASK_ID_RE` 同一条（T / FT 前缀都认）。
+
+    独立一份正则会造出「承接表能写、看板认不出」的空洞，所以这里只做切分与全匹配筛选。
+    """
+    return {tok for tok in re.split(r"[^0-9A-Za-z_-]+", cell) if TASK_ID_RE.fullmatch(tok)}
+MODULE_RE = re.compile(r"\bM-[A-Z]\b")
+AC_ID_RE = re.compile(r"\bG\d+-AC-\d+\b")
+DONE_GLYPH = "☑"
+TODO_GLYPH = "☐"
+BLOCKED_GLYPH = "⚠"
+SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
+REPO_REV_RE = re.compile(r"[\w.-]+@[0-9a-f]{7,40}:[^\s|`]+")
+NA_RE = re.compile(r"N/A[:：]\s*\S")
+
+
+def _git_commit_present(repo_root: Path, sha: str) -> bool:
+    """True only when git resolves sha as a commit object. No git means not verifiable: the
+    check fails closed rather than letting an unverifiable claim pass on a machine without git."""
+    try:
+        r = subprocess.run(
+            ["git", "cat-file", "-e", f"{sha}^{{commit}}"],
+            cwd=str(repo_root), capture_output=True, text=True, check=False,
+        )
+    except OSError:
+        return False
+    return r.returncode == 0
+
+
+def _tables_with_columns(text: str, cols: list[str]) -> list[tuple[list[str], list[list[str]]]]:
+    """Every table whose (markup-normalised) header covers cols."""
+    return [hd for hd in md_tables(text) if _has_columns(hd[0], cols)]
+
+
+def _norm_col(name: str) -> str:
+    """Column label without markup, so `**目标**`, `` `ID` `` and 「目标 」name the same column."""
+    return name.strip().strip("`* ").replace(" ", "").replace("　", "")
+
+
+def _col(cell: dict[str, str], name: str) -> str:
+    """Read a column by label through the same normalisation the header match uses."""
+    return cell.get(_norm_col(name), "")
+
+
+def _has_columns(header: list[str], cols: list[str]) -> bool:
+    wanted = {_norm_col(c) for c in cols}
+    return wanted.issubset({_norm_col(h) for h in header})
+
+
+def _cells(header: list[str], row: list[str]) -> dict[str, str]:
+    return {_norm_col(h): (row[i] if i < len(row) else "") for i, h in enumerate(header)}
+
+
+def plan_task_rows(text: str) -> dict[str, tuple[str, str]]:
+    """task id -> (status cell, evidence cell) for every table with an ID and a 状态 column.
+
+    The evidence column may be named 证据 or 证据回写; when absent the pair's second element is
+    empty, which C23 reads as "no evidence" for a completed row rather than as a parse failure.
+    """
+    out: dict[str, tuple[str, str]] = {}
+    for header, rows in md_tables(text):
+        labels = {_norm_col(h) for h in header}
+        if "ID" not in labels or "状态" not in labels:
+            continue  # 列名按同一归一化匹配：装饰过的表头不得让整张表静默不可见
+        ev_col = next((c for c in ("证据", "证据回写") if _norm_col(c) in labels), None)
+        for row in rows:
+            cell = _cells(header, row)
+            tid = _col(cell, "ID").strip().strip("`* ")
+            if not TASK_ID_RE.match(tid):  # 任务号方言单点取自 C9，不在这里另立一套
+                continue
+            out[tid] = (_col(cell, "状态"), _col(cell, ev_col) if ev_col else "")
+    return out
+
+
+def evidence_carriers(cell: str, repo_root: Path, batch_dir: Path | None = None) -> list[str]:
+    """Which verifiable carriers this evidence cell holds: repo path, repo-qualified ref,
+    resolvable commit sha, or an explicit N/A with a reason. /tmp and absolute paths never count.
+
+    Paths resolve against the repo root *and* the batch directory, because evidence cells are
+    written both ways in practice (`reviews/review-…md` relative to the batch, `docs/issues/…`
+    relative to the repo). Reading only the repo root called correctly-written evidence missing —
+    the over-wide judgement this batch's own exception matrix predicted and required narrowing.
+    """
+    roots = [repo_root] + ([batch_dir] if batch_dir is not None else [])
+    kinds: list[str] = []
+    own = {repo_root.name, "agentflow", "agentflows"}
+    for m in REPO_REV_RE.finditer(cell):
+        repo = m.group(0).split("@", 1)[0]
+        if repo not in own:
+            kinds.append("仓限定引用")
+            continue
+        # 本仓名也可以用仓限定写法，但那就得按本仓核：rev 可解析且路径在盘，否则是自己写的假地址
+        rev, _, tail = m.group(0).split("@", 1)[1].partition(":")
+        if tail and _git_commit_present(repo_root, rev) and (repo_root / tail).exists():
+            kinds.append("本仓限定引用（已核）")
+    # 路径 token 复用 C9 的 path_candidates：反引号内与裸写的带后缀路径都算，
+    # 否则按契约（spec/be §6.2「反引号内或裸写」）正确写下的证据会被判成无载体。
+    tokens = sorted(path_candidates(cell)) + [g for g in re.findall(r"\]\(([^)\s]+)\)", cell)]
+    for tok in tokens:
+        p = tok.strip().strip("（）()「」\"'[]").split("#")[0].split("§")[0]
+        if not p or p.startswith(("/", "~", "http:", "https:", "mailto:")):
+            continue
+        if "@" in p or ":" in p:
+            continue  # repo-qualified refs are handled above
+        if any(_ref_is_in_repo(r, p) is True and (r / p).exists() for r in roots):
+            kinds.append("仓内路径")
+            break
+    for sha in SHA_RE.findall(cell):
+        if _git_commit_present(repo_root, sha):
+            kinds.append("提交号")
+            break
+    if NA_RE.search(cell):
+        kinds.append("显式不适用")
+    return sorted(set(kinds))
+
+
+def evidence_presence_findings(
+    label: str, plan_text: str, repo_root: Path, batch_dir: Path | None = None
+) -> list[str]:
+    """C23 — a row marked 已完成 must carry something a third party can re-check on disk."""
+    errors: list[str] = []
+    rows = plan_task_rows(plan_text)
+    for task_id, (status, evidence) in sorted(rows.items()):
+        if not status.strip().startswith(DONE_GLYPH):
+            continue  # 进行中 / 未开始 / 阻塞 / 本期不做 carry no evidence duty yet
+        if evidence_carriers(evidence, repo_root, batch_dir):
+            continue
+        if not evidence.strip():
+            detail = "证据列为空"
+        elif "/tmp/" in evidence or re.search(r"(^|[\s`])/(Users|home|var)/", evidence):
+            detail = "证据只指向临时目录或机器绝对路径，已不在盘"
+        else:
+            detail = "证据列无可复核载体（路径不存在、提交号不可解析、也不是仓限定引用）"
+        errors.append(
+            f"C23 证据在场: {label} {task_id} 标为已完成但{detail}"
+            f"（四类载体之一即可：仓内存在的路径 / 仓库@修订:路径 / 可解析提交号 / N/A: 理由）"
+        )
+    return errors
+
+
+def _heading_sections(text: str) -> list[str]:
+    """Markdown chunks of (heading line + body up to the next heading)."""
+    chunks: list[str] = []
+    cur: list[str] = []
+    for line in text.splitlines():
+        if re.match(r"^#{1,6}\s", line):
+            if cur:
+                chunks.append("\n".join(cur))
+            cur = [line]
+        else:
+            cur.append(line)
+    if cur:
+        chunks.append("\n".join(cur))
+    return chunks
+
+
+def trace_tables(readme_text: str) -> list[tuple[list[str], list[list[str]]]]:
+    """The 承接 tables sitting under a heading that names 目标承接.
+
+    Heading scoping is not decoration: a table with the same four columns placed anywhere else in
+    the README would otherwise satisfy the check while the real 承接表 stayed unread.
+    """
+    out: list[tuple[list[str], list[list[str]]]] = []
+    for section in _heading_sections(readme_text):
+        if "目标承接" in section.splitlines()[0]:
+            out.extend(_tables_with_columns(section, TRACE_COLUMNS))
+    return out
+
+
+def goal_traceability_findings(feature_dir: Path, repo_root: Path) -> list[str]:
+    """C22 — every proposal goal must land in spec and plan, and nothing may cite a phantom.
+
+    Bidirectional on purpose: a one-way check (targets must appear downstream) is satisfied by
+    writing anything downstream, while the reverse direction catches citations that no upstream
+    goal ever declared. Status is compared with the plan board's glyphs, so a README claiming a
+    goal is done while its tasks are still ☐ fails the same day it is written.
+    """
+    readme = feature_dir / "README.md"
+    if not readme.is_file():
+        return []
+    readme_text = read(readme)
+    if TRACE_MARKER not in readme_text:
+        return []
+    batch = feature_dir.name
+    tables = trace_tables(readme_text)
+    if not tables:
+        return [
+            (
+                f"C22 目标承接: {batch} 打了 {TRACE_MARKER} 标记，但「目标承接」标题下没有承接表"
+                f"（必需列：{' / '.join(TRACE_COLUMNS)}）；补表，不许摘标记"
+            )
+        ]
+    md_files = [f for f in sorted(feature_dir.rglob("*.md")) if f.name != ".gitkeep"]
+    stage_text = {
+        "proposal": "\n".join(read(f) for f in find_stage(md_files, feature_dir / "proposal")),
+        "spec": "\n".join(read(f) for f in find_stage(md_files, feature_dir / "spec")),
+    }
+    plan_rows: dict[str, tuple[str, str]] = {}
+    for f in find_stage(md_files, feature_dir / "plan"):
+        plan_rows.update(plan_task_rows(read(f)))
+
+    def _resolves(token: str) -> bool:
+        p = token.strip().split("#")[0].split("§")[0].strip()
+        if not p or p.startswith(("/", "http:", "https:", "mailto:")) or "@" in p:
+            return True  # 非仓内路径写法不在本判据射程内（外链与跨仓引用另有口径）
+        return (feature_dir / p).exists() or (repo_root / p).exists()
+
+    errors: list[str] = []
+    table_goals: set[str] = set()
+    referenced: set[str] = set()
+    for header, rows in tables:
+        for row in rows:
+            cell = _cells(header, row)
+            goals = set(GOAL_RE.findall(_col(cell, "目标")))
+            if not goals:
+                errors.append(f"C22 目标承接: {batch} 承接行「{_col(cell, '目标')[:24] or '空'}」没有目标编号 G n")
+            table_goals |= goals
+            tag = "/".join(sorted(goals)) or _col(cell, "目标")[:24]
+
+            for mid in sorted(set(MODULE_RE.findall(_col(cell, "spec 承接")))):
+                if mid not in stage_text["spec"]:
+                    errors.append(f"C22 目标承接: {tag} 声明由 {mid} 承接，但 spec/ 文本里找不到 {mid}")
+            for ac in sorted(set(AC_ID_RE.findall(_col(cell, "spec 承接")))):
+                if ac not in stage_text["spec"]:
+                    errors.append(f"C22 目标承接: {tag} 引用的验收点 {ac} 不在 spec/ 文本中")
+            # 出处列同样要能在盘上解析——声明了「路径须可解析」却从不校验，就是第二条空转判据
+            cited = _col(cell, "proposal 出处") + _col(cell, "spec 承接")
+            for p in sorted(path_candidates(cited)):
+                if not _resolves(p):
+                    errors.append(f"C22 目标承接: {tag} 的出处 {p} 不在盘（批次目录与仓根各试一次）")
+
+            tids = trace_task_ids(_col(cell, "plan 任务"))
+            if not tids:
+                errors.append(f"C22 目标承接: {tag} 未给出任何 plan 任务号")
+            for t in sorted(tids):
+                if t not in plan_rows:
+                    errors.append(f"C22 目标承接: {tag} 引用的任务号 {t} 不在计划任务表（幻影引用）")
+            referenced |= tids
+
+            glyph = _col(cell, "状态").strip()[:1]
+            real = {plan_rows[t][0].strip()[:1] for t in tids if t in plan_rows}
+            if glyph == DONE_GLYPH and real and real != {DONE_GLYPH}:
+                errors.append(
+                    f"C22 目标承接: {tag} 承接表标已完成，所引任务行的字形是 {'/'.join(sorted(real))}"
+                )
+            if glyph in (TODO_GLYPH, "◐", BLOCKED_GLYPH) and real == {DONE_GLYPH}:
+                errors.append(
+                    f"C22 目标承接: {tag} 承接表状态是「{glyph}」，但所引任务行已全部完成（未回写）"
+                )
+
+    declared = set(GOAL_RE.findall(stage_text["proposal"]))
+    for g in sorted(declared - table_goals):
+        errors.append(f"C22 目标承接: 提案声明的目标 {g} 未进入承接表（缺承接）")
+    for g in sorted(table_goals - declared):
+        errors.append(f"C22 目标承接: 承接表引用了提案中不存在的目标 {g}（幻影目标）")
+    for task_id, (status, _ev) in sorted(plan_rows.items()):
+        if status.strip()[:1] in (DONE_GLYPH, BLOCKED_GLYPH) and task_id not in referenced:
+            errors.append(
+                f"C22 目标承接: {batch} 计划任务 {task_id} 已是完成或阻塞状态，"
+                f"却没有被任何承接行引用（孤儿任务，须说明它服务哪个目标）"
+            )
+    return errors
+
+
+def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
+    """C22 + C23 for one batch directory; the single entry both modes call.
+
+    The plan glob is recursive on purpose: batches put plans under `plan/` and sometimes one level
+    deeper (`plan/be/`), and a non-recursive read silently reports "no evidence problems" for every
+    nested plan — the vacuous-check failure mode this whole batch exists to close.
+    """
+    errors = goal_traceability_findings(batch_dir, repo_root)
+    plan_dir = batch_dir / "plan"
+    if not plan_dir.is_dir():
+        return errors
+    for f in sorted(plan_dir.rglob("*.md")):
+        if f.name == ".gitkeep":
+            continue
+        rel = f.relative_to(repo_root).as_posix() if f.is_relative_to(repo_root) else f.name
+        errors.extend(evidence_presence_findings(rel, read(f), repo_root, batch_dir))
+    return errors
+
+
 def repo_policy_findings(repo_root: Path) -> list[str]:
     """Run C15-C18 over opt-in files. Marker-gated so the whole repo can be scanned safely."""
     errors: list[str] = []
@@ -969,14 +1285,14 @@ def repo_policy_findings(repo_root: Path) -> list[str]:
             errors.extend(staleness_findings(rel, t, repo_root))
         if LEDGER_MARKER in t:
             errors.extend(ledger_index_findings(rel, t, repo_root))
-    for p in repo_root.glob("docs/features/*/README.md"):
-        try:
-            t = p.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
+    for batch in sorted(p for p in repo_root.glob("docs/features/*") if p.is_dir()):
+        readme = batch / "README.md"
+        t = read(readme) if readme.is_file() else ""
         if OWNERSHIP_MARKER in t:
-            rel = p.relative_to(repo_root).as_posix()
-            errors.extend(ownership_findings(rel, t, repo_root))
+            errors.extend(ownership_findings(readme.relative_to(repo_root).as_posix(), t, repo_root))
+        # The batch set is every directory, not only those that already have a README: two modes
+        # sharing one implementation is worthless if they disagree about which batches exist.
+        errors.extend(batch_traceability_findings(batch, repo_root))
     return errors
 
 
@@ -993,7 +1309,11 @@ def self_test() -> int:
     段落映射豁免; cases 49–54 pin C9's task-row and 分支策略 rules; cases 55–56 pin C5's
     prose-only id scan; case 34 documents why C15 stays clause-governed (see the note at
     CODE_SUBJECT_RE); cases 73–85 pin the 2026-10-21 gate change (bare-glyph status dialect,
-    README 落点基准, C19 qa acceptance, C20 埋点贯通, C21 ui 轨, placeholder non-firing).
+    README 落点基准, C19 qa acceptance, C20 埋点贯通, C21 ui 轨, placeholder non-firing);
+    cases 86–97 pin the 2026-10-23 gate change (C22 goal traceability — missing carrier row,
+    phantom task id, status over-claim, orphan task, marker-without-table, opt-in respected;
+    C23 evidence presence — /tmp-only, empty cell, repo-qualified and N/A carriers, and the
+    repo scan applying C23 to every batch while C22 stays marker-gated).
     """
     import subprocess
     import tempfile
@@ -1032,8 +1352,8 @@ def self_test() -> int:
         ),
         "plan/be/p.md": (
             "# plan\n\n## 0. 分支策略 feature-x\n\n"
-            "| ID | 任务 | 代码落点 | 依赖 | 状态 |\n| --- | --- | --- | --- | --- |\n"
-            "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |\n\n"
+            "| ID | 任务 | 代码落点 | 依赖 | 状态 | 证据 |\n| --- | --- | --- | --- | --- | --- |\n"
+            "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 | `migrations/x.sql` |\n\n"
             "V-9 由 T02 承接\n"
         ),
         # "@root/" keys are written under the fixture repo root (the feature dir's parent), so C9
@@ -1592,6 +1912,200 @@ def self_test() -> int:
         return f
     run_case("85 unfilled README 落点基准/埋点/UI 轨 placeholders never fire", 0,
              ["PASS doc-chain"], m_track_placeholder, results)
+
+    # --- C22 goal traceability and C23 evidence presence (2026-10-23 gate change,
+    # user-authorized). Cases 86-95 pin the four C22 directions (missing carrier row, phantom
+    # task id, status over-claim, orphan completed task), the marker-without-table case, the
+    # four evidence carriers, the /tmp-only failure, and that an unmarked batch is untouched.
+    TRACE_README = (
+        "# feature\n\n## 需求评审门\n## 技术方案评审门\n\n"
+        "本批次启用 agentflow 目标承接 标记，承接表如下。\n\n"
+        "## 目标承接表\n\n"
+        "| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "{rows}"
+    )
+    TRACE_ROW_OK = ("| G1 目标一 | `proposal/p.md` | M-A 与 G1-AC-01 | T01 | ☑ 已完成 |\n")
+    TRACE_SPEC = (
+        "# spec\n\n## 3.0 不合规项（反审 checklist）\n\n"
+        "| # | 缺口 | 阻塞 | 状态 |\n| --- | --- | --- | --- |\n| B-1 | x | 阻塞 | ☑ 已关闭 |\n\n"
+        "### M-A 模块一\n\n| 验收点 | 来源 |\n| --- | --- |\n| G1-AC-01 | proposal §1.2 G1 |\n"
+    )
+
+    def trace_plan(evidence: str, status: str = "☑ 已完成") -> str:
+        return (
+            "# plan\n\n## 0. 分支策略 feature-x\n\n"
+            "| ID | 任务 | 代码落点 | 依赖 | 状态 | 证据 |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+            f"| T01 | 迁移 | `migrations/x.sql` | — | {status} | {evidence} |\n\n"
+            "V-9 由 T01 承接\n"
+        )
+
+    def trace_files(rows: str = TRACE_ROW_OK, evidence: str = "`migrations/x.sql` 在盘",
+                    status: str = "☑ 已完成") -> dict:
+        return {
+            "README.md": TRACE_README.format(rows=rows),
+            "proposal/p.md": "# proposal\n\n目标：G1 目标一（可判定）。\n",
+            "spec/s.md": TRACE_SPEC,
+            "plan/be/p.md": trace_plan(evidence, status),
+            "@root/migrations/x.sql": "-- x\n",
+        }
+
+    def m_trace_ok(f):
+        f.update(trace_files())
+        return f
+    run_case("86 C22 marked batch with a closed 承接表 passes", 0,
+             ["PASS doc-chain"], m_trace_ok, results)
+
+    def m_trace_missing_goal(f):
+        f.update(trace_files(rows="| G2 目标二 | `proposal/p.md` | M-A 与 G1-AC-01 | T01 | ☑ 已完成 |\n"))
+        return f
+    run_case("87 C22 a goal declared upstream but absent from the table trips", 1,
+             ["C22 目标承接", "未进入承接表"], m_trace_missing_goal, results)
+
+    def m_trace_phantom_task(f):
+        f.update(trace_files(rows=TRACE_ROW_OK.replace("T01", "T99")))
+        return f
+    run_case("88 C22 a task id cited by the table but missing from the plan trips", 1,
+             ["C22 目标承接", "不在计划任务表"], m_trace_phantom_task, results)
+
+    def m_trace_status_lie(f):
+        f.update(trace_files(rows=TRACE_ROW_OK.replace("☑ 已完成", "☑ 已完成"),
+                              status="☐ 未开始"))
+        return f
+    run_case("89 C22 table claims done while the board row is still 未开始 trips", 1,
+             ["C22 目标承接", "承接表标已完成"], m_trace_status_lie, results)
+
+    def m_trace_orphan_done(f):
+        files = trace_files(rows=TRACE_ROW_OK.replace("T01", "—"))
+        files["README.md"] = files["README.md"].replace("| T01 |", "| — |")
+        f.update(files)
+        return f
+    run_case("90 C22 a completed task nobody claims trips as an orphan", 1,
+             ["C22 目标承接", "孤儿任务"], m_trace_orphan_done, results)
+
+    def m_trace_no_table(f):
+        f["README.md"] = "# feature\n\n## 需求评审门\n## 技术方案评审门\n\n本批启用 agentflow 目标承接 标记。\n"
+        return f
+    run_case("91 C22 marker without a table trips instead of silently skipping", 1,
+             ["C22 目标承接", "没有承接表"], m_trace_no_table, results)
+
+    def m_trace_unmarked(f):
+        f.update(trace_files())
+        f["README.md"] = f["README.md"].replace("agentflow 目标承接", "目标承接")
+        return f
+    run_case("92 C22/C23 never fire on a batch that did not opt in (no false positives)", 0,
+             ["PASS doc-chain"], m_trace_unmarked, results)
+
+    def m_trace_tmp_evidence(f):
+        f.update(trace_files(evidence="`/tmp/baseline.txt`（已随临时目录清理）"))
+        return f
+    run_case("93 C23 a ☑ row whose only evidence is a cleaned /tmp path trips", 1,
+             ["C23 证据在场", "T01"], m_trace_tmp_evidence, results)
+
+    def m_trace_repo_ref(f):
+        f.update(trace_files(evidence="youc@1a2b3c4:docs/x.md 与 `N/A: 无额外产物`"))
+        return f
+    run_case("94 C23 repo-qualified refs and explicit N/A with reason are carriers", 0,
+             ["PASS doc-chain"], m_trace_repo_ref, results)
+
+    def m_trace_empty_evidence(f):
+        f.update(trace_files(evidence=""))
+        return f
+    run_case("95 C23 an empty evidence cell on a ☑ row trips", 1,
+             ["C23 证据在场", "证据列为空"], m_trace_empty_evidence, results)
+
+    # Repo-scan side: C23 applies to every batch (the evidence duty belongs to the plan
+    # contract, not to the opt-in marker), while C22 only bites opted-in batches.
+    PLAN_TMP = (
+        "# plan\n\n## 0. 分支策略 feature-x\n\n"
+        "| ID | 任务 | 代码落点 | 依赖 | 状态 | 证据 |\n| --- | --- | --- | --- | --- | --- |\n"
+        "| T01 | 迁移 | `a.py` | — | ☑ 已完成 | `/tmp/x.txt` 已清理 |\n"
+    )
+    UNMARKED_TRACE_README = (
+        "# 批次\n\n## 需求评审门\n## 技术方案评审门\n\n目标承接如下（未打启用标记）。\n\n"
+        "| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| G1 目标一 | — | M-A | T01 | ☑ 已完成 |\n"
+    )
+    run_repo_case("96 C23 catches cleaned /tmp evidence in a batch that did not opt in", 1,
+                  ["C23 证据在场", "T01"],
+                  {"docs/features/b/README.md": "# 批次\n\n## 需求评审门\n",
+                   "docs/features/b/plan/p.md": PLAN_TMP})
+    run_repo_case("97 C22 skips an unmarked batch in the repo scan (opt-in preserved)", 0, [],
+                  {"docs/features/b/README.md": UNMARKED_TRACE_README,
+                   "docs/features/b/plan/p.md": trace_plan("N/A: 夹具，无额外产物")})
+
+    def m_base_inline_default(f):
+        # 元信息写在同一行、且声明的就是默认值：不得凭空造出一个不存在的目录
+        f["README.md"] = (f["README.md"]
+                          + "\n- UI 轨：未启用；落点基准：.（主实施仓根，默认）；最后更新时间：2026-10-23\n")
+        return f
+    run_case("98 C9 落点基准 declared inline as the default value never invents a missing dir", 0,
+             ["PASS doc-chain"], m_base_inline_default, results)
+
+    # --- 2026-10-23 独立评审 findings 的回归夹具（100-106）：每条都对应评审指出的一个
+    # 「声明了但没校验」或「判据静默失明」的空洞。
+    def m_evid_backticked_task_id(f):
+        files = trace_files(evidence="`/tmp/x.txt`（已清理）")
+        files["plan/be/p.md"] = files["plan/be/p.md"].replace("| T01 |", "| `T01` |")
+        f.update(files)
+        return f
+    run_case("100 C23 reads backtick-quoted task ids (the dialect that once made it blind)", 1,
+             ["C23 证据在场", "T01"], m_evid_backticked_task_id, results)
+
+    def m_evid_bare_path(f):
+        files = trace_files(evidence="docs/x.md 的原始输出已入库")
+        files["@root/docs/x.md"] = "# x\n"
+        f.update(files)
+        return f
+    run_case("101 C23 accepts a bare written repo path, as the contract states", 0,
+             ["PASS doc-chain"], m_evid_bare_path, results)
+
+    def m_trace_phantom_source(f):
+        f.update(trace_files(rows="| G1 目标一 | `proposal/NOPE.md` | M-A 与 G1-AC-01 | T01 | ☑ 已完成 |\n"))
+        return f
+    run_case("102 C22 validates the 出处 column, not just the spec column", 1,
+             ["C22 目标承接", "proposal/NOPE.md 不在盘"], m_trace_phantom_source, results)
+
+    def m_trace_decoy_placement(f):
+        files = trace_files()
+        files["README.md"] = files["README.md"].replace("## 目标承接表", "## 随便一张同形表")
+        files["@root/README-decoy.md"] = ""
+        f.update(files)
+        return f
+    run_case("103 C22 reads only the table under the 目标承接 heading (decoy elsewhere trips)", 1,
+             ["C22 目标承接", "标题下没有承接表"], m_trace_decoy_placement, results)
+
+    def m_trace_decorated_header(f):
+        files = trace_files()
+        files["README.md"] = files["README.md"].replace(
+            "| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |\n",
+            "| **目标** | `proposal 出处` | **spec 承接** | plan 任务 | 状态 |\n")
+        f.update(files)
+        return f
+    run_case("104 C22 matches decorated column labels instead of reporting 缺表", 0,
+             ["PASS doc-chain"], m_trace_decorated_header, results)
+
+    def m_trace_status_stale(f):
+        f.update(trace_files(rows="| G1 目标一 | `proposal/p.md` | M-A 与 G1-AC-01 | T01 | ◐ 进行中 |\n",
+                             status="☑ 已完成"))
+        return f
+    run_case("105 C22 catches a 进行中 row whose tasks are all done (both directions)", 1,
+             ["C22 目标承接", "未回写"], m_trace_status_stale, results)
+
+    def m_evid_self_repo_ref(f):
+        f.update(trace_files(evidence="agentflow@0000000:zzz.md"))
+        return f
+    run_case("106 C23 verifies a ref qualified with this repo's own name instead of waving it through", 1,
+             ["C23 证据在场", "T01"], m_evid_self_repo_ref, results)
+
+    def m_ft_task_id(f):
+        # C9 的任务号方言：FT 前缀与一两位数字都必须合法（曾被 C22 的同名常量遮蔽）
+        return rep(f, "plan/be/p.md", "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |",
+                              "| FT01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 |")
+    run_case("99 C9 still accepts the FT-prefixed task id dialect (constant shadowing guard)", 0,
+             ["PASS doc-chain"], m_ft_task_id, results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

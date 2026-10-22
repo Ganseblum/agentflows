@@ -12,16 +12,11 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 选角色分两步：**先认链**，再从链里取角色。链是默认入口，画像是难 case 的备用深度；两者同一批
 角色，不是两套角色。链外没有第七种入口。
 
-| 链 | 默认序列 | 不可省的一步 |
-| --- | --- | --- |
-| 实现 | 工程师（frontend / backend，按层选一或并行）→ Reviewer | 独立评审门（作者不验证自己的改动） |
-| 缺陷 | Bug investigator → Bug fixer → Reviewer → Bug recorder | Fixer 不得关闭自己的修复 |
-| 测试 | Test planner → Test executor | Executor 不改被测对象 |
-| 规划 | Technical director → Plan architect | 计划只由 Plan architect 写 |
-| 改进 | Feedback analyst → Candidate engineer → Evaluator → Release governor | 候选不自评、不自放行 |
-| 独立评审 | Reviewer（单点） | 评审期间不编辑、不运行受候选控制的命令 |
-
-完整链路契约与角色画像见 [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md)。
+六条链——实现、缺陷、测试、规划、改进、独立评审——的默认序列、默认可省步骤，以及那一步
+**不可省**（跳过即改变结论效力），单点定义在
+[`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的工作链节；
+本文件不再复制那张表。2026-10-22 的走查发现这张表在两个文件里各写一份且列数已经分歧（这里三列、
+那里四列），而「同一结论双源并存、不声明取舍」正是本仓自己列为出现即缺陷的反模式。
 
 ## 角色清单（14）
 

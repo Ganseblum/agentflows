@@ -48,12 +48,12 @@ python3 tools/lab/isolation.py check-diff \
   --base <frozen-parent-revision>
 ```
 
-`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套十一项检查——schema、
+`validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套检查——schema、
 examples、记录产物、受保护清单、五份 manifest 一致性（含 `packaging/runtime` 生成树新鲜度）、文档面（含版本散文守卫与断链 /
 退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测、文档链 linter 对活文档面
-（`docs/product/`、`docs/features/`）的扫描、决策可追溯检查 decision_gate
-（C15–C18，标记启用），以及 lint（ruff + mypy，依赖
-`requirements-dev.txt`）。项数以 `python3 tools/lab/validate.py --list` 自报为准。
+（`docs/product/`、`docs/features/`）的扫描、追溯类检查 decision_gate
+（C15–C18 与 C22–C23，标记启用），以及 lint（ruff + mypy，依赖
+`requirements-dev.txt`）。项数以 `python3 tools/lab/validate.py --list` 自报为准，本文不写它。
 失败即编译错误：修好它，或把输出退回 worker。
 
 > 注意：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归——本会话即观察到此类环境假红。

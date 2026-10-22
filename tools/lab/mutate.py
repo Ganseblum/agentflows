@@ -111,6 +111,8 @@ ITEMS: dict[str, tuple[str, str]] = {
     "doc_chain.C7": ("tools/lab/doc_chain.py", "C7 fe 线框数量或原型"),
     "doc_chain.C9": ("tools/lab/doc_chain.py", "C9 plan 分支策略节"),
     "doc_chain.C10": ("tools/lab/doc_chain.py", "C10 mermaid 围栏闭合"),
+    "doc_chain.C22": ("tools/lab/doc_chain.py", "C22 目标承接：打标批次的目标须双向闭合、任务号不得幻影、状态不得谎报"),
+    "doc_chain.C23": ("tools/lab/doc_chain.py", "C23 证据在场：☑ 已完成行须留可复核载体"),
 }
 
 # Items exempt from mutation, with the reason. Keep this list short.
@@ -157,7 +159,7 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("schema.required", "if required not in instance:", "disable_if", "tests"),
     ("schema.min-length", 'if "minLength" in schema and len(instance) < schema["minLength"]:', "invert_cmp", "artifacts"),
     ("schema.max-items", 'if "maxItems" in schema and len(instance) > schema["maxItems"]:', "relax_strict", "tests"),
-    ("schema.contains", "if matches < minimum:", "invert_cmp", "tests"),
+    ("schema.contains", "if matched_count < minimum:", "invert_cmp", "tests"),
     ("testing.case-count", "int(declared_count) != len(cases)", "invert_cmp", "examples"),
     ("testing.summary", "int(declared) != observed:", "invert_cmp", "examples"),
     ("testing.fail-evidence", 'if status_cell in ("fail", "blocked") and evidence in NO_EVIDENCE_CELLS:', "disable_if", "tests"),
@@ -180,10 +182,17 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("doc_chain.C4", "if not seq_with_alt:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C4", 'if "flowchart" not in kinds:', "disable_if", "doc_chain_selftest"),
     ("doc_chain.C5", "C5 契约闭合: design/be 契约表声明的接口", "drop_statement", "doc_chain_selftest"),
-    ("doc_chain.C6", "for table in re.findall(r\"((?:^\\|[^\\n]*\\|[ \\t]*\\n){2,})\", fe_text, re.M):", "empty_iter", "doc_chain_selftest"),
+    ("doc_chain.C6", "for table in re.findall(r\"((?:^\\|[^\\n]*\\|[ \\t]*\\n){2,})\", fe_text, re.MULTILINE):", "empty_iter", "doc_chain_selftest"),
     ("doc_chain.C7", "if len(wireframes) < 2 and not has_prototype:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C9", "if not BRANCH_HEADING_RE.search(all_text[f]):", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C10", "if opened != blocks:", "invert_cmp", "doc_chain_selftest"),
+    ("doc_chain.C22", "if TRACE_MARKER not in readme_text:", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C22", "errors.append(f\"C22 目标承接: 提案声明的目标 {g} 未进入承接表（缺承接）\")", "drop_statement", "doc_chain_selftest"),
+    ("doc_chain.C22", "if status.strip()[:1] in (DONE_GLYPH, BLOCKED_GLYPH) and task_id not in referenced:", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C23", "if not status.strip().startswith(DONE_GLYPH):", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C23", "errors.append(\n            f\"C23 证据在场: {label} {task_id} 标为已完成但{detail}\"", "drop_statement", "doc_chain_selftest"),
+    ("doc_chain.C22", "if \"\u76ee\u6807\u627f\u63a5\" in section.splitlines()[0]:", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C23", "if any(_ref_is_in_repo(r, p) is True and (r / p).exists() for r in roots):", "disable_if", "doc_chain_selftest"),
 ]
 
 MUTATIONS: list[Mutation] = [

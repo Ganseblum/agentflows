@@ -29,6 +29,11 @@ docs/features/
 
 ## 纪律
 
+- 立项当天建表：批次 README 打 `agentflow 目标承接` 标记时必须同时写目标承接表（列：目标 /
+  proposal 出处 / spec 承接 / plan 任务 / 状态），否则 C22 判「标记启用但缺表」。承接表的状态列
+  随计划看板回写，回写口径见 `skills/agentflow/references/document-chain.md` 的门 8。
+- 回写不止计划两列：计划任务行的状态与证据两列之外，`spec/qa/acceptance.md` 的验收点状态列同样
+  要在验收发生时更新——「计划已闭而验收表还写待覆盖」是假记录的一种（2026-10-22 走查实证）。
 - 目录由「首次接入 / 批次立项」创建；对实际目录跑
   `python3 tools/lab/doc_chain.py <feature-dir>` 接受文档链，全绿才算链完成。该命令是独立命令：
   结构检查 C1–C11，文本形态检查 C12–C14。同一 linter 另由 `python3 tools/lab/validate.py doc_chain_live`
@@ -74,3 +79,6 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
   升级通道处置，并在**两处**登记：原 issue 记录的状态节写「已升格并入 `<批次目录>`」，
   批次 README 的「元信息」节写「升格来源：ISS-YYYY-NNN（原由）」。升格即留痕，不靠记忆。
 - **批次完成**：结论入 `CHANGELOG.md` 与 episode，批次目录删除（git 历史即归档）。
+
+证据列的形态要求（C23，2026-10-23 起）：标 ☑ 已完成的行必须留下可复核载体——仓内存在的路径、
+`仓库@修订:路径`、git 能解析的提交号，或 `N/A: 理由`；只在 `/tmp` 里存在过的证据不算。

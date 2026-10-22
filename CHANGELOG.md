@@ -1,6 +1,50 @@
 # 变更日志
 
-## 未发布 — 2026-10-22
+## 0.13.0 — 2026-10-23
+
+> 发布批（用户指示「按照你说的提一个feature，然后开始修复完善并发版升级」，门变更与发版范围经
+> AskUserQuestion 当次授权）：五份 manifest（`plugin.json`、`marketplace.json`、`.zcode-plugin/`、
+> `.claude-plugin/`、`.codex-plugin/` 的 plugin.json）0.12.0 → 0.13.0，`packaging/runtime` 随发版重建。
+> 本节收录 2026-10-22 文档面收尾批（未消耗版本号的那批）与 2026-10-23 追溯闭环与证据在场批。
+> `measurement: none`（方法级改动，无仪器化业务任务度量；证据是推理加触发它的走查发现与评审记录）。
+
+- **2026-10-23 追溯闭环与证据在场批（门变更，用户授权「全部授权」）**：承接同日三轮规范质量走查
+  （结论：工程面自洽，但「说到」与「被自己的门照到」之间有系统性落差）。
+  ① **C22 目标承接闭环**（`tools/lab/doc_chain.py`，标记启用 `agentflow 目标承接`）：批次 README 的
+  目标承接表（目标 / proposal 出处 / spec 承接 / plan 任务 / 状态）双向闭合——提案声明的每个 `G n`
+  必须进表、表内编号必须回得上提案；模块号与验收点必须在 `spec/` 存在；任务号必须在计划看板存在，
+  且看板里已 ☑/⚠ 的任务不得无人承接（孤儿任务）；表的状态列与看板聚合一到不一致即红。
+  动因实证：`docs/features/feature-2026-10-13-质量提升/proposal/prd.md` 把「CI 在真实 runner 连续
+  两次通过」列为 G2 目标并决策「做」，而该批 spec 模块表、验收点与十个任务行里 CI 出现 0 次，
+  任何门都不红。② **C23 证据在场**（不加标记，覆盖所有批次的计划行）：☑ 已完成的行，证据列必须含
+  四类可复核载体之一——仓内存在的路径（反引号或裸写都认）、`仓库@修订:路径`、git 能解析的提交号、
+  `N/A: 理由`；只指向 `/tmp` 的不算，无 git 时提交号失败关闭。动因实证：同批 T01/T05 的基线与变异
+  报告在计划文本里自述「已随 /tmp 清理散失、不可复核」，状态仍是 ☑。③ **决策门首次照到活文件**：
+  `schemas/bug-record.schema.json` 增可选 `disposition`（枚举 `deferred`/`not-doing`——`AGENTS.md` 与
+  C18 一直在引用这条豁免通道，而契约里根本没有，照条款写即编译失败），`examples/` 补正反例并登记进
+  `INVALID_EXAMPLES`；`docs/PENDING-DECISIONS.md` 由五列改八列 + 状态列并打 `agentflow 决策记录` 标记；
+  16 条 2026-09-19 起悬空的外部项目 open 记录逐条登记 `deferred`（只追加，不动正文与状态）——打标当天
+  `decision_gate` 报出 16 条 C18，归零后才是真绿。④ **门自身可信度**：门基线与整门变异报告从 `/tmp`
+  迁入 `docs/features/feature-2026-10-22-追溯闭环与证据在场/testing/agentflows-gate-evidence/evidence/`
+  （58 项 = 51 杀死 / 7 存活 / 0 无效；两条漂移锚点 `doc_chain.C6`、`schema.contains` 按源码原文回填，
+  「无效」归零后 `schema.contains` 转为可见存活，存活由 6 变 7，逐项处置登记为 ISS-2026-059）。
+  ⑤ **八条文本与双源缺陷收口**：`spec/qa` 重复 `## 2.`、`docs/product/design/product-design.md` D11
+  过时决策标注、`docs/system-guide.md` 的 `archive/` 与 `docs/issues/归档/` 混用、
+  `agents/README.md` 与 `roles.md` 的工作链表双源且列数已分歧、`agents/reviewer.md` 与
+  `document-chain.md` 的表达纪律双源、`AGENTS.md`/`README.md` 手写门项计数、文件名口径、
+  `doc_chain.py` 里 C15 的编号歧义。⑥ **自曝的七条实现期偏差**（计划 DEV-01…07）：plan 扫描非递归使
+  C23 对子目录失明、任务号常量遮蔽破坏 C9 方言、反引号 ID 使整条历史批次静默通过（评审 P0 的同一根因，
+  立为 ISS-2026-060 并按再犯纪律挂账 `unverified-behavior-claims` 第 3 次、`consolidated_in` → 0.13.0）、
+  5 处改动未声明 + 3 处声明未改（写范围双向对照）、落点列仍带「待核实」旧名、三次估时间戳被
+  `stamps must reflect real time` 拒。自测 85 → 106 例，单测 78 → 89 项，门禁项集合不变
+  （以 `validate.py --list` 自报）；终验 `/tmp/qtools-312/bin/python tools/lab/validate.py all` 十一项全 PASS。
+  独立评审第一轮 `changes_requested`（1 P0 + 1 P1 + 11 P2，记录
+  `docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md`），逐项修复后
+  待第二轮在冻结 revision 上复跑。**明确不做**：领域模板（威胁建模 / 性能与容量 / 无障碍）另批立项
+  （用户当次拍板）；效果测量维持 `measurement: none`（2026-10-19 方案 D）；历史批次不强制接入 C22；
+  「声明落点 vs 实际改动面」与「变异锚点漂移」进门尚未做，方向已写入计划偏差节。
+
+## 未发布 — 2026-10-22（并入上方 0.13.0）
 
 - **2026-10-22 文档面收尾批（用户指示「全部开始处理」）**：按全仓冗余/过时审计清单逐项回写。
   ① **角色计数口径修正**（门变更，用户授权）：`tools/lab/counts.py` 的 `count_agents` 排除

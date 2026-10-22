@@ -20,7 +20,7 @@
 | D8 | 打包 | 瘦快照：`build_runtime.py` 生成，marketplace 源指向生成树 | 用户装的不是整仓死重；运行时面与实验室控制面分开 | spec S9 |
 | D9 | 版本事实源 | 五份 manifest + CHANGELOG 唯一；文档禁复述版本号 | 版本散文化曾三次漂移，守卫检查执行 | spec S9、`validate.py docs` |
 | D10 | 评测仪器 | ~~公开套件 + 业务切片~~ **已整线裁撤**（2026-10-12）；设计知识与恢复清单留存 | 仪器化度量暂停，方法级改动 `measurement: none` | 原始决策见 PLAN-LOOP-SMOKE-001 |
-| D11 | 度量效度 | 被测树含 seeds 即 fail-closed；authoritative 运行强制隔离参数 | 种子泄漏=考试漏题；不可信基线不如不测 | spec S10 |
+| D11 | 度量效度 | **随装置裁撤（2026-10-12）**：原口径为「被测树含 seeds 即 fail-closed；authoritative 运行强制隔离参数」，现存 `artifact_digest.py` 与 `isolation.py check-diff` 仍在，仪器化对照面已不在盘 | 种子泄漏=考试漏题；不可信基线不如不测。恢复仪器化时按 `docs/design-decisions.md` §3 的重建清单执行，与 D10 同批处置 | spec S10 |
 | D12 | 文档链吸收 | 方法增加 proposal→spec→design→plan 交付链（对外生成 + 对内自举），**推翻**早期"只吸收评审判据、不建模板体系"的取舍 | 只有评审判据没有生成契约时，文档质量靠当次会话自觉——与方法的其余部分治理哲学不一致；用户 2026-09-20 拍板补链 | spec S11/S13；本文件 §1.4 |
 | D13 | 文档链门禁 | spec 反审 proposal（阻塞清单）、design 冻结前独立评审、plan 前置=design 冻结 | 链条带门才不是仪式；复用评审桥落证据 | `references/document-chain.md` |
 | D14 | 诚实声明 | 角色分离≠环境隔离等边界如实入文；measurement: none 合法 | 强度声明与证据等级一致是审计前提 | spec S15 |

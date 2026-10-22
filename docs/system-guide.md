@@ -133,7 +133,9 @@ flowchart TB
 记录生命周期：`open`（可带 `provenance: undetermined` 但必须写明缺什么证据）
 → `fixed-pending-review`（修复落地，`regression_status: not-run` 如实标注）
 → `verified`（独立评审 approved + 回归检查通过 + closure_criteria 逐条闭合）
-→ 或 `rejected` 进 `archive/`。**Fixer 永远不能批准自己的 Bug；Recorder 不能用 Fixer 的转述代替独立评审。**
+→ 或 `rejected` 移入 `docs/issues/归档/<日期>/`（该目录随首个被拒记录创建；评审快照另有一处
+`reviews/<项目>-<功能>/archive/<轮次>/`，两者不是同一个落点）。
+**Fixer 永远不能批准自己的 Bug；Recorder 不能用 Fixer 的转述代替独立评审。**
 
 Worker 没有产出时的分类权在 Supervisor（失败语义见 [`contracts.md`](../skills/agentflow/references/contracts.md)）：
 
@@ -307,7 +309,7 @@ findings 按严重度落 bug 记录（`provenance: external`，注明是业务�
 3. **编译**：`validate.py all` 全套检查全绿才算完（FAIL 是编译错误，不是警告）；
 4. **故障注入**（可选但推荐）：在 /tmp 副本上破坏新机制验证它真的会 FAIL，恢复后复跑观察 PASS
    ——未观察的恢复不算恢复；
-5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；
+5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；**写任何日期之前先跑 `date` 取当前时间**——估出来的时间戳会被 `validate.py artifacts` 以 `stamps must reflect real time` 拒，且记录与台账的 `updated_at` 一旦无效会连带让`class_id → 台账` 的解析整链失效；台账类记录立录的同一轮就补齐 `occurrences` 与再犯历史行（先例：ISS-2026-055、ISS-2026-060）；
 6. **版本 bump**：五份 manifest 同步（`validate.py manifests` 强制）；
 7. **重装**：刷新 marketplace → 重装 → `validate.py installed` 转绿；
 8. **收口**：episode 落盘（含 `review_roundtrips`），负向结果如实记。

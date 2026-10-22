@@ -55,6 +55,7 @@ def validate_invalid_test_run_example(path: Path) -> list[ValidationError]:
 INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
     "bug-record-verified-without-review.md": ("bug-record", validate_bug_markdown),
     "bug-record-verified-heading-missing.md": ("bug-record", validate_bug_markdown),
+    "bug-record-disposition-unknown.md": ("bug-record", validate_bug_markdown),
     "PLAN-INVALID-002.md": ("plan", validate_invalid_plan_example),
     "PLAN-INVALID-003.md": ("plan", validate_invalid_plan_example),
     "PLAN-INVALID-004.md": ("plan", validate_invalid_plan_example),
