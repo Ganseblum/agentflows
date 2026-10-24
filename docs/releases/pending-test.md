@@ -10,6 +10,7 @@
 | 1 | 首次接入（Init）章节 + 表达与沉淀纪律（`skills/agentflow/SKILL.md`、`AGENTS.md`） | 阅读两处新增条款：Init 约定（五项）与「面向人的输出白话优先」；重装后由用户在新项目试用 | 条款在盘已核（2026-10-19：SKILL.md Init 五项与 AGENTS.md 表达纪律条款 grep 在场）；待用户在新项目试用（用户阅读向，仓内不可闭环） |
 | 2 | 接入 / 触发面修复 + 模板角色目录化 + 典型案例 | 重装后在新目标仓发起一个 feature 任务，观察：①先问产品前沿 ②落点建 `<repo>-workflow-ai/` 枢纽 ③对 feature 目录 `doc_chain.py` PASS；另抽查 `skills/agentflow/templates/feature/` 为角色目录命名 | 静态项已达成（2026-10-20：`installed` PASS；模板目录为 design/{be,fe,qa,ui}、plan、proposal、spec/{be,fe,qa,ui}）；端到端新仓 feature 任务观察仍待用户侧发起，判为「静态达成 / 端到端待用户」 |
 | 3 | 追溯闭环批 0.13.0 的门变更（C22 目标承接闭环 + C23 证据在场 + 记录契约 `disposition`，提交 `861b6ef`） | ① 在真实新批次立项当天只打 `agentflow 目标承接` 标记、不写承接表，跑 `python3 tools/lab/doc_chain.py <批次目录>`，应报「标记启用却没有承接表」；② 把某已完成任务从承接表删掉，应报「孤儿任务」；③ 把某任务行的证据只写 `/tmp/x.txt`，应报 C23；④ 拿一个未打标记的历史批次跑同命令，确认不产生 C22 findings；⑤ 读 `docs/PENDING-DECISIONS.md` 的八列，判断是否真的能凭它拍板（不用回翻来源） | ①②③④已由 `tools/lab/doc_chain.py --self-test` 用例 86–106 与 `tests/test_lab_contracts.py` 的 `GoalTraceabilityEvidenceTests` 实跑覆盖（106/106、92 tests OK），⑤属阅读向判断，须用户本人确认（仓内不可闭环）；另：7 个变异存活项的逐项处置、以及「锚点漂移应做成机器判据」两项已分别登记为 `docs/issues/ISS-2026-059-变异存活项长期无逐项处置.md` 与 `docs/issues/ISS-2026-058-变异语料锚点漂移致判据不可观察.md` 的备注，本批不做 |
+| 4 | 宿主级接入（Host Init）0.14.0：`skills/agentflow/references/hosts.md`、`skills/agentflow/templates/host/`、SKILL 的「宿主级接入」节 | ① 重装插件后按 `hosts.md` 做 dry-run，确认打印 `realpath`、托管块、块外变动；② 用户当次确认后写入真实 `~/.zcode/AGENTS.md`（先备份），按第 6 条做三项校验；③ 新开 ZCode 会话，让宿主逐字复述块内首行 `## Agentflow 全局规则（托管块，勿手改）`；④ 把结果回写 `docs/host-platform-facts.md` H1 | 未做：真实宿主写入与加载验证须用户当次确认并在新会话执行；仓内只完成协议文本、副本演练与生成树重建，不得记为已验收。安装面同日实测为预期失败：`python3 tools/lab/validate.py installed` → `FAIL installed (1 error(s))`，提示「no snapshot for source version 0.14.0; installed versions: 0.11.0, 0.12.0, 0.8.2, 0.8.4, 0.8.6」，退出码 1 |
 
 ## 已验收（历史，2026-10-19/20）
 
@@ -19,7 +20,7 @@
 - 端点复测与第一次改善闭环试水：探测 3/3，试水 3 轮 21.7 分钟（成本未落盘，装置已裁撤）。
 - `check-write-scope.sh` 的「.」修复：`HEAD .` → OK exit 0；`HEAD skills` → FAIL exit 1（ISS-2026-041）。
 - 精简批 / 瘦身批二期：`validate.py all` PASS，unittest 78 OK，业务残留零命中。
-- 宿主安装快照：2026-10-22 复核 0.12.0 快照在场，`validate.py installed` PASS（**2026-10-23 起失效**：仓内已 bump 到 0.13.0 并重建生成树，宿主缓存仍是 0.12.0，`installed` 现为预期 FAIL，须用户重装后复跑转绿——见本文件第 3 行的待验收条目，不得把它记为已验收）。
+- 宿主安装快照：2026-10-22 复核 0.12.0 快照在场，`validate.py installed` PASS（**2026-10-24 起失效**：仓内已 bump 到 0.14.0 并重建生成树；同日 `validate.py installed` 实测 `FAIL`，提示无 0.14.0 快照、已安装版本为 0.11.0/0.12.0/0.8.2/0.8.4/0.8.6，退出码 1。须用户重装后复跑转绿——见本文件第 4 行的待验收条目，不得把它记为已验收）。
 
 ## 未做与残余
 

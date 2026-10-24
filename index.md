@@ -10,8 +10,9 @@
 | 日常两轨 | 小修与零星事项走 `docs/issues/`；成批 / 跨层工作立 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md` |
 | 改角色定义 | `agents/README.md`（<!-- count:agents -->14<!-- /count --> 个角色文件 + 工作链调度入口） |
 | 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）、`skills/improve/` |
+| 配宿主级全局规则 | `skills/agentflow/references/hosts.md`（三层分工、托管块、宿主矩阵）· `skills/agentflow/templates/host/global-rules.md`（规则正文） |
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md` |
-| 查批次与实施计划 | `docs/features/`（`feature-<YYYY-MM-DD>-<主题>/`；在途批次 `feature-2026-09-19-产品线完善`（需求评审已通过，技术方案评审待跑）、`feature-2026-10-13-质量提升`（T01–T09 完成、T10 本期不做，见批次 README）、`feature-2026-10-22-追溯闭环与证据在场`（门变更 C22 目标承接闭环 / C23 证据在场 / 记录契约 `disposition`，执行中）） |
+| 查批次与实施计划 | `docs/features/README.md`（活跃批次入口与状态）；具体任务状态只看各批次 `plan/` 看板 |
 | 查缺陷与事项 | `docs/issues/README.md`（`ISS-<YYYY>-<NNN>`，含看板与归档规则） |
 | 查对外评审落点 | `reviews/README.md` |
 | 查发布与待验证清单 | `docs/releases/`：`todo.md`（待办与索引）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md` |
@@ -19,7 +20,7 @@
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录与改进环 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）；改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
-| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`（八份交付件：2026-10-12 两份、2026-10-19 任务书、2026-10-20 三份报告、2026-10-21 复盘与提案各一份；含已登记拍板结论） |
+| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新整体审核见 [2026-10-23 功能、文档与模板审核](docs/evaluations/AGENTFLOW-AUDIT-2026-10-23.md)；历史报告按文件日期查阅 |
 
 ## 维护纪律
 
@@ -32,6 +33,7 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-24 宿主接入批（Host Init：跨仓全局规则分发、托管块模板、0.14.0）
 - 2026-10-23 追溯闭环与证据在场批（门变更：文档链新增 C22 目标承接闭环与 C23 证据在场；记录契约补 `disposition`；拍板口八列化；八条文本缺陷收口）
 - 2026-10-22 文档面收尾批（角色计数口径、0.12.0 状态回写、门清单补齐、索引去重）
 - 2026-10-21 收尾批 / 跨仓吸收批 / 决策可追溯实施批

@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-20261024-001",
+  "source_type": "review",
+  "occurred_at": "2026-10-24T00:39:00+08:00",
+  "revision": {
+    "source": "git:20c60a3 + 未提交工作树（0.14.0 发版提交待落）",
+    "base": "git:20c60a3"
+  },
+  "objective": "把跨仓库的 Agentflow 纪律做成可分发的宿主级接入（Host Init）：协议、模板、宿主矩阵、SKILL 接线与 0.14.0 版本 bump；真实宿主写入与加载验证留给用户验收。",
+  "outcome": "partial",
+  "agentflow_version": "0.14.0",
+  "host": "zcode",
+  "provenance": {
+    "carrier": "本仓方法开发会话（Host Init 批），用户逐字指示「补充加上，然后升级版本。」",
+    "sanitized": true
+  },
+  "redactions": [
+    "宿主缓存与用户目录路径以 ~/ 形式概括，不写个人绝对路径",
+    "未复述会话内思考过程，只记断言、命令与结果"
+  ],
+  "signals": [
+    {
+      "kind": "gate_items",
+      "value": 11,
+      "evidence_ref": "venv 解释器运行 tools/lab/validate.py all → schemas/examples/artifacts/protected/manifests/docs/tests/doc_chain/doc_chain_live/decision_gate/lint 11 行 PASS，all_exit=0"
+    },
+    {
+      "kind": "unit_tests",
+      "value": 92,
+      "evidence_ref": "validate.py tests → Ran 92 tests OK"
+    },
+    {
+      "kind": "independent_review_rounds",
+      "value": 3,
+      "evidence_ref": "同一独立 reviewer 三轮：changes_requested（1 P1 + 9 P2 + 7 P3）→ changes_requested（N1 阻塞 + N2–N9）→ approved（N10 非阻塞）"
+    },
+    {
+      "kind": "protocol_simulation",
+      "value": "outside_exit=0 block_exit=0；版本替换后 outside2_exit=0 block2_exit=0；残缺标记 begin=1/end=0；缺末尾换行可检出",
+      "evidence_ref": "/tmp/agentflow-host-init-sim（副本演练，不是真实宿主）"
+    },
+    {
+      "kind": "installed_snapshot",
+      "value": "FAIL：no snapshot for source version 0.14.0",
+      "evidence_ref": "tools/lab/validate.py installed → FAIL installed (1 error(s))；installed versions 0.11.0, 0.12.0, 0.8.2, 0.8.4, 0.8.6；exit 1（预期失败，未冒充通过）"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "Host Init 协议、模板、宿主矩阵与 SKILL 接线在盘，且与既有契约不冲突",
+      "status": "verified",
+      "check": "venv 解释器运行 validate.py all → 11 项 PASS（含 docs/tests/doc_chain_live）；第三轮独立评审 approved",
+      "evidence_ref": "skills/agentflow/references/hosts.md；skills/agentflow/templates/host/；skills/agentflow/SKILL.md"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "五份 manifest 与 packaging/runtime 生成树一致在 0.14.0",
+      "status": "verified",
+      "check": "validate.py manifests PASS（venv 全门）；runtime 副本均为 agentflow/0.14.0",
+      "evidence_ref": "plugin.json；marketplace.json；.codex-plugin/plugin.json；.zcode-plugin/plugin.json；.claude-plugin/plugin.json；packaging/runtime"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "托管块追加与替换不改变块外内容，残缺标记与缺末尾换行可检出",
+      "status": "verified",
+      "check": "副本演练：outside_exit=0、block_exit=0；版本替换后 outside2_exit=0、block2_exit=0；broken_begin=1/broken_end=0；tail -c 1 显示非换行",
+      "evidence_ref": "/tmp/agentflow-host-init-sim（会话内原始输出，未入仓）"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "Host Init 已在真实宿主写入并生效",
+      "status": "unverified",
+      "check": "未执行：真实写入与新会话复述须用户当次确认；pending-test 第 4 行保持「未做」",
+      "evidence_ref": "docs/releases/pending-test.md 第 4 行"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "0.14.0 已安装到宿主",
+      "status": "failed",
+      "check": "validate.py installed → FAIL：no snapshot for source version 0.14.0；installed versions 0.11.0, 0.12.0, 0.8.2, 0.8.4, 0.8.6；exit 1",
+      "evidence_ref": "docs/releases/pending-test.md 第 4 行；docs/product/spec/acceptance-matrix.md S9"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "review",
+      "ref": "同一独立 reviewer 三轮：changes_requested → changes_requested → approved（冻结 diff /tmp/agentflow-host-init.diff、-r2.diff、-r3.diff）"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "gate",
+      "ref": "venv 解释器运行 tools/lab/validate.py all → 11 PASS，all_exit=0；validate.py installed → FAIL（无 0.14.0 快照），exit 1"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "record",
+      "ref": "docs/releases/pending-test.md 第 4 行（真实宿主验收未做）；docs/host-platform-facts.md H1–H4"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "artifact",
+      "ref": "skills/agentflow/references/hosts.md；skills/agentflow/templates/host/global-rules.md；skills/agentflow/templates/host/README.md；CHANGELOG.md 0.14.0 节"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-24T00:16:02+08:00",
+      "reviewer": "独立 Reviewer 子代理（只读，agentflow:reviewer）",
+      "decision": "changes_requested",
+      "finding": "P1-1 托管块写入无恢复点、无块边界校验；P1-2 主用户可见路径未执行；P2-1 协议三份副本互相矛盾；P2-2 全局规则与 SKILL 分叉；P2-3 漂移闭环不成立；P2-4 facts 头部把未验证写成已验证；P2-5 Host Init 嵌在 Init 内；P2-6 留痕落点在安装态不可达；P2-7 工作区外写权限无降级；P2-8 发布验证红且无原始输出；P2-9 缺 episode；P3-1…P3-7 次要项",
+      "resolution": "逐条修复：备份覆盖所有内容变更、三项写后校验、realpath/换行/symlink 规则、单权威协议、material 用词与原始输出、模板改动必须 bump、独立 ## 节、留痕落点、权限降级、venv 全门 11 PASS、pending-test 登记；P3 全部收掉",
+      "evidence_ref": "/tmp/agentflow-host-init.diff（sha256 ae7608…340a）"
+    },
+    {
+      "at": "2026-10-24T00:29:20+08:00",
+      "reviewer": "独立 Reviewer 子代理（只读，agentflow:reviewer）",
+      "decision": "changes_requested",
+      "finding": "N1 权限降级路径把三项校验缩成一项（唯一阻塞）；N2 material 括号与可判定定义冲突；N3 模板登记仍称安装协议；N4 范围声明缺 S2 变更；N5 当日 installed 状态无输出；N6 venv 命令不可照抄；N7 symlink 备份类型未规定；N8 H2 缺席断言只修一半；N9 追加条件缺「没有块时」",
+      "resolution": "N1 两处统一为三项校验并写明执行者；N2 删括号；N3 改为操作清单加权威指针；N4 增「范围」条；N5 补 installed 原始输出与退出码；N6 改用 venv 解释器并列出 11 项；N7 备份必须落在 realpath 旁的普通文件（cp -L）；N8 删缺席从句；N9 补「没有托管块时」",
+      "evidence_ref": "/tmp/agentflow-host-init-r2.diff（sha256 e7b05f…b7e3）"
+    },
+    {
+      "at": "2026-10-24T00:36:35+08:00",
+      "reviewer": "独立 Reviewer 子代理（只读，agentflow:reviewer）",
+      "decision": "approved",
+      "finding": "N1–N9 全部核实已修；新增 N10（非阻塞）：范围条未列 index.md 两处批外 hunk",
+      "resolution": "补 index.md 的「查批次与实施计划」「查本仓自评」两行进范围条；保留 pending-test 第 4 行「未做」；批准（status: complete，宿主执行仍为待验收）",
+      "evidence_ref": "/tmp/agentflow-host-init-r3.diff（sha256 9534c0f…88d3）"
+    }
+  ],
+  "feedback_summary": "用户在看到 2026-10-23 Codex 合并会话的复盘后，要求补上宿主级初始化（把跨仓的分支、合并、证据、评审绑定纪律写进宿主自己的全局指令文件），并升级版本。本批新增 references/hosts.md、templates/host/（global-rules 与操作清单），在 SKILL 增加独立的「宿主级接入」节，并在集成节补上回滚分支对账、源分支侧评审基线与「测试红不得用跳过换子集换绿」；五份 manifest 升到 0.14.0，生成树重建，README/pending-test/todo/acceptance-matrix/facts 同步。独立评审三轮：第一轮 1 P1 + 9 P2 + 7 P3（写入安全、主路径未执行、协议三副本、漂移、留痕落点、权限降级等），第二轮 1 条阻塞（权限降级把三项校验缩成一项）+ 8 条次要，第三轮 approved 并指出范围声明漏列 index.md 两行。协议在 /tmp 副本上演练通过（块外内容不变、块与模板一致、残缺标记与缺末尾换行可检出）；真实宿主写入与加载验证未做，已登记为 pending-test 第 4 行，installed 为预期 FAIL（无 0.14.0 快照），因此 outcome 记为 partial。各轮 review_roundtrips 的 at 取该轮冻结 diff 的创建时间，不是 reviewer 返回时间。"
+}
