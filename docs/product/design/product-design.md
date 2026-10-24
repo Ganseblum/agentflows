@@ -32,7 +32,7 @@
 | 优先级 | 技术挑战 | 应对 |
 | --- | --- | --- |
 | P0 | 工具改自己时可能松掉评分规则（candidate 改 schema/评测/守卫） | 保护门 + `check-diff` 对冻结父 revision 比对 + `validate.py protected` 守清单覆盖（D4） |
-| P0 | 独立评测的效度：基线与候选同树对贴、种子泄漏、宿主不可信端点 | digest 相同拒判（D10）、seeds fail-closed（D11）、证书按宿主发（S12） |
+| P0（仪器化暂停） | 当前无独立评测 runner，不能声称候选效果已测量 | 方法级改动标记 `measurement: none` 并经人工评审；恢复仪器化前，按 D10/D11 的重建清单重新设计隔离对照 |
 | P0 | 方法声明与宿主实态漂移：源码编辑≠宿主行为 | 瘦快照 + `installed` 逐文件比对（D8）；宿主事实只入 `host-platform-facts.md` 且带复验方法 |
 | P1 | 记录一旦分散即不可检索，证据随会话消失 | 记录体系（schema + 编译门）+ FTS5 读侧 + episode 会话内强制落盘（D5） |
 | P1 | 文档链只有评审没有生成契约，质量靠自觉 | D12 补生成契约 + D13 门禁；内部链自举（本目录即样例） |
@@ -56,7 +56,8 @@ flowchart TB
     Gate1 --> Decide["决定记录 + claims ledger"]
     Decide --> Ep["记录根: docs/issues/ · docs/features/ · docs/releases/ · episodes/ · reviews/"]
     Ep --> Inst["实验室工具层（不入快照）<br/>validate / doc_chain / isolation / record_store / artifact_digest"]
-    Inst --> Loop["改进环: episode→假设→候选→独立评测→policy→人批门"]
+    Inst -->|"方法级证据：measurement: none"| Human["人工独立评审与晋级决定"]
+    Inst -."仪器化恢复后".-> Loop["隔离对照与评测流程（当前暂停）"]
     Loop -->|"候选树 + check-diff"| Gate2["保护门 protected-paths"]
     Inst --> Docs["产品文档链 docs/product/<br/>proposal→spec→design→plan"]
 ```
@@ -67,7 +68,7 @@ flowchart TB
 | 角色文件（agents/*.md） | 单角色能力、产物归属、工具白名单 | 跨角色编排（在 Skill/Supervisor） |
 | Supervisor（主会话） | 收口、委派、集成、决定、失败分类 | 替评审者下结论；豁免自己参与的评审门 |
 | `docs/issues/` 等记录根 | 证据落盘与检索 | 承载产品叙事（在 `docs/`） |
-| 实验室（tools/lab/） | 编译门、评测、隔离、策略、检索 | 进入宿主瘦快照 |
+| 实验室（tools/lab/） | 编译门、隔离检查、检索与摘要；仪器化评测暂停 | 进入宿主瘦快照 |
 | docs/product/ | 产品四层文档链 | 取代原记录树中的产品叙事（执行契约在各批次 `docs/features/<批次>/plan/`） |
 | 保护门（protected-paths.txt） | 候选禁区单点声明 | 保护"怎么干活"的角色提示词（那是改进环的对象） |
 

@@ -2,7 +2,7 @@
 
 下表每一行都在本机直接观察得到，除非其证据标记为 `doc`；`doc` 行来自宿主官方指南，尚未经运行检验。每行都标明其证据与适用范围。不得把一条事实推广到超出其适用范围。重新验证请重跑该行指名的检查，而不是编辑本文件。
 
-最后验证：2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
+最后验证：2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
 ## ZCode（桌面版）
 
@@ -54,6 +54,15 @@
 | W1 | 会话内可直接执行 Bash / Read / Edit / Write / Grep / Glob 并派生子代理；本仓的确定性检查、安装构建与检索工具都能在该会话内运行并观察到原始输出。 | Observed 2026-10-13（本仓工作树，`fb98b21`）：`python3 tools/lab/validate.py all` → 9 项全 PASS、退出码 0；`python3 -m unittest discover -s tests` → `Ran 60 tests` / `OK`；`python3 packaging/build_runtime.py` → 退出码 0 并生成 `packaging/runtime`（14 个角色 + 6 份 schema + 四份 manifest）；`python3 tools/lab/record_store.py index` → 索引 106 条记录，`query` 返回带上下文的 FTS5 命中。 | WorkBuddy 会话（本安装），对插件仓工作树的命令执行 | 该宿主足以承载 agentflow 的门、构建与检索面——跑门不必依赖 Claude Code / Codex CLI 端点。它不提供插件安装面，因此 Z1–Z11 / C1–C12 / X1–X2 各行不适用于它。 |
 | W2 | agentflow 插件未在该宿主上安装：未观察到角色加载、技能触发或 frontmatter 工具白名单被宿主强制执行的任何行为。 | 未实际触发——该宿主无插件安装通道，本次只做门与工具层面的执行 | WorkBuddy | 不得把「门在本会话跑绿」外推为「角色在该宿主上按契约运行」。角色面、技能触发与工具白名单的强制执行仍待 dogfood；README 的 dogfood 前置条件（先跑 `validate.py installed` 并记录结果）不变。 |
 
+## 宿主全局指令文件
+
+| # | 事实 | 证据 | 适用范围 | 后果 |
+| --- | --- | --- | --- | --- |
+| H1 | ZCode 在会话启动时加载用户级 `~/.zcode/AGENTS.md`，其内容作为「user default instructions」进入系统提示。 | Observed 2026-10-24：2026-10-24 的 ZCode 会话系统提示逐字包含 `Contents of /Users/lihanghang1/.zcode/AGENTS.md (user default instructions)`，并附该文件全文。 | ZCode 桌面版（本安装） | 写在其中的跨仓规则对每个工作区生效，不依赖插件安装；插件升级不会更新这份文件，需要按 `hosts.md` 重跑 Host Init。 |
+| H2 | Codex 是否加载用户级 `~/.codex/AGENTS.md`，本仓尚未观察。已知 Codex 会话会读取仓库 `AGENTS.md`；2026-10-23 的合并会话加载了 `~/.codex/plugins/cache/personal/agentflow/0.13.0/skills/agentflow/SKILL.md`。 | `doc`（Codex 指令文件约定）+ 本仓尚未做过用户级加载实验 | Codex CLI / Codex 宿主 | 不要把「仓库 `AGENTS.md` 生效」外推为「用户级文件生效」。Host Init 写入后必须按 `hosts.md` 第 6 条验证，拿不到复述记 `blocked`。 |
+| H3 | Claude Code 的用户级指令文件为 `~/.claude/CLAUDE.md`；本仓未做过加载实验。 | `doc`（Claude Code 项目/用户记忆文件约定），未现场验证 | Claude Code | 同 H2：写入后必须验证加载，不得声称已生效。 |
+| H4 | Cursor 的规则载体与加载行为未验证：项目级候选为 `.cursor/rules/*.mdc`，全局规则位置未知；是否读取 `AGENTS.md` 亦未验证。 | 未实际触发——本仓未做过 Cursor 安装或加载实验 | Cursor | 在完成「写一条最小规则 → 新会话复述」的实验前，不提供 Cursor 适配器、不声称支持。 |
+
 ## 重新验证
 
 - C1/C4：重跑一次 `claude --print --output-format json --json-schema <schema>` 调用，看带 `$schema`/`$id` 的 schema 是否仍被拒，以及受约束对象是否仍包在 `.result` 里返回（原适配器冒烟已随装置裁撤，改用一次直接 CLI 调用）。
@@ -67,4 +76,5 @@
 - C9：端点决策之后，运行一次 `--print --output-format stream-json --verbose --json-schema <schema>` 调用，确认最终 `result` 事件可解析且拒绝文本出现在出错的工具结果中；再用 `--strict-mcp-config` 与临时 `CLAUDE_CONFIG_DIR` 重复，确认没有 MCP 服务器初始化（系统 init 事件未列出任何 MCP 服务器）。
 - C12：一词探测（`claude --print --output-format json --no-session-persistence "Reply with the single word: pong"`）；隔离变体：`CLAUDE_CONFIG_DIR=<含 settings.json 副本的临时目录> claude …`（空目录变体预期快速失败）。
 - Z10：任何重新安装之后执行 `ls ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/<version>/`。
+- H1–H4：经用户当次确认，在副本或真实全局指令文件上写入一条带唯一标记的最小规则（真实文件先备份），新开一次会话让它复述该标记。能复述的，把该行证据改为 Observed 并写上日期与文件路径；不能复述的保持未验证，先查文件路径与加载机制。Cursor 另需先确认规则文件格式与全局位置，不得照搬 `AGENTS.md` 的结论。
 - Z10/C9 于 2026-09-18 插入（0.8.0 批次）。

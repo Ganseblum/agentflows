@@ -27,11 +27,14 @@ issues/
 每个文件是 YAML frontmatter（机器校验的契约，
 [`schemas/bug-record.schema.json`](../../schemas/bug-record.schema.json)）加一段给人读的
 Markdown 正文。正文使用固定的中文小节标题——校验器匹配这些精确字面量：`## 现象`、
-`## 根因` 和 `## 修复`（`open` 的缺陷除外）；只要有代码片段就建议使用 `## 问题代码`，
-记录一旦 `verified` 就必须有 `## 审查`。常见附加小节：`## 前后对比`（修复前后对照，证明
-bug 真的解决了）、`## 怎么避免`（防再犯机制）、`## 回归检查`、`## 备注`、
-`## 变更记录`（每次状态流转 追加一行：`YYYY-MM-DD HH:MM · 动作 · 一句话证据`，流转历史
-不随 `updated_at` 单一时间戳丢失）。
+`## 根因` 和 `## 修复`（当前校验器对所有非 `open` 状态要求该标题）；`verified` 还必须有
+`## 审查`。新建记录按模板填写 `## 修复方案`：发现时先写候选建议、依据、风险和未决事项；
+方案标明待审核，审核后再实施。`## 修复` 只写实际落地的改动。修复落地后填写 `## 回归检查`，
+记录命令、结果和可复核证据。`## 怎么避免` 区分候选措施与已落实措施；有决定性代码时用
+`## 问题代码`，有可复核的修复前后证据时可用 `## 前后对比`。不适用的小节整节删除，不留空标题。
+`## 变更记录` 每次状态流转追加一行：`YYYY-MM-DD HH:MM ±HH:MM · 动作 · 一句话证据`，
+时区写清楚，流转历史不随 `updated_at` 单一时间戳丢失。当前机器校验不检查 `## 修复方案` 与
+`## 回归检查` 是否存在或内容是否完整；这些章节依模板填写，并由记录审阅者核对。
 
 「为什么出现」要在 `## 根因` 里人话点破类别，而不是只贴 frontmatter 标签：`error_kind` 为
 `ai-ignored-doc`（文档写明了但没照做）、`ai-ignored-code`（代码写明了但没照做）、
@@ -42,10 +45,14 @@ Frontmatter 字段：`bug_id`、`title`、`status`（open / fixed-pending-review
 rejected）、`severity`（优先级别：P0 critical / P1 high / P2 medium / P3 low）、
 `error_kind`（ai-ignored-doc / ai-ignored-code / missing-constraint / hallucination /
 logic-error / host-compat / environment / other）、`attribution`、`provenance`、`project`、
-`files`、`recorded_at`、`updated_at`；verified 时还要有 `reviewer` + `review_decision` +
+`files`、`recorded_at`、`updated_at`；open 记录如果没有被带标记批次的承接表引用，要有
+`disposition: deferred | not-doing`（只表示归属，不是状态，也不表示已修复）；verified 时还要有
+`reviewer` + `review_decision` +
 `regression_status` + `closure_criteria`（可度量的关闭条件：指标、日志缺席或检查输出）；
 rejected 时要有 `rejection_reason`；记录属于某个再犯类时要带 `class_id` + `occurrence`；
-修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。
+修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。当前 schema 尚不
+按状态强制该字段，填写时仍遵守本条约定。外部产物或代码问题记录其来源 `source_revision`；归因到
+Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 
 **引用自包含**：`files` 条目要么是本仓路径（校验器查在盘），要么是仓限定引用
 `<repo>@<revision>:<path>`（如 `aiwork-workflow-ai@3930ebb:templates/.../tech-design-backend.md`）；

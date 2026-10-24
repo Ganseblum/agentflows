@@ -16,6 +16,8 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
   [`marketplace.json`](marketplace.json) 中的本地 marketplace 安装（它指向 `packaging/runtime`，不是本目录）。
   Skill 通过 `.zcode/skills/` 符号链接解析，但 **agent 从安装快照加载**——改动 `agents/*.md` 之后，
   重新生成运行时树、刷新 marketplace 并重装，然后用 `python3 tools/lab/validate.py installed` 确认。
+  若用过 Host Init（宿主级全局规则），重装后还要按 [`skills/agentflow/references/hosts.md`](skills/agentflow/references/hosts.md)
+  重跑一次，让宿主全局指令文件里的托管块与当前版本对齐。
 
 ## 当前成熟度
 

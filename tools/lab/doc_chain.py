@@ -16,8 +16,11 @@ still belongs to the review gates.
 Checks:
   C1  structure        every stage directory holds at least one real document (no .gitkeep only),
                        unless the batch README's 段落映射 table names a landing for that stage
-                       (non-empty and not 「—」)
-  C2  entry gates      README carries the requirement-review and design-review gate entries
+                       (non-empty and not 「—」); when README.md is absent AND HISTORY.md is present
+                       (single-ledger mode, see C24), HISTORY.md serves as the chain's entry and C1
+                       does not require README.md
+  C2  entry gates      README (or HISTORY.md in single-ledger mode, see C24) carries the
+                       requirement-review and design-review gate entries
   C3  spec re-audit    a spec file contains the re-audit checklist; no blocking row left open (☐)
   C4  design/be figures  >=1 sequenceDiagram WITH an alt failure branch, >=1 flowchart,
                        >=1 erDiagram or stateDiagram
@@ -81,6 +84,12 @@ Checks:
                        repo-qualified `repo@rev:path`, a commit sha git can resolve, or an
                        explicit `N/A: reason`. A /tmp path that has been cleaned away is not a
                        carrier; no git means a sha claim fails closed rather than passing silently
+  C24 history-ledger    file-presence mode (HISTORY.md present, README.md absent — not a marker
+                       opt-in, unlike C15/C16/C18): single-ledger mode. HISTORY.md carries the entry
+                       gates (需求评审 / 技术方案评审) and, when C22 is in scope, the 目标承接 mark and
+                       table. Purely additive: a batch that also has README.md is NOT in this mode
+                       (README governs unchanged; any HISTORY.md present is treated as an ordinary
+                       stage document, not a ledger).
 
 Usage:
     python3 tools/lab/doc_chain.py [--root <repo-dir>] <feature-dir>
@@ -491,9 +500,20 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     files = sorted(feature_dir.rglob("*"))
     md_files = [f for f in files if f.is_file() and f.suffix == ".md" and f.name != ".gitkeep"]
     readme = feature_dir / "README.md"
+    history = feature_dir / "HISTORY.md"
     all_text = {f: read(f) for f in md_files}
 
-    # C1 structure — two exemptions the chain contract allows, both declaration-gated:
+    # C24 single-ledger mode (2026-10-23 gate change, user-authorized): when README.md is absent
+    # but HISTORY.md is present, HISTORY.md is the chain's single ledger — it carries the entry
+    # gates and (when C22 is in scope) the 目标承接 mark/table. README-path rules do not apply.
+    # This is additive: README present ⇒ README mode (unchanged); both present ⇒ README wins and
+    # HISTORY.md is treated as an ordinary stage document (its markers are simply not consulted).
+    single_ledger = (not readme.is_file()) and history.is_file()
+    leader_text = all_text.get(readme, "") if readme.is_file() else (
+        all_text.get(history, "") if single_ledger else ""
+    )
+
+    # C1 structure — three exemptions the chain contract allows, all declaration-gated:
     #   * 轻量模式：无 spec/design 轨 in the README meta line narrows the stage set to
     #     proposal + plan. Until 2026-10-13 C1 demanded all four stage directories
     #     unconditionally, so every such batch failed the very linter the contract told it to
@@ -502,6 +522,8 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     #     narrows the stage requirement, it does not switch C1 off.
     #   * a stage directory may be empty when the README's 段落映射 table names a landing for it
     #     (non-empty and not 「—」); otherwise it must hold a real document.
+    #   * C24 single-ledger mode: README absent, HISTORY present — the whole chain is led by
+    #     HISTORY.md, so C1 does not require README.md as the entry file.
     readme_text = all_text.get(readme, "")
     lightweight = bool(re.search(r"轻量模式[：:][^\n]*无\s*spec/design\s*轨", readme_text))
     required_stages = ("proposal", "plan") if lightweight else STAGE_DIRS
@@ -514,15 +536,16 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
             continue  # 段落映射豁免
         suffix = "（已声明轻量模式）" if lightweight else "，且 README 段落映射未写明落点"
         errors.append(f"C1 结构: {stage}/ 下没有任何有效文档（仅 .gitkeep 占位）{suffix}")
-    if not readme.is_file():
-        errors.append("C1 结构: 缺少 README.md 唯一入口")
+    if not readme.is_file() and not single_ledger:
+        errors.append("C1 结构: 缺少 README.md 唯一入口（HISTORY.md 单账本模式需存在 HISTORY.md）")
 
-    # C2 entry gates
-    if readme.is_file():
-        rtext = all_text.get(readme, "")
+    # C2 entry gates — read from the leader file (README, or HISTORY.md in single-ledger mode).
+    if readme.is_file() or single_ledger:
+        rtext = leader_text
         for gate in ("需求评审", "技术方案评审"):
             if gate not in rtext:
-                errors.append(f"C2 入口门禁: README 未声明「{gate}」门禁条目")
+                src = "HISTORY.md" if single_ledger else "README.md"
+                errors.append(f"C2 入口门禁: {src} 未声明「{gate}」门禁条目")
 
     # C3 spec re-audit + blocking closed
     spec_files = find_stage(md_files, feature_dir / "spec")
@@ -1150,14 +1173,15 @@ def _heading_sections(text: str) -> list[str]:
     return chunks
 
 
-def trace_tables(readme_text: str) -> list[tuple[list[str], list[list[str]]]]:
+def trace_tables(source_text: str) -> list[tuple[list[str], list[list[str]]]]:
     """The 承接 tables sitting under a heading that names 目标承接.
 
     Heading scoping is not decoration: a table with the same four columns placed anywhere else in
-    the README would otherwise satisfy the check while the real 承接表 stayed unread.
+    the source would otherwise satisfy the check while the real 承接表 stayed unread. The source is
+    the README in normal mode, or HISTORY.md in C24 single-ledger mode.
     """
     out: list[tuple[list[str], list[list[str]]]] = []
-    for section in _heading_sections(readme_text):
+    for section in _heading_sections(source_text):
         if "目标承接" in section.splitlines()[0]:
             out.extend(_tables_with_columns(section, TRACE_COLUMNS))
     return out
@@ -1172,9 +1196,16 @@ def goal_traceability_findings(feature_dir: Path, repo_root: Path) -> list[str]:
     goal is done while its tasks are still ☐ fails the same day it is written.
     """
     readme = feature_dir / "README.md"
-    if not readme.is_file():
+    history = feature_dir / "HISTORY.md"
+    single_ledger = (not readme.is_file()) and history.is_file()
+    # Single-ledger mode (C24): README absent, HISTORY present — the 目标承接 mark and table live in
+    # HISTORY.md. README present wins otherwise; HISTORY.md is then an ordinary stage doc, not a ledger.
+    if single_ledger:
+        readme_text = read(history)
+    elif readme.is_file():
+        readme_text = read(readme)
+    else:
         return []
-    readme_text = read(readme)
     if TRACE_MARKER not in readme_text:
         return []
     batch = feature_dir.name
@@ -1325,7 +1356,9 @@ def self_test() -> int:
     cases 86–97 pin the 2026-10-23 gate change (C22 goal traceability — missing carrier row,
     phantom task id, status over-claim, orphan task, marker-without-table, opt-in respected;
     C23 evidence presence — /tmp-only, empty cell, repo-qualified and N/A carriers, and the
-    repo scan applying C23 to every batch while C22 stays marker-gated).
+    repo scan applying C23 to every batch while C22 stays marker-gated); cases 99–102 pin C24
+    single-ledger mode (HISTORY.md without README carries C2 gates and C22 承接表; both files
+    present keeps README as the leader and treats HISTORY.md as an ordinary stage doc).
     """
     import subprocess
     import tempfile
@@ -2047,6 +2080,56 @@ def self_test() -> int:
     run_repo_case("97 C22 skips an unmarked batch in the repo scan (opt-in preserved)", 0, [],
                   {"docs/features/b/README.md": UNMARKED_TRACE_README,
                    "docs/features/b/plan/p.md": trace_plan("N/A: 夹具，无额外产物")})
+
+    # --- C24 single-ledger mode (2026-10-23 gate change, user-authorized). HISTORY.md present
+    # while README.md is absent becomes the chain's single ledger: it carries C2 entry gates and,
+    # when C22 is in scope, the 目标承接 mark + table. Purely additive — README present keeps the
+    # README-path rules; HISTORY.md is then just another stage doc.
+    TRACE_HISTORY = (
+        "# HISTORY 任务记录\n\n## 当前状态\n\n| 字段 | 内容 |\n| --- | --- |\n"
+        "| 当前节点 | 已交付人 |\n| 总体状态 | 已完成 |\n\n"
+        "## 需求评审门\n## 技术方案评审门\n\n"
+        "本批次启用 agentflow 目标承接 标记，承接表如下。\n\n"
+        "## 目标承接表\n\n"
+        "| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "{rows}"
+    )
+
+    def m_history_ok(f):
+        # README absent, HISTORY present, and the 承接表 closed — single-ledger mode, passes C1/C2,
+        # and the traceability read comes from HISTORY.md.
+        f.pop("README.md")
+        f["HISTORY.md"] = TRACE_HISTORY.format(rows=TRACE_ROW_OK)
+        f["proposal/p.md"] = "# proposal\n\n目标：G1 目标一（可判定）。\n"
+        f["spec/s.md"] = TRACE_SPEC
+        f["plan/be/p.md"] = trace_plan("`migrations/x.sql` 在盘")
+        return f
+    run_case("99 C24 single-ledger batch (HISTORY, no README) passes C1/C2/C22", 0,
+             ["PASS doc-chain"], m_history_ok, results)
+
+    def m_history_missing_gates(f):
+        f = m_history_ok(dict(base))
+        f["HISTORY.md"] = f["HISTORY.md"].replace("## 需求评审门\n## 技术方案评审门\n", "")
+        return f
+    run_case("100 C24 single-ledger batch missing entry gates in HISTORY trips C2", 1,
+             ["C2 入口门禁", "HISTORY.md"], m_history_missing_gates, results)
+
+    def m_history_orphan(f):
+        f = m_history_ok(dict(base))
+        f["HISTORY.md"] = f["HISTORY.md"].replace("| T01 |", "| — |")
+        return f
+    run_case("101 C24 single-ledger batch with an orphan completed task trips C22 in HISTORY", 1,
+             ["C22 目标承接", "孤儿任务"], m_history_orphan, results)
+
+    def m_history_with_readme(f):
+        # Both files present: README mode wins, HISTORY.md is an ordinary stage doc (not a ledger).
+        # The README already carries the gates and a closed 承接表, so it must pass unchanged.
+        f.update(trace_files())
+        f["HISTORY.md"] = "# HISTORY\n\n（仅作阶段事件账本，不接管门禁）\n"
+        return f
+    run_case("102 C24 both README and HISTORY present: README governs, HISTORY is a stage doc", 0,
+             ["PASS doc-chain"], m_history_with_readme, results)
 
     def m_base_inline_default(f):
         # 元信息写在同一行、且声明的就是默认值：不得凭空造出一个不存在的目录

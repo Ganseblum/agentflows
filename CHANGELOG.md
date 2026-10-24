@@ -1,5 +1,17 @@
 # 变更日志
 
+## 0.14.0 — 2026-10-24
+
+> 发布批（用户逐字指示「补充加上，然后升级版本。」）：把跨仓库的全局规则从「用户手写一份指令文件」升级为可分发、可验证的 Host Init；五份 manifest 0.13.0 → 0.14.0，`packaging/runtime` 随发版重建。`measurement: none`（方法级改动，无仪器化业务任务度量）。
+
+- **宿主级接入（Host Init）**：新增 [hosts.md](skills/agentflow/references/hosts.md) 与 [templates/host/](skills/agentflow/templates/host/README.md)。三层分工写清楚：插件安装提供角色与工作流；Host Init 把跨仓纪律写进宿主自己的全局指令文件；仓库 Init 只写目标仓约定。写入协议八条：默认 dry-run 并打印 `realpath`、只改托管块、任何内容变更前先备份、版本相同不写、标记不完整拒绝写入、写后三项校验（块外内容 / 块内容 / 宿主复述首行）、宿主拒绝写工作区外文件时降级给用户粘贴、验证记录由插件仓会话落盘。`index.md` 与 `templates/README.md` 同步登记新入口。
+- **全局规则正文**：[global-rules.md](skills/agentflow/templates/host/global-rules.md) 固定六节——写前查分支、分支前缀条件规则、合并与推送两次授权、证据纪律、合并收口、评审绑定 revision。合并收口新增三项：曾回滚过的分支先按回滚提交清单逐文件对账（`git log --grep='This reverts commit'` + `git show --name-status`）；评审 diff 必须含源分支一侧（`source_branch..merge_result`，源分支已删除时用 `merge_result^2..merge_result`）；测试红不得用跳过 pretest、`--ignore-scripts`、只跑子集或缩小 glob 换成绿色。
+- **SKILL 集成节**：同一变更把上述三项补进第 6 步「集成」，并在「首次接入」之后新增独立的「宿主级接入（Host Init）」节。
+- **动因实证**：2026-10-23 的一次 Codex 合并会话里，插件与 SKILL 已加载，但分支纪律只存在于用户的 ZCode 用户级文件；4 个修复提交落在 `release_prod_*` 上，测试入口红后被 `--ignore-scripts` 加 6 文件子集绕过，reviewer 的批准停留在旧 revision 而推送了更新的提交。本次把这三类条款放进可分发层，并在 [host-platform-facts.md](docs/host-platform-facts.md) 新增 H1–H4：ZCode 用户级文件为已观察，Codex / Claude Code 为 `doc` 未验证，Cursor 未验证。
+- **明确不做**：`validate.py host_init` 漂移校验（`tools/lab/validate.py` 在受保护面内，属门变更，需另批人工评审）；Cursor 适配器（规则载体与加载行为未验证，先按 `hosts.md` 的实验验证）；skill 加载时自动写 home 目录（跨项目写操作，需当次确认）。
+- **验证**：在临时 venv 装入 `requirements-dev.txt` 后，用**该 venv 的解释器**运行 `<venv>/bin/python tools/lab/validate.py all` → `schemas`、`examples`、`artifacts`、`protected`、`manifests`、`docs`、`tests`、`doc_chain`、`doc_chain_live`、`decision_gate`、`lint` 11 行 PASS，`all_exit=0`。系统 Python 未装 ruff/mypy，直接跑 `all` 会因 `lint` 环境红退出 1；发版结论采用 venv 的逐字输出。`python3 packaging/build_runtime.py` 重建后 `manifests` PASS。托管块协议在 `/tmp` 副本上演练：追加后 `outside_exit=0`、`block_exit=0`；版本替换后 `outside2_exit=0`、`block2_exit=0`；残缺标记 `broken_begin=1 broken_end=0`；缺末尾换行时 `tail -c 1` 显示非换行。安装面同日实测为预期失败：`validate.py installed` → `FAIL installed (1 error(s))`（无 0.14.0 快照），退出码 1。真实宿主写入与加载验证未做，登记在 `docs/releases/pending-test.md` 第 4 行，不记为已验收。
+- **范围**：本批只含 Host Init 与 0.14.0。工作树里 `docs/product/spec/acceptance-matrix.md` 的 S2 状态更正、SKILL「从停滞的工作中恢复」段落、`templates/README.md` 的命名与 `spec/checklist` 行、`index.md` 的「查批次与实施计划」与「查本仓自评」两行，属本分支既有未提交改动，不在本批声明范围，随分支另行处理。
+
 ## 0.13.0 — 2026-10-23
 
 > 发布批（用户逐字指示「按照你说的提一个feature，然后开始修复完善并发版升级」；门变更与发版范围经

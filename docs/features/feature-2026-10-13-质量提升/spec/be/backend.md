@@ -66,9 +66,10 @@ stateDiagram-v2
 | M-C 计数脚本 | 新增 `tools/lab/counts.py`：计算测试数、schema 数、角色数、批次数、`validate.py` 行数；门禁比对文档标记 | 无 | P1 |
 | M-D 运行态同步 | 用户重装插件后，`validate.py installed` 退出码为 0 | 用户重装 | P0 |
 | M-E 角色场景 | 每个角色至少两个「必须拒绝」场景，以测试计划形式存放于 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/plan-2026-10-13-001.md`，执行结果另行记录 | 无 | P1 |
-| M-F 实验 harness | 新增 `tools/lab/experiment.py`，提供 `run` 与 `compare` 子命令；记录写入 `docs/features/feature-2026-10-13-质量提升/testing/<项目>-<特性>/`（文档链允许的测试子目录） | Q-01、Q-03 | P1（阻塞执行） |
+| M-F 实验 harness | 本批不实现：按 Q-01 拍板的方案 D，仅保留判据与人工 A/B 约定；恢复装置需另立门变更批次 | Q-01、Q-03（历史决定见 README 与评审分析） | 本期不做 |
 
-## 6. M-F 实验记录字段契约
+## 6. M-F 历史提案字段契约
+> 以下保留原始方案的字段草案作历史依据；本批 M-F 不实施这些记录或命令。恢复评测装置需重新评审字段与门变更。
 每次运行写一份 JSON 记录。字段为契约的一部分，不得随意增删。
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -86,7 +87,8 @@ stateDiagram-v2
 | tokens_in / tokens_out | integer 或 null | 是 | 宿主报告值；无法获取时写 null 并说明原因 |
 | evidence_path | string | 是 | 原始输出的仓库内相对路径 |
 
-## 7. M-F 命令错误语义
+## 7. M-F 历史命令错误语义
+> 以下为原方案的错误语义草案，不代表当前工具支持这些子命令。
 | 场景 | 行为 |
 | --- | --- |
 | task_id 不在冻结集中 | 退出码 2，不运行 |
