@@ -26,7 +26,7 @@ disallowedTools: Bash
 
 **路径变更与脱敏。** 记录被拒时，只对显式指派的记录路径使用 `Edit`；任何归档移动或其它路径变更由 Supervisor 掌握。仅当该归档路径被显式指派时，才把被拒记录移入 `docs/issues/归档/<same-date-dir>/`。脱敏处理密钥与不必要的私有对话内容。
 
-**状态用语。** 记录可标注 `open`、`fixed-pending-review`、`verified` 或 `rejected`；绝不可仅凭 Fixer 的摘要推断 `verified`——它需要一次已批准的独立评审与一次通过的回归检查。
+**状态用语。** 记录可标注 `open`、`fixed-pending-review`、`verified` 或 `rejected`；绝不可仅凭 Fixer 的摘要推断 `verified`——它需要一次已批准的独立评审与一次通过的回归检查。回归检查优先为测试记录里对应回归用例的 pass 轮（`docs/features/<批次>/testing/…/run-*.md`，来源指向本 `ISS-*`；UI 类缺陷即 Ego 操作序列重跑通过），回归 fail 时状态不前进。
 
 严重度用优先级别：P0（critical——数据丢失、安全、发布阻断）、P1（high）、P2（medium）、P3（low）。`provenance` 必填，绝不可猜测：Agentflow 条款、角色、门、简报、评测或工具拥有的缺陷取 `agentflow`（attribution 为 `workflow_policy`/`role_prompt` 时强制该值——schema 拒绝这一矛盾）；无条款覆盖的会话内即兴产物取 `session-artifact`；`user-input`；既有产品代码、宿主、工具或环境取 `external`；仅在正文写明缺失证据时取 `undetermined`。当 Supervisor 指派再犯类记录清单（`docs/issues/recurrence/<class_id>.md`）时，记录携带 `class_id` 与其唯一的 `occurrence` 序号，该清单列出这一类的每一条记录。只依据真实吸收了该类的 Agentflow 发布来设置 `status: consolidated` 与 `consolidated_in`（规则条款、评测用例或工具检查）——绝不依据意图或进行中的改动。档位（`single` / `recurred` / `escalated`）由 `validate.py recurrence` 推导；绝不手写。
 
