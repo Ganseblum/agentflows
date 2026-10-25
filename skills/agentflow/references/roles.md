@@ -114,17 +114,17 @@ findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补�
 
 ## Bug investigator
 
-用于 bug 的范围、原因或归因不清时——尤其是跨模块、跨层或宿主相关的失败。只读；它返回结构化诊断，带复现步骤、严重度（P0–P3）、归因、provenance 和可证伪的修复假设，绝不返回修复。provenance（`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`）必须有证据支撑——覆盖条款的引用，或明确声明没有条款覆盖该产物——因为它决定该记录日后能否驱动 Agentflow 改动。行为按规格实为正确时，它返回显式的 `no-defect` finding，适用同样的证据标准。它先查 `docs/issues/recurrence/`：命中既有类的 bug 作为该类的一次 occurrence 提出，而不是新立一个类。
+用于 bug 的范围、原因或归因不清时——尤其是跨模块、跨层或宿主相关的失败。只读；它返回结构化诊断，带复现步骤、严重度（P0–P3）、归因、provenance 和可证伪的修复假设，绝不返回修复。bug 有用户可见面时，复现步骤写成可直接照跑的 Ego Light 操作序列（`ego-browser`，逐步操作 + 每步应采集的证据），供 fixer / executor / supervisor 照跑复现与修复验证；本角色只读不执行。provenance（`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`）必须有证据支撑——覆盖条款的引用，或明确声明没有条款覆盖该产物——因为它决定该记录日后能否驱动 Agentflow 改动。行为按规格实为正确时，它返回显式的 `no-defect` finding，适用同样的证据标准。它先查 `docs/issues/recurrence/`：命中既有类的 bug 作为该类的一次 occurrence 提出，而不是新立一个类。
 
 对意料之外的全局行为（本地代码从未请求的跳转或 toast），它先枚举受影响上下文里隐式运行的东西——拦截器、守卫、全局监听——再归因到可见调用链。
 
 ## Bug fixer
 
-诊断存在后使用。它在指派的候选工作区里实现最小的兼容修复加一个聚焦的回归检查，并上报证据；它绝不发布、关闭或批准自己的修复。fixer 写的回归检查是下限，不是独立验证——证明该检查在未修复代码上失败的 revert 实验属于评审（test-depth 模式）或 supervisor。
+诊断存在后使用。它在指派的候选工作区里实现最小的兼容修复加一个聚焦的回归检查，并上报证据；它绝不发布、关闭或批准自己的修复。bug 有用户可见面时，它修前用 Ego Light 按诊断的操作序列复现失败、修后重跑同一序列验证，留存修前/修后两组原始证据一并上报——重跑通过才算修复验证成立。fixer 写的回归检查是下限，不是独立验证——证明该检查在未修复代码上失败的 revert 实验属于评审（test-depth 模式）或 supervisor。
 
 ## Bug recorder
 
-已诊断 bug 的证据应当沉淀时使用——反复出现的类、流程事故，以及改进环日后可能消费的任何东西。它只写 supervisor 指派的那个 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径，带脱敏的 frontmatter 与叙述；bug 属于某个再犯类时，它还携带 `class_id` + `occurrence`，由 `docs/issues/recurrence/` 下的记录清单列出。归纳状态（`consolidated` / `consolidated_in`）只在有实际吸收该类的 Agentflow 发布时写入——档位（`single` / `recurred` / `escalated`）由校验器推导，绝不手写。它不得仅凭 fixer 的摘要把记录标为 `verified`；那需要一次已批准的独立评审加一次通过的回归检查。
+已诊断 bug 的证据应当沉淀时使用——反复出现的类、流程事故，以及改进环日后可能消费的任何东西。它只写 supervisor 指派的那个 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径，带脱敏的 frontmatter 与叙述；bug 属于某个再犯类时，它还携带 `class_id` + `occurrence`，由 `docs/issues/recurrence/` 下的记录清单列出。归纳状态（`consolidated` / `consolidated_in`）只在有实际吸收该类的 Agentflow 发布时写入——档位（`single` / `recurred` / `escalated`）由校验器推导，绝不手写。它不得仅凭 fixer 的摘要把记录标为 `verified`；那需要一次已批准的独立评审加一次通过的回归检查——回归检查优先为 testing 记录里对应回归用例（来源指向该 `ISS-*`）的 pass 轮，回归 fail 时状态不前进。
 
 ## Plan architect
 
@@ -136,7 +136,7 @@ findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补�
 
 ## Test executor
 
-用于执行已批准的测试计划。优先脚本化自动化（Playwright headless）和可命令行运行的 API 用例；把宿主浏览器 UI 步骤编译成逐步脚本交给 supervisor（浏览器自动化是主对话专属能力），并只依据回传的原始证据判 pass/fail。写指派的 `run-*.md` 记录，带逐用例结果、每个 fail/blocked 行的证据，以及可供 bug 链直接复现的 findings；先跑 smoke，构建坏了就停；绝不修复产品。立案前单独重跑失败用例并保留原始并发条件。单跑通过只说明失败依赖并行或共享状态；重复复现后再区分产品竞态、测试相互污染与环境信号，不能单凭单跑结果排除产品缺陷。
+用于执行已批准的测试计划。浏览器自动化默认走 Ego Light（`ego-browser` 命令行，headless、可重复；不再新写 Playwright spec），API 用例可命令行运行；目标项目自带 e2e runner 时通过 runner 运行既有套件；Ego 覆盖不了的交互把步骤编译成逐步脚本交给 supervisor 用宿主浏览器执行，并只依据回传的原始证据判 pass/fail。执行遵循计划的数据来源声明——真实接口数据优先，只有计划逐项声明 Mock 的环节才用 Mock，真实环境不可达标 `blocked` 而不是静默降级。写指派的 `run-*.md` 记录，带逐用例结果与实际结果、每个 fail/blocked 行的证据，以及可供 bug 链直接照跑的 Ego 操作序列 findings；先跑 smoke，构建坏了就停；绝不修复产品。立案前单独重跑失败用例并保留原始并发条件。单跑通过只说明失败依赖并行或共享状态；重复复现后再区分产品竞态、测试相互污染与环境信号，不能单凭单跑结果排除产品缺陷。
 
 ## 改进角色
 

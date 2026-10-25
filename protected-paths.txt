@@ -46,7 +46,10 @@ agents/release-governor.md
 skills/improve/references/
 
 schemas/
-tests/test_lab_contracts.py
+tests/test_gate_schema.py
+tests/test_gate_integrity.py
+tests/test_gate_records.py
+tests/test_doc_chain.py
 tests/test_record_store.py
 
 # The lab tools decide whether a candidate is measured or judged. tools/lab/gate/,
@@ -56,6 +59,7 @@ tests/test_record_store.py
 tools/lab/artifact_digest.py
 tools/lab/counts.py
 tools/lab/doc_chain.py
+tools/lab/docchain/
 tools/lab/gate/
 tools/lab/isolation.py
 tools/lab/mutate.py

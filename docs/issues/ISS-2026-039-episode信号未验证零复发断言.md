@@ -9,7 +9,7 @@ attribution: role_prompt
 provenance: agentflow
 project: agentflow
 files:
-  - episodes/2026-09-21/EP-20260921-001.json
+  - episodes/归档/2026-09/2026-09-21/EP-20260921-001.json
   - skills/agentflow/references/document-chain.md
 recorded_at: 2026-09-21T14:40:00+08:00
 source_revision: agentflow@7a235b5 (0.8.3+方法整合候选)

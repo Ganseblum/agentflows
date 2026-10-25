@@ -12,7 +12,7 @@ files:
   - tools/lab/record_store.py
   - docs/features/README.md
   - docs/features/feature-2026-09-19-产品线完善/README.md
-  - tests/test_lab_contracts.py
+  - tests/test_gate_integrity.py
   - docs/PENDING-DECISIONS.md
   - AGENTS.md
 recorded_at: 2026-10-12T18:28:00+08:00

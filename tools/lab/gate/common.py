@@ -48,11 +48,19 @@ REQUIRED_PROTECTED_PATHS = {
     "skills/improve/references/episode.schema.json",
     "skills/improve/references/candidate.schema.json",
     "skills/improve/references/release-record.schema.json",
-    "tests/test_lab_contracts.py",
+    "tests/test_gate_schema.py",
+    "tests/test_gate_integrity.py",
+    "tests/test_gate_records.py",
+    "tests/test_doc_chain.py",
     "tests/test_record_store.py",
     "tools/lab/artifact_digest.py",
     "tools/lab/counts.py",
     "tools/lab/doc_chain.py",
+    "tools/lab/docchain/__init__.py",
+    "tools/lab/docchain/constants.py",
+    "tools/lab/docchain/checks.py",
+    "tools/lab/docchain/selftest.py",
+    "tools/lab/docchain/cli.py",
     "tools/lab/gate/checks.py",
     "tools/lab/gate/common.py",
     "tools/lab/gate/docs.py",
@@ -82,7 +90,13 @@ REQUIRED_PROTECTED_PATHS = {
 # `__pycache__` entries there would otherwise block every candidate that ran the checks — so the
 # pinned test files are protected individually and this list asserts nothing else appears. A new
 # test file is a human-authored change to this list plus the protection entry above.
-EXPECTED_TEST_FILES = ("test_lab_contracts.py", "test_record_store.py")
+EXPECTED_TEST_FILES = (
+    "test_gate_schema.py",
+    "test_gate_integrity.py",
+    "test_gate_records.py",
+    "test_doc_chain.py",
+    "test_record_store.py",
+)
 
 
 # Live record roots (2026-10-12 slimming batch, phase 4): the top-level plans/ root was

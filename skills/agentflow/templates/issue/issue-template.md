@@ -29,7 +29,7 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不�
 <!-- 填写说明（复制本文件到 `issues/ISS-<YYYY>-<NNN>-<slug>.md` 后：文件名与 `bug_id` 一致（slug 用中文短语，无中文译法的技术词保留原文，如 `ISS-2026-001-claude-json-schema-被拒.md`）；替换全部占位符；不适用或未满足条件的行整行删除；完成后删掉本注释，并运行 `python3 tools/lab/validate.py artifacts` 校验）：
 
 - 固定标题不得改名。`## 现象`、`## 根因`、`## 修复方案` 与 `## 变更记录` 都要填写；open 阶段先记录待审核建议，并标明审核状态，证据不足时写清缺什么。`## 修复` 只记实际改动；open 可省略。当前校验器对所有非 open 状态都要求 `## 修复`，因此 rejected 记录在该节写明“未实施”并指向拒绝原因。`verified` 还需 `## 审查`。
-- `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
+- `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
 - `## 怎么避免` 要区分候选建议与已落实措施：open 写建议状态；修复后写实际增加的规则、检查或其它控制及证据。若没有可行措施，说明原因，不把愿望写成已落实机制。
 - 「为什么出现」要在 `## 根因` 里人话点破属于哪一类：`error_kind: ai-ignored-doc` = 文档写明了但没照做；`ai-ignored-code` = 代码写明了但没照做；`missing-constraint` = 文档/契约压根没说清（缺约束）；`hallucination` = 无中生有；`logic-error` = 推理/逻辑错。归因要有依据，不能只贴一个标签。
 - frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。

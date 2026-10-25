@@ -10,7 +10,7 @@ provenance: agentflow
 project: agentflow
 files:
   - skills/agentflow/scripts/check-write-scope.sh
-  - tests/test_lab_contracts.py
+  - tests/test_gate_integrity.py
 recorded_at: 2026-10-10T15:13:00+08:00
 source_revision: agentflows@4c767eb + uncommitted youc 吸收批工作树（2026-10-10）
 agentflow_version: 0.10.0
@@ -78,19 +78,19 @@ in_scope() {
     if [ "$normalized" = "." ]; then return 0; fi
 ```
 
-2. 回归用例（`tests/test_lab_contracts.py` 新增 `WriteScopeScriptTests`）：临时 git 仓库分别验证
+2. 回归用例（`tests/test_gate_integrity.py` 新增 `WriteScopeScriptTests`）：临时 git 仓库分别验证
    ——`.` 全树口径 → exit 0 且输出 `OK`；窄范围外的变更 → 仍 exit 1 且输出 `FAIL`。
 
 ## 回归检查
 
 - 修复后真实仓：`bash skills/agentflow/scripts/check-write-scope.sh HEAD .` → `OK: 共 12 个变更路径，全部位于声明的写范围之内。`，EXIT=0
 - 窄范围保留：`bash skills/agentflow/scripts/check-write-scope.sh HEAD skills` → `FAIL: 共 12 个变更路径中有 10 个在声明的写范围之外：…`，EXIT=1（原语义未动）
-- `python3 -m unittest tests.test_lab_contracts -k WriteScopeScript` → 2 用例 OK
+- `python3 -m unittest tests.test_gate_integrity -k WriteScopeScript` → 2 用例 OK
 - `python3 tools/lab/validate.py all` → 全绿（见本批提交前的复跑记录）
 
 ## 审查
 
-2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对成立：check-write-scope.sh:72 对归一化为 . 的范围直接放行；tests/test_lab_contracts.py:1370 WriteScopeScriptTests 在册。回归证据（本次实跑）：HEAD . 输出 OK 且退出 0；HEAD skills 输出 FAIL 70/76 越界且退出 1（原语义保留）；unittest -k WriteScopeScript 2 用例 OK。review_decision：approved。
+2026-10-19 独立复审（agentflow:reviewer 子代理，只读）。修复声称核对成立：check-write-scope.sh:72 对归一化为 . 的范围直接放行；agentflows@4c767eb:tests/test_lab_contracts.py 的 `WriteScopeScriptTests` 在册（该用例后随测试拆分迁入 `tests/test_gate_integrity.py`）。回归证据（本次实跑）：HEAD . 输出 OK 且退出 0；HEAD skills 输出 FAIL 70/76 越界且退出 1（原语义保留）；unittest -k WriteScopeScript 2 用例 OK。review_decision：approved。
 
 ## 变更记录
 

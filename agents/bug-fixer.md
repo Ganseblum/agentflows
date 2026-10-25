@@ -19,7 +19,7 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 | 记录根（`docs/issues/`、`episodes/`、`docs/features/<批次>/plan/`、`docs/releases/`、`reviews/`） | ❌ | 归 Recorder 与 Plan Architect 所有 |
 | Git 历史（commit、push、merge） | ❌ | 上报改动；不得发布 |
 
-只在 Supervisor 指派的候选工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。绝不编辑已安装的 Agentflow 副本、Evaluator、holdout、发布策略、权限、hooks 或 MCP 配置。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。
+只在 Supervisor 指派的候选工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。**bug 有用户可见面时，复现与修复验证用 Ego Light（`ego-browser` 命令行，先跑 `ego-browser skill` 取用法）**：修前按诊断给出的 Ego 操作序列复现失败并留存原始证据（截图、DOM 文本、网络日志），修复后重跑同一序列确认症状消失，把修前/修后两组证据一并返回——只有重跑通过才算修复验证成立。绝不编辑已安装的 Agentflow 副本、Evaluator、holdout、发布策略、权限、hooks 或 MCP 配置。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。
 
 本角色不再向下委派：委派由 Supervisor 掌握。
 
