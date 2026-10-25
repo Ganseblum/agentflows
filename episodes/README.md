@@ -51,5 +51,22 @@ bug 记录（`issues/`）承载**缺陷**证据；episode 承载**任务级**证
 
 ```sh
 python3 tools/lab/validate.py artifacts                 # 编译门
-jq -r '[.occurred_at, .episode_id, .source_type, .outcome] | @tsv' episodes/*/*.json | sort
+jq -r '[.occurred_at, .episode_id, .source_type, .outcome] | @tsv' episodes/归档/*/*/*.json episodes/2*/2*/*.json | sort
 ```
+
+## 存档策略（归档）
+
+episode 是任务级证据的最小落盘，会随时间累积。为保持 `episodes/` 顶层只放「当期」目录、
+又不丢历史，采用与 `docs/issues/归档/` 一致的口径：
+
+- 目录按**月份**归档到 `episodes/归档/<YYYY-MM>/`，整月目录原样搬入（目录名保留原 `YYYY-MM-DD`，
+  不重命名，文件名仍 = episode_id，唯一性不变）。
+- 仅搬**整月目录**；`README.md` 始终留在 `episodes/` 顶层，不进归档。
+- 归档是纯移动，不删内容、不重写证据；被挡在门外的候选、预算耗尽的中断等负向 episode
+  也一并保留（见上「负向 episode 必须收录」）。
+- 归档后 `episodes/*/*.json` 的回溯命令会继续命中归档目录，无需改脚本。
+- 触发时机：每月初把上月（及更早）的目录归档一次；当前月的目录留在顶层为「当期」。
+
+> 注意：live record 门（`validate_workspace_artifacts`）只认 `episodes/` 直接下的 `*.json`，
+> 不会下钻 `episodes/归档/`，因此归档后的目录不再计入门扫描——这正是「历史移出当期面」的预期，
+> 不视为记录丢失。

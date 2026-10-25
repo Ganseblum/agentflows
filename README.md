@@ -6,6 +6,19 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 它不调用也不要求独立的 `agentflow` CLI。
 
+## 先读这张图
+
+第一次进这个仓库、不知道从哪看起，按下面的四个问题走：
+
+| 问题 | 去哪 | 一句话 |
+| --- | --- | --- |
+| **这是什么** | [`docs/quickstart.md`](docs/quickstart.md) · [`docs/system-guide.md`](docs/system-guide.md) | 宿主原生的多 agent 开发工作流：角色契约 + 委派 + 独立评审 + 受治理改进环，不是独立 CLI。 |
+| **谁该看** | [`index.md`](index.md) 的「从这里开始」 | 想用这套方法交付功能的开发者、要改角色/契约/流程维护仓库的人、以及独立评审与发布授权的把关人。 |
+| **怎么装** | 本节「使用」 + [`skills/agentflow/references/hosts.md`](skills/agentflow/references/hosts.md) | Codex/Claude Code 装插件；ZCode 跑 `packaging/build_runtime.py` 再从本地 marketplace 装（指向 `packaging/runtime`，不是本目录）。 |
+| **怎么参与** | [`AGENTS.md`](AGENTS.md) · [`index.md`](index.md) · [`docs/issues/README.md`](docs/issues/README.md) | 小修走 `docs/issues/` 立 ISS；跨层/成批走 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md`；改动前先 `python3 tools/lab/validate.py all`。 |
+
+> 全仓只有一份文档索引：[`index.md`](index.md)，按「场景 → 入口」列全了每类东西在哪；本文件只补「四问」快表，不复制目录树。
+
 ## 使用
 
 - Codex：安装插件并调用 `$agentflow`。仅在改进 Agentflow 自身时选择 **Agentflow Improve** 或

@@ -62,7 +62,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 | `--case-ids` 门变更 | `tools/lab/eval_runner.py`（已失对象：随 ISS-2026-052 删除，见 `docs/design-decisions.md` §3）、`tests/test_lab_contracts.py`、`tools/lab/README.md` | `CaseIdSubsetTests` 6 OK；`validate.py all` 9×PASS |
 | 噪声底计划 | `PLAN-LOOP-SMOKE-001.md` | T01–T04 ☑；T05 ⚠ |
 | 候选预声明 | `improvements/candidates/0.8.1+smokeloop.json` | parent `0.8.1`；digest 异于基线 |
-| 本次执行 episode | `episodes/2026-09-19/EP-20260919-001.json` | outcome `partial` |
+| 本次执行 episode | `episodes/归档/2026-09/2026-09-19/EP-20260919-001.json` | outcome `partial` |
 | 仓库外候选树 | 不入仓 | `check-diff` blocked=[]；仅五份 manifest |
 
 源码基线（历史基线，2026-09-19）：`plugin.json` `0.8.1`，HEAD `ceb639f56c940939c36c745e739c237167048159`。ZCode 安装快照当时仍为 `0.8.0`。
