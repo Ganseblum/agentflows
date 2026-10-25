@@ -7,9 +7,10 @@
 
 | # | 变更 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| 1 | 质量提升批（feature-2026-10-13：门禁拆分 / 变异测试 / 计数脚本 / 角色场景 / 文档链） | 收尾中（看板 PLAN-QUALITY-001 已回写） | T01–T09 已闭（T04 于 2026-10-20 全量实跑 28/28 达成、G5 通过）；T10 本期不做。门变更均经独立评审 approved。2026-10-23 追溯闭环批为本批补上 T01/T04 的仓内证据载体并回写了 `spec/qa` 的验收点状态列 |
-| 2 | 追溯闭环与证据在场批（feature-2026-10-22：文档链新增 C22 目标承接闭环与 C23 证据在场、记录契约补 `disposition`、拍板口八列化、八条文本缺陷收口） | 执行中（看板 `docs/features/feature-2026-10-22-追溯闭环与证据在场/plan/PLAN-TRACE-001.md`） | 门变更经用户 2026-10-22 当次授权；发版口径为本地 bump 与生成树重建，不推送、不动宿主安装 |
-| 3 | 宿主接入批 2026-10-24：Host Init（`skills/agentflow/references/hosts.md`、`skills/agentflow/templates/host/`、SKILL 宿主级接入节）、0.14.0 版本 bump | 本地 bump，待真实宿主验收 | 未推送、未安装到宿主；真实宿主写入与加载验证见 `pending-test.md` 第 4 行 |
+| 1 | 质量提升批（feature-2026-10-13：门禁拆分 / 变异测试 / 计数脚本 / 角色场景 / 文档链） | 已完成（T10 本期不做） | T01–T09 已闭（T04 于 2026-10-20 全量实跑 28/28 达成、G5 通过）。门变更均经独立评审 approved。2026-10-23 追溯闭环批为本批补上 T01/T04 的仓内证据载体并回写了 `spec/qa` 的验收点状态列 |
+| 2 | 追溯闭环与证据在场批（feature-2026-10-22：文档链新增 C22 目标承接闭环与 C23 证据在场、记录契约补 `disposition`、拍板口八列化、八条文本缺陷收口） | 已随 0.13.0 发布；T11 第三轮独立复核待跑 | 门变更经用户 2026-10-22 当次授权；第二轮 20 条已在 `ff13912` 修完（看板 T11 ◐）；发布动作见 `861b6ef`，T12 缺「`validate.py all` 全绿原始输出」留档（看板 T12 ◐） |
+| 3 | 宿主接入批 2026-10-24：Host Init（`skills/agentflow/references/hosts.md`、`skills/agentflow/templates/host/`、SKILL 宿主级接入节）、0.14.0 版本 bump | 已随 0.14.0 发布，现由 0.15.0 取代 | 真实宿主写入与加载验证仍待用户，见 `pending-test.md` 第 4 行 |
+| 4 | 测试链路 Ego Light 批 2026-10-25（分支 `feature-2026-10-24-gate-tune-and-refactor` 已并入 main）：QA 方法切换、`doc_chain` 拆包、README 四问导航、episodes 按月归档、0.15.0 版本 bump | 已发布并已装入宿主（`validate.py installed` PASS） | 端到端 Ego Light 实跑与 bug 回归链走查待用户，见 `pending-test.md` 第 5 行；本批未建 `docs/features/` 批次目录，记录存于 `CHANGELOG.md` 与 git 历史 |
 
 已完成批次：产品链修复轮（REV-20261019-003 approved，2026-10-19）、全仓中文化、youc 吸收批、结构文档、端点复测与试水、2026-10-22 文档面收尾批——详见 `CHANGELOG.md` 与 git 历史。
 

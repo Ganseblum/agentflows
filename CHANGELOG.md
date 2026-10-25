@@ -11,7 +11,7 @@
 - **门与测试拆分（同批重构，用户会话授权「可以全部做」）**：`tools/lab/doc_chain.py`（2272 行）拆为 `docchain/` 四模块 + 薄启动器（CLI 与 `import doc_chain` 不变，受保护面与 mutate 锚点同步登记）；`tests/test_lab_contracts.py`（1671 行，受保护）按面拆为四模块，`EXPECTED_TEST_FILES` 等三张清单同步；C17 staleness 双模式——未写核验日期的行以被引用路径最近提交为基线（opt-in 信任 git），消除手写日期过期循环。
 - **README 四问导航 + episodes 按月归档**：README 新增「这是什么/谁该看/怎么装/怎么参与」快表；episodes 采用与 issues 归档同口径的 `episodes/归档/<YYYY-MM>/` 策略（live 门不下钻归档面），2026-09 全月 22 个 episode 已归档（`git mv` 保留历史）。
 - **验证**：`<venv>/bin/python tools/lab/validate.py all` → 11 行 PASS；`python3 -m unittest discover -s tests` → 92 OK；`doc_chain.py --self-test` → 110/110；`python3 packaging/build_runtime.py` 重建后 `manifests` PASS。安装面同日实测为预期失败：`validate.py installed` → `FAIL installed`（无 0.15.0 快照；当日安装面实测在册 0.8.2/0.8.4/0.8.6/0.11.0/0.14.0——0.14.0 为发版当日用户重装所得），退出码 1——宿主重装与端到端 Ego Light 实跑登记在 `docs/releases/pending-test.md` 第 5 行，不记为已验收。
-- **范围**：本批三笔主题提交（gate/测试拆分、README 导航+episodes 归档、QA 方法切换）加本发版提交；历史计划/ISS 中指向被拆分文件的落点与证据已随拆分重指向新模块。
+- **范围**：本批三笔主题提交（gate/测试拆分、README 导航+episodes 归档、QA 方法切换）加本发版提交；历史计划/ISS 的落点仍指向薄启动器 `tools/lab/doc_chain.py`（CLI 与 `import doc_chain` 不变，链接可解析），未逐条重指向 `docchain/`。
 
 ## 0.14.0 — 2026-10-24
 

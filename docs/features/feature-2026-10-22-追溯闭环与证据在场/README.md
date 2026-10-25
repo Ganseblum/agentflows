@@ -65,7 +65,7 @@
 | G2 任务证据可在盘 | `proposal/proposal.md` §1.2 | M-B（`spec/be/backend.md` §5）与 G2-AC-01 至 G2-AC-04（`spec/qa/acceptance.md` §4） | T01、T04、T05、T10 | ☑ 已完成 |
 | G3 决策门照到活文件 | `proposal/proposal.md` §1.2 | M-C（`spec/be/backend.md` §5）与 G3-AC-01 至 G3-AC-04（`spec/qa/acceptance.md` §4） | T06、T07、T08 | ☑ 已完成 |
 | G4 规范文本自洽 | `proposal/proposal.md` §1.2 | M-D（`spec/be/backend.md` §5）与 G4-AC-01 至 G4-AC-03（`spec/qa/acceptance.md` §4） | T09 | ☑ 已完成 |
-| G5 发布可核 | `proposal/proposal.md` §1.2 | M-E 证据落盘与 M-F 发布（`spec/be/backend.md` §5）与 G5-AC-01 至 G5-AC-03（`spec/qa/acceptance.md` §4） | T10、T11、T12 | ☐ 未开始 |
+| G5 发布可核 | `proposal/proposal.md` §1.2 | M-E 证据落盘与 M-F 发布（`spec/be/backend.md` §5）与 G5-AC-01 至 G5-AC-03（`spec/qa/acceptance.md` §4） | T10、T11、T12 | ◐ 进行中 |
 
 ## 开放记录承接（C18）
 
@@ -78,18 +78,18 @@
 
 | 模块 | 负责面 | 状态 | 做到哪 | 还差什么 |
 | --- | --- | --- | --- | --- |
-| M-A C22 目标承接闭环 | 后端 | ☑ | `tools/lab/doc_chain.py` 的 `goal_traceability_findings()` 落地，自测夹具 86–92/97，仓扫与目录模式共用实现 | 无 |
+| M-A C22 目标承接闭环 | 后端 | ☑ | `tools/lab/docchain/checks.py` 的 `goal_traceability_findings()` 落地（经薄启动器 `tools/lab/doc_chain.py` 调用），自测夹具 86–92/97，仓扫与目录模式共用实现 | 无 |
 | M-B C23 证据在场 | 后端 | ☑ | `evidence_presence_findings()` 与四类载体识别落地，夹具 93–96，plan 扫描改递归 | 无 |
 | M-C 决策门落地 | 后端 | ☑ | `disposition` 进契约与正反例；16 条 open 记录登记 deferred；拍板口八列化并打标，C16/C17/C18 首次照到活文件 | 无 |
 | M-D 文本与双源收口 | 文档 | ☑ | 八条缺陷逐条闭合（含实现中新发现的三条，立为 `docs/issues/ISS-2026-057-元信息同行声明默认落点基准被误判.md` 等） | 无 |
 | M-E 证据落盘 | 测试 | ☑ | 门基线已落 `testing/agentflows-gate-evidence/evidence/baseline-96e0383.md`；整门变异第一轮 49 杀死/6 存活/1 无效 | 无（存活项处置已转 `docs/issues/ISS-2026-059-变异存活项长期无逐项处置.md`） |
-| M-F 发布 | 后端 | ☐ | 发布范围已由用户选定（本地 bump 与快照重建，不推送、不动宿主安装） | 独立评审、episode、五份 manifest 同步、CHANGELOG、生成树 |
+| M-F 发布 | 后端 | ◐ | 发布动作已随 `861b6ef` 完成：五份 manifest、CHANGELOG 0.13.0 条目、episode、`index.md` 与 `docs/releases/` 回写 | T11 第三轮独立评审；`validate.py all` 全绿原始输出留档 |
 
 ## 当前步骤
 
 实现与自检已闭（T01–T10）：两条新门落地并有判别夹具、契约与活文件采用面都已打通、文本缺陷逐条收口、门基线与变异报告落盘。
 两项新门（C22 目标承接、C23 证据在场）的实现与夹具排在 T02 至 T05，决策门落地排在 T06 至 T08，
-余下 T11（独立评审三门）与 T12（版本 bump、生成树重建、episode 与发布收口）。权威进度以 `plan/PLAN-TRACE-001.md` 的任务看板为准。
+余下 T11（第三轮独立评审）与 T12（补 `validate.py all` 全绿原始输出留档）；发布动作已于 `861b6ef` 完成。权威进度以 `plan/PLAN-TRACE-001.md` 的任务看板为准。
 
 ## 当前实施仓与分支基线
 

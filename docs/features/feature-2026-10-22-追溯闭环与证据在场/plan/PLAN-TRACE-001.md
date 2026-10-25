@@ -4,7 +4,7 @@ plan_version: 0.1.0
 status: approved
 objective: 让目标承接与任务证据变成机器判据（新增 C22、C23），把决策可追溯门的首次采用落到活文件，并收口走查发现的八处文本缺陷；门变更经独立评审后随版本发布
 recorded_at: 2026-10-23T00:05:00+08:00
-updated_at: 2026-10-23T01:14:51+08:00
+updated_at: 2026-10-25T15:26:29+08:00
 ---
 
 # 追溯闭环与证据在场批 — 执行计划（PLAN-TRACE-001）
@@ -16,15 +16,15 @@ updated_at: 2026-10-23T01:14:51+08:00
 
 ## 进展概览
 
-- 总任务 12 项：☑ 10 项已完成（T01–T10），◐ 1 项进行中（T11 第一轮已 changes_requested 并修完，待第二轮），☐ 1 项未开始（T12 发布收口）。范围：两项新门（C22、C23）、记录契约一处扩展、
+- 总任务 12 项：☑ 10 项已完成（T01–T10），◐ 2 项进行中（T11 第二轮 20 条已修完、待第三轮复核；T12 发布动作已随 `861b6ef` 完成，缺「全绿原始输出」留档）。范围：两项新门（C22、C23）、记录契约一处扩展、
   八条文本缺陷、门证据落盘、独立评审与发布。
 - 三视角概览：
 
 | 视角 | 现在在哪 | 下一步 | 阻塞 |
 | --- | --- | --- | --- |
-| 方法维护者 | 判据与承载形态已在规格与方案里定义（`spec/be/backend.md` §6、`design/be/backend.md` §1.2）；T01 已完成 | T11 第二轮独立评审（需求、设计与门变更） | 阶段评审未通过前不得发布 |
-| 工具链实现 | C22/C23 已进入 `tools/lab/doc_chain.py`，覆盖目录模式与仓扫模式；实现与测试见 T02–T05 | 按 T11 评审意见复核实现、规格与证据的一致性 | 第二轮独立评审尚未通过 |
-| 交付效果 | C22/C23 已运行并留证；变异测试仍有 7 个存活项，见 ISS-2026-059 | T11 评审通过后，再由用户决定是否授权 T12 本地版本收口 | T12 未开始；推送与重装本批不做 |
+| 方法维护者 | 判据与承载形态已在规格与方案里定义（`spec/be/backend.md` §6、`design/be/backend.md` §1.2）；T01 已完成 | T11 第三轮独立评审（第二轮 20 条已在 `ff13912` 修完） | 阶段评审未通过前不得发布 |
+| 工具链实现 | C22/C23 已进入 `tools/lab/docchain/`（`tools/lab/doc_chain.py` 为薄启动器），覆盖目录模式与仓扫模式；实现与测试见 T02–T05 | 按 T11 第三轮意见复核实现、规格与证据的一致性 | 第三轮独立评审尚未通过 |
+| 交付效果 | C22/C23 已运行并留证；变异测试仍有 7 个存活项，见 ISS-2026-059；0.13.0 已发布（`861b6ef`） | 补 T12 要求的 `validate.py all` 全绿原始输出留档；T11 第三轮评审通过 | 推送与重装本批不做 |
 
 - 阻塞与风险：无未决决策。风险见「接口与共享机制」的异常矩阵，其中「判据过宽误伤存量文档」
   为最高关注项，处置方式是收窄实现并补夹具，禁止给批次摘标记或改判据文字放行。
@@ -50,8 +50,8 @@ updated_at: 2026-10-23T01:14:51+08:00
 | T08 | 拍板口八列化：`docs/PENDING-DECISIONS.md` 表格补齐现状核验（日期 + 反引号命令）、关闭条件、优先级、影响范围、自动决策，并打 `agentflow 决策记录` 标记使 C16 至 C18 首次照到活文件 | P0 | `docs/PENDING-DECISIONS.md` | T06、T07 | ☑ 已完成 | `docs/PENDING-DECISIONS.md` 改八列 + `状态` 列（`来源|待决问题|现状核验|推荐|关闭条件|优先级|影响范围|自动决策|状态`），打 `agentflow 决策记录` 标记；原第 9 条按「拍板后移出」规则移入下方日期注记（不删除）；新增第 11 条登记存量批次接入范围；`decision_gate` 对该文件 C16 零 finding；C17 曾在同日提交上判红（第二轮评审 P0-1/P1-1），已授权改日粒度并以 `ReviewRoundTwoFixTests.test_c17_same_day_commit_is_not_stale` 钉住 |
 | T09 | 文本与双源收口：八条缺陷逐条修复（重复编号、过时决策标注、退役路径措辞、工作链表双源、表达纪律双源、手写门项计数、文件名口径说明），每条给出改前改后命中复跑 | P1 | `AGENTS.md`、`README.md`、`agents/README.md`、`agents/reviewer.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/document-chain.md`、`docs/system-guide.md`、`docs/product/design/product-design.md`、`docs/features/feature-2026-10-13-质量提升/spec/qa/acceptance.md` | T02 | ☑ 已完成 | 八条缺陷逐条闭合：D-01 重复 `## 2.`（`docs/features/feature-2026-10-13-质量提升/spec/qa/acceptance.md` 顺延编号并同步 `design/qa/testing.md` 的 §3→§4 引用）；D-02 `docs/product/design/product-design.md` D11 补裁撤标注；D-03 `docs/system-guide.md` 的 `archive/` 改回 `docs/issues/归档/` 并区分评审快照；D-04 `agents/README.md` 工作链表改指针（消除 3 列/4 列双源）；D-05 `agents/reviewer.md` 表达纪律改指针（保留其独有的「自造接口编号」与引用协议）；D-06 `AGENTS.md` 与 `README.md` 去掉手写门项计数；D-07 `document-chain.md` 补文件名口径说明；D-08 `tools/lab/doc_chain.py` 消解 C15 编号歧义注释；另立 `docs/issues/ISS-2026-057…059` 三条记录 |
 | T10 | 在 `/tmp` 副本重跑门基线与整门变异并把报告落仓内证据目录，回写两个活批次 ☑ 行的证据列，使 C23 findings 为 0 | P0 | `tools/lab/mutate.py`、`docs/features/feature-2026-10-13-质量提升/plan/PLAN-QUALITY-001.md` | T04、T05 | ☑ 已完成 | 整门最终实跑（一次性副本内）：58 项 = 51 杀死 / 7 存活 / 0 无效（评审第一轮补入 M57/M58 后），逐字输出 `docs/features/feature-2026-10-22-追溯闭环与证据在场/testing/agentflows-gate-evidence/evidence/mutation-run-2026-10-23.txt`、机器可读 `docs/features/feature-2026-10-22-追溯闭环与证据在场/testing/agentflows-gate-evidence/evidence/mutation-results-2026-10-23.json`、摘要 `docs/features/feature-2026-10-22-追溯闭环与证据在场/testing/agentflows-gate-evidence/evidence/mutation-summary-2026-10-23.txt`；门基线 `docs/features/feature-2026-10-22-追溯闭环与证据在场/testing/agentflows-gate-evidence/evidence/baseline-96e0383.md`。质量提升批目录模式 → PASS；7 个存活项的处置登记为 `docs/issues/ISS-2026-059-变异存活项长期无逐项处置.md`（本批不承接） |
-| T11 | 独立评审三道门：需求评审（提案与规格）、技术方案评审（方案与验证方案）、门变更评审（C22/C23 与契约 diff）| P0 | 待核实（评审记录目录由本批新建）`docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/` | T03、T08、T09、T10 | ◐ 进行中 | 第一轮已完成：`docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md`（decision `changes_requested`：1 P0 + 1 P1 + 11 P2，处置列逐项标注），`updated_at` 与 episode `EP-20261023-001` 的 `review_roundtrips[0]` 同址；第二轮改在冻结提交上复跑并补需求与技术方案两道门 |
-| T12 | 发布收口：五份 manifest 同步版本并 bump、CHANGELOG 新增条目、`packaging/runtime` 生成树重建、`validate.py installed` 与 `manifests` 复跑、episode 落 `episodes/2026-10-23/`、`index.md` 与 `docs/releases/` 回写，最后复跑 `validate.py all` 留全绿原始输出 | P0 | `plugin.json`、`marketplace.json`、`.zcode-plugin/plugin.json`、`.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`CHANGELOG.md`、`index.md`、`docs/releases/todo.md`、`docs/releases/pending-test.md` | T11 | ☐ 未开始 |  |
+| T11 | 独立评审三道门：需求评审（提案与规格）、技术方案评审（方案与验证方案）、门变更评审（C22/C23 与契约 diff）| P0 | 待核实（评审记录目录由本批新建）`docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/` | T03、T08、T09、T10 | ◐ 进行中 | 第一轮：`docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md`（decision `changes_requested`：1 P0 + 1 P1 + 11 P2）；第二轮：同目录 `review-2026-10-23-002.md`（decision `changes_requested`：2 P0 + 4 P1 + 14 P2 = 20 条），20 条已在 `ff13912` 修完；第三轮复核未跑 |
+| T12 | 发布收口：五份 manifest 同步版本并 bump、CHANGELOG 新增条目、`packaging/runtime` 生成树重建、`validate.py installed` 与 `manifests` 复跑、episode 落 `episodes/2026-10-23/`、`index.md` 与 `docs/releases/` 回写，最后复跑 `validate.py all` 留全绿原始输出 | P0 | `plugin.json`、`marketplace.json`、`.zcode-plugin/plugin.json`、`.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`CHANGELOG.md`、`index.md`、`docs/releases/todo.md`、`docs/releases/pending-test.md` | T11 | ◐ 进行中 | 发布动作已随 `861b6ef` 完成：五份 manifest、CHANGELOG 0.13.0 条目、episode `episodes/2026-10-23/EP-20261023-001.json`、`index.md` 与 `docs/releases/` 回写；缺 T12 要求的 `validate.py all` 全绿原始输出留档 |
 
 ### 未决项
 
