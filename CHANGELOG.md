@@ -1,5 +1,14 @@
 # 变更日志
 
+## 0.17.0 — 2026-10-26
+
+> 升级验证批（用户逐字指示「你随便加个东西 然后升级一下版本我，我看看怎么在 zcode 升级」）。五份 manifest 0.16.0 → 0.17.0，`packaging/runtime` 重建。`measurement: none`。
+
+- **新增 `doc_chain.py --version`**：打印当前检查器所在树的 manifest 版本（读插件根 `plugin.json`，不是硬编码常量）。装完后一条命令即可确认「宿主实际装的是哪一版」，不需要去翻缓存目录或比对文件哈希——这正是升级验证缺的那一步。源仓与装后形态实测均输出 `agentflow 0.17.0`，退出码 0。
+- **同批带上的角色面收口**（来自同工作树的另一会话，单独提交 `4c5c17a` 留痕）：`plan-architect` 补 `## 分支策略`、`test-planner` / `test-executor` frontmatter 对齐 schema 必填项、删除幽灵指针「产物归属表」、`bug-recorder` 写明归档移动须由 Supervisor 执行、禁区检查与记录检索改由 Supervisor 执行、`roles.md` 测试链补 Reviewer、评审范围统一为「由 diff 形状决定」、幽灵测试类勘误追平、`host-platform-facts` W1 与 S9 状态刷新。
+- **验证**：`python3 tools/lab/validate.py all` → 11 项 PASS（`lint` 在装好 ruff/mypy 的解释器下实跑）；`doc_chain --self-test` → 110/110；`manifests` 对重建后的生成树逐字节 PASS。
+- **未做**：推送后的宿主重装与 `validate.py installed` 复核——需用户执行，见 `docs/releases/pending-test.md`。
+
 ## 0.16.0 — 2026-10-26
 
 > 安装面修复批（用户逐字指示「首先按照 A 方案把检查器打进包吧」与「通过 Git 的形式，能不能实现自动更新……主要是现在好像装不上」）。五份 manifest 0.15.0 → 0.16.0，`packaging/runtime` 重建并**改为受版本控制**。`measurement: none`。
