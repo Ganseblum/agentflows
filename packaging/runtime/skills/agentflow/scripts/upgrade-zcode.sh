@@ -109,46 +109,53 @@ fi
 say "  生成树版本一致：${RUNTIME_VERSION}"
 
 # --- 6. 刷新市场（这一步会重新 git clone）------------------------------------
-say ""
-say "[3/5] 刷新市场 ${MARKETPLACE}（CLI 会真正重新拉取）"
-if [ "$DRY_RUN" = "1" ]; then
-  say "  (dry-run 跳过)"
-else
-  zcode_run plugins marketplace update "$MARKETPLACE" || fail "刷新市场失败"
-fi
-
-# --- 7. 校验市场里看到的就是目标版本 ----------------------------------------
-say ""
-say "[4/5] 确认市场已看到 $TARGET_VERSION"
-if [ "$DRY_RUN" = "1" ]; then
-  say "  (dry-run 跳过)"
-else
-  MARKET_VERSION="$(zcode_run plugins marketplace list 2>/dev/null | python3 -c '
-import re, sys
-text = sys.stdin.read()
-for line in text.splitlines():
-    if line.startswith("- ") and "agentflow" in line:
-        m = re.search(r":\s*(\d+)\s+plugins", line)
-        if m:
-            print("listed")
-            break
-' || true)"
-  # 市场清单只报插件数，不报版本；版本以克隆里的 manifest 为准。
-  CLONE_MANIFEST="$HOME/.zcode/cli/plugins/marketplaces/$MARKETPLACE/marketplace.json"
-  if [ -f "$CLONE_MANIFEST" ]; then
-    CLONE_VERSION="$(python3 - "$CLONE_MANIFEST" <<'PY'
+# 每次刷新前先确认远端已经能读到目标版本：刚 push 完时 GitHub 侧可能还没同步，此时刷新
+# 拿到的是旧提交，装上去就是旧版本。重试而不是立刻判失败——这是发布竞态，不是版本错了。
+clone_version() {
+  local manifest="$HOME/.zcode/cli/plugins/marketplaces/$MARKETPLACE/marketplace.json"
+  [ -f "$manifest" ] || { printf '?'; return; }
+  python3 - "$manifest" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 plugins = d.get("plugins") or []
 print(plugins[0].get("version", "?") if plugins else "?")
 PY
-)"
-    say "  克隆里的市场版本：$CLONE_VERSION"
-    if [ "$CLONE_VERSION" != "$TARGET_VERSION" ]; then
-      fail "克隆仍是 ${CLONE_VERSION}，不是 ${TARGET_VERSION} —— 市场刷新没有生效（检查远端是否已推送）"
+}
+
+say ""
+say "[3/5] 刷新市场 ${MARKETPLACE}（CLI 会真正重新拉取）"
+if [ "$DRY_RUN" = "1" ]; then
+  say "  (dry-run 跳过)"
+else
+  attempt=1
+  max_attempts=5
+  while :; do
+    zcode_run plugins marketplace update "$MARKETPLACE" || fail "刷新市场失败"
+    seen="$(clone_version)"
+    if [ "$seen" = "$TARGET_VERSION" ]; then
+      say "  克隆已更新到 ${seen}（第 ${attempt} 次刷新）"
+      break
     fi
-  else
-    say "  注意：找不到克隆清单 ${CLONE_MANIFEST}，跳过该步核对"
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      say "  克隆仍是 ${seen}，不是 ${TARGET_VERSION}"
+      fail "刷新 ${max_attempts} 次仍未拿到 ${TARGET_VERSION}。常见原因：远端尚未推送该版本，或 GitHub 侧缓存未同步。先确认 \`git ls-remote origin main\` 已含该提交，再重跑。"
+    fi
+    say "  克隆仍是 ${seen}（第 ${attempt} 次），远端可能尚未同步，10 秒后重试"
+    sleep 10
+    attempt=$((attempt + 1))
+  done
+fi
+
+# --- 7. 校验市场里看到的就是目标版本 ----------------------------------------
+say ""
+say "[4/5] 确认市场已看到 ${TARGET_VERSION}"
+if [ "$DRY_RUN" = "1" ]; then
+  say "  (dry-run 跳过)"
+else
+  CLONE_VERSION="$(clone_version)"
+  say "  克隆里的市场版本：${CLONE_VERSION}"
+  if [ "$CLONE_VERSION" != "$TARGET_VERSION" ]; then
+    fail "克隆仍是 ${CLONE_VERSION}，不是 ${TARGET_VERSION}"
   fi
 fi
 
