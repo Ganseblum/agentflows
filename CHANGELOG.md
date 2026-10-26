@@ -1,5 +1,15 @@
 # 变更日志
 
+## 0.18.1 — 2026-10-26
+
+> 发版自动化（用户逐字指示「现在每次push就这俩就自动了吧」——答案是「还不是」，本版把它变成一条命令）。`measurement: none`。
+
+- **`skills/agentflow/scripts/publish.sh`**：一次发版跑完七步——版本 bump → 重建生成树 → 十项门 → 提交 → 推送 → 装进 Codex → 装进 ZCode。每步失败即停，后续不再执行。
+- **为什么不做成 git hook（实测结论）**：git 没有 post-push 钩子。`pre-push` 在推送**之前**触发，那时 upstream 未更新，ZCode 那段（要求 HEAD == upstream）必然失败；`post-commit` 是「每次提交」而不是「每次发版」，语义不同。因此做成一条显式命令——敲它即当次发版授权，不敲则什么都不发生，与仓库「推送与发布需当次授权」的纪律一致。
+- **顺序是刻意的**：**先 bump 再重建**。反过来会造出「manifest 已是新版、生成树还是旧版」的远端状态，而 git marketplace 装的正是生成树（0.17.2 的真实事故）。
+- **已知不自动的两件事**：CHANGELOG 不由脚本代写（脚本不猜你改了什么）；ZCode 必须重启才加载新快照（宿主只在启动时读插件）。
+- **验证**：`--dry-run` 只报计划；真实运行 `--bump patch` 从 0.18.0 → 0.18.1，七步全过、exit 0；两端 `doc_chain.py --version` 均为 `agentflow 0.18.1`，两处 `validate.py installed` 均 PASS。
+
 ## 0.18.0 — 2026-10-26
 
 > Codex 升级链路（用户逐字指示「那 现在chatgpt（codex）里面怎么弄」）。`measurement: none`。
