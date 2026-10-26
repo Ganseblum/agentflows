@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.17.3",
+  "version": "0.18.0",
   "description": "宿主原生多智能体开发与证据驱动改进工作流：主管、前端/后端工程师、技术负责人、评审、Bug 链路角色、计划架构师与受治理的改进角色。",
   "author": {
     "name": "Ganseblum"

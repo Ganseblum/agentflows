@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "agentflow",
-  "version": "0.17.3",
+  "version": "0.18.0",
   "description": "面向编码智能体的宿主原生多智能体开发与证据驱动改进工作流。"
 }

@@ -1,5 +1,15 @@
 # 变更日志
 
+## 0.18.0 — 2026-10-26
+
+> Codex 升级链路（用户逐字指示「那 现在chatgpt（codex）里面怎么弄」）。`measurement: none`。
+
+- **`skills/agentflow/scripts/upgrade-codex.sh`**：Codex 侧的安装封装——重建生成树 → 跑十项门 → 核对 personal 市场指向本仓 → `codex plugin add agentflow@personal` → 逐文件比对缓存。`--dry-run` 只报计划。
+- **实测到的平台差异（登记为 X3）**：Codex 的插件源是**本地目录**，不是远端市场。`~/.agents/plugins/marketplace.json` 声明 `source: {source: "local", path: "./plugins/agentflow"}`（相对 `~`），而 `~/plugins/agentflow` 是指向本仓工作树的符号链接。所以 Codex 读的**就是你当前的工作树**：不需要推送、不需要刷市场，`codex plugin add` 一条命令就把工作树快照进缓存。
+- **代价与对应防护**：也正因为读工作树，**未提交改动会被一起装进去**。脚本因此在安装前跑门（红则拒绝），并在安装后逐文件比对缓存与源面；脏树会在开头明确列出。
+- **同时补 Z12**：ZCode 图形界面「刷新该市场」对 git 源不重新拉取（两次点击均返回 OK，但克隆 mtime 与版本一次未变），而自带 CLI 会——这是 0.17.x 期间排障得到的一手结论，已连同证据写入宿主事实表。
+- **验证**：`upgrade-codex.sh` 实跑 exit 0；装后 `doc_chain.py --version` → `agentflow 0.18.0`；`validate.py installed --path ~/.codex/plugins/cache/personal/agentflow/0.18.0` → PASS。
+
 ## 0.17.3 — 2026-10-26
 
 > 升级链路自动化（用户逐字指示「看看怎么能自动」）。`measurement: none`。
