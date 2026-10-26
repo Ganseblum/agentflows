@@ -1,5 +1,16 @@
 # 变更日志
 
+## 0.16.0 — 2026-10-26
+
+> 安装面修复批（用户逐字指示「首先按照 A 方案把检查器打进包吧」与「通过 Git 的形式，能不能实现自动更新……主要是现在好像装不上」）。五份 manifest 0.15.0 → 0.16.0，`packaging/runtime` 重建并**改为受版本控制**。`measurement: none`。
+
+- **装不上的根因**：`marketplace.json` 的 `source` 指向 `./packaging/runtime`，而该目录在 `.gitignore` 里。GitHub 上的克隆因此没有这个目录，ZCode 从 git marketplace 安装时找不到插件源（克隆缓存 `plugins/marketplaces/agentflow-local/packaging/` 只有 `README.md` 与 `build_runtime.py`）。修复：把 `packaging/runtime/` 移出 `.gitignore` 并纳入版本控制，`validate.py manifests` 继续逐字节守住它与源面一致。
+- **检查器随插件交付（A 方案）**：`packaging/build_runtime.py` 新增 `RUNTIME_SUBTREES`，把 `tools/lab/doc_chain.py` 与 `tools/lab/docchain/` 复制进安装树。此前 SKILL 的「首次接入」要求目标仓运行 `python3 tools/lab/doc_chain.py`，而装完插件的用户照抄只会得到 `No such file or directory`——方法里所有机器强制对安装用户失效。`gate/manifests.py` 的新鲜度检查同步覆盖这两个路径，防止发出的检查器落后于源面。
+- **命令形态修正**：检查器的仓根默认解析到**插件根**，所以在目标仓工作时必须显式带 `--root <目标仓根>`；`SKILL.md` 的「首次接入」与 `document-chain.md` 的门 6 已改写为可照抄的完整形态。实测：`python3 <插件根>/tools/lab/doc_chain.py --root /tmp/target-repo /tmp/target-repo/docs/features/feature-demo` → `PASS doc-chain`，退出码 0。
+- **`--help` 修复**：`doc_chain.py --help` 此前被当成目录参数，报 `FAIL doc-chain (1 findings): --help: 目录不存在` 并退出 1；现在打印用法并退出 0。
+- **验证**：`python3 packaging/build_runtime.py` 重建（复制清单含 `tools/lab/doc_chain.py`、`tools/lab/docchain`）；`python3 tools/lab/validate.py all` → 10 项 PASS（`lint` 因本解释器未装 ruff/mypy 记为未运行，非本次改动引入）；装后形态自测 `--self-test` → 110/110。
+- **未做**：推送远端、宿主重装、真实安装走查——均需用户当次确认，登记在 `docs/releases/pending-test.md`。
+
 ## 0.15.0 — 2026-10-25
 
 > 发布批（用户逐字指示「OK，现在全部升级为不用 Playwright，改用 Ego Light。……这种测试要有对应的测试用例，包括预期结果、实际结果、测试步骤、测试功能、对应的 Propose 或者低单里的描述，以及一些检验结果之类的」与「Push 更新，然后改变版本号」）：五份 manifest 0.14.0 → 0.15.0，`packaging/runtime` 随发版重建。`measurement: none`（方法级改动，无仪器化业务任务度量）。

@@ -1,0 +1,82 @@
+# Protected paths — the improvement gate that no candidate may edit
+#
+# Hard boundary 6: never let an agent edit the gate that judges its own work. This file is the
+# single source for that gate. `isolation.py check-diff` reads it by default and refuses a
+# candidate diff that touches any prefix below; `validate.py protected` checks the list still
+# covers every required entry. A candidate engineer's write scope excludes all of it, even when
+# the candidate tree contains these paths.
+#
+# Inclusion rule: a path belongs here when it decides whether a candidate is measured or judged —
+# the evaluator and governor role instructions, the measurement path that survives (digest,
+# isolation), the compile step, the boundary check, the record contracts that compile step
+# enforces, and the regression tests that pin the gate tools. The evaluation suite, runner,
+# adapter, and release policy were retired with the 2026-10-12 evaluation-apparatus removal
+# (design knowledge kept in docs/design-decisions.md §3); restore their protection together
+# with the apparatus. Role prompts that only describe how work is done are NOT protected;
+# improving them is the point of the loop.
+#
+# Three prefixes below are deliberately broad. `schemas/` covers the record contracts that
+# `validate.py` compiles candidate artifacts against: a candidate that loosens the schema it is
+# measured by has edited its own gate. `skills/improve/references/` is the improvement loop's
+# rulebook — the evidence-and-release rules plus the governance schemas that survive the
+# 2026-10-12 apparatus removal (episode, candidate, release-record; the eval-case schema was
+# retired with the apparatus itself). Both mean a legitimate contract or rule change is a
+# human-reviewed change rather than a candidate edit — that is the intended trade.
+#
+# The regression tests are protected by file, not by directory, and `validate.py tests` asserts
+# the directory holds exactly its declared entries. Protecting the whole directory instead would
+# block on `tests/__pycache__/*.pyc` — artifacts any candidate carries after running the checks —
+# so the gate would fail every candidate that tested its own work. The declared-content check
+# must reject directories as well as files: `unittest discover` imports packages found in
+# subdirectories, and import-time code runs before any assertion. A demonstrated bypass adds a
+# subdirectory whose module replaces a pinned test method at import time, so a broken assertion
+# passes and the gate returns PASS. A stray `tests/__init__.py` is inert under
+# `discover -s tests` (it is imported only by discovery started from the repository root); the
+# entry check rejects it regardless.
+#
+# Changing anything here is a gate change: it requires explicit human review before it is used.
+#
+# Format: one path relative to the repository root per line. A path protects itself and
+# everything under it. Blank lines and lines starting with '#' are ignored.
+
+agents/evaluator.md
+agents/release-governor.md
+.github/
+
+skills/improve/references/
+
+schemas/
+tests/test_gate_schema.py
+tests/test_gate_integrity.py
+tests/test_gate_records.py
+tests/test_doc_chain.py
+tests/test_record_store.py
+
+# The lab tools decide whether a candidate is measured or judged. tools/lab/gate/,
+# counts.py, and mutate.py were added 2026-10-19 (gate change, human-directed): the
+# 2026-10-13 split moved the check bodies into gate/ while this list still named only
+# validate.py, leaving the guard logic itself outside the protection.
+tools/lab/artifact_digest.py
+tools/lab/counts.py
+tools/lab/doc_chain.py
+tools/lab/docchain/
+tools/lab/gate/
+tools/lab/isolation.py
+tools/lab/mutate.py
+tools/lab/record_store.py
+tools/lab/trend.py
+tools/lab/validate.py
+
+# The build script decides what the installed surface contains: a candidate that edits how
+# packaging/runtime is assembled can ship a role set or schema set different from the one the
+# gate compiled. Added 2026-10-13 (gate change, human-directed) — it decides what gets judged.
+packaging/build_runtime.py
+
+# The write-scope auditor and the worker-facing boundary contract ship with the plugin
+# (skills/agentflow/) and decide what a candidate is allowed to write. Until 2026-10-20 they sat
+# outside every protected prefix, so a candidate could rewrite the very script that audits its
+# write scope (evaluation G03). Added 2026-10-20 (gate change, human-directed).
+skills/agentflow/scripts/
+skills/agentflow/references/contracts.md
+
+protected-paths.txt

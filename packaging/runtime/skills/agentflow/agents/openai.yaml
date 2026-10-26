@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentflow"
+  short_description: "以评审与可追溯性协调多智能体编码"
+  default_prompt: "用 $agentflow 运行本任务，按需启用宿主原生的前端、后端、技术负责人与评审角色。"

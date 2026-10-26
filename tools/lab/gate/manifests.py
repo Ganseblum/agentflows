@@ -190,6 +190,33 @@ def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
             errors.append(_drift(f"packaging/runtime/{name}", "file missing from snapshot", hint))
         elif source_file.read_bytes() != runtime_file.read_bytes():
             errors.append(_drift(f"packaging/runtime/{name}", "content differs from source", hint))
+
+    # Shipped checker (RUNTIME_SUBTREES): a stale copy here means every installed user runs an
+    # older doc-chain linter than the one the source tree's own gates exercised.
+    for name in build_runtime.RUNTIME_SUBTREES:
+        source_path = root / name
+        if not source_path.exists():
+            continue
+        snapshot_path = runtime / name
+        if source_path.is_file():
+            if not snapshot_path.is_file():
+                errors.append(_drift(f"packaging/runtime/{name}", "file missing from snapshot", hint))
+            elif source_path.read_bytes() != snapshot_path.read_bytes():
+                errors.append(_drift(f"packaging/runtime/{name}", "content differs from source", hint))
+            continue
+        source_files = _relative_files(source_path)
+        snapshot_files = _relative_files(snapshot_path) if snapshot_path.is_dir() else set()
+        missing = sorted(source_files - snapshot_files)
+        extra = sorted(snapshot_files - source_files)
+        if missing:
+            preview = ", ".join(missing[:5]) + ("…" if len(missing) > 5 else "")
+            errors.append(_drift(f"packaging/runtime/{name}", f"{len(missing)} file(s) missing from snapshot: {preview}", hint))
+        if extra:
+            preview = ", ".join(extra[:5]) + ("…" if len(extra) > 5 else "")
+            errors.append(_drift(f"packaging/runtime/{name}", f"{len(extra)} extra file(s) no longer in source: {preview}", hint))
+        for relative in sorted(source_files & snapshot_files):
+            if (source_path / relative).read_bytes() != (snapshot_path / relative).read_bytes():
+                errors.append(_drift(f"packaging/runtime/{name}/{relative}", "content differs from source", hint))
     return errors
 
 

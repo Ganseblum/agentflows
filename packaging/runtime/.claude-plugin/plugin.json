@@ -1,0 +1,15 @@
+{
+  "name": "agentflow",
+  "description": "以专职的实现、评测与发布角色运行宿主原生开发与受治理的改进工作流。",
+  "version": "0.16.0",
+  "author": {
+    "name": "Ganseblum"
+  },
+  "keywords": [
+    "multi-agent",
+    "development-workflow",
+    "architecture",
+    "code-review",
+    "continuous-improvement"
+  ]
+}

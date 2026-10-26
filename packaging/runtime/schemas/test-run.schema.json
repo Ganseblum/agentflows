@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/test-run.schema.json",
+  "title": "Agentflow test run frontmatter",
+  "description": "Contract for the YAML frontmatter of a test run record at docs/features/<批次>/testing/<project>-<feature-slug>/run-<YYYY-MM-DD>-<NNN>.md — one execution round against a pinned test plan version. Each round is one new file; corrections edit the record in place and refresh updated_at. Findings become issue records and are referenced by bug_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "test_run_id",
+    "title",
+    "project",
+    "test_plan_id",
+    "test_plan_version",
+    "target_revision",
+    "environment",
+    "credentials",
+    "summary_pass",
+    "summary_fail",
+    "summary_blocked",
+    "summary_not_run",
+    "decision",
+    "recorded_at"
+  ],
+  "properties": {
+    "test_run_id": {
+      "type": "string",
+      "pattern": "^TR-\\d{8}-\\d{3}$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "project": {
+      "description": "Slug of the repository or project under test — must match the referenced plan's project.",
+      "type": "string",
+      "minLength": 1
+    },
+    "test_plan_id": {
+      "type": "string",
+      "pattern": "^TP-\\d{8}-\\d{3}$"
+    },
+    "test_plan_version": {
+      "description": "The plan's test_version at execution time. Coverage against the current registry is only asserted when this equals the plan's current version.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "target_revision": {
+      "description": "Commit of the target repository that was actually tested — may differ from the plan's target_revision; the run record is the provenance of its own results.",
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "description": "Where and how it ran: origin, automation route (Ego Light CLI / target project own e2e runner / host browser via supervisor / API), account role. Never carries credentials.",
+      "type": "string",
+      "minLength": 1
+    },
+    "credentials": {
+      "description": "How credentials reached the executor (e.g. 'session-injected env, never persisted'). Values are forbidden here and anywhere in the body.",
+      "type": "string",
+      "minLength": 1
+    },
+    "summary_pass": {
+      "description": "Case count with result pass; the checker asserts equality with the 结果 table. Frontmatter values are strings by contract.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "summary_fail": {
+      "description": "Case count with result fail; the checker asserts equality with the 结果 table.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "summary_blocked": {
+      "description": "Case count with result blocked; the checker asserts equality with the 结果 table.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "summary_not_run": {
+      "description": "Case count with result not-run; the checker asserts equality with the 结果 table.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "decision": {
+      "description": "pass requires zero fail and zero blocked in the summary; the checker enforces this.",
+      "enum": ["pass", "partial", "fail"]
+    },
+    "findings": {
+      "description": "bug_ids of the defect records filed from this run; each must exist under docs/issues/.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
+    },
+    "flow_findings": {
+      "description": "bug_ids of flow-reasonableness findings filed from this run (missing timeout/duplicate/interrupt handling, inconsistent error semantics, unhandled states); each must exist under docs/issues/.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
+    },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

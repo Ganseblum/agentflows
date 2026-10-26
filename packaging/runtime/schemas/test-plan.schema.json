@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/test-plan.schema.json",
+  "title": "Agentflow test plan frontmatter",
+  "description": "Contract for the YAML frontmatter of a test plan at docs/features/<批次>/testing/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md — the case catalog a test executor runs against one feature. The directory is anchored on the tested feature, not the date. The plan is revised in place (bump test_version); run records pin the version they executed. Credentials are declared as an injection method, never as values.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "test_plan_id",
+    "title",
+    "project",
+    "feature",
+    "target_revision",
+    "credentials",
+    "case_count",
+    "test_version",
+    "status",
+    "recorded_at"
+  ],
+  "properties": {
+    "test_plan_id": {
+      "type": "string",
+      "pattern": "^TP-\\d{8}-\\d{3}$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "project": {
+      "description": "Slug of the repository or project under test (e.g. aiwork).",
+      "type": "string",
+      "minLength": 1
+    },
+    "feature": {
+      "description": "Feature or scope identifier in the target project.",
+      "type": "string",
+      "minLength": 1
+    },
+    "target_revision": {
+      "description": "Commit of the target repository the cases were written against — later edits there must not retroactively change what the cases mean.",
+      "type": "string",
+      "minLength": 1
+    },
+    "credentials": {
+      "description": "How credentials reach the executor (e.g. 'session-injected env, never persisted'). Values are forbidden here and anywhere in the body.",
+      "type": "string",
+      "minLength": 1
+    },
+    "base_url": {
+      "description": "Environment under test (e.g. the staging origin). Never carries credentials.",
+      "type": "string",
+      "minLength": 1
+    },
+    "case_count": {
+      "description": "Number of cases in the 用例 registry table; the checker asserts equality. Frontmatter values are strings by contract.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "test_version": {
+      "description": "Bumped on every revision; run records pin the version they executed.",
+      "type": "string",
+      "pattern": "^\\d+$"
+    },
+    "status": {
+      "enum": ["draft", "active", "superseded"]
+    },
+    "superseded_by": {
+      "description": "test_plan_id of the plan that supersedes this one.",
+      "type": "string",
+      "pattern": "^TP-\\d{8}-\\d{3}$"
+    },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

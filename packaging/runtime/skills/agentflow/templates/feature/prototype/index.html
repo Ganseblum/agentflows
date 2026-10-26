@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>线框预览（结构稿，非最终视觉）— &lt;feature 名&gt;</title>
+<!--
+  线框/原型骨架：零依赖、浏览器直开，不引入构建链与外部资源。
+  复制到 docs/features/<批次>/prototype/index.html 后，把 <占位> 换成真实页面结构。
+  规矩（见 prototype/README.md）：
+    1) 这是结构稿，不是最终视觉——颜色、字体、圆角都不参与评审结论；
+    2) 每个区块写清它承担什么（区块标题左上的灰字），可点击元素在 docs 里对应 data-testid；
+    3) 一个页面一个 <section class="screen">，页签自动生成；
+    4) 状态用下面的按钮切换，覆盖 加载中 / 空 / 错误 / 有数据 四态；
+    5) 右侧「标注」区逐条写编号 + 结论，与 design/fe §1.1.5 的线框表逐条对应。
+-->
+<style>
+  :root {
+    --ink: #1f2328;
+    --ink-soft: #6b7280;
+    --line: #c9ced6;
+    --line-soft: #e5e8ed;
+    --paper: #ffffff;
+    --bg: #f4f5f7;
+    --accent: #2f6bff;
+    --danger: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.55 -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  header.bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  header.bar h1 { margin: 0; font-size: 15px; font-weight: 600; }
+  .badge {
+    border: 1px dashed var(--danger); color: var(--danger);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+  }
+  .tabs, .states { display: flex; gap: 6px; margin-left: auto; }
+  .tabs button, .states button {
+    font: inherit; cursor: pointer; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--ink);
+  }
+  .tabs button[aria-selected="true"], .states button[aria-pressed="true"] {
+    border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } aside { order: -1; } }
+
+  .screen { display: none; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .screen[data-active="true"] { display: block; }
+  .screen-head {
+    display: flex; gap: 10px; align-items: baseline;
+    padding: 10px 16px; border-bottom: 1px solid var(--line-soft); background: #fbfbfc;
+  }
+  .screen-head strong { font-size: 14px; }
+  .screen-head span { color: var(--ink-soft); font-size: 12px; }
+
+  .frame { padding: 16px; display: grid; gap: 12px; }
+  .block {
+    position: relative; border: 1px dashed var(--line); border-radius: 8px;
+    padding: 14px; min-height: 56px; background: #fcfcfd;
+  }
+  .block > .label {
+    position: absolute; top: -9px; left: 10px; padding: 0 6px;
+    background: #fcfcfd; color: var(--ink-soft); font-size: 12px; letter-spacing: .02em;
+  }
+  .block.row { display: flex; gap: 12px; align-items: center; }
+  .block.row > * { flex: 0 0 auto; }
+  .grow { flex: 1 1 auto; }
+
+  .placeholder {
+    border: 1px dashed var(--line-soft); border-radius: 6px; background: #f7f8fa;
+    color: var(--ink-soft); font-size: 12px; display: grid; place-items: center; min-height: 44px;
+  }
+  .btn {
+    border: 1px solid var(--accent); color: var(--accent); background: var(--paper);
+    border-radius: 6px; padding: 5px 12px; font-size: 13px;
+  }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-size: 12px; color: var(--ink-soft); }
+  .lines { display: grid; gap: 8px; }
+  .lines i { display: block; height: 8px; background: var(--line-soft); border-radius: 3px; }
+  .lines i:nth-child(2) { width: 82%; }
+  .lines i:nth-child(3) { width: 64%; }
+
+  /* 四态：同一结构的四种呈现，供评审对着谈 */
+  .only-loading, .only-empty, .only-error { display: none; }
+  body[data-state="loading"] .only-loading,
+  body[data-state="empty"] .only-empty,
+  body[data-state="error"] .only-error { display: block; }
+  body[data-state="loading"] .only-data,
+  body[data-state="empty"] .only-data,
+  body[data-state="error"] .only-data { display: none; }
+  .state-note {
+    border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 6px; padding: 10px 12px; color: var(--ink-soft); font-size: 13px;
+    background: #fbfcff;
+  }
+  .state-note.error { border-left-color: var(--danger); color: var(--danger); background: #fff8f7; }
+
+  aside .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  aside h2 { font-size: 13px; margin: 0 0 8px; }
+  aside ol { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 13px; }
+  aside ol li { margin-bottom: 8px; }
+  aside code { font-size: 12px; background: #f2f3f5; border-radius: 3px; padding: 0 4px; }
+  .legend { margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body data-state="default">
+
+<header class="bar">
+  <h1>&lt;feature 名&gt; — 线框预览</h1>
+  <span class="badge">结构稿，非最终视觉</span>
+  <nav class="tabs" id="tabs" aria-label="页面切换"></nav>
+  <div class="states" role="group" aria-label="状态切换">
+    <button type="button" data-state="default" aria-pressed="true">默认</button>
+    <button type="button" data-state="loading" aria-pressed="false">加载中</button>
+    <button type="button" data-state="empty" aria-pressed="false">空</button>
+    <button type="button" data-state="error" aria-pressed="false">错误</button>
+  </div>
+</header>
+
+<main>
+  <div id="screens">
+
+    <section class="screen" data-active="true" data-name="P1 列表页" data-doc="design/fe §1.1.5 线框 1">
+      <div class="screen-head">
+        <strong>P1 列表页</strong>
+        <span>回答的问题：用户进来先看到什么、先做什么</span>
+      </div>
+      <div class="frame">
+        <div class="block row">
+          <span class="label">① 顶部导航 — 品牌 / 全局入口</span>
+          <div class="placeholder grow">品牌</div>
+          <div class="placeholder">搜索</div>
+          <div class="placeholder">账号</div>
+        </div>
+
+        <div class="block row">
+          <span class="label">② 筛选栏 — 默认条件与清空</span>
+          <div class="placeholder grow">条件 A</div>
+          <div class="placeholder grow">条件 B</div>
+          <button class="btn" type="button">清空</button>
+          <button class="btn primary" type="button">查询</button>
+        </div>
+
+        <div class="block">
+          <span class="label">③ 内容区 — 有数据 / 加载中 / 空 / 错误 四态共用此区域</span>
+
+          <div class="only-data lines">
+            <div class="block row" style="border-style:solid">
+              <div class="placeholder grow">行 1：主字段 + 次字段</div>
+              <span class="chip">状态</span>
+              <button class="btn" type="button">行操作</button>
+            </div>
+            <div class="block row" style="border-style:solid">
+              <div class="placeholder grow">行 2：主字段 + 次字段</div>
+              <span class="chip">状态</span>
+              <button class="btn" type="button">行操作</button>
+            </div>
+            <div class="placeholder">分页 / 加载更多</div>
+          </div>
+
+          <div class="only-loading state-note">加载中：骨架屏占位，保留上一轮数据时标注“刷新中”而不是清空。</div>
+          <div class="only-empty state-note">空态：一句说明“为什么空” + 一个主行动入口；不要只画一个图标。</div>
+          <div class="only-error state-note error">错误态：错误原因（可读文案）+ 重试入口 + 兜底出口。</div>
+        </div>
+
+        <div class="block">
+          <span class="label">④ 弹窗/抽屉（在本页触发，结构画在 P2）</span>
+          <div class="placeholder">触发控件：<code>data-testid="&lt;新增按钮&gt;"</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-name="P2 新建弹窗" data-doc="design/fe §1.1.5 线框 2">
+      <div class="screen-head">
+        <strong>P2 新建弹窗</strong>
+        <span>回答的问题：字段顺序、校验提示位置、提交失败留在哪里</span>
+      </div>
+      <div class="frame">
+        <div class="block">
+          <span class="label">① 标题与关闭</span>
+          <div class="block row" style="border-style:solid">
+            <div class="grow">弹窗标题</div>
+            <span class="chip">关闭</span>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="label">② 字段区 — 逐字段 + 校验提示（提示紧贴字段下方，不用 toast 代替）</span>
+          <div class="lines">
+            <i></i><i></i><i></i>
+          </div>
+          <div class="placeholder" style="margin-top:10px">必填/格式错误示例：红框 + 一行说明</div>
+        </div>
+
+        <div class="block row">
+          <span class="label">③ 底部操作 — 主次分明，禁用条件写清</span>
+          <div class="grow"></div>
+          <button class="btn" type="button">取消</button>
+          <button class="btn primary" type="button">确定</button>
+        </div>
+
+        <div class="block">
+          <span class="label">④ 提交中 / 提交失败（就地呈现，不关窗）</span>
+          <div class="placeholder">提交中：按钮 loading + 禁止重复提交；失败：字段级或整窗级错误 + 保留已填内容</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <aside>
+    <div class="card">
+      <h2>标注（逐条写结论，不写感受）</h2>
+      <ol>
+        <li>① 顶部导航是否承载全局搜索：<strong>&lt;结论 + 理由&gt;</strong></li>
+        <li>② 筛选默认值：<strong>&lt;结论&gt;</strong>；清空是否重置分页：<strong>&lt;结论&gt;</strong></li>
+        <li>③ 四态各自的兜底出口：<strong>&lt;结论&gt;</strong></li>
+        <li>④ 新增入口位置与触发方式：<strong>&lt;结论&gt;</strong></li>
+      </ol>
+      <div class="legend">
+        标注编号与 <code>design/fe §1.1.5</code> 的线框表逐条对应；结论要能落成验收口径，
+        不能只写“看起来更顺”。
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  // 页签由 .screen 自动生成；新增页面只加一个 <section class="screen">，不改这段脚本。
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = document.getElementById('tabs');
+  screens.forEach((screen, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = screen.dataset.name || `P${index + 1}`;
+    button.setAttribute('aria-selected', screen.dataset.active === 'true' ? 'true' : 'false');
+    button.addEventListener('click', () => {
+      screens.forEach((s) => { s.dataset.active = 'false'; });
+      [...tabs.children].forEach((b) => { b.setAttribute('aria-selected', 'false'); });
+      screen.dataset.active = 'true';
+      button.setAttribute('aria-selected', 'true');
+    });
+    tabs.appendChild(button);
+  });
+
+  // 状态切换只改 body[data-state]，四态样式由 CSS 决定，不在 JS 里判窗口或改结构。
+  document.querySelectorAll('.states button').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.body.dataset.state = button.dataset.state;
+      document.querySelectorAll('.states button').forEach((b) => {
+        b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
+      });
+    });
+  });
+</script>
+</body>
+</html>

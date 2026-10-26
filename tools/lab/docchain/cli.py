@@ -39,6 +39,9 @@ def lint_file(path: Path) -> int:
 
 
 def main(argv: list[str]) -> int:
+    if argv[:1] in (["--help"], ["-h"]):
+        print(__doc__)
+        return 0
     if len(argv) == 1 and argv[0] == "--self-test":
         return self_test()
     root = REPO_ROOT

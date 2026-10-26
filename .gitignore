@@ -7,5 +7,8 @@ private-evals/
 .commandcode/
 command-code-session-*.html
 .agentflow-records.sqlite3
-packaging/runtime/
+# packaging/runtime is generated but MUST stay tracked: the git marketplace clones this repo and
+# resolves marketplace.json's `source: ./packaging/runtime` inside the clone. While it was
+# ignored, every fresh clone lacked the directory and install failed with "plugin source not
+# found". `validate.py manifests` keeps the committed snapshot byte-identical to the source.
 .workbuddy/

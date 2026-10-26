@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agentflow Improve"
+  short_description: "基于真实任务证据安全地改进 Agentflow"
+  default_prompt: "用 $improve 把明确的 Agentflow 反馈转化为有界的候选，走证据化评审（装置裁撤后为人工评审口径），并准备可审计的发布决策。"
+policy:
+  allow_implicit_invocation: false

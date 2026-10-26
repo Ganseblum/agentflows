@@ -241,7 +241,9 @@ proposal 分多轮采集，而不是一次问完。把待决事项建模为一�
    ④ ①② 中可机器检查的部分连同 代号裸用 形态由
    `tools/lab/doc_chain.py` 承载——运行 `python3 tools/lab/doc_chain.py <feature-dir>`
    （C12 时效性引用, C13 会话角色词, C14 代号裸用）并修复或对每条发现显式放行；独立会话
-   交付物经 `python3 tools/lab/doc_chain.py --file <路径>` 走同样的文本形态检查。C13 的
+   交付物经 `python3 tools/lab/doc_chain.py --file <路径>` 走同样的文本形态检查。自 0.16.0
+   起该检查器随插件交付、装在插件根 `tools/lab/`；在目标仓工作时从插件根调用并带
+   `--root <目标仓根>`，否则落点按插件仓根解析。C13 的
    **作用域是交付物**（链阶段文档与会话交付物）：方法的自述面（`docs/product/**`、
    `skills/**`、`agents/**`）与评审记录（`reviews/**`）里这些词是被定义的术语或被列举的
    例词（reviewer 档案本身就列举了它禁止的词），机器分不清「指称」与「提及」，故整体豁免，
@@ -280,6 +282,9 @@ proposal 分多轮采集，而不是一次问完。把待决事项建模为一�
 ```sh
 python3 tools/lab/doc_chain.py <feature-dir>
 ```
+
+> 该命令的相对路径按**插件仓根**解析。随插件安装后，从目标仓调用要写全插件根路径并带
+> `--root <目标仓根>`：`python3 <插件根>/tools/lab/doc_chain.py --root <目标仓根> <feature-dir>`。
 
 以下情形判该链失败：阶段目录只有 `.gitkeep`（段落映射表声明了非空、非「—」落点的段落除外，
 见「段落映射豁免」）；README 缺少评审门；spec 缺少反审 checklist

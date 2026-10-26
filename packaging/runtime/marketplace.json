@@ -1,0 +1,23 @@
+{
+  "name": "agentflow-local",
+  "version": 1,
+  "description": "用于在 ZCode 中测试 Agentflow 插件的本地市场。",
+  "plugins": [
+    {
+      "name": "agentflow",
+      "source": "./packaging/runtime",
+      "description": "宿主原生多智能体开发与证据驱动改进工作流，含专职的实现、评测与发布角色。",
+      "version": "0.16.0",
+      "author": {
+        "name": "Ganseblum"
+      },
+      "category": "developer-tools",
+      "keywords": [
+        "multi-agent",
+        "development-workflow",
+        "code-review",
+        "continuous-improvement"
+      ]
+    }
+  ]
+}

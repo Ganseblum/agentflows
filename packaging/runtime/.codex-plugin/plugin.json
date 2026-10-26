@@ -1,0 +1,30 @@
+{
+  "name": "agentflow",
+  "version": "0.16.0",
+  "description": "运行宿主原生的多智能体开发与受治理的证据驱动改进工作流。",
+  "author": {
+    "name": "Ganseblum"
+  },
+  "keywords": [
+    "multi-agent",
+    "workflow",
+    "code-review",
+    "audit"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agentflow",
+    "shortDescription": "以评审与可追溯性协调多智能体编码。",
+    "longDescription": "把编码宿主的原生智能体作为一支有界的工程团队使用，涵盖前端、后端、技术负责人、主管与评审角色。Agentflow 只定义工作流与契约，不调用独立的编排 CLI，也不需要额外的提供方凭证。",
+    "developerName": "Ganseblum",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Multi-agent task coordination",
+      "Frontend and backend role delegation",
+      "Independent implementation review",
+      "Architecture decision gates",
+      "Evidence-driven improvement candidates"
+    ],
+    "defaultPrompt": "Use $agentflow to coordinate this coding task with bounded delegation, independent review, and a concise decision record."
+  }
+}

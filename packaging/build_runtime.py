@@ -29,6 +29,14 @@ RUNTIME_DIRECTORIES = (
     ".claude-plugin",
     ".codex-plugin",
 )
+# 运行期检查器随插件交付（2026-10-26，安装面断裂修复）：SKILL 的「首次接入」要求目标仓运行
+# doc_chain.py，而此前 tools/ 被排除在运行时之外——装完插件的用户照抄命令只会得到
+# 「No such file or directory」。这里只发文档链检查器，不发整个 gate：目标仓需要的是链检查，
+# validate.py 校验的是本仓自己的记录（issues/features/episodes），对目标仓无意义。
+RUNTIME_SUBTREES = (
+    "tools/lab/doc_chain.py",
+    "tools/lab/docchain",
+)
 RUNTIME_FILES = (
     "plugin.json",
     "marketplace.json",
@@ -43,7 +51,6 @@ FORBIDDEN_TOP_LEVEL = frozenset(
         "releases",
         "reviews",
         "tests",
-        "tools",
         "docs",
         "evals",
         "examples",
@@ -70,6 +77,10 @@ def assert_safe_destination(destination: Path) -> None:
         source = (ROOT / name).resolve()
         if resolved == source or source in resolved.parents:
             raise ValueError(f"拒绝覆盖源树 {name}")
+    for name in RUNTIME_SUBTREES:
+        source = (ROOT / name).resolve()
+        if resolved == source or source in resolved.parents:
+            raise ValueError(f"拒绝覆盖源路径 {name}")
     for name in RUNTIME_FILES:
         source = (ROOT / name).resolve()
         if resolved == source:
@@ -117,6 +128,16 @@ def build(destination: Path) -> list[str]:
             raise ValueError(f"缺少必需目录：{name}")
         copy_tree(source, destination / name)
         copied.append(name)
+    for name in RUNTIME_SUBTREES:
+        source = ROOT / name
+        if not source.exists():
+            raise ValueError(f"缺少必需路径：{name}")
+        target = destination / name
+        if source.is_dir():
+            copy_tree(source, target)
+        else:
+            copy_file(source, target)
+        copied.append(name)
     for name in RUNTIME_FILES:
         source = ROOT / name
         if not source.is_file():
@@ -133,13 +154,18 @@ def verify(destination: Path) -> None:
     forbidden = sorted(names & FORBIDDEN_TOP_LEVEL)
     if forbidden:
         raise ValueError("runtime 树包含 lab/evidence 路径： " + ", ".join(forbidden))
-    required = set(RUNTIME_DIRECTORIES) | set(RUNTIME_FILES)
+    required = set(RUNTIME_DIRECTORIES) | set(RUNTIME_FILES) | _subtree_top_levels()
     missing = sorted(required - names)
     if missing:
         raise ValueError("runtime 树缺少： " + ", ".join(missing))
     unexpected = sorted(names - required)
     if unexpected:
         raise ValueError("runtime 树存在未声明的顶层名称： " + ", ".join(unexpected))
+
+
+def _subtree_top_levels() -> set[str]:
+    """Top-level names contributed by RUNTIME_SUBTREES (e.g. `tools/lab/docchain` → `tools`)."""
+    return {Path(name).parts[0] for name in RUNTIME_SUBTREES}
 
 
 def main(argv: list[str] | None = None) -> int:
