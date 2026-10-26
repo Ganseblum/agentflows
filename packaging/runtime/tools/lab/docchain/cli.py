@@ -21,7 +21,7 @@ import json
 import sys
 from pathlib import Path
 
-from .checks import lint, read, repo_policy_findings, text_form_findings
+from .checks import lint, read, repo_policy_findings, text_form_findings, closure_claim_findings
 from .constants import REPO_ROOT
 from .selftest import self_test
 
@@ -44,12 +44,14 @@ def plugin_version() -> str:
 
 
 def lint_file(path: Path) -> int:
-    """--file mode: text-form checks only (C12/C13/C14) against one standalone markdown file."""
+    """--file mode: text-form checks (C12/C13/C14) and the opt-in closure claim (C25)."""
     if not path.is_file():
         print("FAIL doc-chain --file (1 findings)")
         print(f"  - 文件不存在: {path}")
         return 1
-    errors = text_form_findings(str(path), read(path), [path.parent])
+    text = read(path)
+    errors = text_form_findings(str(path), text, [path.parent])
+    errors.extend(closure_claim_findings(str(path), text, [path.parent], marked=True))
     if errors:
         print(f"FAIL doc-chain --file {path} ({len(errors)} findings)")
         for e in errors:

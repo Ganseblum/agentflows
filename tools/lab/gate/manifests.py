@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import re
+
 from .common import (
     MANIFEST_POINTERS,
     PROTECTED_PATHS_FILE,
@@ -229,6 +231,30 @@ def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
             errors.append(_drift(f"packaging/runtime/{name}", "file missing from snapshot", hint))
         elif source_file.read_bytes() != runtime_file.read_bytes():
             errors.append(_drift(f"packaging/runtime/{name}", "content differs from source", hint))
+
+    # Shipped-surface link integrity (2026-10-26 audit G15): the installed plugin is the
+    # runtime subset, so a relative Markdown link inside it must resolve *within that subset*,
+    # not just in the full source repo. Links to directories that the builder never copies
+    # (reviews/, the root templates/ hub) were dead in every installed copy while the source
+    # gate — which scans the whole repo — stayed green. Fail any relative .md link whose target
+    # is absent under the runtime tree; http/mailto/anchor-only links are not path checks.
+    RUNTIME_LINK_RE = re.compile(r"\]\(([^)]+)\)")
+    for md in sorted(runtime.rglob("*.md")):
+        text = md.read_text(encoding="utf-8", errors="ignore")
+        base = md.parent
+        for target in RUNTIME_LINK_RE.findall(text):
+            tail = target.split("#", 1)[0].strip()
+            if not tail or tail.startswith(("http://", "https://", "mailto:", "/")):
+                continue
+            if not (base / tail).exists():
+                errors.append(
+                    _drift(
+                        f"packaging/runtime/{md.relative_to(runtime).as_posix()}",
+                        f"shipped link target missing from install tree: {target!r}",
+                        "point the link at a path present in packaging/runtime, or make it "
+                        "repo-relative prose instead of a hyperlink",
+                    )
+                )
 
     # Shipped checker (RUNTIME_SUBTREES): a stale copy here means every installed user runs an
     # older doc-chain linter than the one the source tree's own gates exercised.

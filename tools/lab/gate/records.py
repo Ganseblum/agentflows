@@ -262,6 +262,38 @@ def validate_review_markdown(
     return errors
 
 
+# G09: closure_criteria historically embedded brittle source line numbers
+# (e.g. `document-chain.md:284-286`) that silently drift as the target file edits.
+# The contract value is the clause/identifier, not a line — a line ref stops being
+# verifiable the moment the cited file is edited. This weak check flags the pattern so
+# drift stops being silent; the records themselves carry the clause name instead.
+CLOSURE_LINE_REF = re.compile(r"[^\s:（）()，、|]+\.(?:md|py|json|go|ts|js):\d+(?:-\d+)?")
+
+
+def closure_criteria_line_ref_errors(frontmatter: dict[str, Any], path: Path) -> list[ValidationError]:
+    """G09 — closure_criteria must not pin a source line number.
+
+    A line number is a snapshot that rots on the next edit to the cited file; the
+    contract value is the clause name (and a path, which git-history can audit via C17).
+    Flag any `path.ext:NN` reference so drift becomes an explicit, greppable finding
+    instead of a silently-stale verification claim.
+    """
+    value = frontmatter.get("closure_criteria")
+    if not isinstance(value, str):
+        return []
+    refs = CLOSURE_LINE_REF.findall(value)
+    if not refs:
+        return []
+    return [
+        ValidationError(
+            str(path),
+            "closure_criteria 不应钉死源文件行号（"
+            + "、".join(refs)
+            + "）——行号随引用文件编辑悄悄过期；改为写明条款名 + 路径，行号由 git 历史（C17）审计",
+        )
+    ]
+
+
 def validate_bug_markdown(path: Path) -> list[ValidationError]:
     """Validate one Markdown bug record: frontmatter schema, body sections, state rules."""
     frontmatter, body, errors = load_record_markdown(path)
@@ -275,6 +307,7 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
     if errors:
         return errors
     errors.extend(validate_timestamp_order(frontmatter, path))
+    errors.extend(closure_criteria_line_ref_errors(frontmatter, path))
 
     for heading in BUG_REQUIRED_HEADINGS:
         if not heading_present(body, heading):

@@ -60,15 +60,17 @@ examples、记录产物、受保护清单、五份 manifest 一致性（含 `pac
 `requirements-dev.txt`）。项数以 `python3 tools/lab/validate.py --list` 自报为准，本文不写它。
 失败即编译错误：修好它，或把输出退回 worker。
 
-> 注意：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归——本会话即观察到此类环境假红。
+> 注意一（`lint` 缺依赖是环境红，不是回归）：本机未装 `requirements-dev.txt` 里的 ruff/mypy 时，`validate.py all` 会以 `FAIL lint (2 error(s))` 退出 1——这是**有意的 fail-closed**。装好依赖后同一命令应全绿（CI 即如此，见 `.github/workflows/validate.yml` 的安装步）。想不装依赖就推代码，走 `skills/agentflow/scripts/pre-push.sh`：它把 `lint` 记为「未运行」并放行，其余项照常判红。可用 `AGENTFLOW_LINT_PYTHON` 指向一个装好依赖的解释器让脚本实跑 lint。
+>
+> 注意二（`tests` 子项可能环境假红）：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归。
 
 三个 Bug 角色是可选择的能力，而不是每个问题都必须走的固定仪式。对 material、
 不确定、反复出现、跨层或高风险的 bug，使用完整的
 Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现的小型低风险 bug，
-Supervisor 可以合并诊断或记录环节，同时保持同样的证据门。Plan Architect 写计划；
-Supervisor 授权并协调执行。
+主审可以合并诊断或记录环节，同时保持同样的证据门。Plan Architect 写计划；
+主审授权并协调执行。
 
-改进工作流是一个受治理的骨架：会话收口先落 episode，Feedback Analyst 归一化证据，
+改进工作流是一个受治理的骨架：会话收口（一项工作收尾并落档）先落 episode，Feedback Analyst 归一化证据，
 Candidate Engineer 在 candidate worktree 里实现单个候选，`isolation.py check-diff` 对照冻结
 parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审，最终由人批准。跨会话
 遥测、持久检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现；人工批准是默认的

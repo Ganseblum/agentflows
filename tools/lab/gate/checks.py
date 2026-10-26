@@ -103,6 +103,24 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
                 "shrinking the regression suite is a gate change that requires explicit review",
             )
         ]
+    # Per-file floor, not just a suite-wide one. MIN_UNIT_TEST_COUNT alone let 4 of the 5
+    # declared files be gutted (32 of 62 tests deleted) with the gate still green, because
+    # the remaining 30 still cleared the floor of 20 (2026-10-26 audit G14). Each declared
+    # file must contribute at least one test method, parsed statically so a file that was
+    # emptied cannot hide behind the others.
+    for name in EXPECTED_TEST_FILES:
+        source = (tests_dir / name).read_text(encoding="utf-8")
+        per_file = len(re.findall(r"^\s+def test_", source, re.M))
+        if per_file == 0:
+            errors.append(
+                ValidationError(
+                    f"tests/{name}",
+                    "declared test file contributes no test methods; every EXPECTED_TEST_FILES "
+                    "entry must hold at least one",
+                )
+            )
+    if errors:
+        return errors
     return []
 
 
@@ -160,6 +178,21 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
                 f"doc-chain self-test ran {total} cases, below the required floor of "
                 f"{MIN_DOC_CHAIN_SELF_TEST_CASES}; shrinking the linter's self-test is a gate "
                 "change that requires explicit review",
+            )
+        ]
+    # Cross-check the summary against the output structure. The summary line is printed by the
+    # code under test, so reading M from it alone lets an inflated claim through: a mutated
+    # selftest printing "200/200" passed this gate (2026-10-26 audit G12). Each case prints
+    # exactly one "PASS <id>"/"FAIL <id>" line, so counting them is an independent witness.
+    # Case ids are not always plain digits — "12b" is a real one — so match the label loosely.
+    per_case = re.findall(r"^(?:PASS|FAIL) \S+ ", output, re.M)
+    if len(per_case) != total:
+        return [
+            ValidationError(
+                "doc_chain",
+                f"doc-chain self-test summary claims {total} cases but "
+                f"{len(per_case)} per-case result lines were printed; the summary cannot be "
+                "trusted on its own",
             )
         ]
     return []

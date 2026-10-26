@@ -34,10 +34,22 @@ if [ ! -f "tools/lab/validate.py" ]; then
   exit 0
 fi
 
-TARGETS="schemas examples artifacts protected manifests docs tests doc_chain doc_chain_live decision_gate"
+# 门清单是单源：直接解析 `validate.py --list` 的输出，而不是硬编码。任何一处新增/删除
+# 门项，脚本自动跟随，不再与 --list 双源（2026-10-26 审计 G24）。排除 all/installed/
+# lint/report/recurrence：all 是聚合、installed 读仓外内容不属于推送前树、lint 缺依赖
+# 记为未运行、后两者是只读表格不校验。
+REQUIRED_KINDS="all installed lint report recurrence"
+TARGETS="$(python3 tools/lab/validate.py --list \
+  | grep -vE 'all runs [0-9]+ checks' \
+  | while read -r kind; do
+      case " $REQUIRED_KINDS " in
+        *" $kind "*) ;;
+        *) echo "$kind" ;;
+      esac
+    done)"
 FAILED=""
 
-echo "pre-push: 跑门禁（$(git rev-parse --short HEAD)）"
+echo "pre-push: 跑门禁（$(git rev-parse --short HEAD)）：必绿项 $TARGETS"
 for target in $TARGETS; do
   if python3 tools/lab/validate.py "$target"; then
     :

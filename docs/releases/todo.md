@@ -26,6 +26,12 @@
 
 ## 零散微项
 
-- 当前无未关闭微项。历史微项（计划看板回写、`--case-ids` 复核、`check-write-scope.sh`「.」缺陷、
+- **写范围执法器（G08 / 2026-10-26 审核 P2）登记为「已知人工步骤，不自动接入」**：
+  `skills/agentflow/scripts/check-write-scope.sh` 只在 Supervisor 接受产物时手动运行
+  （硬边界 14），未接入 pre-push 或 CI。原因：`check-write-scope.sh:18-22` 自身要求
+  「委派时已 dirty 的路径需在阅读报告时人工扣除」，误报面（dirty 树上的无关变更）尚未评估，
+  贸然接入会阻断合法推送。等价于把 G08 从 P1 降为「已声明未缓释」。接入与否待用户拍板
+  （见 `../PENDING-DECISIONS.md`；若改接入，pre-push.sh / CI 改动 + 误报面评估属门变更，需授权）。
+- 历史微项（计划看板回写、`--case-ids` 复核、`check-write-scope.sh`「.」缺陷、
   schema description 汉化、`index-template.md` 去重、`host_adapter` 隔离认证、公开切片授权）
   均已在 2026-10-09–2026-10-22 期间关闭，证据见 `CHANGELOG.md` 与 git 历史。

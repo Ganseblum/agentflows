@@ -104,6 +104,37 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
     return errors
 
 
+def closure_claim_findings(label: str, text: str, resolve_roots: list[Path], marked: bool = False) -> list[str]:
+    """C25 — closure-claim residue: a marker-committed document must not still claim pending.
+
+    Opt-in. The `agentflow 链路收口` marker (carried by the batch README) is the document's
+    promise that the chain-closure read (gate 6) was actually performed; when `marked` is true,
+    every stage document scanned with that flag must be free of stale-time claims (STALE_WORDS)
+    whose target already exists on disk — that is precisely the rot gate 6 exists to catch, and
+    is what C12 checks elsewhere. `marked` is passed by the caller (the README carries the
+    marker, not each stage doc), so the function never decides opt-in for itself. Reuses
+    STALE_WORDS and the same link/backtick resolution as C12 so the two never disagree on what
+    "pending but here" means. A marked document without any stale claim, or one whose claimed
+    target is genuinely absent, passes.
+    """
+    if not marked:
+        return []
+    errors: list[str] = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if any(w in line for w in STALE_WORDS):
+            seen: set[str] = set()
+            for target in MD_LINK_RE.findall(line) + BT_PATH_RE.findall(line):
+                t = target.split("#", 1)[0].split("?", 1)[0].strip()
+                if not t or t in seen or t.startswith(("/", "http:", "https:", "mailto:")):
+                    continue
+                seen.add(t)
+                if any((root / t).is_file() for root in resolve_roots):
+                    errors.append(
+                        f"C25 链路收口: {label}:{i} 标记了收口却仍声称待产出但目标已存在: {t}"
+                    )
+    return errors
+
+
 def mermaid_blocks(text: str) -> list[str]:
     blocks: list[str] = []
     lines = text.splitlines()
@@ -515,6 +546,17 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
                 errors.append(f"C11 结构模板: {fname} 缺「评审前自检」章")
         if fe_files and "data-testid" not in fe_heads:
             errors.append("C11 结构模板: design/fe 缺 data-testid 可测性清单")
+
+    # C25 closure-claim (machine half of gate 6): if the batch README declares the closure
+    # marker, every stage document in the chain must be free of stale-time claims whose target
+    # already exists — the closure read was promised, so the rot it catches must be gone.
+    if readme.is_file() and CLOSURE_MARKER in all_text.get(readme, ""):
+        stage_files = sorted(
+            {f for stage in STAGE_DIRS for f in find_stage(md_files, feature_dir / stage)}
+        )
+        for f in stage_files:
+            rel = str(f.relative_to(feature_dir))
+            errors.extend(closure_claim_findings(rel, all_text[f], [f.parent, feature_dir], marked=True))
 
     # C12/C13/C14 chain-closure pass (machine-checkable part of closure gate 6): a stage document
     # must stay true over time, readable without the session that wrote it, and free of bare code
@@ -937,7 +979,13 @@ def evidence_carriers(cell: str, repo_root: Path, batch_dir: Path | None = None)
             continue
         if "@" in p or ":" in p:
             continue  # repo-qualified refs are handled above
-        if any(_ref_is_in_repo(r, p) is True and (r / p).exists() for r in roots):
+        # A path token counts as a carrier only when it resolves to a real FILE — a deliverable
+        # a third party can open and re-check. A directory (e.g. `./packaging/runtime`) is a
+        # *location*, not evidence the task was performed; accepting it let a ☑ row whose only
+        # evidence was a described source directory pass C23 with nothing verifiable on disk
+        # (2026-10-26 audit G05: PLAN-PRODUCT-001 T07). Commit shas, repo-qualified refs and
+        # explicit N/A still count as before.
+        if any(_ref_is_in_repo(r, p) is True and (r / p).is_file() for r in roots):
             kinds.append("仓内路径")
             break
     for sha in SHA_RE.findall(cell):
@@ -1138,7 +1186,12 @@ def repo_policy_findings(repo_root: Path) -> list[str]:
     for p in md_files:
         try:
             t = p.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
+        except OSError as exc:
+            # fail-closed: an unreadable file cannot be shown to be compliant. Skipping it
+            # silently made violations invisible exactly when the file was hardest to read
+            # (2026-10-26 audit G02: chmod 000 turned 8 C16 findings into PASS).
+            rel = p.relative_to(repo_root).as_posix()
+            errors.append(f"decision-gate: 无法读取 {rel}: {exc}")
             continue
         rel = p.relative_to(repo_root).as_posix()
         if DECISION_MARKER in t:

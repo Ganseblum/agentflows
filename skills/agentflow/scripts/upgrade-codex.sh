@@ -66,11 +66,22 @@ say "[1/4] 重建 packaging/runtime"
 if [ "$DRY_RUN" = "1" ]; then say "  (dry-run 跳过)"; else python3 "$REPO_ROOT/packaging/build_runtime.py"; fi
 
 say ""
-say "[2/4] 跑门槛（十项必绿；lint 缺 dev 依赖时记为未运行）"
+say "[2/4] 跑门槛（必绿项从 validate.py --list 解析；lint 缺 dev 依赖时记为未运行）"
 if [ "$DRY_RUN" = "1" ]; then
   say "  (dry-run 跳过)"
 else
-  for target in schemas examples artifacts protected manifests docs tests doc_chain doc_chain_live decision_gate; do
+  # 门清单单源：解析 `validate.py --list`，排除 all/installed/lint/report/recurrence
+  # （2026-10-26 审计 G24）。
+  REQUIRED_KINDS="all installed lint report recurrence"
+  TARGETS="$(python3 "$REPO_ROOT/tools/lab/validate.py" --list \
+    | grep -vE 'all runs [0-9]+ checks' \
+    | while read -r kind; do
+        case " $REQUIRED_KINDS " in
+          *" $kind "*) ;;
+          *) echo "$kind" ;;
+        esac
+      done)"
+  for target in $TARGETS; do
     if ! python3 "$REPO_ROOT/tools/lab/validate.py" "$target"; then
       fail "门禁红（${target}）——先在仓内修好再装进宿主"
     fi

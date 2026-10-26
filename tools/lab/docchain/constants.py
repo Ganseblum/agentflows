@@ -102,6 +102,16 @@ STALE_WORDS = ("待产出", "尚未产出", "待补充", "待生成")
 MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+\.md)\)")
 BT_PATH_RE = re.compile(r"`([^`\n]+\.md)`")
 
+# C25 closure-claim (the machine-checkable half of chain-closure gate 6, 2026-10-26 audit G06).
+# Gate 6 is the "read the whole chain end-to-end before declaring done" pass. It had a prose
+# definition and zero machine judgments — a dead clause. C25 turns its core promise into a
+# check: a document that declares the closure marker commits to having been read through, so it
+# must not still contain a stale-time claim (STALE_WORDS) whose target already exists on disk —
+# that residue is exactly the "claimed pending, but it's here" rot gate 6 exists to catch. The
+# marker is opt-in so the linter stays safe to run over the whole repo, and unmarked documents
+# are untouched (the prose definition in document-chain.md still governs them).
+CLOSURE_MARKER = "agentflow 链路收口"
+
 # C13 session role words: a formal document must be readable without the session that wrote
 # it. Case-insensitive process-role names plus the literal session-bound phrases seen in the
 # 2026-09-21 corpus (TD 开放问题 etc.).
