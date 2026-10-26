@@ -72,17 +72,28 @@ if [ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]; then
 fi
 
 # --- 4. 重建生成树 + 跑门（装之前必须绿）-------------------------------------
+# lint 需要 dev 依赖（ruff/mypy）。缺它们时门会 FAIL，但那属于「未运行」而不是失败——
+# 仓库自己的判据是「无法复现的检查记为未运行，绝不计为通过」。这里把 lint 单独拆出来跑，
+# 缺依赖时明确报「未运行」，其余十项照常判红。带 lint 的解释器由 AGENTFLOW_LINT_PYTHON 指定。
 say ""
 say "[1/5] 重建 packaging/runtime"
 if [ "$DRY_RUN" = "1" ]; then say "  (dry-run 跳过)"; else python3 "$REPO_ROOT/packaging/build_runtime.py"; fi
 
 say ""
-say "[2/5] 跑门槛（schema / examples / artifacts / protected / manifests / docs / tests / doc_chain / doc_chain_live / decision_gate）"
+say "[2/5] 跑门槛（其余十项必绿；lint 缺 dev 依赖时记为未运行）"
 if [ "$DRY_RUN" = "1" ]; then
   say "  (dry-run 跳过)"
 else
-  if ! python3 "$REPO_ROOT/tools/lab/validate.py" all; then
-    fail "门禁红——先在仓内修好再发版，不要带着红门装进宿主"
+  for target in schemas examples artifacts protected manifests docs tests doc_chain doc_chain_live decision_gate; do
+    if ! python3 "$REPO_ROOT/tools/lab/validate.py" "$target"; then
+      fail "门禁红（$target）——先在仓内修好再发版，不要带着红门装进宿主"
+    fi
+  done
+  LINT_PYTHON="${AGENTFLOW_LINT_PYTHON:-python3}"
+  if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
+    "$LINT_PYTHON" "$REPO_ROOT/tools/lab/validate.py" lint || fail "门禁红（lint）"
+  else
+    say "SKIP lint（未运行：当前解释器没有 ruff/mypy；用 AGENTFLOW_LINT_PYTHON 指向装好 dev 依赖的解释器可实跑）"
   fi
 fi
 
