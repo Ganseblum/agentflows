@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -119,6 +120,44 @@ def _drift(path: str, detail: str, hint: str) -> ValidationError:
     return ValidationError(path, f"{detail} — {hint}")
 
 
+def _runtime_tracking_errors(root: Path) -> list[ValidationError]:
+    """Require `packaging/runtime` to be tracked by git when the repo is a git checkout.
+
+    2026-10-26: the directory sat in `.gitignore`, so every GitHub clone lacked it while
+    `marketplace.json` pointed at `./packaging/runtime` — the git marketplace could not resolve
+    the plugin source and install failed with "Unsupported or missing plugin source". Freshness
+    alone could not catch this: an absent tree made the check skip (the fresh-checkout branch),
+    and the source tree itself looked healthy. Tracking is the property that matters for a
+    git-distributed plugin, so it gets its own assertion.
+    """
+    runtime = root / "packaging" / "runtime"
+    if not runtime.is_dir():
+        return []
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--error-unmatch", "packaging/runtime/plugin.json"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []  # no git available: the distributed-surface question cannot be answered here
+    if proc.returncode == 0:
+        return []
+    combined = (proc.stdout + proc.stderr).lower()
+    if "not a git repository" in combined:
+        return []  # running from an exported tree or a fixture copy
+    hint = "add packaging/runtime to version control (it is what the git marketplace installs)"
+    return [
+        _drift(
+            "packaging/runtime",
+            "the snapshot exists but is not tracked by git",
+            hint,
+        )
+    ]
+
+
 def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
     """Require the generated packaging/runtime snapshot to match the source surface.
 
@@ -132,6 +171,7 @@ def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
     runtime = root / "packaging" / "runtime"
     if not runtime.is_dir():
         return []
+    errors: list[ValidationError] = _runtime_tracking_errors(root)
     # Single source of truth for the whitelist: the builder decides what the snapshot contains,
     # so the freshness check must not grow its own copy of that list.
     packaging_dir = Path(__file__).resolve().parents[3] / "packaging"
@@ -140,7 +180,6 @@ def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
     import build_runtime
 
     hint = "packaging/runtime is stale — run `python3 packaging/build_runtime.py` to regenerate it"
-    errors: list[ValidationError] = []
 
     for name, pointer in MANIFEST_POINTERS:
         source_entry, source_errors = manifest_value(name, pointer, root)

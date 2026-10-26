@@ -34,23 +34,12 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 ## 当前成熟度
 
-版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。当前发布提供：
+版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->14<!-- /count -->个角色档案、六份记录契约 schema、Codex / Claude Code / ZCode 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
 
-- 一个共享的开发 Skill 与<!-- count:agents -->14<!-- /count -->个角色档案：前端/后端一对、Technical Director、
-  Reviewer、Investigator → Fixer → Recorder bug 链、Plan Architect、Test
-  Planner/Executor 链，以及改进环的 Feedback Analyst、Candidate Engineer、Evaluator 与
-  Release Governor；
-- 机器可读的记录契约 schema：bug 记录、计划、再犯分类、评审记录、测试计划与测试执行
-  （`schemas/`），以及 episode、候选与发布记录（`skills/improve/references/`）；
-- Codex、Claude Code、ZCode 与可移植的 Agent Plugin 清单。
+两条别处没有的边界说明：
 
-实现型角色声明显式的工具白名单（`Read, Glob, Grep, Write, Edit, Bash`），因此
-worker 不会通过该白名单获得宿主原生的委派工具或 MCP 工具。Bash
-仍遵循宿主的沙箱，且可能具备工具名未暗示的能力；网络隔离必须从宿主处核实，
-不得从这份清单推断。`bug-recorder` 只写 `docs/issues/` 下被显式指派的脱敏记录，
-`plan-architect` 只写批次 `plan/` 下被显式指派的计划。两个角色都不能关闭 bug、
-授权代码执行或发布 Plugin。Supervisor 必须检查产出的实际路径与验证证据，因为宿主
-不会对 `Write` 工具强制任意路径约束；见 [AGENTS.md](AGENTS.md)。
+- 实现型角色声明显式的工具白名单（`Read, Glob, Grep, Write, Edit, Bash`），宿主据此约束 worker 的工具面；Bash 仍遵循宿主的沙箱，且可能具备工具名未暗示的能力，网络隔离必须从宿主处核实，不得从这份清单推断。
+- 独立的 Execution Coordinator 预留给未来的持久控制面——该角色当前不存在，不是可委派能力，不得写进委派简报。
 
 候选门面——evaluator 与 governor 角色文件、测量路径（digest / isolation）、发布规则、
 `schemas/` 下的记录 schema、钉住的回归测试，以及清单本身——在
@@ -77,23 +66,24 @@ examples、记录产物、受保护清单、五份 manifest 一致性（含 `pac
 不确定、反复出现、跨层或高风险的 bug，使用完整的
 Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现的小型低风险 bug，
 Supervisor 可以合并诊断或记录环节，同时保持同样的证据门。Plan Architect 写计划；
-Supervisor 授权并协调执行。独立的 Execution Coordinator 预留给未来的持久控制面——该角色当前不存在，不是可委派的能力，不得写进委派简报。
+Supervisor 授权并协调执行。
 
-改进工作流是一个受治理的骨架。用 `python3 tools/lab/record_store.py index` 构建一次性的
-SQLite FTS5 词法索引，再用 `query` 做显式检索；源记录保持权威，且不使用向量数据库。跨会话遥测、持久
-检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现。人工批准是默认的发布边界。
+改进工作流是一个受治理的骨架：会话收口先落 episode，Feedback Analyst 归一化证据，
+Candidate Engineer 在 candidate worktree 里实现单个候选，`isolation.py check-diff` 对照冻结
+parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审，最终由人批准。跨会话
+遥测、持久检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现；人工批准是默认的
+发布边界。检索是一次性的 SQLite FTS5 词法索引（`record_store.py`），源记录保持权威，
+不使用向量数据库。完整流程与两条诚实规则见
+[`docs/system-guide.md`](docs/system-guide.md) §5。
 
-工作区包含一组确定性的门与工具（`tools/lab/`）：一个契约与记录校验器
-`validate.py`（全套检查，项数与内容以 `python3 tools/lab/validate.py --list` 为准；
-另加安装快照漂移检查 `installed`；检查函数
-均已拆入 `tools/lab/gate/` 模块包，`validate.py` 保留为薄入口）、一个文档链
-linter（`doc_chain.py`）、一个候选禁区检查（`isolation.py check-diff`）与一个
-产物摘要工具（`artifact_digest.py`）；`record_store.py` 提供记录的一次性 SQLite FTS5
-词法检索，`trend.py` 把改进环已有的信号（再犯档位、活面发现数、评审发现数、套件规模）
-追加记录到 `docs/trend.jsonl`，`counts.py` 核对文档里的计数标记，`mutate.py` 对门自身
-做变异测试。真实模型 dogfood、私有 holdout 服务与安装/发布切换
-仍在有意待办；评测装置已于 2026-10-12 裁撤（见
-[`docs/design-decisions.md`](docs/design-decisions.md) §3）。
+工作区包含一组确定性的门与工具（`tools/lab/`）：契约与记录校验器 `validate.py`
+（全套检查，项数与内容以 `python3 tools/lab/validate.py --list` 为准；另加安装快照漂移检查
+`installed`；检查函数均已拆入 `tools/lab/gate/` 模块包，`validate.py` 保留为薄入口）、
+文档链 linter（`doc_chain.py`）、候选禁区检查（`isolation.py check-diff`）与产物摘要工具
+（`artifact_digest.py`）。逐项管什么、失败时第一反应是什么，见
+[`docs/system-guide.md`](docs/system-guide.md) §7 与 [`tools/lab/README.md`](tools/lab/README.md)；
+真实模型 dogfood、私有 holdout 服务与安装/发布切换仍在有意待办；评测装置已于 2026-10-12
+裁撤（见 [`docs/design-decisions.md`](docs/design-decisions.md) §3）。
 
 ## 仓库布局
 
