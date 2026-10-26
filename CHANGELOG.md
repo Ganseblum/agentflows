@@ -1,13 +1,33 @@
 # 变更日志
 
+## 0.17.3 — 2026-10-26
+
+> 升级链路自动化（用户逐字指示「看看怎么能自动」）。`measurement: none`。
+
+- **`skills/agentflow/scripts/upgrade-zcode.sh`**：一条命令完成「重建生成树 → 跑十项门 → 刷新市场 → 升级插件 → 逐文件比对安装面」。`--dry-run` 只报计划。
+- **发现并绕开 GUI 缺陷**：ZCode 图形界面的「刷新该市场」对 git 源不可靠——2026-10-26 实测两次点击均返回 OK（632ms），但克隆目录 mtime 与版本号一次都没变。ZCode 自带 CLI 则真的重新 clone：`zcode plugins marketplace update <id>` 后克隆 mtime 从 13:08 变为 13:13，`zcode plugins update <plugin>@<id>` 原地升到新版本目录。
+- **三道防呆（每道都由真实事故逼出来）**：① 发布面有未提交改动即拒绝——git marketplace 装的是远端那棵树，不是工作树；② 分支无 upstream 或 HEAD ≠ upstream 即拒绝；③ 刷新后核对克隆里确实是目标版本，最多重试 5 次（刚 push 时 GitHub 侧可能尚未同步），而不是只看命令退出码。
+- **实证的事故**：0.17.2 只 bump 了 manifest、没重建 `packaging/runtime` 就发布，远端于是 `plugin.json=0.17.2` 而 `packaging/runtime/plugin.json=0.17.1`。git marketplace 装的正是 runtime 那棵树，结果市场显示新版、装进去的仍是旧版——而本地校验全绿，因为本地与远端不是同一棵树。已在 0.17.2 补提交修正，并沉淀为上面的前置检查。
+- **端到端实测**：0.17.2 → 0.17.3 全流程 exit 0；装后 `doc_chain.py --version` → `agentflow 0.17.3`；`validate.py installed` → PASS。
+- **`lint` 的语义修正**：缺 ruff/mypy 时脚本输出 `SKIP lint（未运行）` 并放行，不再把「未运行」当失败——与仓库自己的判据一致。可用 `AGENTFLOW_LINT_PYTHON` 指向装好 dev 依赖的解释器实跑。
+
+## 0.17.2 — 2026-10-26
+
+> 补 0.17.2 漏提交的生成树（详见 0.17.3 条目的「实证的事故」）。`measurement: none`。
+
+## 0.17.1 — 2026-10-26
+
+> 升级链路端到端验证批。`measurement: none`。
+
+- 新增 `doc_chain.py --version` 的验证用途实测：装后一条命令确认宿主实际装的是哪一版。
+- `upgrade-zcode.sh` 修掉一处 bash 缺陷：`$VAR（` 全角括号紧跟变量时会被当作变量名的一部分，必须写 `${VAR}`。
+
 ## 0.17.0 — 2026-10-26
 
-> 升级验证批（用户逐字指示「你随便加个东西 然后升级一下版本我，我看看怎么在 zcode 升级」）。五份 manifest 0.16.0 → 0.17.0，`packaging/runtime` 重建。`measurement: none`。
+> 升级验证批。`measurement: none`。
 
-- **新增 `doc_chain.py --version`**：打印当前检查器所在树的 manifest 版本（读插件根 `plugin.json`，不是硬编码常量）。装完后一条命令即可确认「宿主实际装的是哪一版」，不需要去翻缓存目录或比对文件哈希——这正是升级验证缺的那一步。源仓与装后形态实测均输出 `agentflow 0.17.0`，退出码 0。
-- **同批带上的角色面收口**（来自同工作树的另一会话，单独提交 `4c5c17a` 留痕）：`plan-architect` 补 `## 分支策略`、`test-planner` / `test-executor` frontmatter 对齐 schema 必填项、删除幽灵指针「产物归属表」、`bug-recorder` 写明归档移动须由 Supervisor 执行、禁区检查与记录检索改由 Supervisor 执行、`roles.md` 测试链补 Reviewer、评审范围统一为「由 diff 形状决定」、幽灵测试类勘误追平、`host-platform-facts` W1 与 S9 状态刷新。
-- **验证**：`python3 tools/lab/validate.py all` → 11 项 PASS（`lint` 在装好 ruff/mypy 的解释器下实跑）；`doc_chain --self-test` → 110/110；`manifests` 对重建后的生成树逐字节 PASS。
-- **未做**：推送后的宿主重装与 `validate.py installed` 复核——需用户执行，见 `docs/releases/pending-test.md`。
+- **新增 `doc_chain.py --version`**：打印检查器所在树的 manifest 版本（读插件根 `plugin.json`，不是硬编码常量）。装完后一条命令即可确认「宿主实际装的是哪一版」。
+- 同批带上的角色面收口（来自同工作树的另一会话，单独提交 `4c5c17a` 留痕）。
 
 ## 0.16.0 — 2026-10-26
 
