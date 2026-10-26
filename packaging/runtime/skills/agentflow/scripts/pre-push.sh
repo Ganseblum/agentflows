@@ -38,15 +38,13 @@ fi
 # 门项，脚本自动跟随，不再与 --list 双源（2026-10-26 审计 G24）。排除 all/installed/
 # lint/report/recurrence：all 是聚合、installed 读仓外内容不属于推送前树、lint 缺依赖
 # 记为未运行、后两者是只读表格不校验。
-REQUIRED_KINDS="all installed lint report recurrence"
+#
+# 用 grep -vxE 做整词排除（而非 while read + case）：`set -u` 下未绑定变量 `kind` 会让
+# 命令替换里的 while 循环崩溃，从而拦下每一次推送（2026-10-26 G24 回归，本批修）。
 TARGETS="$(python3 tools/lab/validate.py --list \
   | grep -vE 'all runs [0-9]+ checks' \
-  | while read -r kind; do
-      case " $REQUIRED_KINDS " in
-        *" $kind "*) ;;
-        *) echo "$kind" ;;
-      esac
-    done)"
+  | grep -vxE 'all|installed|lint|report|recurrence' \
+  | tr '\n' ' ')"
 FAILED=""
 
 echo "pre-push: 跑门禁（$(git rev-parse --short HEAD)）：必绿项 $TARGETS"
