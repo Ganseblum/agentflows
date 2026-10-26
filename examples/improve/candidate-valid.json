@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "candidate_version": "0.18.3",
+  "parent_version": "0.18.2",
+  "source_revision": "ef7da3f",
+  "artifact_digest": "sha256:47d5c7ceb53719f1351023f0f38ed91cffa25fb5aac63241df834c94779bcf18",
+  "hypothesis": "将 closure_criteria 的源行号改为条款名 + 路径，使验证声明不再随引用文件编辑悄悄过期",
+  "evidence_ids": ["ISS-2026-030", "ISS-2026-038"],
+  "changed_components": ["tools/lab/gate/records.py", "docs/issues/ISS-2026-030-先写契约后核实平台约定.md"],
+  "risk_class": "low",
+  "primary_metrics": ["verified 记录 closure_criteria 行号引用数 = 0"],
+  "guardrails": ["gate 改动仅限 records.py 一行弱校验，不动 schema 闭集", "所有引用行号记录已转为条款名 + 路径"],
+  "rejection_criteria": ["records.py 改动引入新的必填字段导致历史 verified 记录批量红"],
+  "protected_slices": ["schemas/bug-record.schema.json", "protected-paths.txt"]
+}

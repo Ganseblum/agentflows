@@ -25,7 +25,7 @@ Skill 直接链接到它们；校验器加载两处位置，并检查单份 JSON
 本目录曾另有评测装置契约（公开用例夹具、runner、宿主 adapter 与 policy 引擎），随 2026-10-12
 评测装置整线裁撤删除：`evals/`、`eval_runner.py` / `host_adapter.py` / `policy.py`、
 `adapter-protocol.md`，以及 `eval-case.schema.json` 等三个 schema。留存的可复用设计知识与恢复
-清单见 [`docs/design-decisions.md`](../docs/design-decisions.md) §3——恢复仪器化时按该清单重建，
+清单见 `docs/design-decisions.md` §3——恢复仪器化时按该清单重建，
 包括重新引入的用例/对照契约。在此之前的改进环方法级改动一律 `measurement: none` 口径。
 
 这些契约描述证据与执行计划。计划本身不构成修改代码或发布插件的授权。

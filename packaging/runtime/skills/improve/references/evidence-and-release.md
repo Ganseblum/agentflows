@@ -106,7 +106,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 [release-record.schema.json](release-record.schema.json)（以上两份契约文件仍在）。
 **冻结用例与对照结果的原契约（`eval-case.schema.json`、`comparison.schema.json`）已随
 2026-10-12 评测装置裁撤删除**——本轮及以后的方法级改动一律 `measurement: none`；恢复仪器化时
-按 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3 的重建清单一并恢复契约
+按 `docs/design-decisions.md` §3 的重建清单一并恢复契约
 （届时 `baseline_results` / `candidate_results` 再次成为 `measurement: complete` 的必填项，
 晋升也重新要求 `evaluation_result: better`）。
 
@@ -115,7 +115,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 ## 评测隔离（恢复仪器化后适用）
 
 评测套件与隔离 runner 已随 2026-10-12 装置裁撤，本节条款当前无对照面可挂载——留存为恢复
-仪器化时的施工要求（重建清单见 [`docs/design-decisions.md`](../../../docs/design-decisions.md) §3）。
+仪器化时的施工要求（重建清单见 `docs/design-decisions.md` §3）。
 恢复后：
 
 - 在实现候选之前定义评分标准与阈值。
@@ -153,7 +153,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
 记成已验证的改进，本环最不该犯的错。这一条与 [release-record.schema.json](release-record.schema.json)
 的 `allOf` 分支、`skills/improve/SKILL.md` 的「度量范围与晋升规则」段逐字一致。
 
-提示词措辞与角色描述在流程被证明之后可以取得 canary 资格。权限、工具、hook、MCP、evaluator 规则、发布规则与自动阈值保持人工把门。
+提示词措辞与角色描述在流程被证明之后可以取得 canary 资格。权限、工具、hook、MCP、evaluator 规则、发布规则与自动阈值保持人工把门。**注意当前装置下 canary 与 automatic 均不可达**（2026-10-26 审核 G07）：无自动监控/回滚执行面，且 `automatic` 要求 `evaluation_result: better` 而 `measurement: none` 结构上禁止它——详见 `SKILL.md` 的晋级模式注。
 
 ## 版本与回滚
 

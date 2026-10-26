@@ -153,6 +153,7 @@ INSTALLED_COMPONENTS = ("agents", "skills")
 INSTALLED_FILES = (
     "plugin.json",
     "marketplace.json",
+    "protected-paths.txt",
     ".zcode-plugin/plugin.json",
     ".claude-plugin/plugin.json",
     ".codex-plugin/plugin.json",

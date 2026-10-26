@@ -27,14 +27,14 @@
 ☑ spec/qa 已起草（`spec/qa/acceptance.md`），判据预先写定，未经实验验证
 
 ### 3. 需求评审 [门禁]
-☐ 待独立评审勾选；阻塞项 Q-01、Q-03 已于 2026-10-19 拍板关闭
+☑ 已独立评审（`reviews/review-2026-10-19-001.md` 门禁改动 approved、`reviews/review-2026-10-19-002.md` 受保护面回溯 approved）；阻塞项 Q-01、Q-03 已于 2026-10-19 拍板关闭
 
 ### 4. Design [按角色]
 ☑ design/be 已起草（`design/be/backend.md`）
 ☑ design/qa 已起草（`design/qa/testing.md`）
 
 ### 5. 技术方案评审 [门禁]
-☐ 待独立评审；前置为需求评审门
+☑ 已独立评审（`reviews/review-2026-10-19-001.md` approved）；前置需求评审门已勾选
 
 ### 6. Plan [执行契约]
 ☑ 已执行（`plan/PLAN-QUALITY-001.md`，T01–T09 已闭；T10 本期不做；状态见计划看板）

@@ -19,7 +19,7 @@ occurrence: "2"
 updated_at: 2026-10-19T21:45:00+08:00
 reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
 review_decision: approved
-closure_criteria: document-chain.md:318-322 信号完整性节 + EP-20260921-001.json signals[0] 证伪修订前缀 + recurrence/unverified-behavior-claims.md occurrences 含 ISS-2026-039 三者grep/读档可验；doc_chain.py --self-test 63/63 退出 0；validate.py all 9 项 PASS 退出 0。
+closure_criteria: document-chain.md「信号完整性」节 + EP-20260921-001.json signals[0] 证伪修订前缀 + recurrence/unverified-behavior-claims.md occurrences 含 ISS-2026-039 三者grep/读档可验；doc_chain.py --self-test 63/63 退出 0；validate.py all 9 项 PASS 退出 0。
 ---
 
 ## 现象

@@ -19,7 +19,7 @@ occurrence: "2"
 updated_at: 2026-10-19T21:45:00+08:00
 reviewer: agentflow:reviewer（2026-10-19 独立批量复审）
 review_decision: approved
-closure_criteria: document-chain.md:291-293 存在性≠形态条款 + skills/agentflow/templates/feature/design/be/backend.md:60 与 skills/agentflow/templates/feature/design/fe/frontend.md:95 宽表格塞列不合格形态 grep 在场；doc_chain.py --self-test 63/63 退出 0；unittest OK；validate.py all 9 项 PASS 退出 0。
+closure_criteria: document-chain.md「存在性检查≠形态标准」条款 + skills/agentflow/templates/feature/design/be/backend.md「字段级契约」节 与 skills/agentflow/templates/feature/design/fe/frontend.md「字段级契约」节（宽表格塞列不合格形态）grep 在场；doc_chain.py --self-test 63/63 退出 0；unittest OK；validate.py all 9 项 PASS 退出 0。
 ---
 
 ## 现象

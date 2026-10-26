@@ -1,5 +1,12 @@
 # 变更日志
 
+## 0.18.3 — 2026-10-26
+
+> 2026-10-26 整体审核的吸收批（[审核报告](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)）。`measurement: none`。
+
+- **`skills/agentflow/references/repo-audit.md`（新增）**：仓库整体审核契约——七种档位、十三条铁律、维度适配（通用七维 + 「阻断机制审」+ 三维按项目形态换对象 + 业务仓追加维 + 不适用维度不进分母）、单文件输出骨架（附录 C 覆盖与证据、附录 D 评分卡）。SKILL 新增「仓库整体审核」一节指向它。契约吸收了本轮三条实证教训：产物**单文件承载**（三份拆开制造了双源漂移）、**产物自身要过目标仓的门**（契约写进 `references/` 后被 C13 拦下 4 处会话角色词）、**派发前先核实任务书里的引用**（主审在任务书写「README 自承」，实际在 `host-platform-facts.md` C7 行）。
+- **`lint` 口径的适用范围勘误**（审核 G01）：0.17.3 与 0.18.2 两条写的「缺 ruff/mypy 时输出 `SKIP lint（未运行）` 并放行，可用 `AGENTFLOW_LINT_PYTHON` 实跑」**只在 4 个 shell 脚本（`pre-push.sh`/`publish.sh`/`upgrade-codex.sh`/`upgrade-zcode.sh`）里成立**。`tools/lab/validate.py` 本身没有 `AGENTFLOW_LINT_PYTHON` 代码路径、没有 SKIP 分支——缺依赖即 `FAIL lint` + 退出码 1，这是**有意的 fail-closed**。两个口径各自诚实：脚本侧按「未运行 ≠ 失败」放行推送，门侧按「缺工具即红」拦住直跑。本次不改 `validate.py` 的行为（改它属门变更且会削弱 fail-closed），只把适用范围写准，并在 README 的环境注记里同步（G22）。
+
 ## 0.18.2 — 2026-10-26
 
 > 推送前门禁（用户选定方案 A：装 pre-push hook，只跑门禁、不碰宿主）。`measurement: none`。

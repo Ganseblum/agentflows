@@ -98,7 +98,10 @@ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 `awk -F'\t' '$7=="agentflow"'` 过滤。
 
 归档规则：`rejected` 记录必须移入 `docs/issues/归档/<same-date-dir>/`；`verified` 记录原地保留
-作为参考。
+作为参考。`rejected` 记录若仍留在 `docs/issues/` 根目录，`validate.py artifacts` 会 FAIL（目录结构约束：
+`docs/issues/README.md:100` 的规则由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，已在 2026-10-26
+`/tmp` 副本演练确认：根目录留 `rejected` → FAIL、移入 `归档/<date>/` → PASS）；`归档/` 目录当前 0 条记录，
+故尚不存在，首个 `rejected` 记录创建时随其日期目录生成。
 
 ## 再犯台账
 

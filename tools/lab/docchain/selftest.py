@@ -253,6 +253,36 @@ def self_test() -> int:
     run_case("26 C12 stale backtick path with an absent target does NOT trip", 0, ["PASS doc-chain"],
              add_stale_backtick_absent, results)
 
+    # --- C25 closure-claim (gate 6's machine half, 2026-10-26 audit G06). The batch README
+    # declares `agentflow 链路收口`; the closure read was promised, so a stage doc must not
+    # still carry a stale-time claim whose target exists. Three cases: a marked chain with a
+    # rotted claim trips C25; a marked chain with an honest (absent-target) claim passes; an
+    # unmarked chain with the same rotted claim is untouched by C25 (the prose gate 6 still
+    # governs it, but C25 is opt-in so it must not fire uninvited). ---
+    def add_closure_marker(f):
+        return rep(f, "README.md", "## 技术方案评审门\n",
+                   "## 技术方案评审门\n\nagentflow 链路收口\n")
+    def add_closure_stale_existing(f):
+        # stale claim pointing at a file that exists in the fixture (design/be/b.md)
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n接口契约 [A1](design/be/b.md) 待产出\n")
+    run_case("103 C25 marked chain with a rotted stale claim trips C25", 1,
+             ["C25 链路收口: spec/s.md", "标记了收口却仍声称待产出但目标已存在: design/be/b.md"],
+             lambda f: add_closure_marker(add_closure_stale_existing(f)), results)
+    def add_closure_stale_absent(f):
+        # same claim words but the target genuinely does not exist — honest pending claim
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n验收脚本 [QA](./qa-check.md) 待补充\n")
+    run_case("104 C25 marked chain with an absent-target claim does NOT trip C25", 0,
+             ["PASS doc-chain"], lambda f: add_closure_marker(add_closure_stale_absent(f)), results)
+    def add_unmarked_stale_absent(f):
+        # same absent-target (honest) claim as 104, but NO closure marker — proves C25 is
+        # opt-in: it must stay silent on an unmarked chain even though the claim words appear.
+        return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
+                   "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n验收脚本 [QA](./qa-check.md) 待补充\n")
+    run_case("105 C25 unmarked chain with a pending claim does NOT trip C25 (opt-in)", 0,
+             ["PASS doc-chain"], add_unmarked_stale_absent, results)
+
     # --- C14 bare code subjects + --file mode. C15 (schema words in prose) is deliberately
     # NOT implemented — the closed-set heuristic flooded a real reviewed chain's legend rows;
     # case 34 pins that boundary. See the note at CODE_SUBJECT_RE for the full trade. ---
@@ -542,7 +572,29 @@ def self_test() -> int:
                   {"docs/features/batch-a/README.md":
                    "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD
                    + "| ISS-2026-001-x | T01 | 收尾 |\n"},
-                  with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+                   with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+
+    # --- Unreadable marker file must not pass silently (2026-10-26 audit G02). The old
+    # `except OSError: continue` turned a violating-but-unreadable decision record into a
+    # PASS: chmod 000 flipped 8 C16 findings to zero.
+    def _dec_violating() -> str:
+        return dec_file(DEC_HEAD + DEC_GOOD_ROW.replace("| 批次 T01 |", "|  |"))
+
+    def _unreadable_findings() -> list[str]:
+        import tempfile
+
+        d = Path(tempfile.mkdtemp()) / "repo"
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / "examples" / "d.md"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(_dec_violating(), encoding="utf-8")
+        p.chmod(0o000)
+        return repo_policy_findings(d)
+
+    errs_unreadable = _unreadable_findings()
+    results.append(("111 unreadable violating decision record is reported, not skipped",
+                    len(errs_unreadable) >= 1
+                    and any("无法读取" in e for e in errs_unreadable)))
 
     # --- C9 dialect / 落点基准 and C19-C21 (2026-10-21 gate change, user-authorized).
     # Cases 73-84 pin: the bare-glyph status dialect (aligned with gate/plan.py's first-char
@@ -869,6 +921,21 @@ def self_test() -> int:
         return f
     run_case("106 C23 verifies a ref qualified with this repo's own name instead of waving it through", 1,
              ["C23 证据在场", "T01"], m_evid_self_repo_ref, results)
+
+    # C23 reverse judgment (2026-10-26 audit G05): a path token that resolves to a DIRECTORY is
+    # a location, not a verifiable artifact, so it must not alone satisfy C23. The fixture's only
+    # evidence names an existing directory (the batch root itself) — it must trip.
+    def m_evid_dir_token(f):
+        f.update(trace_files(evidence="见 `docs/features` 目录下的产物"))
+        return f
+    run_case("107 C23 a ☑ row whose only evidence is a directory path trips (location != proof)", 1,
+             ["C23 证据在场", "T01"], m_evid_dir_token, results)
+    def m_evid_file_token(f):
+        # the same wording but pointing at a real FILE (the deliverable) passes
+        f.update(trace_files(evidence="见 `migrations/x.sql` 落盘"))
+        return f
+    run_case("108 C23 a ☑ row pointing at a real deliverable file is a valid carrier", 0,
+             ["PASS doc-chain"], m_evid_file_token, results)
 
     def m_ft_task_id(f):
         # C9 的任务号方言：FT 前缀与一两位数字都必须合法（曾被 C22 的同名常量遮蔽）

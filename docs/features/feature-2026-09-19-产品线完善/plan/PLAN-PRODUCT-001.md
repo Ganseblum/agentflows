@@ -19,7 +19,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 
 ## 进展概览
 
-**本期进度**：**7 / 12 已完成** · **1 进行中** · **0 阻塞** · **1 未开始** · **3 本期不做**（T10、T11、T12）
+**本期进度**：**7 / 14 已完成** · **1 进行中** · **0 阻塞** · **1 未开始** · **5 本期不做**（T10–T14）
 **统计口径**：按任务表 T01–T12 逐行计数（12 项：☑7 / ◐1 / ☐1 / —3）；T13–T14 同为本期不做，不计入上述分母。概览表前两行是已经发生的事实（架构拍板 + 噪声底离线），对应任务格只有 T01。
 （2026-10-10 回写：T04/T05 按实况置完成——版本与提交已随后续批次发生；T02 置进行中——端点复测通过、试水实跑启动。2026-10-13 复核：T06 状态由「未开始」改为「进行中」，T10/T12 因 `host_adapter.py` 已删除改为「本期不做」。2026-10-22 回写：T06 安装快照已同步到 0.12.0，`installed` PASS，置完成。）
 
@@ -98,7 +98,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 | `T04` | 源码版本 bump 与 CHANGELOG：记下门变更与 `measurement: none`（live 未出前不得写成已验证改进） | P1 | 五份 manifest、`CHANGELOG.md`（待核实：原 `docs/iteration-log.md` 已删） | `T03` | ☑ 已完成 |  由后续发布批覆盖（0.8.2–0.10.0 均完成 bump + CHANGELOG 且 `measurement: none`）；本批相关的 `--case-ids` 条目缺口经 2026-10-10 复核确认并按书面豁免（不改写历史条目）；2026-10-10 `CHANGELOG`「待发布」节已含新批 ｜N/A: 本行的可复核载体是发布史，落点为 `CHANGELOG.md` 与 git 历史；本行不重复抄录其内容 |
 | `T05` | 用户授权后再提交本批；默认不 push | P1 | 待核实（无固定代码落点：提交步骤） | `T03` | ☑ 已完成 | 用户授权提交：3f902a3（PLAN-LOOP-SMOKE-001 T01 的 `--case-ids` 门变更）/ 4543b69（PLAN-PRODUCT-001 打包批）（2026-09-19）及后续批次（4ae68bd、4c767eb 等）均已落地。a6fd485 为 PLAN-PY-GUARD-001 的解释器守卫修复（`validate.py`），与本批无关，已移出本批归属（2026-10-13 更正） |
 | `T06` | 刷新 marketplace 重装，使安装快照与源码版本一致 | P1 | 待核实（安装快照位于宿主缓存，不在仓库内） | `T04` | ☑ 已完成 | 2026-10-22 复核：ZCode 缓存已有 `0.12.0` 快照，`PYTHONDONTWRITEBYTECODE=1 python3 -B tools/lab/validate.py installed` → PASS（exit 0）；`manifests` → PASS。2026-10-13 记录的 0.10.0 差异已随 0.11.0/0.12.0 重装闭合 |
-| `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `source`=`./packaging/runtime`；生成树仅含运行时面，`docs/`、`episodes/`、`reviews/`、`tests/`、`tools/`、`evals/` 均排除；独立评审 `approved`；评审后补目的地禁写源码树 |
+| `T07` | 产品打包：运行时（skills/agents/manifest）与实验室（tools/evals/tests/docs 审计）分开，消除整目录快照死重 | P1 | `packaging/build_runtime.py`、`marketplace.json` | `T01` | ☑ 已完成 | `packaging/build_runtime.py` 定义运行时面与排除项（`RUNTIME_DIRECTORIES`/`RUNTIME_FILES`/`FORBIDDEN_TOP_LEVEL`）；`N/A: 生成的 ./packaging/runtime 是构建产物，其存在性与链接新鲜度由 manifests 检查 RUNTIME_FILES 与 doc_chain G15 覆盖，本行不重复承载` |
 | `T08` | 默认路径缩短：Skill 强调只启用有工作的角色；14 角色留作可选能力 | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | `T01` | ☑ 已完成 |  Bind 段不再枚举 14 个 `agentflow:*`；独立评审 `approved`；`validate.py docs` PASS；ZCode 重装提示保留 ｜载体补充（2026-10-23 C23 回写）：触发面文本落 `skills/agentflow/SKILL.md`（绑定宿主节）与 `skills/agentflow/references/roles.md`（路由表）；快照状态以 `python3 tools/lab/validate.py installed` 复跑为准 |
 | `T09` | 日常 Intake 显式检索再犯类（FTS5）；不作为向量 RAG | P2 | `skills/agentflow/SKILL.md`、`tools/lab/record_store.py` | `T02` | ☐ 未开始 | 适合噪声底之后的第一个真假设候选 |
 | `T10` | ZCode 评测适配器（本机已在用 marketplace，无 adapter） | P2 | `tools/lab/host_adapter.py`（已失对象：随 ISS-2026-052 删除，见 `docs/design-decisions.md` §3） | `T02` | — 本期不做 | 已失对象（2026-10-13）：无替代，评测装置整线删除；原「门变更，需人审」议题一并取消 |

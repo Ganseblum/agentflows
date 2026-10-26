@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "schema_version": 1,
+    "candidate_version": "0.18.3",
+    "parent_version": "0.18.2",
+    "source_revision": "ef7da3f",
+    "artifact_digest": "sha256:47d5c7ceb53719f1351023f0f38ed91cffa25fb5aac63241df834c94779bcf18",
+    "hypothesis": "反例：measurement:none 下仍声称 better——该声称在 2026-10-12 装置裁撤后结构上不可能成立",
+    "evidence_ids": ["ISS-2026-030"],
+    "changed_components": ["tools/lab/gate/records.py"],
+    "risk_class": "low",
+    "primary_metrics": ["verified 记录 closure_criteria 行号引用数 = 0"],
+    "guardrails": ["不动 schema 闭集"],
+    "rejection_criteria": ["历史 verified 记录批量红"],
+    "protected_slices": ["schemas/bug-record.schema.json"]
+  },
+  "measurement": {
+    "status": "none",
+    "basis": "human review: reviewer approved"
+  },
+  "evaluation_result": "better",
+  "decision": "promote",
+  "approvals": [
+    {
+      "actor": "agentflow:release-governor",
+      "decision": "approved",
+      "evidence_ref": "reviews/review-2026-10-19-001.md",
+      "recorded_at": "2026-10-26T18:00:00+08:00"
+    }
+  ],
+  "rollout": {
+    "mode": "human-gated"
+  },
+  "rollback_to": "0.18.2"
+}
