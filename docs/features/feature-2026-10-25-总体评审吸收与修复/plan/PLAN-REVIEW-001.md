@@ -15,7 +15,7 @@ recorded_at: 2026-10-25T16:23:53+08:00
 
 ## 进展概览
 
-- 总任务 26 项：☐ 26 项未开始。其中受保护路径任务 12 项（T01 至 T09、T12、T16、T17——触
+- 总任务 30 项：☐ 30 项未开始。其中受保护路径任务 13 项（T01 至 T09、T12、T16、T17、T29——触
   `tools/lab/` 或 `packaging/`，属门变更，需显式人工评审授权）；删除类任务 5 项（T18 至 T22，打包
   等 Q-04）；出提案不实施 2 项（T25、T26 部分）。
 - 三视角概览：
@@ -71,6 +71,10 @@ recorded_at: 2026-10-25T16:23:53+08:00
 | T24 | 最小必读面瘦身：四文件（skill + roles + contracts + reviewer，现 587 行）压到 ≤350 行——去重以引用代替复述、「分派前必读」改「按链必读」；方案先出，Q-05 拍板后实施 | P2 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md` | — | ☐ 未开始 | — |
 | T25 | 文档链默认档改轻提案：默认「一页提案 + 验收判据 + 计划看板」，全链为按需启用加强档；本任务只产提案文本（Q-02 拍板后另批实施） | P2 | `skills/agentflow/references/document-chain.md` | — | ☐ 未开始 | — |
 | T26 | 改进环处置落地：按 Q-03（即 `docs/PENDING-DECISIONS.md` 第 10 条）拍板结果执行冻结 / 裁撤 / 保留；裁撤时设计知识留 `docs/design-decisions.md` §3，恢复清单口径不变 | P2 | `skills/improve/SKILL.md`、`agents/evaluator.md`、`agents/release-governor.md`、`agents/feedback-analyst.md`、`agents/candidate-engineer.md` | — | ☐ 未开始 | — |
+| T27 | 决策登记册改只追加（D8 Tier 0/1）：`docs/PENDING-DECISIONS.md` 第 7 行规则改为「只追加、永不移出」，条目加 `DEC-<YYYY>-<NNN>` 前缀与修订链 r1…rN、终态三分（superseded / withdrawn / deferred）、`equivalent_to`；新增 `tools/lab/decisions.py view` 生成未决视图，撤销手工搬行 | P0 | `docs/PENDING-DECISIONS.md`；待核实（本批新建）：`tools/lab/decisions.py`、决策台账 schema | — | ☐ 未开始 | — |
+| T28 | 下游声明依赖（D8 Tier 2）：批次 README 与阶段文档 frontmatter 支持 `decision_deps: [{id, rev}]` 或 `{id, invariant}`；文档链契约补该字段口径与「立账门槛」两条判据 | P1 | `skills/agentflow/references/document-chain.md`、待核实（本批新建）：`tools/lab/docchain/constants.py` 的依赖字段口径 | T27 | ☐ 未开始 | — |
+| T29 | 横向检查（D8 Tier 3）：`tools/lab/decisions.py check` 扫全仓 frontmatter 算反向索引，只报真正受影响的文档（钉 r2 报红；钉 r1 且新版 `equivalent_to: r1` 保持绿）；每条只能「改文本并升版本」或「登记 `stale_reason` + 复核日期」；补正例、破坏例、不误伤例三组夹具（受保护，门变更） | P0 | 待核实（本批新建）：`tools/lab/decisions.py`、`tests/test_decisions.py`；`tools/lab/gate/checks.py` | T27、T28 | ☐ 未开始 | — |
+| T30 | 决策索引机器生成（D8 Tier 4）：`decisions.py index --write` 产出 `docs/decisions/index.md`，手改即红（生成文件哈希断言） | P2 | 待核实（本批新建）：`tools/lab/decisions.py`、`docs/decisions/index.md` | T27 | ☐ 未开始 | — |
 
 ### 未决项
 

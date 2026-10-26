@@ -74,6 +74,7 @@
 | G4 勘误可追平 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「勘误传播」） | T15、T16、T17 | ☐ 未开始 |
 | G5 记录面回到产出比 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「记录面」） | T18、T19、T20、T21、T22 | ☐ 未开始 |
 | G6 表达与结构减负 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「表达与结构」） | T23、T24、T25、T26 | ☐ 未开始 |
+| G7 决策跨批次统一 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §四 4.2 与 §七「决策统一」） | T27、T28、T29、T30 | ☐ 未开始 |
 
 ## 当前步骤
 
