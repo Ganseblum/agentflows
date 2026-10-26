@@ -1,7 +1,7 @@
 {
   "name": "agentflow",
   "description": "以专职的实现、评测与发布角色运行宿主原生开发与受治理的改进工作流。",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "author": {
     "name": "Ganseblum"
   },

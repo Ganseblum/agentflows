@@ -1,5 +1,15 @@
 # 变更日志
 
+## 0.18.2 — 2026-10-26
+
+> 推送前门禁（用户选定方案 A：装 pre-push hook，只跑门禁、不碰宿主）。`measurement: none`。
+
+- **`skills/agentflow/scripts/pre-push.sh`**：推送前对当前树跑十项确定性检查，红则拦下推送并点名失败项；`lint` 缺 dev 依赖时输出 `SKIP（未运行）` 并放行——与仓库「未运行 ≠ 失败」的判据一致。缺 python3 时按未运行处理、放行并说明，不把环境缺失伪装成代码缺陷。
+- **`skills/agentflow/scripts/install-hooks.sh`**：幂等的安装/检查/卸载入口。**hook 本体放在仓内**（`skills/agentflow/scripts/`），`.git/hooks/pre-push` 只是软链——因为 `.git/` 不受版本控制，直接写进去会随重新 clone 丢失，且没人知道它存在过；放进仓库则规则有版本、可评审、可回滚。`--check` 检测软链漂移。
+- **实证**：把 hook 装好后，一次真实推送因为「新增脚本未重建生成树」被 `manifests` 拦下——这正是它该抓的东西；重建后放行。另在 `/tmp` 副本上注入一条断链，`pre-push` 以退出码 1 拦下真实 `git push`（点名 `docs tests`），远端未被污染。副本用后即删。
+- **可跳过**：`git push --no-verify`。确实要带红推送时用，并在提交说明写原因。
+- **边界**：hook 只跑门禁，**不重建生成树、不装宿主**——那些是发布动作，仍需显式授权（`publish.sh`）。
+
 ## 0.18.1 — 2026-10-26
 
 > 发版自动化（用户逐字指示「现在每次push就这俩就自动了吧」——答案是「还不是」，本版把它变成一条命令）。`measurement: none`。
