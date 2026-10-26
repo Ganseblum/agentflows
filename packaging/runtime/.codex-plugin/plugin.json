@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "运行宿主原生的多智能体开发与受治理的证据驱动改进工作流。",
   "author": {
     "name": "Ganseblum"

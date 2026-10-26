@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>线框预览（结构稿，非最终视觉）— &lt;feature 名&gt;</title>
+<title>原型骨架（须适配目标项目视觉基线）— &lt;feature 名&gt;</title>
 <!--
-  线框/原型骨架：零依赖、浏览器直开，不引入构建链与外部资源。
+  原型 HTML 骨架：零依赖、浏览器直开，不引入构建链与外部资源。当前中性样式仅用于占位，不能直接当作
+  目标项目的产品视觉；开始评审前须按 feature README 元信息与设计文档里的真实组件、主题和 token 改造。
   复制到 docs/features/<批次>/prototype/index.html 后，把 <占位> 换成真实页面结构。
-  规矩（见 prototype/README.md）：
-    1) 这是结构稿，不是最终视觉——颜色、字体、圆角都不参与评审结论；
+  规矩（见 Agentflow 的 feature/prototype 模板说明与 feature README 元信息）：
+    1) 当前文件只是骨架；适配真实视觉基线后才是产品视觉预览，样式出处记在 design/ui 或 design/fe；
     2) 每个区块写清它承担什么（区块标题左上的灰字），可点击元素在 docs 里对应 data-testid；
     3) 一个页面一个 <section class="screen">，页签自动生成；
     4) 状态用下面的按钮切换，覆盖 加载中 / 空 / 错误 / 有数据 四态；
@@ -116,8 +117,8 @@
 <body data-state="default">
 
 <header class="bar">
-  <h1>&lt;feature 名&gt; — 线框预览</h1>
-  <span class="badge">结构稿，非最终视觉</span>
+  <h1>&lt;feature 名&gt; — 产品原型预览</h1>
+  <span class="badge">骨架占位，待套用项目真实视觉</span>
   <nav class="tabs" id="tabs" aria-label="页面切换"></nav>
   <div class="states" role="group" aria-label="状态切换">
     <button type="button" data-state="default" aria-pressed="true">默认</button>

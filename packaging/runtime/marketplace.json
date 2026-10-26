@@ -7,7 +7,7 @@
       "name": "agentflow",
       "source": "./packaging/runtime",
       "description": "宿主原生多智能体开发与证据驱动改进工作流，含专职的实现、评测与发布角色。",
-      "version": "0.18.2",
+      "version": "0.18.3",
       "author": {
         "name": "Ganseblum"
       },

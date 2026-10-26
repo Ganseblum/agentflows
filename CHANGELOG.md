@@ -1,11 +1,16 @@
 # 变更日志
 
-## 0.18.3 — 2026-10-26
+## 0.18.3 — 2026-10-27
 
-> 2026-10-26 整体审核的吸收批（[审核报告](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)）。`measurement: none`。
+> 2026-10-26 整体审核的吸收批（[审核报告](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)），并纳入「原型先行」契约修订。`measurement: none`。
+> 日期与范围更正：本条目原写在 2026-10-26，但那次只改了 CHANGELOG、没有 bump manifest，0.18.3 因此从未真正发出去（manifest 与已装快照仍是 0.18.2，远端无 tag）。本次把该批内容与后续原型改动一次对齐发布，详见本节末「版本号回填」。
 
 - **`skills/agentflow/references/repo-audit.md`（新增）**：仓库整体审核契约——七种档位、十三条铁律、维度适配（通用七维 + 「阻断机制审」+ 三维按项目形态换对象 + 业务仓追加维 + 不适用维度不进分母）、单文件输出骨架（附录 C 覆盖与证据、附录 D 评分卡）。SKILL 新增「仓库整体审核」一节指向它。契约吸收了本轮三条实证教训：产物**单文件承载**（三份拆开制造了双源漂移）、**产物自身要过目标仓的门**（契约写进 `references/` 后被 C13 拦下 4 处会话角色词）、**派发前先核实任务书里的引用**（主审在任务书写「README 自承」，实际在 `host-platform-facts.md` C7 行）。
 - **`lint` 口径的适用范围勘误**（审核 G01）：0.17.3 与 0.18.2 两条写的「缺 ruff/mypy 时输出 `SKIP lint（未运行）` 并放行，可用 `AGENTFLOW_LINT_PYTHON` 实跑」**只在 4 个 shell 脚本（`pre-push.sh`/`publish.sh`/`upgrade-codex.sh`/`upgrade-zcode.sh`）里成立**。`tools/lab/validate.py` 本身没有 `AGENTFLOW_LINT_PYTHON` 代码路径、没有 SKIP 分支——缺依赖即 `FAIL lint` + 退出码 1，这是**有意的 fail-closed**。两个口径各自诚实：脚本侧按「未运行 ≠ 失败」放行推送，门侧按「缺工具即红」拦住直跑。本次不改 `validate.py` 的行为（改它属门变更且会削弱 fail-closed），只把适用范围写准，并在 README 的环境注记里同步（G22）。
+
+- **原型先行：从「可选的结构稿」升级为「计划前必须过用户确认的产品预览」**（SKILL 原型段、`references/document-chain.md` 原型/线框节、`templates/feature/README.md`、`prototype/README.md`、`prototype/index.html`、`design/ui/visual.md`、`design/fe/frontend.md`、`plan/execution.md`、`proposal/proposal.md`）。改动前的口径是「有用户可见界面时默认产出静态 `prototype/index.html`，标注**结构稿、非最终视觉**」——低保真骨架可以直接带进计划，视觉方案留到实现阶段才第一次被用户看到，导致「做完了不是用户想要的样子」。新口径四处收紧：其一，**默认产出贴近真实产品的可编辑 HTML 预览**，先查目标仓实际页面、组件库、主题接入点、token 与字体图标资产，按查到的实现复现，禁截图取色、禁凭空补品牌样式；其二，**低保真结构稿降级为访谈期的临时形态**，仅用于业务选择尚未收敛的结构比较，且必须标注待决项，进计划前补成基于真实视觉基线的预览；其三，**改动既有页面时沿用上游原型**——复制最近一次用户确认的 `prototype/index.html` 到本期目录，在 README 元信息登记来源 feature 与可解析的 revision，Git 历史保留已确认旧版，不按日期堆副本目录；其四，**未确认即不冻结**——用户确认人、结论与当时的原型 revision 写入 design 变更记录，确认前不冻结设计、不进入计划或实现。配套把静态产品图定性为由 HTML 导出的补充（不再是独立的第三种形态），并把评审标注放到预览区外，避免把说明面板误做成产品 UI。feature README 元信息新增「原型基线」一行（`path:line@revision`），proposal 新增 §3.1 界面与视觉范围表（访谈期就该查清受影响页面与实现出处），plan 的贯通项提示从「线框/原型确认」改写为「产品原型确认」并要求引用 revision 与用户结论。**用户自主范围不受影响**：文档产出形态的约束落在走文档链的角色上，`N/A: 无用户界面` 与 `N/A: 复用 <页面> 既有结构` 两个出口保留。
+
+- **版本号回填（本次一并修掉的反漂移）**：上一版在 CHANGELOG 写好 0.18.3 后没有 bump manifest，形成「文档说已发、manifest 说未发」的双源状态——`validate.py installed` 因此 FAIL 20 项（已装副本文档里没有 `repo-audit.md`，另有 13 个文件与已提交内容不一致），远端也没有对应 tag。教训与 0.17.2 同源：**CHANGELOG 条目不是宣布动作，版本只在 manifest 里成立**。本次以 `publish.sh --bump patch` 把 manifest、生成树、CHANGELOG 三者重新对齐。
 
 ## 0.18.2 — 2026-10-26
 
