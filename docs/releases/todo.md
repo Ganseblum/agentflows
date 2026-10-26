@@ -11,6 +11,7 @@
 | 2 | 追溯闭环与证据在场批（feature-2026-10-22：文档链新增 C22 目标承接闭环与 C23 证据在场、记录契约补 `disposition`、拍板口八列化、八条文本缺陷收口） | 已随 0.13.0 发布；T11 第三轮独立复核待跑 | 门变更经用户 2026-10-22 当次授权；第二轮 20 条已在 `ff13912` 修完（看板 T11 ◐）；发布动作见 `861b6ef`，T12 缺「`validate.py all` 全绿原始输出」留档（看板 T12 ◐） |
 | 3 | 宿主接入批 2026-10-24：Host Init（`skills/agentflow/references/hosts.md`、`skills/agentflow/templates/host/`、SKILL 宿主级接入节）、0.14.0 版本 bump | 已随 0.14.0 发布，现由 0.15.0 取代 | 真实宿主写入与加载验证仍待用户，见 `pending-test.md` 第 4 行 |
 | 4 | 测试链路 Ego Light 批 2026-10-25（分支 `feature-2026-10-24-gate-tune-and-refactor` 已并入 main）：QA 方法切换、`doc_chain` 拆包、README 四问导航、episodes 按月归档、0.15.0 版本 bump | 已发布并已装入宿主（`validate.py installed` PASS） | 端到端 Ego Light 实跑与 bug 回归链走查待用户，见 `pending-test.md` 第 5 行；本批未建 `docs/features/` 批次目录，记录存于 `CHANGELOG.md` 与 git 历史 |
+| 5 | 总体评审吸收与修复批（feature-2026-10-25：2026-10-25 会话总体评审结论入仓——问题清单、四维评分与理由、26 项修复任务） | 立项：提案与计划已成文，`status: proposed` | 五项待拍板（Q-01 门工具交付路线 / Q-02 文档链默认档 / Q-03 改进环处置 / Q-04 记录面删减 / Q-05 必读面瘦身）见批次提案 §六；受保护路径任务 12 项需逐项授权 |
 
 已完成批次：产品链修复轮（REV-20261019-003 approved，2026-10-19）、全仓中文化、youc 吸收批、结构文档、端点复测与试水、2026-10-22 文档面收尾批——详见 `CHANGELOG.md` 与 git 历史。
 
