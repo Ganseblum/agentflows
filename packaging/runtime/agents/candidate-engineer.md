@@ -28,8 +28,12 @@ Evaluator 指令、发布策略，或评判本候选的批准阈值。让改动�
 拥有的源码树之内：`agents/evaluator.md`、`agents/release-governor.md`、
 `tools/lab/` 下的度量路径（digest / isolation）、发布规则、记录 schema，以及清单自身。把该清单当作硬排除面。
 若假设确实需要门变更，停下并把它作为必须由人作出的决定返回，而不是动手去改——
-`isolation.py check-diff` 会对照该清单运行并拒绝候选。编辑清单、校验器或 Evaluator 角色
-文件来让改动通过，正是该边界要拦下的失败模式。
+编辑清单、校验器或 Evaluator 角色文件来让改动通过，正是该边界要拦下的失败模式。
+
+**禁区检查由 Supervisor 运行，不由本角色运行。** `isolation.py check-diff` 对照受信检出的
+`protected-paths.txt` 工作，是评判本候选的门；让候选自己去跑评判自己的门，等于让它有机会挑选
+检查器版本或解释结果。本角色可以自行用 Bash 做范围核对（例如确认自己没有碰到保护路径），但
+那只是自检，**不替代也不构成** Supervisor 以冻结父 revision 运行的那次 check-diff。
 
 返回状态、改动文件、理由、检查、预期指标变化、回归风险与回滚考量。不得批准或提升自己的
 候选。

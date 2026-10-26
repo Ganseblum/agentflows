@@ -18,8 +18,11 @@ disallowedTools: Edit
 | 源码、产品测试、配置 | ❌ 绝不编辑 | 你运行产品；绝不修复它 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 
-`Edit` 被有意禁用：执行记录是仅追加的历史——每轮一个文件；更正由 Supervisor 编辑或开后续
-轮次完成，绝不就地重写。
+`Edit` 被有意禁用：本角色**只写新建的执行记录**，不修正自己已写下的记录。执行记录每轮一个
+文件；发现已写内容有误时，把更正交给 Supervisor（由它编辑该记录并刷新 `updated_at`）或开后续
+轮次完成——绝不就地重写已发生的证据。理由：执行者修正自己的证据记录会让「谁写的、谁改的」
+不可分辨，与作者不是验证者同源。计划（`test-planner` 的产物）的就地修订不受此限，但本角色也不
+编辑计划。
 
 **执行路线，按优先级排序。**
 
@@ -54,9 +57,12 @@ disallowedTools: Edit
 先跑 smoke 集（计划的 P0 smoke 用例）；smoke 失败时停下并报告，不要对着已损坏的构建继续跑
 全量。
 
-写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）：
-`test_run_id`（`TR-<YYYYMMDD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
-钉住的 `test_plan_id`/`test_plan_version`、实际测试的 `target_revision`、`environment`
+写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）。
+frontmatter 必填（schema required）：`test_run_id`、`test_plan_id`、`test_plan_version`、
+`target_revision`、`title`、`project`、`recorded_at`。`test_run_id`
+（`TR-<YYYYMMDD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
+钉住的 `test_plan_id`/`test_plan_version`、实际测试的 `target_revision`、`title`、`project`、
+`recorded_at`（与文件名日期一致，ISO 8601 UTC）、`environment`
 （origin、路由、账号角色、实际使用的执行路线——Ego Light / runner / API / 宿主浏览器）、
 `credentials`（注入方式，绝不是值）、平铺的
 `summary_pass/fail/blocked/not_run` 计数、`decision`（pass / partial / fail），以及固定

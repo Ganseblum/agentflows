@@ -43,5 +43,6 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 - 并行只并行「写范围互不重叠」的实现；两个写入者共用同一仓库时还要各用分支或 worktree。
 - `maxTurns` 按意图元数据对待（声明未验证）；生效约束是各角色提示词里的预算纪律
   （最后一轮留给结果，目标未成返回 `partial`）。
-- 每个角色的 `tools` / `disallowedTools` 由宿主白名单强制；角色与门的写范围互证见
-  [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的产物归属表。
+- 每个角色的 `tools` / `disallowedTools` 由宿主白名单强制；各角色的写范围见其文件内的
+  `## 产物归属` 矩阵，文档链各阶段谁产出见
+  [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的「阶段 × 角色速查」表。

@@ -33,7 +33,7 @@
 | --- | --- | --- | --- |
 | 实现 | 工程师（frontend / backend，按层选一或并行）→ Reviewer | 单层小修可只留 Supervisor | 独立评审门：Supervisor 亲写的改动也强制，不得自免 |
 | 缺陷 | Bug investigator → Bug fixer → Reviewer → Bug recorder | 已复现的小 bug 可合并诊断与记录环节 | Fixer 不得批准或关闭自己的修复；Recorder 不得凭 Fixer 摘要标 `verified` |
-| 测试 | Test planner → Test executor | 无计划的少量手工核对可不立案 | Executor 不改被测对象；失败先分离真 red 与 flaky，再立案 |
+| 测试 | Test planner → Test executor → Reviewer（流程合理性模式） | 无计划的少量手工核对可不立案 | Executor 不改被测对象；失败先分离真 red 与 flaky，再立案 |
 | 规划 | Technical director → Plan architect | 无跨层或契约决策时可跳过 TD | 计划只由 Plan architect 写；批准、指派执行与回滚决定归 Supervisor |
 | 改进 | Feedback analyst → Candidate engineer → Evaluator → Release governor | 无（四步各自承担一项独立性） | Candidate 不自评、不自放行；Evaluator 与 Release governor 全程只读 |
 | 独立评审 | Reviewer（单点） | 无 | 评审期间不编辑实现、不运行受候选控制的命令；无基线须声明，不得假定符合 |
@@ -110,7 +110,7 @@ reviewer 独立于实现者。它检查验收标准、正确性、回归风险�
 
 findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补丁；评审缺少基线时，报告声明这一点，而不是假定符合。对行为改动，它在批准前走一遍改动触及的运行时路径——调用顺序、状态流转、失败分支。
 
-专项审计——安全、测试深度、文档准确性、**埋点**——走同一个 reviewer 角色，简报把范围限定到 reviewer 画像中对应的专项清单；它们不需要单独的角色。埋点专项的清单与隐私红线在 [`telemetry.md`](telemetry.md)，本画像不复述其内容；画像只声明其中三条属**运行时判据**——必须向 supervisor 索取端到端路径证据或网络请求日志，读代码不构成证据，拿不到就记为未验证。被评审的产物是外部文档时（二次评审桥），简报指明文档类型，reviewer 套用匹配的文档模式——需求提案、spec、design 或埋点——其清单在 reviewer 画像里；每一项都要引用原文才算通过。
+专项审计——安全、测试深度、文档准确性、**埋点**——走同一个 reviewer 角色，简报点名要跑哪个专项，reviewer 照跑；它们不需要单独的角色。**范围由 diff 形状强制扩张，简报只能收窄不到清单之外**：简报没提安全，而 diff 改了鉴权面，安全清单照样必须跑——覆盖范围是改动的函数，不是简报问没问。埋点专项的清单与隐私红线在 [`telemetry.md`](telemetry.md)，本画像不复述其内容；画像只声明其中三条属**运行时判据**——必须向 supervisor 索取端到端路径证据或网络请求日志，读代码不构成证据，拿不到就记为未验证。被评审的产物是外部文档时（二次评审桥），简报指明文档类型，reviewer 套用匹配的文档模式——需求提案、spec、design 或埋点——其清单在 reviewer 画像里；每一项都要引用原文才算通过。
 
 ## Bug investigator
 

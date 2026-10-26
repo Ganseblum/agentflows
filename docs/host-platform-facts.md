@@ -51,7 +51,7 @@
 
 | # | 事实 | 证据 | 适用范围 | 后果 |
 | --- | --- | --- | --- | --- |
-| W1 | 会话内可直接执行 Bash / Read / Edit / Write / Grep / Glob 并派生子代理；本仓的确定性检查、安装构建与检索工具都能在该会话内运行并观察到原始输出。 | Observed 2026-10-13（本仓工作树，`fb98b21`）：`python3 tools/lab/validate.py all` → 9 项全 PASS、退出码 0；`python3 -m unittest discover -s tests` → `Ran 60 tests` / `OK`；`python3 packaging/build_runtime.py` → 退出码 0 并生成 `packaging/runtime`（14 个角色 + 6 份 schema + 四份 manifest）；`python3 tools/lab/record_store.py index` → 索引 106 条记录，`query` 返回带上下文的 FTS5 命中。 | WorkBuddy 会话（本安装），对插件仓工作树的命令执行 | 该宿主足以承载 agentflow 的门、构建与检索面——跑门不必依赖 Claude Code / Codex CLI 端点。它不提供插件安装面，因此 Z1–Z11 / C1–C12 / X1–X2 各行不适用于它。 |
+| W1 | 会话内可直接执行 Bash / Read / Edit / Write / Grep / Glob 并派生子代理；本仓的确定性检查、安装构建与检索工具都能在该会话内运行并观察到原始输出。 | Observed 2026-10-13（本仓工作树，`fb98b21`）：`python3 tools/lab/validate.py all` → 9 项全 PASS、退出码 0；`python3 -m unittest discover -s tests` → `Ran 60 tests` / `OK`；`python3 packaging/build_runtime.py` → 退出码 0 并生成 `packaging/runtime`（14 个角色 + 6 份 schema + 五份 manifest）；`python3 tools/lab/record_store.py index` → 索引 106 条记录，`query` 返回带上下文的 FTS5 命中。 | WorkBuddy 会话（本安装），对插件仓工作树的命令执行 | 该宿主足以承载 agentflow 的门、构建与检索面——跑门不必依赖 Claude Code / Codex CLI 端点。它不提供插件安装面，因此 Z1–Z11 / C1–C12 / X1–X2 各行不适用于它。 |
 | W2 | agentflow 插件未在该宿主上安装：未观察到角色加载、技能触发或 frontmatter 工具白名单被宿主强制执行的任何行为。 | 未实际触发——该宿主无插件安装通道，本次只做门与工具层面的执行 | WorkBuddy | 不得把「门在本会话跑绿」外推为「角色在该宿主上按契约运行」。角色面、技能触发与工具白名单的强制执行仍待 dogfood；README 的 dogfood 前置条件（先跑 `validate.py installed` 并记录结果）不变。 |
 
 ## 宿主全局指令文件

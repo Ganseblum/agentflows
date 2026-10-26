@@ -27,7 +27,7 @@
     },
     {
       "kind": "gate_change",
-      "value": "gate/schema.py 新增 SUPPORTED_SCHEMA_KEYWORDS + check_schema_keywords：未实现关键字、format 任意取值、数组未声明 items 一律拒载（G1/G14 移植），钉于 tests/test_lab_contracts.py SchemaSubsetFailClosedTests",
+      "value": "gate/schema.py 新增 SUPPORTED_SCHEMA_KEYWORDS + check_schema_keywords：未实现关键字、format 任意取值、数组未声明 items 一律拒载（G1/G14 移植），钉于 tests/test_lab_contracts.py SchemaSubsetFailClosedTests 【2026-10-20 勘误：该类从未进入被提交的历史树，git log --all -S 零命中】",
       "evidence_ref": "tools/lab/gate/schema.py；tests/test_lab_contracts.py"
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "kind": "mutation_disposition",
-      "value": "16 存活项处置：M01/M02/M04/M06/M07/M08/M09 由新负例语料补杀（PLAN-INVALID-003..007、bug-record-verified-heading-missing.md；正例 PLAN-DEMO-PROPOSE-001.md 钉 approved 门作用域）；M13/M15/M17/M21/M24/M25/M31/M36 由 MutationKillCorpusTests 单测补杀；skip-guard（原 M40）经事实论证登记 EXEMPT（skip>0 在真实门本就红、语料无 skipped=N 记号）；M45 锚点随 C3 回改同步",
+      "value": "16 存活项处置：M01/M02/M04/M06/M07/M08/M09 由新负例语料补杀（PLAN-INVALID-003..007、bug-record-verified-heading-missing.md；正例 PLAN-DEMO-PROPOSE-001.md 钉 approved 门作用域）；M13/M15/M17/M21/M24/M25/M31/M36 由 MutationKillCorpusTests 单测补杀 【2026-10-20 勘误：该类从未进入被提交的历史树，git log --all -S 零命中】；skip-guard（原 M40）经事实论证登记 EXEMPT（skip>0 在真实门本就红、语料无 skipped=N 记号）；M45 锚点随 C3 回改同步",
       "evidence_ref": "examples/invalid/PLAN-INVALID-003..007.md；examples/plans/PLAN-DEMO-PROPOSE-001.md；tests/test_lab_contracts.py；tools/lab/mutate.py EXEMPT"
     },
     {
@@ -105,7 +105,7 @@
     {
       "evidence_id": "E5",
       "kind": "regression_suite",
-      "ref": "tests/test_lab_contracts.py（SchemaSubsetFailClosedTests + MutationKillCorpusTests，78→95）"
+      "ref": "tests/test_lab_contracts.py（SchemaSubsetFailClosedTests + MutationKillCorpusTests，78→95（其中两个幽灵类 【2026-10-20 勘误：该类从未进入被提交的历史树，git log --all -S 零命中】，95 一并不成立））"
     },
     {
       "evidence_id": "E6",

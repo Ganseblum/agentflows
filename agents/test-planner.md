@@ -22,11 +22,13 @@ disallowedTools: Bash
 对照 `schemas/test-plan.schema.json` 校验的 **Markdown 融合形态**（契约：
 `skills/agentflow/references/test-records.md`）：
 
-- **frontmatter 机器信封**：`test_plan_id`（`TP-<YYYYMMDD>-<NNN>`，文件名随之命名为
-  `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、`project`、`feature`、`target_revision`（用例
-  所对照的目标仓 commit）、`credentials`（一行写明注入方式——绝不是值）、可选的 `base_url`、
-  `case_count`、`test_version`（每次修订递增）、`status`（draft / active / superseded；
-  被取代时写 `superseded_by`）；每次修订刷新 `updated_at`。
+- **frontmatter 机器信封**（`schemas/test-plan.schema.json` 必填：`test_plan_id`、`title`、
+  `project`、`feature`、`target_revision`、`recorded_at`）：`test_plan_id`
+  （`TP-<YYYYMMDD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、
+  `project`、`feature`、`target_revision`（用例所对照的目标仓 commit）、`recorded_at`
+  （与文件名日期一致，ISO 8601 UTC）、`credentials`（一行写明注入方式——绝不是值）、可选的
+  `base_url`、`case_count`、`test_version`（每次修订递增）、`status`
+  （draft / active / superseded；被取代时写 `superseded_by`）；每次修订刷新 `updated_at`。
 - **正文（人读层）**，固定章节 `## 用例`、`## 边界覆盖`、`## 数据来源`、`## 流程疑点`：
   - `## 用例` 以注册表开头（`| 用例 ID | 级别 | 优先级 | 标题 | 来源 |`），随后每个用例一个
     `### <case id> <title>` 明细块。每个用例带**测试功能**一行（被测功能点，如「登录-账号密码

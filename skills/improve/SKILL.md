@@ -9,7 +9,7 @@ description: 仅当用户要求演进、优化、评测、版本化、晋级或�
 
 执行的 Agent 可以发现并创建候选，但不得批准自己的证据，也不得静默替换已安装的插件。分析、候选实现、评测与发布决策必须保持为分离的角色。
 
-创建候选前阅读[证据与发布规则](references/evidence-and-release.md)。在 Intake 期间，用 `python3 tools/lab/record_store.py index` 继而 `python3 tools/lab/record_store.py query '<terms>'` 显式检索相关既有记录；这只是词法 SQLite FTS5 读侧索引，不是向量库，也绝不替代各记录根下的记录文件。
+创建候选前阅读[证据与发布规则](references/evidence-and-release.md)。检索相关既有记录由 **Supervisor 执行**——它运行 `python3 tools/lab/record_store.py index` 继而 `python3 tools/lab/record_store.py query '<terms>'`，把命中结果连同路径一起纳入给 feedback analyst 的简报。这只是词法 SQLite FTS5 读侧索引，不是向量库，也绝不替代各记录根下的记录文件。feedback analyst 的工具面禁 Bash，无法自行运行检索命令，因此不得把该命令写进它的指派。
 
 ## 把角色绑定到宿主
 
@@ -23,7 +23,7 @@ description: 仅当用户要求演进、优化、评测、版本化、晋级或�
 
 若宿主无法提供独立 Agent，可准备提案，但不得声称独立评测或自动晋级。除非宿主确实强制分离的工具白名单与工作区，否则角色分离只是流程性的。绝不因为候选的提示词说不编辑受保护文件，就声称它被隔离。
 
-候选写范围排除 [`protected-paths.txt`](../../protected-paths.txt) 中声明的每一个路径——Evaluator 与 Release Governor 角色文件、`tools/lab/` 下的度量路径（digest / isolation）、发布规则、记录 schema 以及清单自身。在候选被评测前用 `isolation.py check-diff` 强制执行，而不是读候选的摘要。会话强制的工具白名单（agent frontmatter 中的 `tools:`）是第二层；路径排除仍依赖该检查加 Supervisor 的 diff 复核。
+候选写范围排除 [`protected-paths.txt`](../../protected-paths.txt) 中声明的每一个路径——Evaluator 与 Release Governor 角色文件、`tools/lab/` 下的度量路径（digest / isolation）、发布规则、记录 schema 以及清单自身。在候选被评测前用 `isolation.py check-diff` 强制执行，而不是读候选的摘要。该检查由 **Supervisor 从受信源码 checkout 运行**——不交给候选自己跑：那等于让被检查者挑选检查器。会话强制的工具白名单（agent frontmatter 中的 `tools:`）是第二层；路径排除仍依赖该检查加 Supervisor 的 diff 复核。
 
 ## 运行改进环
 
