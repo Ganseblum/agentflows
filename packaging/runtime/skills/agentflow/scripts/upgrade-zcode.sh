@@ -71,6 +71,25 @@ if [ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]; then
   say "      （脚本不阻止，但你要知道装的是什么。）"
 fi
 
+# --- 3b. 强制本仓与远端一致 ------------------------------------------------
+# 2026-10-26 的真实事故：只 bump 了 manifest 没重建 runtime 就发布，远端于是出现
+# plugin.json=0.17.2 而 packaging/runtime/plugin.json=0.17.1；git marketplace 装的正是
+# runtime 那棵树，结果市场显示新版、装进去的仍是旧版。下面三项检查就是拦这一类。
+if [ "$DRY_RUN" != "1" ]; then
+  if [ -n "$(git -C "$REPO_ROOT" status --porcelain -- packaging plugin.json marketplace.json .zcode-plugin .claude-plugin .codex-plugin)" ]; then
+    fail "发布面有未提交改动——先 rebuild、提交并推送，再运行本脚本（git marketplace 装的是远端那棵树，不是你的工作树）"
+  fi
+  if ! git -C "$REPO_ROOT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+    fail "当前分支没有 upstream——无法确认远端已是同一提交"
+  fi
+  HEAD_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+  UPSTREAM_SHA="$(git -C "$REPO_ROOT" rev-parse '@{u}')"
+  if [ "$HEAD_SHA" != "$UPSTREAM_SHA" ]; then
+    fail "本地 HEAD ($(printf '%.7s' "$HEAD_SHA")) 与 upstream ($(printf '%.7s' "$UPSTREAM_SHA")) 不同——先 push"
+  fi
+  say "本仓 HEAD 与 upstream 一致：$(printf '%.7s' "$HEAD_SHA")"
+fi
+
 # --- 4. 重建生成树 + 跑门（装之前必须绿）-------------------------------------
 # lint 需要 dev 依赖（ruff/mypy）。缺它们时门会 FAIL，但那属于「未运行」而不是失败——
 # 仓库自己的判据是「无法复现的检查记为未运行，绝不计为通过」。这里把 lint 单独拆出来跑，
