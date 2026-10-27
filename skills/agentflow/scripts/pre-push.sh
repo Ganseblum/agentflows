@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# pre-push.sh — 推送前的门禁。由 .git/hooks/pre-push 调用，也可手动跑。
+# pre-push.sh — 推送前的门禁。由 .git/hooks/pre-push 调用，也可手动跑（无 stdin 时校验 HEAD）。
 #
-# 只做一件事：在把提交推出去之前，对**将要被推送的那棵树**跑十项确定性检查。
+# 只做一件事：在提交被推出去之前，把**将要被推送的那些提交**逐一检出到临时工作树，
+# 对那棵树跑确定性检查。检查对象是提交树，不是当前工作区——工作区可以带着尚未提交的
+# 修复，而"坏提交留在历史里、工作区已经改好"正是最容易蒙混过关的场景（2026-10-26
+# L3 复核的副本实验已证实旧脚本会放行这种推送）。
 # 不重建生成树、不装宿主——那些是发布动作，需要显式授权（见 publish.sh）。
-#
-# 为什么值得每次推送都跑：门禁发现的多数问题（断链、记录契约、文档链形态、版本散文）
-# 在本地几秒内就能暴露，而一旦推进远端，CI 才红、别人拉到红树，代价高得多。
 #
 # 装法（一次性，见 install-hooks.sh）：
 #   ln -sf ../../skills/agentflow/scripts/pre-push.sh .git/hooks/pre-push
 # 临时跳过：
 #   git push --no-verify
+# 允许「未运行」放行（缺解释器或 lint 依赖时默认拦下；设了才放行）：
+#   AGENTFLOW_PREPUSH_ALLOW_UNRUN=1 git push
 #
-# 退出状态：0 = 全绿，放行推送；1 = 有红项，拦下推送。
+# 退出状态：0 = 待推送提交全部通过（或显式允许未运行项）；
+#           1 = 有红项或无法验证，拦下推送。
 
 set -uo pipefail
 
@@ -22,47 +25,133 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 }
 cd "$REPO_ROOT"
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "pre-push: 找不到 python3，无法跑门禁。" >&2
-  echo "pre-push: 这是环境缺失、不是代码缺陷，按「未运行」处理，放行推送。" >&2
-  echo "pre-push: 装好 python3 后这一关才会真正生效。" >&2
-  exit 0
-fi
-
-if [ ! -f "tools/lab/validate.py" ]; then
-  echo "pre-push: 找不到 tools/lab/validate.py，本仓没有门禁，跳过" >&2
-  exit 0
-fi
-
-# 门清单是单源：直接解析 `validate.py --list` 的输出，而不是硬编码。任何一处新增/删除
-# 门项，脚本自动跟随，不再与 --list 双源（2026-10-26 审计 G24）。排除 all/installed/
-# lint/report/recurrence：all 是聚合、installed 读仓外内容不属于推送前树、lint 缺依赖
-# 记为未运行、后两者是只读表格不校验。
-#
-# 用 grep -vxE 做整词排除（而非 while read + case）：`set -u` 下未绑定变量 `kind` 会让
-# 命令替换里的 while 循环崩溃，从而拦下每一次推送（2026-10-26 G24 回归，本批修）。
-TARGETS="$(python3 tools/lab/validate.py --list \
-  | grep -vE 'all runs [0-9]+ checks' \
-  | grep -vxE 'all|installed|lint|report|recurrence' \
-  | tr '\n' ' ')"
+# 单一解释器：探测 ruff/mypy 与真正跑 lint 必须是同一个，否则探测结果不代表调用结果
+# （旧脚本用 AGENTFLOW_LINT_PYTHON 探测、用写死的 python3 调用）。门的其余项也用它，
+# gate 内部的子进程一律是 sys.executable，因此解释器在整条链上保持一致。
+GATE_PYTHON="${AGENTFLOW_GATE_PYTHON:-${AGENTFLOW_LINT_PYTHON:-python3}}"
+ALLOW_UNRUN="${AGENTFLOW_PREPUSH_ALLOW_UNRUN:-0}"
 FAILED=""
+UNRUN=""
+CHECKED=""
 
-echo "pre-push: 跑门禁（$(git rev-parse --short HEAD)）：必绿项 $TARGETS"
-for target in $TARGETS; do
-  if python3 tools/lab/validate.py "$target"; then
-    :
-  else
-    FAILED="$FAILED $target"
+if ! command -v "$GATE_PYTHON" >/dev/null 2>&1; then
+  echo "pre-push: 找不到解释器 ${GATE_PYTHON}，无法验证待推送提交。" >&2
+  echo "pre-push: 未运行不等于通过——默认拦下。装好 python3 或 dev 依赖后重试；" >&2
+  echo "pre-push: 确需放行时显式设 AGENTFLOW_PREPUSH_ALLOW_UNRUN=1 或 git push --no-verify，" >&2
+  echo "pre-push: 并在提交说明里写清为什么这次推送没有经过门禁。" >&2
+  if [ "$ALLOW_UNRUN" = "1" ]; then
+    echo "pre-push: AGENTFLOW_PREPUSH_ALLOW_UNRUN=1，放行（本次推送未经门禁验证）" >&2
+    exit 0
   fi
-done
-
-# lint 需要 dev 依赖。缺依赖是「未运行」而不是「失败」——与仓库判据一致。
-LINT_PYTHON="${AGENTFLOW_LINT_PYTHON:-python3}"
-if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
-  python3 tools/lab/validate.py lint || FAILED="$FAILED lint"
-else
-  echo "SKIP lint（未运行：没有 ruff/mypy；用 AGENTFLOW_LINT_PYTHON 指定装好 dev 依赖的解释器）"
+  exit 1
 fi
+
+# --- 收集待推送提交 ---------------------------------------------------------
+# git 通过 stdin 传入：<本地 ref> <本地 SHA> <远端 ref> <远端 SHA>。
+# 删除分支或标签时本地 SHA 全零，跳过；手动运行（stdin 是终端或为空）退回校验 HEAD。
+SHAS=()
+SAW_REF=0
+if [ ! -t 0 ]; then
+  while IFS=' ' read -r _local_ref local_sha _remote_ref _remote_sha || [ -n "${local_sha:-}" ]; do
+    SAW_REF=1
+    [ -n "${local_sha:-}" ] || continue
+    case "$local_sha" in
+      *[!0]*) SHAS+=("$local_sha") ;;
+    esac
+  done
+fi
+if [ "${#SHAS[@]}" -eq 0 ]; then
+  if [ "$SAW_REF" = "1" ]; then
+    echo "pre-push: 本次推送只包含删除操作，没有需要校验的提交，放行"
+    exit 0
+  fi
+  SHAS=("$(git rev-parse HEAD)")
+  echo "pre-push: 没有收到待推送 ref（手动运行），改校验 HEAD $(git rev-parse --short HEAD)"
+fi
+
+UNIQUE_SHAS="$(printf '%s\n' "${SHAS[@]}" | sort -u)"
+
+TMP_DIRS=()
+WORKTREES=()
+cleanup() {
+  local w t
+  for w in "${WORKTREES[@]:-}"; do
+    [ -n "$w" ] && git worktree remove --force "$w" >/dev/null 2>&1
+  done
+  for t in "${TMP_DIRS[@]:-}"; do
+    [ -n "$t" ] && rm -rf "$t"
+  done
+  git worktree prune >/dev/null 2>&1
+}
+trap cleanup EXIT
+
+for sha in $UNIQUE_SHAS; do
+  short="$(git rev-parse --short "$sha" 2>/dev/null || printf '%s' "${sha:0:7}")"
+  if ! git rev-parse --verify --quiet "${sha}^{commit}" >/dev/null; then
+    echo "pre-push: 待推送对象 $short 不是本地可读的提交，无法验证" >&2
+    FAILED="$FAILED ${short}:unreadable"
+    continue
+  fi
+
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/agentflow-pre-push.XXXXXX")"
+  wt="$tmp/tree"
+  if ! git worktree add --detach --quiet "$wt" "$sha" >/dev/null 2>&1; then
+    echo "pre-push: 无法把待推送提交 $short 检出到临时工作树，无法验证" >&2
+    FAILED="$FAILED ${short}:checkout"
+    rm -rf "$tmp"
+    continue
+  fi
+  TMP_DIRS+=("$tmp")
+  WORKTREES+=("$wt")
+
+  if [ ! -f "$wt/tools/lab/validate.py" ]; then
+    # 判断依据用提交的父树，不用当前工作区：工作区可能已经被 `git rm` 弄脏，
+    # 那会把「本次推送删掉了门禁」误判成「本仓本来就没有门禁」。
+    parent="$(git rev-parse --verify --quiet "${sha}^" 2>/dev/null || true)"
+    if [ -n "$parent" ] && git cat-file -e "${parent}:tools/lab/validate.py" 2>/dev/null; then
+      echo "pre-push: 待推送提交 ${short} 删除了 tools/lab/validate.py，无法验证" >&2
+      FAILED="$FAILED ${short}:gate-missing"
+    else
+      echo "pre-push: 待推送提交 ${short} 的父树也没有 tools/lab/validate.py，该提交无门禁可跑，跳过"
+    fi
+    continue
+  fi
+
+  # 门清单以**待推送提交**的 --list 为单源：用本地树的门清单去检查另一棵树，会在门项
+  # 增删的提交上给出与目标树不匹配的结论。排除 all/installed/lint/report/recurrence
+  # 的理由同前：all 是聚合、installed 读仓外内容不属于推送提交、lint 单独按依赖处理、
+  # 后两者是只读表格不校验。
+  TARGETS="$(cd "$wt" && "$GATE_PYTHON" tools/lab/validate.py --list 2>/dev/null \
+    | grep -vE 'all runs [0-9]+ checks' \
+    | grep -vxE 'all|installed|lint|report|recurrence' \
+    | tr '\n' ' ')"
+  if [ -z "${TARGETS// /}" ]; then
+    echo "pre-push: 待推送提交 $short 的门清单为空或读取失败，无法验证" >&2
+    FAILED="$FAILED ${short}:targets"
+    continue
+  fi
+
+  echo "pre-push: 校验待推送提交 ${short}（临时检出，不用工作区）：$TARGETS"
+  for target in $TARGETS; do
+    if ( cd "$wt" && "$GATE_PYTHON" tools/lab/validate.py "$target" ); then
+      :
+    else
+      FAILED="$FAILED ${short}:${target}"
+    fi
+  done
+
+  # lint 需要 dev 依赖。缺依赖是「未运行」而不是「失败」，但未运行同样不授予放行资格：
+  # 默认拦下，只有显式 ALLOW_UNRUN=1 才放行并保留告警。
+  if "$GATE_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
+    if ! ( cd "$wt" && "$GATE_PYTHON" tools/lab/validate.py lint ); then
+      FAILED="$FAILED ${short}:lint"
+    fi
+  else
+    echo "pre-push: lint 未运行（$GATE_PYTHON 缺 ruff/mypy）；用 AGENTFLOW_GATE_PYTHON 指定装好 dev 依赖的解释器" >&2
+    UNRUN="$UNRUN ${short}:lint"
+  fi
+  CHECKED="$CHECKED $short"
+done
 
 if [ -n "$FAILED" ]; then
   echo "" >&2
@@ -71,5 +160,17 @@ if [ -n "$FAILED" ]; then
   exit 1
 fi
 
-echo "pre-push: 全绿，放行"
+if [ -n "$UNRUN" ]; then
+  echo "" >&2
+  echo "pre-push: 有检查未运行：${UNRUN}" >&2
+  echo "pre-push: 未运行不等于通过；默认拦下。装好 dev 依赖后重试，" >&2
+  echo "pre-push: 或显式设 AGENTFLOW_PREPUSH_ALLOW_UNRUN=1 放行这次推送并在提交说明里写清原因。" >&2
+  if [ "$ALLOW_UNRUN" = "1" ]; then
+    echo "pre-push: AGENTFLOW_PREPUSH_ALLOW_UNRUN=1，放行（未运行项未经验证）" >&2
+    exit 0
+  fi
+  exit 1
+fi
+
+echo "pre-push: 全绿，放行（已校验：${CHECKED:- 无}）"
 exit 0
