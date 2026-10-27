@@ -7,7 +7,7 @@
       "name": "agentflow",
       "source": "./packaging/runtime",
       "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
-      "version": "0.19.2",
+      "version": "0.19.3",
       "author": {
         "name": "Ganseblum"
       },
