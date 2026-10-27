@@ -60,7 +60,7 @@ examples、记录产物、受保护清单、五份 manifest 一致性（含 `pac
 `requirements-dev.txt`）。项数以 `python3 tools/lab/validate.py --list` 自报为准，本文不写它。
 失败即编译错误：修好它，或把输出退回 worker。
 
-> 注意一（`lint` 缺依赖是环境红，不是回归）：本机未装 `requirements-dev.txt` 里的 ruff/mypy 时，`validate.py all` 会以 `FAIL lint (2 error(s))` 退出 1——这是**有意的 fail-closed**。装好依赖后同一命令应全绿（CI 即如此，见 `.github/workflows/validate.yml` 的安装步）。想不装依赖就推代码，走 `skills/agentflow/scripts/pre-push.sh`：它把 `lint` 记为「未运行」并放行，其余项照常判红。可用 `AGENTFLOW_LINT_PYTHON` 指向一个装好依赖的解释器让脚本实跑 lint。
+> 注意一（`lint` 缺依赖是环境红，不是回归）：本机未装 `requirements-dev.txt` 里的 ruff/mypy 时，`validate.py all` 会以 `FAIL lint (2 error(s))` 退出 1——这是**有意的 fail-closed**。装好依赖后同一命令应全绿（CI 即如此，见 `.github/workflows/validate.yml` 的安装步）。`skills/agentflow/scripts/pre-push.sh` 对**待推送提交的临时检出**跑同一套门：缺 ruff/mypy 时把 `lint` 记为「未运行」并**默认拦下**推送，只有显式设 `AGENTFLOW_PREPUSH_ALLOW_UNRUN=1` 才放行并保留告警；其余项照常判红。用 `AGENTFLOW_GATE_PYTHON`（兼容 `AGENTFLOW_LINT_PYTHON`）指向装好依赖的解释器即可实跑 lint。
 >
 > 注意二（`tests` 子项可能环境假红）：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归。
 

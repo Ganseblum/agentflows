@@ -1,5 +1,13 @@
 # 变更日志
 
+## 未发布 — 2026-10-27
+
+> pre-push 门禁的对象与放行语义修正（门变更）。`measurement: none`。
+
+- **`skills/agentflow/scripts/pre-push.sh`（受保护路径）**：检查对象从当前工作区改为**待推送提交**——按 git 传入的 ref，把每个 tip 检出到临时工作树跑同一套门，结束后清理。修复三处经副本实验证实的缺陷：坏提交留在历史、只在工作区改好时旧脚本返回「全绿，放行」；找不到 `python3` 时直接 `exit 0`；用 `AGENTFLOW_LINT_PYTHON` 探测却用写死的 `python3` 调用 lint。缺解释器、缺 lint 依赖、待推送对象不可读、检出失败、门清单为空、待推送提交删除门禁、待推送提交的树与父树都没有门禁（记为未运行），一律默认拦下；`AGENTFLOW_PREPUSH_ALLOW_UNRUN=1` 可显式放行并保留告警。探测与调用统一用 `AGENTFLOW_GATE_PYTHON`（兼容 `AGENTFLOW_LINT_PYTHON`）。手动运行（无 stdin）仍校验 HEAD；纯删除 ref 直接放行。头部注明边界：本 hook 防「本地漏跑门」，不防「提交同时改写门本身」。
+- **`tests/test_pre_push.py`（新增回归，已登记 `EXPECTED_TEST_FILES` 与 `protected-paths.txt`）**：钉住 17 个用例——干净提交放行、坏提交+干净工作区拦下、纯删除放行、多 ref 有坏即拦、缺解释器（默认拦下 / 显式放行）、缺 lint 依赖（默认拦下 / 显式放行）、删除门禁、无门禁记未运行（默认拦下 / 显式放行）、不可读对象、非 commit 对象、畸形 stdin、手动运行校验 HEAD、annotated tag 推送不被误拦、临时工作树清理。
+- **落地顺序**：本 hook 会拦住 lint 红。`tools/lab/docchain/cli.py`、`tools/lab/gate/checks.py` 与 `tools/lab/gate/manifests.py` 的 4 个 ruff 错误（均为 import 排序/格式类，可 `ruff --fix`）在 `main` 上即存在（本提交未修复，属另一候选批次），需与本改动同批或在其后落地；在此之前推送需 `AGENTFLOW_PREPUSH_ALLOW_UNRUN=1` 或 `git push --no-verify`。
+
 ## 0.18.3 — 2026-10-27
 
 > 2026-10-26 整体审核的吸收批（[审核报告](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)），并纳入「原型先行」契约修订。`measurement: none`。
