@@ -57,7 +57,7 @@
 | 13 | 托管写入与过期预览保护 | managed-preview、managed-apply | TC-WF-008、TC-WF-009 |
 | 14 | 简单任务可判定轻量档 | 轻量模板、文档链检查 | TC-WF-010 |
 
-规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。0.19.2 已于 `58d3adc` 推送 `origin/main` 并完成双端安装核验（ZCode 与 Codex 缓存均为 0.19.2，`validate.py installed` PASS）。方法疗效未测量。
+规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。0.19.3 已于 `272add3` 推送 `origin/main` 并完成双端安装核验（ZCode 与 Codex 缓存均为 0.19.3，`validate.py installed` PASS）。方法疗效未测量。
 
 ## 交付记录
 

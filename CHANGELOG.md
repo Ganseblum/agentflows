@@ -4,6 +4,7 @@
 
 - 版本号提升，无行为改动：0.19.2 的推送与双端安装状态已在 `a05276a` 回写；本次把五份 manifest、
   `packaging/runtime` 生成树与宿主安装同步到 0.19.3，便于宿主按新版本目录装载。`measurement: none`。
+- 已推送 `origin/main`（`272add3`）并装入 ZCode 与 Codex（两端缓存均为 0.19.3，`validate.py installed` PASS）；pre-push 逐提交校验全绿。
 
 ## 0.19.2 — 2026-10-27
 
