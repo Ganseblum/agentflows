@@ -125,3 +125,5 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
 dogfood 之前，用 `python3 tools/lab/validate.py installed
 --path <installed-plugin-root>`（或宿主特定的默认值）比对实际的宿主快照并记录结果。
 在首次人工门控的 dogfood 运行使用经验证的模型端点之前，不得切换安装。
+
+[broken](./definitely-missing-file.md)
