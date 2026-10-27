@@ -62,7 +62,7 @@
 
 | # | 事实 | 证据 | 适用范围 | 后果 |
 | --- | --- | --- | --- | --- |
-| H1 | ZCode 在会话启动时加载用户级 `~/.zcode/AGENTS.md`，其内容作为「user default instructions」进入系统提示。 | Observed 2026-10-24：2026-10-24 的 ZCode 会话系统提示逐字包含 `Contents of /Users/lihanghang1/.zcode/AGENTS.md (user default instructions)`，并附该文件全文。 | ZCode 桌面版（本安装） | 写在其中的跨仓规则对每个工作区生效，不依赖插件安装；插件升级不会更新这份文件，需要按 `hosts.md` 重跑 Host Init。 |
+| H1 | ZCode 在会话启动时加载用户级 `~/.zcode/AGENTS.md`，其内容作为「user default instructions」进入系统提示。 | Observed 2026-10-24：2026-10-24 的 ZCode 会话系统提示逐字包含 `Contents of /Users/lihanghang1/.zcode/AGENTS.md (user default instructions)`，并附该文件全文。**2026-10-27 Host Init 实测**：向该文件追加 `<!-- agentflow:begin v0.18.4 -->` 托管块（11 条宿主级规则，来源 `skills/agentflow/templates/host/global-rules.md`）；块外 101 行逐字未变，块内容与模板（版本替换后）diff 为空，备份 `~/.zcode/AGENTS.md.agentflow-backup-20261027-113211`。**第 6 条第三项（新会话复述首行）尚未执行**，故本次仍记 `partial`，不记完成。 | ZCode 桌面版（本安装） | 写在其中的跨仓规则对每个工作区生效，不依赖插件安装；插件升级不会更新这份文件，需要按 `hosts.md` 重跑 Host Init。托管块由模板灌入，块外是用户手写内容，勿互相覆盖。 |
 | H2 | Codex 是否加载用户级 `~/.codex/AGENTS.md`，本仓尚未观察。已知 Codex 会话会读取仓库 `AGENTS.md`；2026-10-23 的合并会话加载了 `~/.codex/plugins/cache/personal/agentflow/0.13.0/skills/agentflow/SKILL.md`。 | `doc`（Codex 指令文件约定）+ 本仓尚未做过用户级加载实验 | Codex CLI / Codex 宿主 | 不要把「仓库 `AGENTS.md` 生效」外推为「用户级文件生效」。Host Init 写入后必须按 `hosts.md` 第 6 条验证，拿不到复述记 `blocked`。 |
 | H3 | Claude Code 的用户级指令文件为 `~/.claude/CLAUDE.md`；本仓未做过加载实验。 | `doc`（Claude Code 项目/用户记忆文件约定），未现场验证 | Claude Code | 同 H2：写入后必须验证加载，不得声称已生效。 |
 | H4 | Cursor 的规则载体与加载行为未验证：项目级候选为 `.cursor/rules/*.mdc`，全局规则位置未知；是否读取 `AGENTS.md` 亦未验证。 | 未实际触发——本仓未做过 Cursor 安装或加载实验 | Cursor | 在完成「写一条最小规则 → 新会话复述」的实验前，不提供 Cursor 适配器、不声称支持。 |

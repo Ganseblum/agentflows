@@ -5,10 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>原型骨架（须适配目标项目视觉基线）— &lt;feature 名&gt;</title>
 <!--
-  原型 HTML 骨架：零依赖、浏览器直开，不引入构建链与外部资源。当前中性样式仅用于占位，不能直接当作
-  目标项目的产品视觉；开始评审前须按 feature README 元信息与设计文档里的真实组件、主题和 token 改造。
-  复制到 docs/features/<批次>/prototype/index.html 后，把 <占位> 换成真实页面结构。
-  规矩（见 Agentflow 的 feature/prototype 模板说明与 feature README 元信息）：
+  原型 HTML 骨架（双形态，共用此一个文件）：零依赖、浏览器直开，不引入构建链与外部资源。
+  选形态看目标仓事实——目标仓已维护原型库 → 必须形态 A；确无原型库 → 形态 B（规矩见
+  feature/prototype/README.md 与 feature README 元信息）。不要为本模板再建第二个 index 文件。
+
+  形态 A（仓库级原型库）只用链接块：删掉下面所有 <section class="screen">、aside 标注区与页签脚本，
+  把 <main> 换成入口页内容——受影响页到库内页面的深链、库首页整体预览入口、正文基线
+  path@revision（跨仓写 <repo>@<revision>:<path>）。入口页不放页面正文，页面正文住库内。
+  示例（形态 A 时照此改写 <main>；下面的 ../../../../ 按本骨架所在位置
+  docs/features/<批次>/prototype/ 到仓根计算，实际深度不同须调整）：
+    <main>
+      <h1>本期原型：<批次名></h1>
+      <p>正文基线：design/html/<产品组>/<页面>.html@<提交号></p>
+      <ul>
+        <li><a href="../../../../design/html/<产品组>/<页面>.html">P1 <页面名>（本期受影响）</a></li>
+        <li><a href="../../../../design/html/index.html">整体预览入口（库首页）</a></li>
+      </ul>
+      <p>跨仓或枢纽仓：深链不可达时在此登记 <repo>@<revision>:<path> 与可打开的工作台入口。</p>
+    </main>
+
+  形态 B（批次自建）用下面这些 sections：复制到 docs/features/<批次>/prototype/index.html 后，把
+  <占位> 换成真实页面结构，按 1)–5) 改造：
     1) 当前文件只是骨架；适配真实视觉基线后才是产品视觉预览，样式出处记在 design/ui 或 design/fe；
     2) 每个区块写清它承担什么（区块标题左上的灰字），可点击元素在 docs 里对应 data-testid；
     3) 一个页面一个 <section class="screen">，页签自动生成；
