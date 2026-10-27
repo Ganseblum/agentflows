@@ -494,6 +494,34 @@ class ValidatorRegressionTests(unittest.TestCase):
         self.assertTrue(any("dependency cycle" in m for m in messages))
         self.assertTrue(any("blocking unresolved decision" in m for m in messages))
 
+    def test_shipped_plan_template_can_be_used_as_hybrid(self) -> None:
+        template = ROOT / "skills/agentflow/templates/feature/plan/execution.md"
+        lines: list[str] = []
+        filled_tasks = 0
+        for line in template.read_text(encoding="utf-8").splitlines():
+            for task_id, dependency in (("T01", "—"), ("T02", "T01")):
+                if line.startswith(f"| {task_id} |"):
+                    line = (
+                        f"| {task_id} | 验证模板 | QA | `src.py` | {dependency} |"
+                        " 设计说明 | 可观察结果 | ☐ 未开始 | — |"
+                    )
+                    filled_tasks += 1
+                    break
+            lines.append(line)
+        self.assertEqual(2, filled_tasks, "The real template must supply the task rows")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "PLAN-TEMPLATE-001.md"
+            path.write_text(
+                "---\nplan_id: PLAN-TEMPLATE-001\nplan_version: 0.1.0\n"
+                "status: proposed\nobjective: 使用随插件交付的计划模板\n"
+                "recorded_at: 2026-10-26T00:00:00Z\n---\n\n"
+                + "\n".join(lines)
+                + "\n",
+                encoding="utf-8",
+            )
+            errors = validate.validate_plan_markdown(path)
+        self.assertEqual([], [error.message for error in errors])
+
     def test_approval_gate_is_not_bypassed_by_a_decision_titled_with_wei_jue(self) -> None:
         # Item A: a 未决项 row whose text merely contains the word 未决 used to be skipped as if it
         # were a header, so an approved plan with an open blocking decision passed the gate.

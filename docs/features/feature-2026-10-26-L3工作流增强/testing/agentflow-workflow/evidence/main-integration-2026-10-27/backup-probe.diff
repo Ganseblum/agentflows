@@ -1,0 +1,20 @@
+commit 0aeb6a10100945b7842a06ef0412bb8dc1b2a145
+Author:     probe <probe@example.invalid>
+AuthorDate: Tue Oct 27 14:42:57 2026 +0800
+Commit:     probe <probe@example.invalid>
+CommitDate: Tue Oct 27 14:42:57 2026 +0800
+
+    probe: broken link
+
+diff --git a/README.md b/README.md
+index f3f4617..6af7d2b 100644
+--- a/README.md
++++ b/README.md
+@@ -125,3 +125,5 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
+ dogfood 之前，用 `python3 tools/lab/validate.py installed
+ --path <installed-plugin-root>`（或宿主特定的默认值）比对实际的宿主快照并记录结果。
+ 在首次人工门控的 dogfood 运行使用经验证的模型端点之前，不得切换安装。
++
++[broken](./definitely-missing-file.md)
+
+EXIT_CODE=0

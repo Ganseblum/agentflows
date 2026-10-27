@@ -1,0 +1,476 @@
+diff --git a/.claude-plugin/plugin.json b/.claude-plugin/plugin.json
+index 693a279..54c8b49 100644
+--- a/.claude-plugin/plugin.json
++++ b/.claude-plugin/plugin.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "agentflow",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-  "version": "0.19.1",
++  "version": "0.19.2",
+   "author": {
+     "name": "Ganseblum"
+   },
+diff --git a/.codex-plugin/plugin.json b/.codex-plugin/plugin.json
+index 6bceb98..8374963 100644
+--- a/.codex-plugin/plugin.json
++++ b/.codex-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.19.1",
++  "version": "0.19.2",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/.zcode-plugin/plugin.json b/.zcode-plugin/plugin.json
+index bd20263..075dc10 100644
+--- a/.zcode-plugin/plugin.json
++++ b/.zcode-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.19.1",
++  "version": "0.19.2",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7b4ce67..34bfb60 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # 变更日志
+ 
++## 0.19.2 — 2026-10-27（本地 main，未发布）
++
++- 收录 L3 实验备份分支历史，保留 main 已验证的文件树；故障断链与旧候选不回流。
++- pre-push 对非空但失败的检查清单立即拒绝；“允许未运行”不能绕过清单读取失败。
++- 计划模板使用检查器要求的固定标题，并以实际模板生成混合计划回归。
++- Skill 测试入口集中引用执行方法，明确共享 smoke 与独立任务的失败范围。
++- 批次当前摘要区分已安装的旧版本与尚未发布的本地修正；历史证据保留。`measurement: none`。
++
+ ## 0.19.1 — 2026-10-27
+ 
+ > 本版合并两条线：0.18.4 的宿主运行纪律、评审读取纪律与原型形态 A/B，以及 0.19.0 的 L3 工作流增强
+diff --git "a/docs/features/feature-2026-10-26-L3\345\267\245\344\275\234\346\265\201\345\242\236\345\274\272/README.md" "b/docs/features/feature-2026-10-26-L3\345\267\245\344\275\234\346\265\201\345\242\236\345\274\272/README.md"
+index 74d8cce..706b097 100644
+--- "a/docs/features/feature-2026-10-26-L3\345\267\245\344\275\234\346\265\201\345\242\236\345\274\272/README.md"
++++ "b/docs/features/feature-2026-10-26-L3\345\267\245\344\275\234\346\265\201\345\242\236\345\274\272/README.md"
+@@ -57,8 +57,14 @@
+ | 13 | 托管写入与过期预览保护 | managed-preview、managed-apply | TC-WF-008、TC-WF-009 |
+ | 14 | 简单任务可判定轻量档 | 轻量模板、文档链检查 | TC-WF-010 |
+ 
+-规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。接受范围为本地源码和生成树；宿主尚未安装候选，未声明方法效果已经提升。
++规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。0.19.1 已于 `17ccbd7` 完成双端安装核验；后续 0.19.2 修正属于本地 main，尚未发布或重装，不代表宿主已加载这些修正。方法疗效未测量。
+ 
+ ## 交付记录
+ 
+ [逐用例结果](testing/agentflow-workflow/run-2026-10-27-001.md) · [首轮发现](reviews/review-2026-10-27-001.md) · [修复后批准](reviews/review-2026-10-27-002.md) · [任务级记录](../../../episodes/2026-10-27/EP-20261027-001.json)。本批已进入 Git 历史（`17ccbd7`），材料保留供审查；证据的复核以该提交为准。
++
++## 合并后修正
++
++本地main在 `57e45d2` 收录备份历史，保留已验证文件树。四条开发分支已在主线；两个旧工作树的28文件与既有集成来源摘要一致，不用旧候选覆盖后续修复。分支和文件证据见 [整合记录](testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json)。
++
++后续四项状态分别以缺陷记录为准：[清单读取失败](../../issues/ISS-2026-062-门清单部分输出失败仍被放行.md)、[计划模板标题](../../issues/ISS-2026-063-计划模板验证标题不匹配.md)、[测试方法重复](../../issues/ISS-2026-064-测试入口重复定义失败范围.md)、[安装摘要矛盾](../../issues/ISS-2026-065-L3批次安装摘要前后矛盾.md)。本次不修改既有计划已完成任务的定义，也不回写历史执行结果。
+diff --git a/index.md b/index.md
+index 78eac60..9b39828 100644
+--- a/index.md
++++ b/index.md
+@@ -57,3 +57,7 @@
+ ## 执行证据
+ 
+ 工作流方法见 [执行与验证](skills/agentflow/references/execution.md)，工具接口见 [证据工具用法](skills/agentflow/references/workflow-tool.md)，轻量交付见 [单文件模板](skills/agentflow/templates/feature/lightweight.md)。
++
++## L3 合并后修正
++
++[分支整合及证据](docs/features/feature-2026-10-26-L3工作流增强/README.md#合并后修正) · [门清单失败](docs/issues/ISS-2026-062-门清单部分输出失败仍被放行.md) · [计划模板标题](docs/issues/ISS-2026-063-计划模板验证标题不匹配.md) · [测试方法重复](docs/issues/ISS-2026-064-测试入口重复定义失败范围.md) · [安装摘要](docs/issues/ISS-2026-065-L3批次安装摘要前后矛盾.md)。状态以各记录frontmatter为准。
+diff --git a/marketplace.json b/marketplace.json
+index ac806af..8f1f5f6 100644
+--- a/marketplace.json
++++ b/marketplace.json
+@@ -7,7 +7,7 @@
+       "name": "agentflow",
+       "source": "./packaging/runtime",
+       "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-      "version": "0.19.1",
++      "version": "0.19.2",
+       "author": {
+         "name": "Ganseblum"
+       },
+diff --git a/plugin.json b/plugin.json
+index a56102a..1221210 100644
+--- a/plugin.json
++++ b/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+   "name": "agentflow",
+-  "version": "0.19.1",
++  "version": "0.19.2",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。"
+ }
+diff --git a/skills/agentflow/SKILL.md b/skills/agentflow/SKILL.md
+index 9aef242..07b6a7a 100644
+--- a/skills/agentflow/SKILL.md
++++ b/skills/agentflow/SKILL.md
+@@ -57,7 +57,15 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓
+ 
+ ## 自动化测试
+ 
+-当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），每个用例带测试功能、来源（proposal 目标/AC 编号或工单 `ISS-*`）、前置与步骤表；边界覆盖并声明未覆盖的类别；`## 数据来源` 逐项声明真实接口/真实库状态/Mock——能取到真实接口数据的一律用真实数据，只有真实拿不到的环节才按项声明 Mock，禁止全链路 Mock；以及用于 spec 未定义行为的 `## 流程疑点`（契约：`skills/agentflow/references/test-records.md`）。`test-executor` 执行它：浏览器自动化默认走 Ego Light（`ego-browser` 命令行，headless 可重复；不再新写 Playwright spec；目标项目自带 e2e runner 时通过 runner 跑既有套件），API 用例走命令，Ego 覆盖不了的交互由 Supervisor 在主对话中按 Executor 的步骤脚本执行——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。执行遵循计划的数据来源声明：真实优先，计划未声明 Mock 的环节拿不到真实数据就标 `blocked`，不静默降级。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、实际结果、证据与汇总计数。失败的用例带可直接照跑的 Ego 操作序列 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用 Ego Light 命令行路线；Supervisor 驱动的宿主浏览器路线是兜底，不是目标。
++当用户要求对用户可见功能做自动化测试，或计划包含测试设计任务时，使用测试链路：
++
++- `test-planner` 在明确指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径编写用例库。
++- `test-executor` 执行已确认的计划，在同一目录新建每轮 `run-*.md` 及原始证据，不修改被测对象或缺陷状态。
++- `reviewer` 独立复核覆盖与流程合理性；产品缺陷经缺陷链处理。
++
++测试先行、环境预检、Ego Light/API 路线、真实数据与凭据规则统一遵守[执行与验证](references/execution.md)；计划和运行记录形态及 Bug 状态联动遵守[测试记录](references/test-records.md)。共享 smoke 或共同环境失败时停止其依赖任务；独立模块失败按真实依赖分流，不终止其他已授权工作。
++
++宿主浏览器或本机交互若仅主对话可用，由 Supervisor 按执行者给出的步骤操作，回传截图、DOM、网络等原始证据，由执行者判定结果；不把该兜底路线当作默认自动化入口。
+ 
+ ## 外部文档二次评审
+ 
+diff --git a/skills/agentflow/scripts/pre-push.sh b/skills/agentflow/scripts/pre-push.sh
+index c83824e..c9063d9 100755
+--- a/skills/agentflow/scripts/pre-push.sh
++++ b/skills/agentflow/scripts/pre-push.sh
+@@ -157,10 +157,16 @@ for sha in $UNIQUE_SHAS; do
+   # `cd "$wt"` 只换 cwd 不换 GIT_DIR，依赖 git 的门项会读主仓索引而误判为绿。
+   # 显式清掉是廉价的防御，且不影响没有这些变量的情形。
+   GATE_ENV=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE)
+-  TARGETS="$(cd "$wt" && "${GATE_ENV[@]}" "$GATE_PYTHON" tools/lab/validate.py --list \
++  if TARGETS="$(cd "$wt" && "${GATE_ENV[@]}" "$GATE_PYTHON" tools/lab/validate.py --list \
+     | grep -vE 'all runs [0-9]+ checks' \
+     | grep -vxE 'all|installed|lint|report|recurrence' \
+-    | tr '\n' ' ')"
++    | tr '\n' ' ')"; then
++    :
++  else
++    echo "pre-push: 待推送提交 $short 的门清单读取失败，无法验证" >&2
++    FAILED="$FAILED ${short}:targets"
++    continue
++  fi
+   if [ -z "${TARGETS// /}" ]; then
+     echo "pre-push: 待推送提交 $short 的门清单为空或读取失败，无法验证" >&2
+     echo "pre-push: 常见原因是解释器过旧（需 >= 3.10）或 tools/lab/validate.py 无法启动；" >&2
+diff --git a/skills/agentflow/templates/feature/plan/execution.md b/skills/agentflow/templates/feature/plan/execution.md
+index df1c608..d685098 100644
+--- a/skills/agentflow/templates/feature/plan/execution.md
++++ b/skills/agentflow/templates/feature/plan/execution.md
+@@ -5,7 +5,7 @@
+ > 形态说明：本模板是**目标仓默认形态**（无自有计划约定时使用，见 `references/document-chain.md` 的 plan 节）。
+ > 目标仓若落成 agentflow 混合形态（`plan/<plan_id>.md`），需另加 YAML frontmatter 信封
+ > （`plan_id` / `plan_version` / `status` / `objective` / `recorded_at` / `updated_at`），正文标题
+-> 已与混合形态对齐（`## 进展概览`、`## 任务清单`、`## 验证命令与启服清单` 等无编号标题）——
++> 已与混合形态对齐（`## 进展概览`、`## 任务清单`、`## 验证命令` 等无编号标题）——
+ > 本仓门（`gate/plan.py` 的 `PLAN_REQUIRED_HEADINGS`）按标题逐字匹配，**照抄本模板不会因标题被拒**。
+ > 任务表两道门（`doc_chain.py` C9 与 `gate/plan.py`）均按**列名**读「状态」列，列序可自由调整。
+ 
+@@ -71,7 +71,7 @@
+ | --- | --- | --- | --- |
+ | 1 | （填写） | （填写） | （填写/无） |
+ 
+-## 验证命令与启服清单
++## 验证命令
+ <填：| 命令 | 覆盖什么 | 命令依据 |；**每行都要写出处**，禁止只写「待补充」>
+ | 命令 | 覆盖什么 | 命令依据 |
+ | --- | --- | --- |
+diff --git a/tests/test_gate_schema.py b/tests/test_gate_schema.py
+index 45a0829..f851fef 100644
+--- a/tests/test_gate_schema.py
++++ b/tests/test_gate_schema.py
+@@ -494,6 +494,34 @@ class ValidatorRegressionTests(unittest.TestCase):
+         self.assertTrue(any("dependency cycle" in m for m in messages))
+         self.assertTrue(any("blocking unresolved decision" in m for m in messages))
+ 
++    def test_shipped_plan_template_can_be_used_as_hybrid(self) -> None:
++        template = ROOT / "skills/agentflow/templates/feature/plan/execution.md"
++        lines: list[str] = []
++        filled_tasks = 0
++        for line in template.read_text(encoding="utf-8").splitlines():
++            for task_id, dependency in (("T01", "—"), ("T02", "T01")):
++                if line.startswith(f"| {task_id} |"):
++                    line = (
++                        f"| {task_id} | 验证模板 | QA | `src.py` | {dependency} |"
++                        " 设计说明 | 可观察结果 | ☐ 未开始 | — |"
++                    )
++                    filled_tasks += 1
++                    break
++            lines.append(line)
++        self.assertEqual(2, filled_tasks, "The real template must supply the task rows")
++        with tempfile.TemporaryDirectory() as temporary:
++            path = Path(temporary) / "PLAN-TEMPLATE-001.md"
++            path.write_text(
++                "---\nplan_id: PLAN-TEMPLATE-001\nplan_version: 0.1.0\n"
++                "status: proposed\nobjective: 使用随插件交付的计划模板\n"
++                "recorded_at: 2026-10-26T00:00:00Z\n---\n\n"
++                + "\n".join(lines)
++                + "\n",
++                encoding="utf-8",
++            )
++            errors = validate.validate_plan_markdown(path)
++        self.assertEqual([], [error.message for error in errors])
++
+     def test_approval_gate_is_not_bypassed_by_a_decision_titled_with_wei_jue(self) -> None:
+         # Item A: a 未决项 row whose text merely contains the word 未决 used to be skipped as if it
+         # were a header, so an approved plan with an open blocking decision passed the gate.
+diff --git a/tests/test_pre_push.py b/tests/test_pre_push.py
+index c603351..dca20d3 100644
+--- a/tests/test_pre_push.py
++++ b/tests/test_pre_push.py
+@@ -137,6 +137,28 @@ class PrePushHookTests(unittest.TestCase):
+         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+         self.assertIn("全绿", result.stdout)
+ 
++    def test_partial_target_list_failure_is_not_allowed(self):
++        successful_listing = '    print("all runs 2 checks")\n    raise SystemExit(0)'
++        failed_listing = '    print("all runs 2 checks")\n    raise SystemExit(1)'
++        self.assertEqual(1, FAKE_GATE.count(successful_listing))
++        (self.repo / "tools/lab/validate.py").write_text(
++            FAKE_GATE.replace(successful_listing, failed_listing), encoding="utf-8"
++        )
++        self.git("add", "tools/lab/validate.py")
++        self.git("commit", "-qm", "fixture with partial failed gate listing")
++        for allow_unrun in ("0", "1"):
++            with self.subTest(allow_unrun=allow_unrun):
++                result = self.run_hook(
++                    self.ref_line(self.head()),
++                    env={"AGENTFLOW_PREPUSH_ALLOW_UNRUN": allow_unrun},
++                )
++                output = result.stdout + result.stderr
++                self.assertEqual(1, result.returncode, output)
++                self.assertIn(":targets", result.stderr)
++                self.assertNotIn("PASS docs", output)
++                self.assertNotIn("PASS lint", output)
++                self.assertNotIn("全绿", output)
++
+     def test_bad_commit_is_blocked_even_when_worktree_is_fixed(self):
+         bad = self.commit_bad_marker()
+         (self.repo / "BROKEN").unlink()
+@@ -263,4 +285,4 @@ class PrePushHookTests(unittest.TestCase):
+ 
+ 
+ if __name__ == "__main__":
+-    unittest.main()
+\ No newline at end of file
++    unittest.main()
+--- /dev/null
++++ b/docs/issues/ISS-2026-062-门清单部分输出失败仍被放行.md
+@@ -0,0 +1,52 @@
++---
++bug_id: ISS-2026-062
++title: 门清单部分输出失败仍被放行
++status: fixed-pending-review
++regression_status: pass
++severity: P1
++error_kind: logic-error
++attribution: product_code
++provenance: agentflow
++project: agentflows
++files:
++  - skills/agentflow/scripts/pre-push.sh
++  - tests/test_pre_push.py
++recorded_at: 2026-10-27T19:05:40+08:00
++updated_at: 2026-10-27T19:05:40+08:00
++source_revision: eaa3d6c0efa1201e31c38752f58c38692d0cc198
++agentflow_version: 0.19.2
++fix_revision: 0.19.2（本地main修正，未发布）
++closure_criteria: 新增test_partial_target_list_failure_is_not_allowed：两种ALLOW_UNRUN值均须退出1，且不得运行后续目标或报全绿。
++---
++
++## 现象
++
++检查清单输出合法项目后退出1，旧hook仍运行docs/lint并显示全绿、退出0。默认和允许未运行两种配置均可复现。
++
++## 根因
++
++命令替换的管道状态未被承接，只判断输出是否为空；非空不能证明清单读取成功。本记录归为逻辑错误，依据为上述实际源码、模板与修前输出，不推断模型或宿主意图。
++
++## 修复方案
++
++已采纳：将整个清单赋值放入显式成功/失败分支，管道失败记targets失败并停止该提交；保留空清单、逐项执行与lint路径。依据为用户在四项评审结论后明确要求“先把所有代码和分支合并到main，然后处理”；只读架构判断确认不改接口或授权边界，保留既有失败关闭契约。
++
++## 修复
++
++将整个清单赋值放入显式成功/失败分支，管道失败记targets失败并停止该提交；保留空清单、逐项执行与lint路径。源面与安装生成树同步，当前仅本地修复，不声明已在宿主加载。
++
++## 回归检查
++
++新增test_partial_target_list_failure_is_not_allowed：两种ALLOW_UNRUN值均须退出1，且不得运行后续目标或报全绿。原始证据归档于 `docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27`；完整检查和独立回执接受后才将本记录转为verified。
++
++## 前后对比
++
++`fix-target-red.txt` 中两个子用例错误返回0；`fix-target-green.txt` 同一检查通过。既有修前证据不覆盖；本次反例只在一次性临时Git项目运行，不对真实树故障注入。
++
++## 怎么避免
++
++新增test_partial_target_list_failure_is_not_allowed：两种ALLOW_UNRUN值均须退出1，且不得运行后续目标或报全绿。
++
++## 变更记录
++
++- 2026-10-27T19:05:40+08:00 · 立录并置fixed-pending-review · 用户已指示处理，最小修正与目标回归已完成，独立评审待核验。
+--- /dev/null
++++ b/docs/issues/ISS-2026-063-计划模板验证标题不匹配.md
+@@ -0,0 +1,52 @@
++---
++bug_id: ISS-2026-063
++title: 计划模板验证标题不匹配
++status: fixed-pending-review
++regression_status: pass
++severity: P1
++error_kind: logic-error
++attribution: workflow_policy
++provenance: agentflow
++project: agentflows
++files:
++  - skills/agentflow/templates/feature/plan/execution.md
++  - tests/test_gate_schema.py
++recorded_at: 2026-10-27T19:05:40+08:00
++updated_at: 2026-10-27T19:05:40+08:00
++source_revision: eaa3d6c0efa1201e31c38752f58c38692d0cc198
++agentflow_version: 0.19.2
++fix_revision: 0.19.2（本地main修正，未发布）
++closure_criteria: 新增test_shipped_plan_template_can_be_used_as_hybrid：复制实际模板、填写任务和信封，通过真实计划校验。
++---
++
++## 现象
++
++模板承诺可转为混合计划，但实际标题为“验证命令与启服清单”，固定匹配器要求“验证命令”；填写实际模板后被拒绝。
++
++## 根因
++
++模板标题和检查器的精确字面量分开维护，既有测试没有实例化实际交付模板。本记录归为逻辑错误，依据为上述实际源码、模板与修前输出，不推断模型或宿主意图。
++
++## 修复方案
++
++已采纳：只修改模板标题及说明，保留命令和启服表；不放宽检查器。依据为用户在四项评审结论后明确要求“先把所有代码和分支合并到main，然后处理”；只读架构判断确认不改接口或授权边界，保留既有失败关闭契约。
++
++## 修复
++
++只修改模板标题及说明，保留命令和启服表；不放宽检查器。源面与安装生成树同步，当前仅本地修复，不声明已在宿主加载。
++
++## 回归检查
++
++新增test_shipped_plan_template_can_be_used_as_hybrid：复制实际模板、填写任务和信封，通过真实计划校验。原始证据归档于 `docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27`；完整检查和独立回执接受后才将本记录转为verified。
++
++## 前后对比
++
++`fix-target-red.txt` 仅报缺少固定标题；`fix-target-green.txt` 同一实际模板回归通过。既有修前证据不覆盖；本次反例只在一次性临时Git项目运行，不对真实树故障注入。
++
++## 怎么避免
++
++新增test_shipped_plan_template_can_be_used_as_hybrid：复制实际模板、填写任务和信封，通过真实计划校验。
++
++## 变更记录
++
++- 2026-10-27T19:05:40+08:00 · 立录并置fixed-pending-review · 用户已指示处理，最小修正与目标回归已完成，独立评审待核验。
+--- /dev/null
++++ b/docs/issues/ISS-2026-064-测试入口重复定义失败范围.md
+@@ -0,0 +1,52 @@
++---
++bug_id: ISS-2026-064
++title: 测试入口重复定义失败范围
++status: fixed-pending-review
++regression_status: pass
++severity: P2
++error_kind: logic-error
++attribution: workflow_policy
++provenance: agentflow
++project: agentflows
++files:
++  - skills/agentflow/SKILL.md
++  - skills/agentflow/references/execution.md
++recorded_at: 2026-10-27T19:05:40+08:00
++updated_at: 2026-10-27T19:05:40+08:00
++source_revision: eaa3d6c0efa1201e31c38752f58c38692d0cc198
++agentflow_version: 0.19.2
++fix_revision: 0.19.2（本地main修正，未发布）
++closure_criteria: 对实际差异独立核对职责未丢失，并运行文档一致性与完整检查；纯文字不新增镜像实现的测试。
++---
++
++## 现象
++
++Skill测试入口重复方法正文，笼统的smoke失败即停没有限定共同前置，与执行协议按真实依赖分流的读法产生歧义。
++
++## 根因
++
++角色调度入口同时复制执行方法，合并恢复旧段落时两处规则没有作为单一来源维护。本记录归为逻辑错误，依据为上述实际源码、模板与修前输出，不推断模型或宿主意图。
++
++## 修复方案
++
++已采纳：保留测试设计、执行、独立评审和主对话浏览器职责；方法及记录形态分别引用既有权威，明确共享失败仅阻塞依赖。依据为用户在四项评审结论后明确要求“先把所有代码和分支合并到main，然后处理”；只读架构判断确认不改接口或授权边界，保留既有失败关闭契约。
++
++## 修复
++
++保留测试设计、执行、独立评审和主对话浏览器职责；方法及记录形态分别引用既有权威，明确共享失败仅阻塞依赖。源面与安装生成树同步，当前仅本地修复，不声明已在宿主加载。
++
++## 回归检查
++
++对实际差异独立核对职责未丢失，并运行文档一致性与完整检查；纯文字不新增镜像实现的测试。原始证据归档于 `docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27`；完整检查和独立回执接受后才将本记录转为verified。
++
++## 前后对比
++
++修前原文可由eaa3d6c的Skill读取；修后原始diff与独立回执归档。既有修前证据不覆盖；本次反例只在一次性临时Git项目运行，不对真实树故障注入。
++
++## 怎么避免
++
++对实际差异独立核对职责未丢失，并运行文档一致性与完整检查；纯文字不新增镜像实现的测试。
++
++## 变更记录
++
++- 2026-10-27T19:05:40+08:00 · 立录并置fixed-pending-review · 用户已指示处理，最小修正与目标回归已完成，独立评审待核验。
+--- /dev/null
++++ b/docs/issues/ISS-2026-065-L3批次安装摘要前后矛盾.md
+@@ -0,0 +1,51 @@
++---
++bug_id: ISS-2026-065
++title: L3批次安装摘要前后矛盾
++status: fixed-pending-review
++regression_status: pass
++severity: P2
++error_kind: logic-error
++attribution: context
++provenance: agentflow
++project: agentflows
++files:
++  - docs/features/feature-2026-10-26-L3工作流增强/README.md
++recorded_at: 2026-10-27T19:05:40+08:00
++updated_at: 2026-10-27T19:05:40+08:00
++source_revision: eaa3d6c0efa1201e31c38752f58c38692d0cc198
++agentflow_version: 0.19.2
++fix_revision: 0.19.2（本地main修正，未发布）
++closure_criteria: 独立核对版本限定与安装原始输出；实际installed结果不以生成树通过替代。
++---
++
++## 现象
++
++批次元信息已写0.19.1双端安装完成，正文仍称候选尚未安装；当前状态互相矛盾。
++
++## 根因
++
++更新状态时只修改了部分摘要，未检查同一文件内其余当前描述。本记录归为逻辑错误，依据为上述实际源码、模板与修前输出，不推断模型或宿主意图。
++
++## 修复方案
++
++已采纳：当前摘要以修订限定0.19.1的实际安装事实，并明确本地0.19.2后续修正未发布或重装；历史run和旧输出保持原样。依据为用户在四项评审结论后明确要求“先把所有代码和分支合并到main，然后处理”；只读架构判断确认不改接口或授权边界，保留既有失败关闭契约。
++
++## 修复
++
++当前摘要以修订限定0.19.1的实际安装事实，并明确本地0.19.2后续修正未发布或重装；历史run和旧输出保持原样。源面与安装生成树同步，当前仅本地修复，不声明已在宿主加载。
++
++## 回归检查
++
++独立核对版本限定与安装原始输出；实际installed结果不以生成树通过替代。原始证据归档于 `docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27`；完整检查和独立回执接受后才将本记录转为verified。
++
++## 前后对比
++
++旧安装证据属于0.19.1，不回改历史；本次源面漂移会如实保存。既有修前证据不覆盖；本次反例只在一次性临时Git项目运行，不对真实树故障注入。
++
++## 怎么避免
++
++独立核对版本限定与安装原始输出；实际installed结果不以生成树通过替代。
++
++## 变更记录
++
++- 2026-10-27T19:05:40+08:00 · 立录并置fixed-pending-review · 用户已指示处理，最小修正与目标回归已完成，独立评审待核验。

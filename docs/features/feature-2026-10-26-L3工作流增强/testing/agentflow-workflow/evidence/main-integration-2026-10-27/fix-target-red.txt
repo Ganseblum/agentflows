@@ -1,0 +1,50 @@
+["/tmp/agentflows-l3-venv-20261026/bin/python3", "-m", "unittest", "test_pre_push.PrePushHookTests.test_partial_target_list_failure_is_not_allowed", "test_gate_schema.ValidatorRegressionTests.test_shipped_plan_template_can_be_used_as_hybrid"]
+FFF
+======================================================================
+FAIL: test_partial_target_list_failure_is_not_allowed (test_pre_push.PrePushHookTests.test_partial_target_list_failure_is_not_allowed) (allow_unrun='0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lihanghang1/Desktop/TestProject/agentflows/tests/test_pre_push.py", line 156, in test_partial_target_list_failure_is_not_allowed
+    self.assertEqual(1, result.returncode, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : pre-push: 校验待推送提交 7c3796b（临时检出，不用工作区）：docs 
+PASS docs
+PASS lint
+pre-push: 全绿，放行（已校验： 7c3796b）
+
+
+======================================================================
+FAIL: test_partial_target_list_failure_is_not_allowed (test_pre_push.PrePushHookTests.test_partial_target_list_failure_is_not_allowed) (allow_unrun='1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lihanghang1/Desktop/TestProject/agentflows/tests/test_pre_push.py", line 156, in test_partial_target_list_failure_is_not_allowed
+    self.assertEqual(1, result.returncode, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : pre-push: 校验待推送提交 7c3796b（临时检出，不用工作区）：docs 
+PASS docs
+PASS lint
+pre-push: 全绿，放行（已校验： 7c3796b）
+
+
+======================================================================
+FAIL: test_shipped_plan_template_can_be_used_as_hybrid (test_gate_schema.ValidatorRegressionTests.test_shipped_plan_template_can_be_used_as_hybrid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lihanghang1/Desktop/TestProject/agentflows/tests/test_gate_schema.py", line 523, in test_shipped_plan_template_can_be_used_as_hybrid
+    self.assertEqual([], [error.message for error in errors])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ["body section '## 验证命令' is required"]
+
+Second list contains 1 additional elements.
+First extra element 0:
+"body section '## 验证命令' is required"
+
+- []
++ ["body section '## 验证命令' is required"]
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.734s
+
+FAILED (failures=3)
+
+EXIT_CODE=1

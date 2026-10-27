@@ -1,0 +1,4 @@
+["python3", "tools/lab/validate.py", "installed", "--path", "packaging/runtime"]
+validate.py: interpreter too old: found Python 3.9.6, require >= 3.10. The default `python3` may be the Xcode CLT 3.9; use `python3.12` explicitly. No check was run.
+
+EXIT_CODE=2

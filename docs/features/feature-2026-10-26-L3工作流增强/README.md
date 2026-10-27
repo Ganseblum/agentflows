@@ -57,8 +57,16 @@
 | 13 | 托管写入与过期预览保护 | managed-preview、managed-apply | TC-WF-008、TC-WF-009 |
 | 14 | 简单任务可判定轻量档 | 轻量模板、文档链检查 | TC-WF-010 |
 
-规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。接受范围为本地源码和生成树；宿主尚未安装候选，未声明方法效果已经提升。
+规则与用法分别见 [执行协议](../../../skills/agentflow/references/execution.md)、[证据工具](../../../skills/agentflow/references/workflow-tool.md)、[快速开始](../../quickstart.md)。0.19.1 已于 `17ccbd7` 完成双端安装核验；后续 0.19.2 修正属于本地 main，尚未发布或重装，不代表宿主已加载这些修正。方法疗效未测量。
 
 ## 交付记录
 
 [逐用例结果](testing/agentflow-workflow/run-2026-10-27-001.md) · [首轮发现](reviews/review-2026-10-27-001.md) · [修复后批准](reviews/review-2026-10-27-002.md) · [任务级记录](../../../episodes/2026-10-27/EP-20261027-001.json)。本批已进入 Git 历史（`17ccbd7`），材料保留供审查；证据的复核以该提交为准。
+
+## 合并后修正
+
+本地main在 `57e45d2` 收录备份历史，保留已验证文件树。四条开发分支已在主线；两个旧工作树的28文件与既有集成来源摘要一致，不用旧候选覆盖后续修复。分支和文件证据见 [整合记录](testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json)。
+
+后续四项状态分别以缺陷记录为准：[清单读取失败](../../issues/ISS-2026-062-门清单部分输出失败仍被放行.md)、[计划模板标题](../../issues/ISS-2026-063-计划模板验证标题不匹配.md)、[测试方法重复](../../issues/ISS-2026-064-测试入口重复定义失败范围.md)、[安装摘要矛盾](../../issues/ISS-2026-065-L3批次安装摘要前后矛盾.md)。本次不修改既有计划已完成任务的定义，也不回写历史执行结果。
+
+独立收尾见 [四项修正评审](reviews/review-2026-10-27-003.md) 与 [任务级记录](../../../episodes/2026-10-27/EP-20261027-002.json)。

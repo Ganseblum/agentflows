@@ -1,0 +1,5 @@
+CASE template ACTUAL_HEADING '## 验证命令与启服清单' ERROR_COUNT 1
+/tmp/agentflow-template-heading-vp3pq3u7/PLAN-REVIEW-001.md: body section '## 验证命令' is required
+RESULT FAIL
+CASE control ACTUAL_HEADING '## 验证命令' ERROR_COUNT 0
+RESULT PASS

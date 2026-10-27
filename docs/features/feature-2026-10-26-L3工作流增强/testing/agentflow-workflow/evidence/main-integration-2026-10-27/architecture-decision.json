@@ -1,0 +1,13 @@
+{
+  "task_id": "HOOK-TARGET-LIST-BOUNDARY",
+  "role": "technical-director",
+  "agent": "implementation_architecture",
+  "status": "complete",
+  "decision": "维持既有失败关闭契约，作有界修复；无需新增架构产物",
+  "files_changed": [],
+  "commands_executed": [],
+  "implementation": "将整个TARGETS赋值放入显式正向if，复用FAILED targets路径；保留其余检查与ALLOW_UNRUN边界",
+  "required_regression": "部分清单输出后失败时，两种ALLOW_UNRUN值均拒绝，并不执行后续目标；实际模板填写后通过真实校验",
+  "integration": "保留main树的ours合并合理，须分别证明树不变与备份祖先可达",
+  "measurement": "none"
+}

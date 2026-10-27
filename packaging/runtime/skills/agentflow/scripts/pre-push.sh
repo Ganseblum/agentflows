@@ -157,10 +157,16 @@ for sha in $UNIQUE_SHAS; do
   # `cd "$wt"` 只换 cwd 不换 GIT_DIR，依赖 git 的门项会读主仓索引而误判为绿。
   # 显式清掉是廉价的防御，且不影响没有这些变量的情形。
   GATE_ENV=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE)
-  TARGETS="$(cd "$wt" && "${GATE_ENV[@]}" "$GATE_PYTHON" tools/lab/validate.py --list \
+  if TARGETS="$(cd "$wt" && "${GATE_ENV[@]}" "$GATE_PYTHON" tools/lab/validate.py --list \
     | grep -vE 'all runs [0-9]+ checks' \
     | grep -vxE 'all|installed|lint|report|recurrence' \
-    | tr '\n' ' ')"
+    | tr '\n' ' ')"; then
+    :
+  else
+    echo "pre-push: 待推送提交 $short 的门清单读取失败，无法验证" >&2
+    FAILED="$FAILED ${short}:targets"
+    continue
+  fi
   if [ -z "${TARGETS// /}" ]; then
     echo "pre-push: 待推送提交 $short 的门清单为空或读取失败，无法验证" >&2
     echo "pre-push: 常见原因是解释器过旧（需 >= 3.10）或 tools/lab/validate.py 无法启动；" >&2

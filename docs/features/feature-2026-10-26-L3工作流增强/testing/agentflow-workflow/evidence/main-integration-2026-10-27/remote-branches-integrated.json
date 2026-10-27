@@ -1,0 +1,14 @@
+[
+  {
+    "remote_ref": "origin",
+    "ancestor_exit_code": 0
+  },
+  {
+    "remote_ref": "origin/codex/l3-workflow-enhancement",
+    "ancestor_exit_code": 0
+  },
+  {
+    "remote_ref": "origin/main",
+    "ancestor_exit_code": 0
+  }
+]

@@ -137,6 +137,28 @@ class PrePushHookTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("全绿", result.stdout)
 
+    def test_partial_target_list_failure_is_not_allowed(self):
+        successful_listing = '    print("all runs 2 checks")\n    raise SystemExit(0)'
+        failed_listing = '    print("all runs 2 checks")\n    raise SystemExit(1)'
+        self.assertEqual(1, FAKE_GATE.count(successful_listing))
+        (self.repo / "tools/lab/validate.py").write_text(
+            FAKE_GATE.replace(successful_listing, failed_listing), encoding="utf-8"
+        )
+        self.git("add", "tools/lab/validate.py")
+        self.git("commit", "-qm", "fixture with partial failed gate listing")
+        for allow_unrun in ("0", "1"):
+            with self.subTest(allow_unrun=allow_unrun):
+                result = self.run_hook(
+                    self.ref_line(self.head()),
+                    env={"AGENTFLOW_PREPUSH_ALLOW_UNRUN": allow_unrun},
+                )
+                output = result.stdout + result.stderr
+                self.assertEqual(1, result.returncode, output)
+                self.assertIn(":targets", result.stderr)
+                self.assertNotIn("PASS docs", output)
+                self.assertNotIn("PASS lint", output)
+                self.assertNotIn("全绿", output)
+
     def test_bad_commit_is_blocked_even_when_worktree_is_fixed(self):
         bad = self.commit_bad_marker()
         (self.repo / "BROKEN").unlink()

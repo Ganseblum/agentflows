@@ -1,0 +1,26 @@
+[
+  {
+    "branch": "backup/l3-hook-fix-contaminated",
+    "ancestor_exit_code": 0
+  },
+  {
+    "branch": "codex/l3-evidence-runtime",
+    "ancestor_exit_code": 0
+  },
+  {
+    "branch": "codex/l3-execution-method",
+    "ancestor_exit_code": 0
+  },
+  {
+    "branch": "codex/l3-hook-fix",
+    "ancestor_exit_code": 0
+  },
+  {
+    "branch": "codex/l3-workflow-enhancement",
+    "ancestor_exit_code": 0
+  },
+  {
+    "branch": "main",
+    "ancestor_exit_code": 0
+  }
+]

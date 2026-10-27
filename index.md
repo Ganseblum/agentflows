@@ -57,3 +57,9 @@
 ## 执行证据
 
 工作流方法见 [执行与验证](skills/agentflow/references/execution.md)，工具接口见 [证据工具用法](skills/agentflow/references/workflow-tool.md)，轻量交付见 [单文件模板](skills/agentflow/templates/feature/lightweight.md)。
+
+## L3 合并后修正
+
+[分支整合及证据](docs/features/feature-2026-10-26-L3工作流增强/README.md#合并后修正) · [门清单失败](docs/issues/ISS-2026-062-门清单部分输出失败仍被放行.md) · [计划模板标题](docs/issues/ISS-2026-063-计划模板验证标题不匹配.md) · [测试方法重复](docs/issues/ISS-2026-064-测试入口重复定义失败范围.md) · [安装摘要](docs/issues/ISS-2026-065-L3批次安装摘要前后矛盾.md)。状态以各记录frontmatter为准。
+
+[合并后修正评审](docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md) · [整合与修正任务记录](episodes/2026-10-27/EP-20261027-002.json)。

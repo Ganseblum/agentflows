@@ -57,7 +57,15 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 自动化测试
 
-当用户要求对用户可见功能做自动化测试——或计划带有测试设计任务——时，运行测试链路。`test-planner` 在显式的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径下写用例库：级别 smoke / e2e / api / boundary，断言可观察的步骤表（元素文本、跳转、网络请求是否发出），每个用例带测试功能、来源（proposal 目标/AC 编号或工单 `ISS-*`）、前置与步骤表；边界覆盖并声明未覆盖的类别；`## 数据来源` 逐项声明真实接口/真实库状态/Mock——能取到真实接口数据的一律用真实数据，只有真实拿不到的环节才按项声明 Mock，禁止全链路 Mock；以及用于 spec 未定义行为的 `## 流程疑点`（契约：`skills/agentflow/references/test-records.md`）。`test-executor` 执行它：浏览器自动化默认走 Ego Light（`ego-browser` 命令行，headless 可重复；不再新写 Playwright spec；目标项目自带 e2e runner 时通过 runner 跑既有套件），API 用例走命令，Ego 覆盖不了的交互由 Supervisor 在主对话中按 Executor 的步骤脚本执行——回传原始证据（截图、DOM 文本、网络日志）由 Executor 判定。执行遵循计划的数据来源声明：真实优先，计划未声明 Mock 的环节拿不到真实数据就标 `blocked`，不静默降级。先跑 smoke 集，smoke 失败即停，不要在坏构建上跑全集。每轮落成一条 `run-*.md` 记录，含逐用例结果、实际结果、证据与汇总计数。失败的用例带可直接照跑的 Ego 操作序列 findings，经标准链路成为 Bug 记录（归因按记录规则）；流程合理性 findings 交给 Reviewer 的 *流程合理性（测试证据）* 专项模式。运行记录的原始证据就是评审门的端到端路径证据（第 8 步）。凭据按会话提供、运行时注入——绝不持久化到记录、脚本或日志。为可重复性优先使用 Ego Light 命令行路线；Supervisor 驱动的宿主浏览器路线是兜底，不是目标。
+当用户要求对用户可见功能做自动化测试，或计划包含测试设计任务时，使用测试链路：
+
+- `test-planner` 在明确指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径编写用例库。
+- `test-executor` 执行已确认的计划，在同一目录新建每轮 `run-*.md` 及原始证据，不修改被测对象或缺陷状态。
+- `reviewer` 独立复核覆盖与流程合理性；产品缺陷经缺陷链处理。
+
+测试先行、环境预检、Ego Light/API 路线、真实数据与凭据规则统一遵守[执行与验证](references/execution.md)；计划和运行记录形态及 Bug 状态联动遵守[测试记录](references/test-records.md)。共享 smoke 或共同环境失败时停止其依赖任务；独立模块失败按真实依赖分流，不终止其他已授权工作。
+
+宿主浏览器或本机交互若仅主对话可用，由 Supervisor 按执行者给出的步骤操作，回传截图、DOM、网络等原始证据，由执行者判定结果；不把该兜底路线当作默认自动化入口。
 
 ## 外部文档二次评审
 

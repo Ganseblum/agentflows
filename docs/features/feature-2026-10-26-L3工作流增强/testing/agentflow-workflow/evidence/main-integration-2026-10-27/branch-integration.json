@@ -1,0 +1,16 @@
+{
+  "merge_revision": "57e45d23f1aa9ff158ddb9641a5018d5d9d0ef66",
+  "previous_main": "eaa3d6c0efa1201e31c38752f58c38692d0cc198",
+  "backup_tip": "370ed218f2e74bfa98ffca8ea8dc5ff2fce83e17",
+  "main_tree_before_and_after": "69fb7c9134caa246644d8bdf966c948035a7a6e1",
+  "strategy": "ours: preserve main tree; obsolete valid work already integrated; retain backup history",
+  "old_worker_files": 28,
+  "all_worker_hashes_match_previously_integrated_candidates": true,
+  "full_diff_reproduction": [
+    "git diff eaa3d6c0efa1201e31c38752f58c38692d0cc198 370ed218f2e74bfa98ffca8ea8dc5ff2fce83e17",
+    "git show 0aeb6a10100945b7842a06ef0412bb8dc1b2a145",
+    "git show 370ed218f2e74bfa98ffca8ea8dc5ff2fce83e17"
+  ],
+  "full_diff_sha256": "78b276dafa84da673fd6027c75634dc5853651c6becc42c133293a9fa4326f20",
+  "notes": "Full historical trees are reconstructible from reachable commits; no duplicate repository snapshot is archived."
+}
