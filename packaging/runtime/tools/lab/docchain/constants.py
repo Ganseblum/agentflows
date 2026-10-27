@@ -1,6 +1,6 @@
 """Constants and regexes for the doc-chain linter (shared across docchain.* modules).
 
-Check catalogue (C1–C24). The full prose lives in skills/agentflow/references/document-chain.md;
+Check catalogue (C1–C26). The full prose lives in skills/agentflow/references/document-chain.md;
 this is the quick-reference summary the linter enforces.
 
   C1  structure        every stage directory holds at least one real document (no .gitkeep only),
@@ -94,6 +94,9 @@ BOX_CHARS = ("┌", "└", "├", "│")
 # Repository root, used to resolve C9 code-location paths. Overridable with --root (self-test
 # fixtures and validate.py's live pass pass their own root explicitly).
 REPO_ROOT = Path(__file__).resolve().parents[3]
+
+# C26 compact profile: explicit eligibility, substantive acceptance/tasks, completed evidence;
+# declarations and tables inside fenced examples do not grant an exemption from full checks.
 
 # C12 stale-time reference: claim words whose truth depends on the world, not the text — a
 # line claiming one of these while pointing at a target that already exists on disk (markdown

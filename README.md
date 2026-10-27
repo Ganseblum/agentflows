@@ -2,7 +2,7 @@
 
 Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Claude Code、ZCode，
 以及兼容的 Agent Skills 宿主。宿主掌管模型、认证、工具、权限、会话历史与 agent
-执行。Agentflow 提供角色契约、委派规则、独立评审，以及一套受治理的改进方法。
+执行。Agentflow 提供角色契约、测试先行执行、独立评审，以及一套受治理的改进方法。
 
 它不调用也不要求独立的 `agentflow` CLI。
 
@@ -31,6 +31,10 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
   重新生成运行时树、刷新 marketplace 并重装，然后用 `python3 tools/lab/validate.py installed` 确认。
   若用过 Host Init（宿主级全局规则），重装后还要按 [`skills/agentflow/references/hosts.md`](skills/agentflow/references/hosts.md)
   重跑一次，让宿主全局指令文件里的托管块与当前版本对齐。
+
+## 执行入口
+
+日常按“查现状与定边界 → 准备与批准 → 连续执行与验证 → 独立评审与交付”阅读。执行细则集中在[执行与验证](skills/agentflow/references/execution.md)，轻量或完整材料按[文档档位](skills/agentflow/references/document-chain.md#文档档位)选择；证据工具随插件交付，不增加独立运行系统。
 
 ## 当前成熟度
 

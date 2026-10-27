@@ -1,0 +1,20 @@
+{
+  "files": [
+    {"path": "src/value.cjs", "kind": "production"},
+    {"path": "tests/value.test.cjs", "kind": "test"},
+    {"path": "plan.md", "kind": "excluded", "reason": "confirmed behavior and implementation plan"}
+  ],
+  "features": [
+    {
+      "id": "value",
+      "entrypoint": "public value function",
+      "acceptance": "plan.md",
+      "source_files": ["src/value.cjs"],
+      "tests": [
+        {"id": "TC-VALUE-001", "name": "returns confirmed value", "path": "tests/value.test.cjs", "layer": "unit", "planned": false}
+      ],
+      "not_applicable": {"integration": "isolated calculation without collaborators", "e2e": "no independent end-user journey"}
+    }
+  ],
+  "batches": [{"id": "first", "features": ["value"], "depends_on": []}]
+}

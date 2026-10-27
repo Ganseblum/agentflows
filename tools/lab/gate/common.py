@@ -53,6 +53,7 @@ REQUIRED_PROTECTED_PATHS = {
     "tests/test_gate_records.py",
     "tests/test_doc_chain.py",
     "tests/test_record_store.py",
+    "tests/test_workflow.py",
     "tools/lab/artifact_digest.py",
     "tools/lab/counts.py",
     "tools/lab/doc_chain.py",
@@ -80,6 +81,8 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/validate.py",
     "packaging/build_runtime.py",
     "skills/agentflow/scripts/check-write-scope.sh",
+    "skills/agentflow/scripts/workflow.py",
+    "skills/agentflow/scripts/workflow_lib",
     "skills/agentflow/references/contracts.md",
     "protected-paths.txt",
     ".github/workflows/validate.yml",
@@ -96,6 +99,7 @@ EXPECTED_TEST_FILES = (
     "test_gate_records.py",
     "test_doc_chain.py",
     "test_record_store.py",
+    "test_workflow.py",
 )
 
 

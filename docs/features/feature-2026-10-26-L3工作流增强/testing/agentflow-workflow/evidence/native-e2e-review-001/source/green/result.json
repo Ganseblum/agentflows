@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "phase": "green",
+  "execution_status": "pass",
+  "coverage_status": "needs_review",
+  "fingerprint": "sha256:b9355548ca6478bfc732c9cb8bb59dcc067a91d4e6c1e1e1de10eeaf2ba1c706",
+  "execution_snapshot": "sha256:c9f53b769cc00399e6a8aae44c1f69f51289d7244f22604244ee8442081f49c0",
+  "tasks": [
+    {
+      "id": "preflight",
+      "status": "pass",
+      "cases": [],
+      "error_kind": null,
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-bmigzsz6/.git/agentflow/green/preflight.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-bmigzsz6/.git/agentflow/green/preflight.stderr",
+        "returncode": 0,
+        "duration_seconds": 0.026695
+      },
+      "kind": "preflight"
+    },
+    {
+      "id": "target",
+      "status": "pass",
+      "cases": [
+        {
+          "id": "TC-VALUE-001",
+          "report_name": "returns confirmed value",
+          "status": "pass"
+        }
+      ],
+      "error_kind": null,
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-bmigzsz6/.git/agentflow/green/target.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-bmigzsz6/.git/agentflow/green/target.stderr",
+        "returncode": 0,
+        "duration_seconds": 0.070324,
+        "report": "/private/tmp/agentflow-native-e2e-bmigzsz6/.git/agentflow/green/target.stdout",
+        "discovered_cases": [
+          {
+            "name": "returns confirmed value",
+            "status": "pass"
+          }
+        ]
+      },
+      "kind": "test"
+    }
+  ]
+}

@@ -944,6 +944,40 @@ def self_test() -> int:
     run_case("99 C9 still accepts the FT-prefixed task id dialect (constant shadowing guard)", 0,
              ["PASS doc-chain"], m_ft_task_id, results)
 
+    compact = (
+        "# local change\n\n文档档位：轻量\n完整文档要求：否\n\n"
+        "## 适用性\n\n| 判据 | 结论 | 依据 |\n| --- | --- | --- |\n"
+        + "".join(f"| {name} | 是 | 实际源码与已确认需求相符 |\n" for name in (
+            "目标与行为已确认", "无跨层或公开契约变更", "无持久化或权限变更",
+            "无共享时序或不可逆变更", "单一部署单元且回退明确", "验收可执行"
+        ))
+        + "\n## 需求与验收\n\n| 行为 | 预期结果 | 验证 |\n| --- | --- | --- |\n"
+          "| 输入数值 | 返回确认值 | `python test.py` |\n"
+          "\n## 实施与证据\n\n| 任务 | 代码落点 | 状态 | 证据 |\n| --- | --- | --- | --- |\n"
+          "| T01 修复返回值 | `src.py` | ☐ 未开始 | — |\n"
+          "\n## 风险与恢复\n\n局部计算修改，恢复原实现后运行同一测试。\n"
+    )
+
+    def compact_fixture(text):
+        return {"README.md": text, "@root/src.py": "# existing implementation\n"}
+
+    run_case("C26-01 C26 valid compact profile passes", 0, ["PASS doc-chain"],
+             lambda f: compact_fixture(compact), results)
+    run_case("C26-02 C26 unknown permission risk requires full documents", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact.replace("| 无持久化或权限变更 | 是 |", "| 无持久化或权限变更 | 未知 |")), results)
+    run_case("C26-03 C26 explicit complete-document request cannot be downgraded", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact.replace("完整文档要求：否", "完整文档要求：是")), results)
+    run_case("C26-04 C26 completed task needs verifiable evidence", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact.replace("☐ 未开始 | —", "☑ 已完成 | —")), results)
+    run_case("C26-05 C26 metadata in a code example cannot waive full structure", 1, ["C1 结构"],
+             lambda f: compact_fixture(compact.replace("文档档位：轻量", "```text\n文档档位：轻量\n```")), results)
+    run_case("C26-06 C26 conflicting complete-document declarations fail", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact + "\n完整文档要求：是\n"), results)
+    run_case("C26-07 C26 conflicting profile declarations fail", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact + "\n文档档位：完整\n"), results)
+    run_case("C26-08 C26 repeated identical declarations are not unique", 1, ["C26 轻量档"],
+             lambda f: compact_fixture(compact + "\n完整文档要求：否\n"), results)
+
     ok = all(passed for _, passed in results)
     for name, passed in results:
         print(("PASS " if passed else "FAIL ") + name)

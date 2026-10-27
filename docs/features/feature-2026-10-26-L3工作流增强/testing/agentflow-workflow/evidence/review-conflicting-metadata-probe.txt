@@ -1,0 +1,14 @@
+CASE control
+COMMAND ["/opt/homebrew/opt/python@3.12/bin/python3.12", "/tmp/agentflow-review-probes-oz1nuoc2/candidate/tools/lab/doc_chain.py", "--root", "/tmp/agentflow-review-probes-oz1nuoc2/documents", "/tmp/agentflow-review-probes-oz1nuoc2/documents/feature"]
+PASS doc-chain /tmp/agentflow-review-probes-oz1nuoc2/documents/feature
+EXIT_CODE=0
+
+CASE conflicting-full-request
+COMMAND ["/opt/homebrew/opt/python@3.12/bin/python3.12", "/tmp/agentflow-review-probes-oz1nuoc2/candidate/tools/lab/doc_chain.py", "--root", "/tmp/agentflow-review-probes-oz1nuoc2/documents", "/tmp/agentflow-review-probes-oz1nuoc2/documents/feature"]
+PASS doc-chain /tmp/agentflow-review-probes-oz1nuoc2/documents/feature
+EXIT_CODE=0
+
+CASE conflicting-profile
+COMMAND ["/opt/homebrew/opt/python@3.12/bin/python3.12", "/tmp/agentflow-review-probes-oz1nuoc2/candidate/tools/lab/doc_chain.py", "--root", "/tmp/agentflow-review-probes-oz1nuoc2/documents", "/tmp/agentflow-review-probes-oz1nuoc2/documents/feature"]
+PASS doc-chain /tmp/agentflow-review-probes-oz1nuoc2/documents/feature
+EXIT_CODE=0

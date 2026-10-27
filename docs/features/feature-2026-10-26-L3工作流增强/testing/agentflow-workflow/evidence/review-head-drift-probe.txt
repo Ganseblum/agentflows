@@ -1,0 +1,62 @@
+COMMAND ["/opt/homebrew/opt/python@3.12/bin/python3.12", "/tmp/agentflow-review-probes-oz1nuoc2/candidate/skills/agentflow/scripts/workflow.py", "seal", "--root", "/tmp/agentflow-review-probes-oz1nuoc2/execution", "--input", "/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/request.json", "--output", "/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/sealed.json"]
+{
+  "operation": "seal",
+  "status": "pass",
+  "error_kind": null,
+  "evidence": {
+    "fingerprint": "sha256:0f2b2b083b43cdcc4b68274f4b0696872ec6241c704a5272cdfd689c42230817",
+    "sealed": "/private/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/sealed.json",
+    "input_count": 2
+  },
+  "next_action": "verify_before_work",
+  "exit_code": 0
+}
+EXIT_CODE=0
+COMMAND ["/opt/homebrew/opt/python@3.12/bin/python3.12", "/tmp/agentflow-review-probes-oz1nuoc2/candidate/skills/agentflow/scripts/workflow.py", "run", "--root", "/tmp/agentflow-review-probes-oz1nuoc2/execution", "--sealed", "/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/sealed.json", "--fingerprint", "sha256:0f2b2b083b43cdcc4b68274f4b0696872ec6241c704a5272cdfd689c42230817", "--output", "/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/run"]
+{
+  "operation": "run",
+  "status": "pass",
+  "error_kind": null,
+  "evidence": {
+    "schema_version": 1,
+    "phase": "green",
+    "execution_status": "pass",
+    "coverage_status": "needs_review",
+    "fingerprint": "sha256:0f2b2b083b43cdcc4b68274f4b0696872ec6241c704a5272cdfd689c42230817",
+    "execution_snapshot": "sha256:1f331651b57ab5a79fe6692d4945cf26504c900a222fe70347b3c615897d5b7c",
+    "tasks": [
+      {
+        "id": "target",
+        "status": "pass",
+        "cases": [
+          {
+            "id": "TC-HEAD",
+            "report_name": "one",
+            "status": "pass"
+          }
+        ],
+        "error_kind": null,
+        "evidence": {
+          "stdout": "/private/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/run/target.stdout",
+          "stderr": "/private/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/run/target.stderr",
+          "returncode": 0,
+          "duration_seconds": 0.088148,
+          "report": "/private/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/run/target.stdout",
+          "discovered_cases": [
+            {
+              "name": "one",
+              "status": "pass"
+            }
+          ]
+        },
+        "kind": "test"
+      }
+    ],
+    "result_file": "/private/tmp/agentflow-review-probes-oz1nuoc2/execution/.git/agentflow/run/result.json"
+  },
+  "next_action": "review_coverage",
+  "exit_code": 0
+}
+EXIT_CODE=0
+HEAD_BEFORE=6ebc21a4b7925d0a42d8eb9b16e007216b1a8b5b
+HEAD_AFTER=eb321107c4baf62fa0aaa57077b64812b3c8c0a2

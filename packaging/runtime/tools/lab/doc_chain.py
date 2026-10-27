@@ -6,7 +6,7 @@ constants, checks, self-test, and the CLI. This file only preserves the
 historical ``python3 tools/lab/doc_chain.py ...`` entry point and the
 ``import doc_chain`` namespace the gate and its tests rely on.
 
-See tools/lab/docchain/constants.py for the full check catalogue (C1–C24) and
+See tools/lab/docchain/constants.py for the full check catalogue and
 usage, which is unchanged from the original monolith.
 """
 

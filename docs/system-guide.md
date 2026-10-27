@@ -3,7 +3,7 @@
 > 这份文档回答一个问题：**这套体系平时怎么用**——流程怎么流转、谁来做什么、结果记到哪、
 > 出了问题怎么处理、怎么迭代升级。它只描述既有契约，不引入新规则；权威来源是
 > [`skills/agentflow/references/contracts.md`](../skills/agentflow/references/contracts.md)（硬边界与简报/结果契约）、
-> [`skills/agentflow/SKILL.md`](../skills/agentflow/SKILL.md)（步骤）、
+> [`skills/agentflow/SKILL.md`](../skills/agentflow/SKILL.md)（入口）、[执行与验证](../skills/agentflow/references/execution.md)（执行方法）、
 > [`AGENTS.md`](../AGENTS.md)（仓库纪律）。
 
 ---
@@ -29,322 +29,78 @@
 
 ---
 
-## 1. 一张图看懂体系
+## 1. 四步使用主线
 
-体系分四层：**宿主**（模型、工具、权限都是宿主的）、**角色面**（<!-- count:agents -->14<!-- /count --> 个角色文件，宿主从安装快照加载）、
-**证据层**（`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/` 里人和机器都能校验的记录；改进三件套已停用）、**门**（确定性工具，判定产物合不合格）。
-
-```mermaid
-flowchart TB
-    subgraph HOST["宿主（Codex / Claude Code / ZCode）"]
-        MODEL["模型与网关"]
-        TOOLS["工具、权限、会话历史"]
-    end
-
-    subgraph PLUGIN["Agentflow 插件（从安装快照加载）"]
-        SK["skills: agentflow（开发工作流）+ improve（自迭代环）"]
-        ROLES["agents: 14 个角色文件（公开角色面）"]
-    end
-
-    subgraph SUPER["Supervisor = 当前宿主的主对话"]
-        DECIDE["分解 / 授权 / 集成 / 终判"]
-    end
-
-    subgraph EVIDENCE["证据层 记录根"]
-        BUGS["issues/ 缺陷记录 + recurrence/ 类台账 + 归档/"]
-        PLANS["docs/features/<批次>/plan/ 版本化计划（看板）"]
-        EPIS["episodes/ 任务级决策（JSON）"]
-        REVIEWS["reviews/ 评审桥"]
-        IMPR["改进环产物落点由 Supervisor 指派（三件套已停用）"]
-        TESTS["docs/features/<批次>/testing/ 测试计划与执行记录"]
-    end
-
-    subgraph GATE["确定性门 tools/lab/（保护区）"]
-        VAL["validate.py all（全套检查）"]
-        ISO["isolation.py check-diff（候选禁区）"]
-        POL["policy（已随评测装置裁撤）"]
-        GR["record_store / artifact_digest"]
-    end
-
-    HUMAN["人（你）：授权、终审、发布门"]
-
-    TOOLS --> MODEL
-    HOST -->|"加载"| PLUGIN
-    DECIDE -->|"按 SKILL 步骤委派"| ROLES
-    ROLES -->|"写产物"| EVIDENCE
-    EVIDENCE -->|"编译校验"| GATE
-    GATE -->|"PASS/FAIL + 决策建议"| DECIDE
-    GATE -.->|"发布决策需人批"| HUMAN
-    HUMAN -.->|"gate 变更须人工授权"| GATE
-```
-
-一句话记住分工：**角色干活，Supervisor 判收，门负责铁面，人负责不可逆决定。**
-
----
-
-## 2. 谁做什么：角色速览与产物归属
-
-按任务形态选角色（不是按名字资历），完整路由表见
-[`skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md)。常用映射：
-
-| 你遇到的事 | 启用的角色 | 产物写到哪 |
+| 步骤 | 做什么 | 留下什么 |
 | --- | --- | --- |
-| 单层小修、复现明确 | Supervisor 自己做（**自己写的代码评审门不可豁免**） | 代码 + 必要时 bug 记录 |
-| 前端/后端有界实现 | 一名工程师（+ 评审，改动成规模时） | 代码 + worker result |
-| 跨层功能 / 契约变更 | Technical Director → 双工程师并行 → Reviewer | 决策 + 代码 + 计划 |
-| Bug（重要/反复/跨层） | Investigator → Fixer → Reviewer → Recorder | `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` |
-| 小 Bug 有验证复现 | Supervisor 合并诊断/修复，Recorder 视沉淀价值 | 同上 |
-| 纯规划 | 专家并行 → Plan Architect | 批次 `plan/<plan_id>.md` |
-| 用户可见功能要测试 | Test Planner → Test Executor → Reviewer | `docs/features/<批次>/testing/<项目>-<功能>/` |
-| 外部文档二次评审 | Supervisor 归档快照 → Reviewer（按文档类型模式） | `reviews/<项目>-<功能>/` |
-| 改进 Agentflow 本身 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor | episode（三件套记录根已停用，落点由 Supervisor 指派） |
+| 查现状与定边界 | 查实际代码、契约和测试，澄清目标及禁止事项 | 已确认行为、验收来源、真实停止条件 |
+| 准备与批准 | 按风险选择材料，准备环境和必要计划 | 轻量 README 或完整文档链；计划批准依据及最小预检结果 |
+| 连续执行与验证 | 目标行为先有效失败，再实现、回归，按依赖分流 | 精确用例、本次输入、命令、原始输出及状态回写 |
+| 独立评审与交付 | 作者之外的人核对需求与工程质量，再确认结果 | 覆盖复核、最终确认、未验证范围及下一动作 |
 
-四个只读角色（Investigator / Feedback Analyst / Technical Director / Evaluator）与 Reviewer 同构但**有意不合并**——
-输入契约不同（诊断 ≠ 证据聚类 ≠ 架构决策 ≠ 对不可变结果记录的对照判定），合并与否是保留的产品决策（版本史见 [`CHANGELOG.md`](../CHANGELOG.md)）。
+四步是阅读入口，不是另一份规则。执行顺序及失败语义以[执行协议](../skills/agentflow/references/execution.md)为准；角色的分工与交接以[角色路由](../skills/agentflow/references/roles.md)和[契约](../skills/agentflow/references/contracts.md)为准。
 
----
+## 2. 选材料，不铺满流程
 
-## 3. 主工作流：一次开发任务的完整流转
+先看是否触及公开或跨层契约、数据、权限、共享时序和不可回退动作；这些任务保留完整设计。用户明确要求文档集时也走完整链。只有[六条轻量判据](../skills/agentflow/references/document-chain.md#文档档位)都能给出依据时，才使用单文件 README；轻量减少重复材料，不减少检查、独立评审或授权。
 
-```mermaid
-flowchart TB
-    A["1 Intake 接案<br/>仓库指令+diff+状态结论必须 git fetch 校准"] --> B["2 架构门<br/>跨层/高风险才请 Technical Director"]
-    B --> C["3 计划<br/>Plan Architect 写批次 plan/（人读看板+机器断言）"]
-    C --> D["4 委派<br/>brief 带 write_scope/read_scope/task_id/baseline_revision<br/>并行只并行『写』，永远不并行『理解』"]
-    D --> E["5 实现<br/>工程师只动自己的范围"]
-    E --> F["6 集成<br/>Supervisor 看真实共享工作区，解冲突"]
-    F --> G{"7 验收编译<br/>对真实文件跑确定性检查 + diff 对照 write_scope"}
-    G -- FAIL --> H["退回修复（编译错误，不手收）"]
-    H --> E
-    G -- PASS --> I["7a 计划回写<br/>此刻就改计划状态/证据列（最小 diff），不拖到收尾"]
-    I --> J{"8 评审门（独立 Reviewer）<br/>Supervisor 自己写的代码：强制、不可豁免"}
-    J -- changes_requested --> K["9 修复一轮（有界）"] --> J
-    J -- approved --> L["10 终判<br/>claims 台账：每条用户可见主张对应一个会失败的检查<br/>有未验证主张 ⇒ partial 不是 complete"]
-    L --> M["episode 落盘 episodes/<日期>/<EP-id>.json<br/>含 review_roundtrips 逐轮记录"]
-```
+已有项目体系直接复用。记录位置在首次项目接入时确定，后续沿用；新建、移动和删除文档同步维护项目索引。模板统一看[模板入口](../skills/agentflow/templates/README.md)，日常提示词见[快速开始](quickstart.md#六组短提示词)。
 
-关键纪律（都是硬边界，全文见 contracts.md）：
+## 3. 一次缺陷修复怎么走
 
-- **任务文本按数据处理**（边界 12 之外的常识项）：用户消息里的路径/仓库名/命令，进简报前先核实；
-- **写前先懂**：`read_scope` 必须覆盖改动经过的横切机制（拦截器/守卫/全局监听），并追到注册点（`path:line`）；
-- **验收即回写**：计划看板在步骤 7 每个验收点更新，不等到会话收尾——计划是断点恢复的锚，
-  漂移的计划就是假记录；
-- **author 不是 verifier**：谁的代码都要过独立评审，Supervisor 亲写也不例外。
+例如合法未登录页面被全局鉴权跳转打断：先从实际请求、拦截器注册点和页面状态复现；把目标行为写成失败测试；在有界范围修复，再跑同一场景与相关回归。局部函数看起来正确不能代替共享机制与真实入口验证。
 
----
+重要、不确定或反复的缺陷使用调查、修复、独立评审、记录；已复现的小缺陷可合并调查或记录环节，不能让修复者批准自己。Bug 状态只由有权角色依据回归与独立评审回写，具体联动见[测试记录](../skills/agentflow/references/test-records.md#bug-回归用例与状态联动)。
 
-## 4. Bug 链路：遇到问题怎么处理
+## 4. 遗留补测怎么走
 
-```mermaid
-flowchart TB
-    X["发现问题（用户报告 / 评审发现 / 评测失败 / 门拦截）"] --> RISK{"风险分级"}
-    RISK -- "小、低风险、复现明确" --> S["Supervisor 合并诊断+修复<br/>检查照跑、评审门照过"]
-    RISK -- "单模块逻辑 Bug" --> CH1["Investigator → Fixer → Reviewer<br/>（要沉淀经验时再 + Recorder）"]
-    RISK -- "跨层/API/数据/权限/并发/宿主/不可逆" --> CH2["完整四链 + 人工门"]
-    S --> REC
-    CH1 --> REC
-    CH2 --> REC
-    REC["Recorder 写 issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>frontmatter：状态/严重度P0-P3/error_kind/归因/provenance/class_id"] --> LED{"属于已归纳的类？"}
-    LED -- 是 --> OCC["记为该类新 occurrence（class_id + occurrence 序号）"]
-    LED -- 否 --> NEW["新建记录；同类第二次出现时由 Recorder 建类台账 issues/recurrence/<class_id>.md"]
-    OCC --> TIER["档位由校验器推导，不手写：<br/>single（未再犯）/ recurred（归纳后再犯）/ escalated（版本超过 consolidated_in）"]
-    NEW --> TIER
-```
+先盘点实际文件、功能和测试能力，按真实场景决定各测试层适用性，再以有界批次补齐。新增测试不能悄悄改变生产行为；需要生产修复时明确独立范围。共享环境坏时阻止依赖任务，独立模块的失败不自动终止全部补测。
 
-记录生命周期：`open`（可带 `provenance: undetermined` 但必须写明缺什么证据）
-→ `fixed-pending-review`（修复落地，`regression_status: not-run` 如实标注）
-→ `verified`（独立评审 approved + 回归检查通过 + closure_criteria 逐条闭合）
-→ 或 `rejected` 移入 `docs/issues/归档/<日期>/`（该目录随首个被拒记录创建；评审快照另有一处
-`reviews/<项目>-<功能>/archive/<轮次>/`，两者不是同一个落点）。
-**Fixer 永远不能批准自己的 Bug；Recorder 不能用 Fixer 的转述代替独立评审。**
+`workflow.py inventory` 只检查文件、功能和测试声明的结构一致性。具名测试真实执行后，还要从需求与入口复核断言和缺口；盘点完整或计划执行满足不等于业务覆盖穷尽。
 
-Worker 没有产出时的分类权在 Supervisor（失败语义见 [`contracts.md`](../skills/agentflow/references/contracts.md)）：
+## 5. 证据和状态分别放哪里
 
-| 现象 | 分类 | 处理 |
-| --- | --- | --- |
-| 进程/宿主死了，无结构化结果 | `crash` → 委派 `blocked` | 先分诊环境 vs 工作（对基线跑同一检查），带因重新委派 |
-| 预算/超时耗尽 | `timeout` → `partial` | 在途未验证的工作丢弃，不算数 |
-| 有输出但不是合法结果（坏 schema/无检查/无证据） | `empty or invalid return` | 带缺陷名退回一次；再犯立 bug 记录，不是再重试 |
+| 载体 | 权威内容 |
+| --- | --- |
+| 需求规格 | 用户行为、边界、验收及已确认决定 |
+| 实施计划或轻量 README | 任务状态、真实依赖和证据回写；中断恢复入口 |
+| 测试计划与执行记录 | 用例来源、计划版本、逐用例实际结果及原始证据索引 |
+| 问题记录 | 缺陷状态、归因、关闭条件和回归引用 |
+| episode | 方法任务的最终决定、断言证据及每轮评审，不只记录成功 |
+| 执行说明与结果 JSON | 上述记录引用的计划指纹、快照和运行证据，不另建状态系统 |
 
-编排层**不做**「保底执行路径」：降级是结果降级（`partial`/`blocked`、丢弃在途未验证工作），不是兜底方案——制造「看起来完成」的未验证工作正是 claims 台账要拦的缺陷；产品级 fallback 是设计决策，属于异常矩阵条款，必须写明 owner、触发条件与验证方式。
+记录路径以[index.md](../index.md)和各目录 README 为准。本仓计划形态见仓库 `docs/features/README.md`；测试记录与凭据注入见[测试记录契约](../skills/agentflow/references/test-records.md)。没有证据的任务不标完成；状态查询先 fetch/log/status 核实，不靠会话记忆。
 
----
+## 6. 工具证明什么
 
-## 5. 改进环（Loop）：体系自己怎么升级
+- `seal/verify`：把既有计划、允许写范围和命令绑定到指纹，检查过期输入；不批准计划。
+- `run`：核对最终执行输入，运行精确参数和本次原生测试报告，保存原始输出；不证明断言充分。
+- `inventory`：核对补测声明，不能从结构合法推导所有业务已覆盖。
+- `managed-preview/managed-apply`：单文件摘要预览、写前检查及读回；不授权全局文件写入，也不证明宿主已加载。
 
-```mermaid
-sequenceDiagram
-    participant U as 人（你）
-    participant SU as Supervisor
-    participant FA as Feedback Analyst
-    participant CE as Candidate Engineer
-    participant IS as isolation.py check-diff
-    participant EV as Evaluator（只读评审证据记录）
-    participant RG as Release Governor（按人工评审口径判定）
-    participant RE as Bug Recorder / episodes
+完整参数及限制见[执行协议](../skills/agentflow/references/execution.md)。宿主全局文件另看[Host Init](../skills/agentflow/references/hosts.md)，全局纪律、项目约定和插件安装互不替代。
 
-    U->>SU: 反馈 / 复盘 / 新需求
-    SU->>RE: 会话收口先落 episode（review_roundtrips 逐轮、负向 outcome 也是一等证据）
-    SU->>FA: 归一化证据（只认 provenance: agentflow 的记录为候选证据）
-    FA-->>SU: 聚类 + 最小可证伪假设
-    SU->>CE: 授权候选（candidate worktree，禁区外改动）
-    CE->>IS: check-diff（对照冻结 parent revision，触碰禁区即 FAIL）
-    IS-->>EV: 干净的候选树
-    EV->>EV: 审阅候选与证据记录（装置裁撤后无仪器化对照）
-    EV-->>RG: 证据结论 + 评审引用
-    RG->>RG: 判定 promote / revise / reject / rollback（measurement: none 时以人工评审为依据）<br/>原 policy.py 自动判定已裁撤，流程留存为设计知识（design-decisions §3）
-    RG-->>U: 决策建议（required_human_approval: true）
-    U->>SU: 批准 / 否决
-    SU->>RE: promote 后回写台账 consolidated_in（否则该类永远误挂 escalated）<br/>版本 bump 五 manifest + CHANGELOG
-    SU->>SU: 刷新 marketplace 重装 → validate.py installed 转绿
-```
+## 7. 接受、安装与发布
 
-两条诚实规则贯穿这个环：
+本仓产物要对实际文件跑 `python3 tools/lab/validate.py all`；文档链单独检查实际目录。失败输出退回修复，无法运行记未运行，不在红灯上接受摘要。检查器逐项职责以 `tools/lab/README.md` 为准，本指南不复制清单。
 
-1. **方法级改动没有业务评测信号时，发布必须标 `measurement: none`**——不得表述为"已验证的改进"；
-2. **门变了要人审**：改 `protected-paths.txt`、`schemas/`、`tools/lab/`、evaluator/governor 角色文件、
-   `skills/improve/references/`、`tests/` 任何一个，都是 gate change，由人明确授权后实施（候选不能自改评判自己的门）。
+修改角色或 skill 后先重建生成树。安装来自宿主快照，源面正确不等于正在使用的宿主已加载；重装前后都用 `validate.py installed` 核验，并按[宿主事实](host-platform-facts.md)的范围描述观察。用过全局托管规则时，模板或版本变化还要按 Host Init 协议重新核验。
 
----
+提交、推送、合并、发布、宿主重装和全局写入各遵循当前任务授权，连续执行不顺带授权。版本只在 manifest 与 CHANGELOG 声明；发布是可定位的版本与安装结果，不是仅跑过生成命令。
 
-## 6. 记录体系：什么记在哪、谁来写、谁校验
+## 8. 方法自身怎么改
 
-```mermaid
-flowchart LR
-    subgraph WRITTEN["人写（会话里产生）"]
-        B["issues/ISS-<YYYY>-<NNN>-<slug>.md<br/>现象/问题代码/根因/修复/变更记录"]
-        P["docs/features/&lt;批次&gt;/plan/&lt;plan_id&gt;.md<br/>进展概览+任务表+未决项"]
-        E["episodes/<日期>/EP-*.json<br/>目标/outcome/claims/evidence"]
-        RV["reviews/<项目>-<功能>/review-*.md<br/>+ archive/ 逐字快照"]
-        T["docs/features/<批次>/testing/<项目>-<功能>/{plan,run}-*.md"]
-        I["改进环产物落点由 Supervisor 指派"]
-    end
-    subgraph COMPILED["机器校验（写完就编，FAIL 即编译错误）"]
-        V["validate.py artifacts：schema + 跨文档不变量<br/>validate.py docs：文档面一致性 + 版本散文守卫 + 断链/退役路径扫描"]
-    end
-    WRITTEN --> COMPILED
-```
+改进仍是受治理的人工闭环：先留真实反馈与 episode，再形成单个有界假设，候选不能编辑评判自己的门，独立评价与发布建议之后由人决定。方法无仪器化疗效证据时继续使用 `measurement: none`，不把文本或工具检查通过写成成功率提高。设计边界和恢复清单见[设计决策](design-decisions.md)。
 
-要点：
+记录时间要现取，不估未来时间；更正已发生的证据采用追加，不覆盖历史。故障注入只在一次性副本上运行，恢复也要重跑并观察检查转绿；不得用 checkout/restore 丢弃真实树中的用户工作。
 
-- **标题字面量固定**：bug 记录章节必须是 `## 现象` / `## 根因` / `## 修复`（+ `## 问题代码` / `## 审查`）；
-- **机器层英文、人读层单语**，title 与正文同语言，默认中文；
-- **正文引用规则**：散文里的路径必须真实存在（或用 `仓库名@revision:路径` 限定），围栏/行内代码里的是引文不算；
-- **episode 是任务级的最终决策记录**，material 改动一律写，`review_roundtrips` 必填
-  （`[]` 也算表态；字段要求见 [`episodes/README.md`](../episodes/README.md)），负向 outcome（rejected/partial/failed）与成功同等收录——只记成功会让改进环
-  把"没做坏过"误读成"不会做坏"；
-- **plan 看板**：任务状态枚举 `☐/◐/☑/⚠/—`，回写只动状态与证据两列；阻塞未决不关闭不得 approved。
+## 9. 故障时先看什么
 
----
-
-## 7. 门：检查清单与常用命令
-
-`python3 tools/lab/validate.py all`（本机用 Python ≥3.10，装了 3.12）：
-
-| 检查 | 管什么 | 失败时第一反应 |
-| --- | --- | --- |
-| `schemas` | 契约文件本身合法 | 看报错改 schema（gate change，需人审） |
-| `examples` | 正反例与契约同步 | 反例必须真的能被拒 |
-| `artifacts` | 各记录根实际产物 schema + 交叉引用 | 按报错修记录（**是编译错误不是警告**） |
-| `protected` | 禁区清单覆盖所有必需条目 | 谁删了条目谁恢复 |
-| `manifests` | 五份 manifest 名字版本一致；`packaging/runtime` 生成树在场时与源面逐字节一致（marketplace 指向它，漂移即静默装出旧角色） | 补 bump，或重建生成树 `python3 packaging/build_runtime.py` |
-| `docs` | 角色/文档面一致性 + 版本散文守卫 + 断链与退役路径扫描 | 按报错修文档；版本号只活在 manifest/CHANGELOG |
-| `tests` | tests/ 目录内容受控 + 回归全绿 + 拒绝 skip | 测试红即门回归 |
-| `doc_chain` | 文档链 linter 判别自测（用例数下限守卫） | 自测红或用例数缩水即门红（缩水=门变更，需人审） |
-| `doc_chain_live` | 活面扫描：对声明域（docs/product、docs/features）跑文档链文本形态，FAIL 即门红 | 按报错修文档；这是被检查物体检，不是检查器自检 |
-| `decision_gate` | 决策可追溯（C15–C18，标记启用：台账索引 / 决策记录 / 核验过期 / 未决归属） | 按报错修记录或台账；门变更需人审 |
-| `lint` | ruff + mypy 静态检查（依赖 `requirements-dev.txt`） | 装依赖或修代码 |
-
-其他日常命令：
-
-```sh
-python3 tools/lab/validate.py installed        # 源码 vs 安装快照逐文件比对（改角色后必跑）
-python3 tools/lab/validate.py report           # bug 回溯表（可按项目/状态/来源过滤）
-python3 tools/lab/validate.py recurrence       # 类台账与推导档位
-python3 tools/lab/trend.py --append             # 追加一行改进环信号到 docs/trend.jsonl（无校验，仅观测）
-python3 tools/lab/record_store.py index        # 一次性 SQLite FTS5 索引（只读辅助）
-python3 tools/lab/record_store.py query '关键词'
-python3 tools/lab/counts.py                    # 核对文档计数标记（README/index 中带 HTML 注释包裹的计数）
-python3 tools/lab/mutate.py --list             # 门变异测试：先列变异，再逐检查项运行（副本内执行）
-python3 tools/lab/isolation.py check-diff --candidate <树> --base <冻结parent>
-bash skills/agentflow/scripts/check-write-scope.sh <baseline> <write_scope>...   # 硬边界 14
-# （原）python3 tools/lab/policy.py --candidate-record ... —— 已随评测装置裁撤
-```
-
-发布/装后例行：改了 `agents/` 或 `skills/` → 刷新 marketplace → 重装 → `validate.py installed`
-转绿（报"没有源码版本的快照"属预期漂移，不是回归）。
-
----
-
-## 8. 三个完整例子
-
-### 例 1：你报了一个前端 Bug（真实案例：axios 401 拦截器打断忘记密码流程）
-
-| 步骤 | 谁 | 做什么 | 记录到哪 |
-| --- | --- | --- | --- |
-| 1 | 你 | "全局导航自动登录复用了 login()，方法没问题，但 401 拦截器跳登录页，忘记密码页合法未登录态被打断" | ——（任务文本按数据处理，进简报前会核实） |
-| 2 | Supervisor | Intake：读 diff/架构/测试；定性为跨切面行为 → 触发**隐式行为检查** | —— |
-| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-004-axios拦截器401跳转冲突.md` |
-| 4 | Bug Fixer | 候选树内最小修复 + 回归检查（`regression_status` 先标 not-run） | 代码 + 记录转 `fixed-pending-review` |
-| 5 | Reviewer（独立） | 指定检查命令与预期，只认原始输出；验证全局导航/登录页/忘记密码三场景 | 评审结论写回记录 |
-| 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |
-| 7 | Supervisor 收口 | episode：目标/claims 台账/评审轮次/成本 | `episodes/<日期>/EP-*.json` |
-
-如果这类"横切机制漏检"以后**再犯**，Recorder 会把它挂到再犯分类台账 → 校验器推导 `recurred/escalated`
-→ 按惯例，这类信号本会升格为公开评测用例——历史上 AF-011~015 就是这么来的。但评测用例已于
-2026-10-12 随评测装置整线裁撤（`evals/`、runner、adapter、policy 全删），当前再犯信号不再有
-自动升格通道，只落台账；恢复仪器化时按
-[`docs/design-decisions.md`](design-decisions.md) §3 的重建清单恢复。
-
-### 例 2：你说"帮我看看 Agentflow 触发描述要不要改"（改进环一轮）
-
-1. Supervisor 落 episode（先留证），派 **Feedback Analyst**（只读）：评估 SKILL 触发描述预算；
-2. Analyst 结论：触发判据句在宿主 250 字符窗口内，**不需要改**——但发现缺口"前置化纪律零确定性保护"，
-   立案为 `EP-20260917-001`，记入台账待办（用户裁决定期）；
-3. 若决定改：**Candidate Engineer** 在 candidate worktree 实施 → `check-diff` 证明没碰禁区 →
-   **Evaluator** 跑对照（出 better/neutral/worse）→ **Release Governor**
-   给 `promote/revise/reject` + rollback 块 → **你批** → bump 版本、回写台账、重装；
-4. 全程每一轮评审（含分歧）进 episode 的 `review_roundtrips`。
-
-### 例 3：你问"现在有什么高优任务？"（状态类问题的纪律）
-
-这类问题的教训是 ISS-2026-009：**凭会话记忆回答状态类问题 = 没回答**（别的会话可能已推进）。
-现在的标准动作：Supervisor 先 `git fetch` + `log/status` 校准仓库事实，回答时**带证据命令**
-（如"以 `git log --oneline -5` 为准：…"）。你若发现回答没带证据命令，可以直接打回——这有记录撑腰。
-
-### 例 4：你给一份外部 spec 要"第二道评审"
-
-Supervisor 在 `reviews/<项目>-<功能>/` 建 feature 锚目录，**逐字快照**被评审文档进
-`archive/<轮次>/`；Reviewer 按 spec 模式清单评（语义冻结/边界/降级/异常矩阵…每条引用原文句）；
-findings 按严重度落 bug 记录（`provenance: external`，注明是业务仓的问题还是方法的问题）；
-评审记录写 `review-<日期>-<NNN>.md`。二轮复审再开新轮次文件，快照不覆盖。
-
----
-
-## 9. 迭代升级的固定动作清单
-
-一次改动从"想改"到"升级完"的标准路径（任何一批都要走完）：
-
-1. **回归先行**：能机器化的发现，先在 `tests/` 加"修复前红、修复后绿"的用例；
-2. **实施**：普通改动直接做；触及保护区 = gate change → 只能由人授权实施，候选无权自改；
-3. **编译**：`validate.py all` 全套检查全绿才算完（FAIL 是编译错误，不是警告）；
-4. **故障注入**（可选但推荐）：在 /tmp 副本上破坏新机制验证它真的会 FAIL，恢复后复跑观察 PASS
-   ——未观察的恢复不算恢复；
-5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；**写任何日期之前先跑 `date` 取当前时间**——估出来的时间戳会被 `validate.py artifacts` 以 `stamps must reflect real time` 拒，且记录与台账的 `updated_at` 一旦无效会连带让`class_id → 台账` 的解析整链失效；台账类记录立录的同一轮就补齐 `occurrences` 与再犯历史行（先例：ISS-2026-055、ISS-2026-060）；
-6. **版本 bump**：五份 manifest 同步（`validate.py manifests` 强制）；
-7. **重装**：刷新 marketplace → 重装 → `validate.py installed` 转绿；
-8. **收口**：episode 落盘（含 `review_roundtrips`），负向结果如实记。
-
----
-
-## 10. 快速故障对照表
-
-| 症状 | 根因 | 处理 |
-| --- | --- | --- |
-| `validate.py installed` 报"没有源码版本的快照" | 改了源码没重装 | 刷新 marketplace 重装（预期漂移，非回归） |
-| worker 说做完了但 `validate.py` FAIL | 产物是编译错误 | 退回 worker，**绝不手收**；无法复现的检查记为未运行 |
-| `check-diff` FAIL：candidate changed a forbidden path | 候选碰了评判自己的门 | 立即停止；需要改门 = gate change，走人审 |
-| 评审说 `changes_requested` | 正常环 | 步骤 9 修复一轮再审；轮次进 episode |
-| `claude --print` 返回 502 / 挂起 | 第三方网关故障（C10，09-14 与 09-19 两次实测；2026-10-10 端点切换后恢复，见 C12） | 换可用端点（已切换至 `api.360.cn`，C12 一词探测 3/3 通过；U-01 解除） |
-| 记录被 `artifacts` 拒：缺 `review_roundtrips` | 字段必填（要求见 `episodes/README.md`） | 没开评审门写 `[]`；历史记录按回填约定加说明 signal |
-| 想引用仓库外的文件 | 可携带性规则 | 用 `仓库名@revision:路径` 限定，或把证据逐字嵌进记录 |
+| 观察 | 下一步 |
+| --- | --- |
+| 缺依赖、坏夹具、没有发现目标测试 | 先修环境或测试入口，不算有效目标失败 |
+| 计划或快照漂移 | 核实实际变化，再重新封存，不使用旧指纹继续 |
+| 局部任务失败 | 标明真实依赖，继续无依赖的已授权工作 |
+| 评审要求修改 | 聚焦修复并复审，记录轮次，不自行改为批准 |
+| 源码与安装快照不同 | 明确未加载范围，按授权更新，不声称新规则已经生效 |
+| 仓外文件需被引用 | 用仓限定版本地址或自包含决定性片段，避免悬空裸路径 |

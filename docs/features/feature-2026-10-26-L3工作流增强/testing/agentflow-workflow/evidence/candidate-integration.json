@@ -1,0 +1,142 @@
+[
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow.py",
+    "sha256": "94d6729e56da45148de4197c82c4f5e2e279d6e9cf77b9f548882ff96ece89b8"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/__init__.py",
+    "sha256": "bbe9f3c335f307a09d2dc5caf530aa67ff8c9a080471101ef2228913e4fa5b6a"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/cli.py",
+    "sha256": "cdcb0b81d1ca07df61c9159dcced6e4fa107e4c1c1cfd256607d386a38b15460"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/execution.py",
+    "sha256": "eb2a3028e43009088f4dc60ebaba156893e7a9b6a1212752c03be911b9d19fd1"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/managed.py",
+    "sha256": "03608b6e1387707f7d80d158e11d9d5924dcaeea3fc6ad3393e3fbeb8dace90f"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/reports.py",
+    "sha256": "d7c90e35f47c2e4ce3e2e967e8e801f5bd7a2be8324fc05a1c50861074b94dea"
+  },
+  {
+    "worker": "runtime",
+    "path": "skills/agentflow/scripts/workflow_lib/snapshots.py",
+    "sha256": "077b55e8882e1011478ef03e67b5325d6ebacde7f1d0ff075b614d54049608c6"
+  },
+  {
+    "worker": "method",
+    "path": "README.md",
+    "sha256": "0bb4aa3e7a91ae52940d9f3fd53070119f2963bd6206a119c497b824aacbe89a"
+  },
+  {
+    "worker": "method",
+    "path": "agents/README.md",
+    "sha256": "e4534e406153b1c9f7188bfea317717690a0542439e2eca4ead598c60e03c878"
+  },
+  {
+    "worker": "method",
+    "path": "agents/backend-engineer.md",
+    "sha256": "f7e019509146e47f27f63c816dd06b4c69bfbe4d729ffa42f678b6ed449e2478"
+  },
+  {
+    "worker": "method",
+    "path": "agents/bug-fixer.md",
+    "sha256": "ab21ed0d510d0227ea8a1d91fa3175b3eacbcad974abd5cdb964c2385aa7da5c"
+  },
+  {
+    "worker": "method",
+    "path": "agents/frontend-engineer.md",
+    "sha256": "9bf30781f068e1686accc8defa1723ee537a71a6b7f228bed44acbc2baf59767"
+  },
+  {
+    "worker": "method",
+    "path": "agents/test-executor.md",
+    "sha256": "8218df8654cf831ff9efb3ea7b0d713bb4b8a0e3479b50b22f95679cbc89c3d6"
+  },
+  {
+    "worker": "method",
+    "path": "agents/test-planner.md",
+    "sha256": "c61e03338e8620660dc74cdf067a506d3adf611284b8e3b9e5888807103f9999"
+  },
+  {
+    "worker": "method",
+    "path": "docs/quickstart.md",
+    "sha256": "041987de64f05c569daf9d448793b0bf949ac1a1cdb352aff39e2631a91f2f24"
+  },
+  {
+    "worker": "method",
+    "path": "docs/system-guide.md",
+    "sha256": "dbfb9e18875078091e68838399f25e7883adb36cd2218b55bdce9c1db37c6671"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/SKILL.md",
+    "sha256": "1a2c88c84287ab8cbad8655ffa386cfada3496f431c3f981c4aeaf8ddc9cd049"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/references/document-chain.md",
+    "sha256": "d04cf9352ee2c06f4869e05c00ddf25f6c41aeae708556138f032498e2301fd0"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/references/execution.md",
+    "sha256": "0d29c98f8d62d6ebf8ef8a203fbdebb41fcef3a0e79966c8d2a231f0cfeafdc1"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/references/hosts.md",
+    "sha256": "b268165569bc8246c5d099c7d8649594de849a097aff7eada5d3e94130b8871f"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/references/roles.md",
+    "sha256": "864e029d180f710d99447737c811a64bfab0b6dbd8f399c800e7ea40b2555656"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/references/test-records.md",
+    "sha256": "596d496232bc6eee8728a604811177f71d45aa74774131dab645c2d04fec5415"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/README.md",
+    "sha256": "4c4e7e9bde940d8a20ec9f5cc2f0c37cde9db6cd20cb890e4db78b29dc8be874"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/feature/lightweight.md",
+    "sha256": "79b08cf4c70c532fe2e6986564a9404c3f96481ea5b011dff41c5179f835cfcb"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/feature/plan/execution.md",
+    "sha256": "f0295ece37e0ada9e68d83d6ecd08ea4eb101d7ccabc296a9750ca63005ff131"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/feature/spec/qa/acceptance.md",
+    "sha256": "581cd9924b7f745c2eabfde0c3c71af8957982c4aab7f2f429992825ab22565b"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/testing/plan.md",
+    "sha256": "7380fa02df7a76d46ec0a48cb277906d2e4197e50f9627c2aeaf1f6ec275cc49"
+  },
+  {
+    "worker": "method",
+    "path": "skills/agentflow/templates/testing/run.md",
+    "sha256": "892ffbbbb7728310a3f43309618921b85686de93a12b4734b27a6dff0e0cd9d9"
+  }
+]

@@ -1,0 +1,111 @@
+MUTANT report-uniqueness COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '-m', 'unittest', 'test_workflow.WorkflowCliTests.test_duplicate_case_names_are_ambiguous']
+F
+======================================================================
+FAIL: test_duplicate_case_names_are_ambiguous (test_workflow.WorkflowCliTests.test_duplicate_case_names_are_ambiguous)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/report-uniqueness/tests/test_workflow.py", line 166, in test_duplicate_case_names_are_ambiguous
+    self.assertNotEqual(self.run_plan(self.seal(tasks=[task]))[0], 0)
+AssertionError: 0 == 0
+
+----------------------------------------------------------------------
+Ran 1 test in 0.371s
+
+FAILED (failures=1)
+
+EXIT_CODE=1
+MUTANT source-scope COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '-m', 'unittest', 'test_workflow.WorkflowCliTests.test_untracked_out_of_scope_file_is_rejected', 'test_workflow.WorkflowCliTests.test_ignored_input_change_is_not_invisible']
+FF
+======================================================================
+FAIL: test_untracked_out_of_scope_file_is_rejected (test_workflow.WorkflowCliTests.test_untracked_out_of_scope_file_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/source-scope/tests/test_workflow.py", line 101, in test_untracked_out_of_scope_file_is_rejected
+    self.assertEqual(self.verify(fingerprint)[0], 3)
+AssertionError: 0 != 3
+
+======================================================================
+FAIL: test_ignored_input_change_is_not_invisible (test_workflow.WorkflowCliTests.test_ignored_input_change_is_not_invisible)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/source-scope/tests/test_workflow.py", line 107, in test_ignored_input_change_is_not_invisible
+    self.assertEqual(self.verify(fingerprint)[0], 3)
+AssertionError: 0 != 3
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.557s
+
+FAILED (failures=2)
+
+EXIT_CODE=1
+MUTANT managed-staleness COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '-m', 'unittest', 'test_workflow.WorkflowCliTests.test_managed_preview_cannot_overwrite_later_user_change']
+F
+======================================================================
+FAIL: test_managed_preview_cannot_overwrite_later_user_change (test_workflow.WorkflowCliTests.test_managed_preview_cannot_overwrite_later_user_change)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/managed-staleness/tests/test_workflow.py", line 281, in test_managed_preview_cannot_overwrite_later_user_change
+    self.assertEqual(self.cli("managed-apply", "--preview", preview, "--fingerprint", fingerprint)[0], 3)
+AssertionError: 0 != 3
+
+----------------------------------------------------------------------
+Ran 1 test in 0.186s
+
+FAILED (failures=1)
+
+EXIT_CODE=1
+MUTANT evidence-layout COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '-m', 'unittest', 'test_workflow.EvidenceLayoutTests']
+FF
+======================================================================
+FAIL: test_nested_raw_evidence_is_supported_by_the_record_contract (test_workflow.EvidenceLayoutTests.test_nested_raw_evidence_is_supported_by_the_record_contract)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/evidence-layout/tests/test_workflow.py", line 470, in test_nested_raw_evidence_is_supported_by_the_record_contract
+    self.assertEqual(self.check_layout("evidence"), [])
+AssertionError: Lists differ: ['/tmp/agentflow-evidence-layout-r9vbew01/[508 chars]ies'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'/tmp/agentflow-evidence-layout-r9vbew01/docs/features/batch/testing/project-feature/evidence/native/run: unexpected entry under testing/; records are testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and run-<date>-<NNN>.md, plus evidence/ and scratch/ directories'
+
++ []
+- ['/tmp/agentflow-evidence-layout-r9vbew01/docs/features/batch/testing/project-feature/evidence/native/run: '
+-  'unexpected entry under testing/; records are '
+-  'testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and '
+-  'run-<date>-<NNN>.md, plus evidence/ and scratch/ directories',
+-  '/tmp/agentflow-evidence-layout-r9vbew01/docs/features/batch/testing/project-feature/evidence/native/run/stdout.txt: '
+-  'unexpected entry under testing/; records are '
+-  'testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and '
+-  'run-<date>-<NNN>.md, plus evidence/ and scratch/ directories']
+
+======================================================================
+FAIL: test_nested_scratch_is_supported_but_arbitrary_record_folders_are_not (test_workflow.EvidenceLayoutTests.test_nested_scratch_is_supported_but_arbitrary_record_folders_are_not)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/agentflow-review-mutants-l9uyeya1/evidence-layout/tests/test_workflow.py", line 473, in test_nested_scratch_is_supported_but_arbitrary_record_folders_are_not
+    self.assertEqual(self.check_layout("scratch"), [])
+AssertionError: Lists differ: ['/tmp/agentflow-evidence-layout-nynu28pr/[506 chars]ies'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'/tmp/agentflow-evidence-layout-nynu28pr/docs/features/batch/testing/project-feature/scratch/native/run: unexpected entry under testing/; records are testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and run-<date>-<NNN>.md, plus evidence/ and scratch/ directories'
+
++ []
+- ['/tmp/agentflow-evidence-layout-nynu28pr/docs/features/batch/testing/project-feature/scratch/native/run: '
+-  'unexpected entry under testing/; records are '
+-  'testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and '
+-  'run-<date>-<NNN>.md, plus evidence/ and scratch/ directories',
+-  '/tmp/agentflow-evidence-layout-nynu28pr/docs/features/batch/testing/project-feature/scratch/native/run/stdout.txt: '
+-  'unexpected entry under testing/; records are '
+-  'testing/<project>-<feature-slug>/plan-<date>-<NNN>.md and '
+-  'run-<date>-<NNN>.md, plus evidence/ and scratch/ directories']
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.029s
+
+FAILED (failures=2)
+
+EXIT_CODE=1
+ALL_FOUR_MUTANTS_KILLED
+
+RECIPE_EXIT_CODE=0

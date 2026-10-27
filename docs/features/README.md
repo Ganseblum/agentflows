@@ -84,3 +84,7 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
 
 证据列的形态要求（C23，2026-10-23 起）：☑ 已完成的行必须留下可复核载体；**四类载体的定义单点在
 `skills/agentflow/references/document-chain.md` 的门 8**，本文件只引用不复述——复述就会长出第二个真源。
+
+## L3 工作流增强
+
+[本批入口](feature-2026-10-26-L3工作流增强/README.md)承接十四项吸收、执行证据与文档去重，状态只看其计划看板。

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "phase": "green",
+  "execution_status": "fail",
+  "coverage_status": "needs_review",
+  "fingerprint": "sha256:5dbf8fb6d6160d00f8957556d17c3514626891c8397d009445928d9ea9a47b9f",
+  "execution_snapshot": "sha256:c9f53b769cc00399e6a8aae44c1f69f51289d7244f22604244ee8442081f49c0",
+  "tasks": [
+    {
+      "id": "bad",
+      "status": "fail",
+      "cases": [],
+      "error_kind": "command-failed",
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-v66x_h3v/.git/agentflow/dependencies/bad.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-v66x_h3v/.git/agentflow/dependencies/bad.stderr",
+        "returncode": 1,
+        "duration_seconds": 0.026066
+      },
+      "kind": "preflight"
+    },
+    {
+      "id": "independent",
+      "status": "pass",
+      "cases": [
+        {
+          "id": "TC-INDEPENDENT",
+          "report_name": "returns confirmed value",
+          "status": "pass"
+        }
+      ],
+      "error_kind": null,
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-v66x_h3v/.git/agentflow/dependencies/independent.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-v66x_h3v/.git/agentflow/dependencies/independent.stderr",
+        "returncode": 0,
+        "duration_seconds": 0.071761,
+        "report": "/private/tmp/agentflow-native-e2e-v66x_h3v/.git/agentflow/dependencies/independent.stdout",
+        "discovered_cases": [
+          {
+            "name": "returns confirmed value",
+            "status": "pass"
+          }
+        ]
+      },
+      "kind": "test"
+    },
+    {
+      "id": "dependent",
+      "status": "blocked",
+      "cases": [],
+      "error_kind": "dependency-failed",
+      "evidence": {
+        "depends_on": [
+          "bad"
+        ]
+      },
+      "kind": "test"
+    }
+  ]
+}

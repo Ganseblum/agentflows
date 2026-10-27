@@ -34,6 +34,12 @@
 
 - `.workbuddy/`（已被 `.gitignore` 排除）：本机调试 / 复盘 / 记忆的**草料区**，内容不入版本库、不进入任何门禁与文档链、不构成本仓交付物；其中结论若可复用，应落回 `docs/evaluations/`、`episodes/` 或 `docs/issues/` 后才算现行记录。活文档面（索引、README、AGENTS）不引用其路径。
 
+## L3 增强实施
+
+[工作流增强批次](docs/features/feature-2026-10-26-L3工作流增强/README.md)：十四项落地对照、执行协议与文档分档，状态以批次计划为准。
+
+[测试结果](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md) · [独立批准](docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-002.md) · [任务级记录](episodes/2026-10-27/EP-20261027-001.json)。
+
 ## 迁移与清理记录
 
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
@@ -52,3 +58,7 @@
 - 2026-10-12 评测装置裁撤批 / 归档批 / 结构改造批四期 / 三期 / 瘦身批
 - 2026-10 结构改造迁移执行批次
 - 2026-10-09 彻底清理与防漂移批次
+
+## 执行证据
+
+工作流方法见 [执行与验证](skills/agentflow/references/execution.md)，工具接口见 [证据工具用法](skills/agentflow/references/workflow-tool.md)，轻量交付见 [单文件模板](skills/agentflow/templates/feature/lightweight.md)。

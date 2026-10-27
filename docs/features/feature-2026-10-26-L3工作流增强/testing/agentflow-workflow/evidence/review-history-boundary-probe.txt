@@ -1,0 +1,16 @@
+light-with-history-only
+COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '/tmp/agentflow-review-probes-oz1nuoc2/candidate/tools/lab/doc_chain.py', '--root', '/tmp/agentflow-history-probe-_olqq4gf', '/tmp/agentflow-history-probe-_olqq4gf/feature']
+PASS doc-chain /tmp/agentflow-history-probe-_olqq4gf/feature
+EXIT_CODE=0
+
+history-only-without-full-stages
+COMMAND ['/opt/homebrew/opt/python@3.12/bin/python3.12', '/tmp/agentflow-review-probes-oz1nuoc2/candidate/tools/lab/doc_chain.py', '--root', '/tmp/agentflow-history-probe-_olqq4gf', '/tmp/agentflow-history-probe-_olqq4gf/feature']
+FAIL doc-chain (7 findings)
+  - C1 结构: proposal/ 下没有任何有效文档（仅 .gitkeep 占位），且 README 段落映射未写明落点
+  - C1 结构: spec/ 下没有任何有效文档（仅 .gitkeep 占位），且 README 段落映射未写明落点
+  - C1 结构: design/ 下没有任何有效文档（仅 .gitkeep 占位），且 README 段落映射未写明落点
+  - C1 结构: plan/ 下没有任何有效文档（仅 .gitkeep 占位），且 README 段落映射未写明落点
+  - C2 入口门禁: HISTORY.md 未声明「需求评审」门禁条目
+  - C2 入口门禁: HISTORY.md 未声明「技术方案评审」门禁条目
+  - C22 目标承接: feature 打了 agentflow 目标承接 标记，但「目标承接」标题下没有承接表（必需列：目标 / spec 承接 / plan 任务 / 状态）；补表，不许摘标记
+EXIT_CODE=1
