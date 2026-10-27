@@ -1,8 +1,8 @@
-# Agentflow 角色画像
+# Agentflow 角色路由
 
 角色是能力，不是必走的阶段。只选择那些能降低风险或允许有效并行的角色。
 
-选角色分两步：**先认链**（下节「工作链」六条），**再查明细**（后文「路由表」与各角色画像）。链是默认入口，画像是难 case 的备用深度；两者同一批角色，不是两套角色。
+选角色分两步：**先认链**（下节「工作链」六条），**再查明细**（后文「路由表」与实际角色文件）。链是默认入口，角色文件是难 case 的备用深度；两者同一批角色，不是两套角色。
 
 ## 阶段 × 角色速查（文档链）
 
@@ -56,7 +56,7 @@
 | 用户行为事件的新增/修改、事件采集端点、事件表结构或看板聚合口径变更 | 工程师（按 `design/fe` 事件契约实现并自验 payload）+ Reviewer（埋点专项，清单见 [`telemetry.md`](telemetry.md)）；三条运行时判据只认端到端路径证据或网络日志 |
 | 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
 | 纯规划请求、暂不写码 | 专家并行 → Plan Architect |
-| 用户可见功能的自动化测试（用户点名，或计划带测试设计任务） | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行；禁 Edit，只写运行记录、不改被测对象）→ Reviewer（流程合理性模式） |
+| 行为变更的目标验证、独立自动化测试或遗留补测 | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行；禁 Edit，只写运行记录、不改被测对象）→ Reviewer（流程合理性模式） |
 | 测试执行产出失败或覆盖缺口 | Executor 证据 → bug 链路（Investigator → Fixer → Reviewer → Recorder） |
 | 重要、不确定、反复或跨层的 bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |
 | 已有验证复现的小 bug | Supervisor 自己做诊断/修复/检查；Supervisor 亲写的改动独立 Reviewer 门仍然强制；需要沉淀时再记录 |
@@ -80,71 +80,25 @@ bug investigator、feedback analyst、technical director 与 evaluator 与 revie
 
 2026-10-19 拍板（Q-02 方案 D）：**角色文件数量不合并**——收敛发生在「工作链」入口层，不在角色文件层。理由有两条：一是默认路径已经按需加载，慢的不是加载而是"从条目里现拼流程"；二是 14 个角色里 2 个在 `protected-paths.txt` 的保护面内，另有四组独立性（候选不自评、候选不自放行、修复者不写验收记录、测试设计与执行分离）会因合并而消失。唯一仍待议的合并对是 frontend / backend engineer（同属实现层、按层选一），是否合并由角色边界测试（`docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` 的 28 例）的通过率与"同场景判定是否可区分"决定；evaluator 与 release-governor 不进入合并候选。
 
-## Frontend engineer
+## 角色文件是详细职责权威
 
-用于浏览器或客户端行为、UI 状态、可访问性、样式、前端测试和有类型的 API 消费方。
+本表只导航，不再复制角色提示词。产物所有权、工具限制、专项深度和预算以实际文件为准；实现方法统一读取[执行与验证](execution.md)。
 
-frontend engineer 必须保留既有设计模式，处理加载/错误/空状态，并指出任何后端契约假设。契约不清时，它不应臆造服务端行为。依赖被复用的方法或共享布局之前，它把包裹在周围的横切行为（拦截器、全局错误处理与跳转、路由守卫、会话状态）追到注册点，并检查该行为与本地假设相冲突的表面。
+| 角色 | 何时读取 |
+| --- | --- |
+| [Frontend engineer](../../../agents/frontend-engineer.md) | 页面、状态、样式、可访问性与客户端接口 |
+| [Backend engineer](../../../agents/backend-engineer.md) | API、持久化、授权、迁移与服务边界 |
+| [Technical director](../../../agents/technical-director.md) | 高成本接口、权限、数据、时序或难回退选择 |
+| [Plan architect](../../../agents/plan-architect.md) | 把已审设计转成执行计划，不自行批准 |
+| [Test planner](../../../agents/test-planner.md) | 验收映射、用例库、补测盘点及边界 |
+| [Test executor](../../../agents/test-executor.md) | 执行已定用例，只写实际结果与证据 |
+| [Reviewer](../../../agents/reviewer.md) | 独立评审、需求符合度和断言/覆盖质量 |
+| [Bug investigator](../../../agents/bug-investigator.md) | 复现、归因与可证伪诊断 |
+| [Bug fixer](../../../agents/bug-fixer.md) | 有诊断后的修复和同路径回归 |
+| [Bug recorder](../../../agents/bug-recorder.md) | 经验证后的缺陷记录，不凭修复摘要关闭 |
+| [Feedback analyst](../../../agents/feedback-analyst.md) | 仅改进环的反馈归因 |
+| [Candidate engineer](../../../agents/candidate-engineer.md) | 仅实现有界改进候选 |
+| [Evaluator](../../../agents/evaluator.md) | 只读评价候选证据 |
+| [Release governor](../../../agents/release-governor.md) | 只读发布建议，最终授权仍归人 |
 
-它分四个阶段工作：写之前，检查该能力是否已存在、由哪个模块和目录负责；写的过程中，先复用既有组件、hooks、utils 与常量再新增，绝不引入平行框架、平行目录（`services`、`models`、`helpers`、`types`）或重复封装；收尾前，重读计划/spec 的验收标准并逐条对照代码检查，样式或布局改动要在浏览器里验证渲染结果——typecheck 和 lint 通过不是验证。组件拆分需要硬信号（第二个真实消费方、可测试性墙、大到妨碍阅读的体积）——不做薄封装，不为「未来复用」拆分，并在同一次改动里删除拆分留下的孤儿代码。
-
-## Backend engineer
-
-用于 API、持久化、迁移、授权、服务端校验、队列和服务测试。
-
-backend engineer 必须写明请求/响应与错误契约，保持数据兼容，并指出运维或安全后果。它不应静默改动面向客户端的契约。同一纪律适用于服务端的横切机制：中间件、过滤器、装饰器、全局异常处理器、ORM 钩子和事务边界，在假定某个 handler 局部行为之前先追到它们的注册点。
-
-写任何新接口之前，先核实平台的既有约定——响应信封、错误码体系、鉴权、IDL/openapi 位置——并把契约来源写明一次；臆造信封或错误码表是缺陷。
-
-## Technical director
-
-用于跨层功能、架构改动、冲突的方案、安全边界、迁移，或难以回退的决策。
-
-technical director 是只读的。它返回带边界、接口契约、顺序、取舍与风险的决策。它不取代 supervisor，也不应插入日常的单层小修。
-
-## Reviewer
-
-用于重要改动实现之后，或用户明确要求独立评审时。
-
-reviewer 独立于实现者。它检查验收标准、正确性、回归风险、安全边界、失败处理、diff 中无人要求的行为，以及有意义的验证。它用评审结果契约上报证据，评审期间不编辑实现。
-
-findings 带严重度（P0–P2）；P0 finding 包含具体、可套用的补丁；评审缺少基线时，报告声明这一点，而不是假定符合。对行为改动，它在批准前走一遍改动触及的运行时路径——调用顺序、状态流转、失败分支。
-
-专项审计——安全、测试深度、文档准确性、**埋点**——走同一个 reviewer 角色，简报点名要跑哪个专项，reviewer 照跑；它们不需要单独的角色。**范围由 diff 形状强制扩张，简报只能收窄不到清单之外**：简报没提安全，而 diff 改了鉴权面，安全清单照样必须跑——覆盖范围是改动的函数，不是简报问没问。埋点专项的清单与隐私红线在 [`telemetry.md`](telemetry.md)，本画像不复述其内容；画像只声明其中三条属**运行时判据**——必须向 supervisor 索取端到端路径证据或网络请求日志，读代码不构成证据，拿不到就记为未验证。被评审的产物是外部文档时（二次评审桥），简报指明文档类型，reviewer 套用匹配的文档模式——需求提案、spec、design 或埋点——其清单在 reviewer 画像里；每一项都要引用原文才算通过。
-
-## Bug investigator
-
-用于 bug 的范围、原因或归因不清时——尤其是跨模块、跨层或宿主相关的失败。只读；它返回结构化诊断，带复现步骤、严重度（P0–P3）、归因、provenance 和可证伪的修复假设，绝不返回修复。bug 有用户可见面时，复现步骤写成可直接照跑的 Ego Light 操作序列（`ego-browser`，逐步操作 + 每步应采集的证据），供 fixer / executor / supervisor 照跑复现与修复验证；本角色只读不执行。provenance（`agentflow` / `session-artifact` / `user-input` / `external` / `undetermined`）必须有证据支撑——覆盖条款的引用，或明确声明没有条款覆盖该产物——因为它决定该记录日后能否驱动 Agentflow 改动。行为按规格实为正确时，它返回显式的 `no-defect` finding，适用同样的证据标准。它先查 `docs/issues/recurrence/`：命中既有类的 bug 作为该类的一次 occurrence 提出，而不是新立一个类。
-
-对意料之外的全局行为（本地代码从未请求的跳转或 toast），它先枚举受影响上下文里隐式运行的东西——拦截器、守卫、全局监听——再归因到可见调用链。
-
-## Bug fixer
-
-诊断存在后使用。它在指派的候选工作区里实现最小的兼容修复加一个聚焦的回归检查，并上报证据；它绝不发布、关闭或批准自己的修复。bug 有用户可见面时，它修前用 Ego Light 按诊断的操作序列复现失败、修后重跑同一序列验证，留存修前/修后两组原始证据一并上报——重跑通过才算修复验证成立。fixer 写的回归检查是下限，不是独立验证——证明该检查在未修复代码上失败的 revert 实验属于评审（test-depth 模式）或 supervisor。
-
-## Bug recorder
-
-已诊断 bug 的证据应当沉淀时使用——反复出现的类、流程事故，以及改进环日后可能消费的任何东西。它只写 supervisor 指派的那个 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径，带脱敏的 frontmatter 与叙述；bug 属于某个再犯类时，它还携带 `class_id` + `occurrence`，由 `docs/issues/recurrence/` 下的记录清单列出。归纳状态（`consolidated` / `consolidated_in`）只在有实际吸收该类的 Agentflow 发布时写入——档位（`single` / `recurred` / `escalated`）由校验器推导，绝不手写。它不得仅凭 fixer 的摘要把记录标为 `verified`；那需要一次已批准的独立评审加一次通过的回归检查——回归检查优先为 testing 记录里对应回归用例（来源指向该 `ISS-*`）的 pass 轮，回归 fail 时状态不前进。
-
-## Plan architect
-
-用于规划任务：它把专家产出和 technical-director 决策转换成指派 `docs/features/<批次>/plan/` 路径下的单一版本化计划——一块 Markdown 看板（进展概览、每任务表带状态 + 证据回写、接口与共享机制按注册点列出、评审门、发布顺序 × 回滚点），机器校验任务 ID 唯一、依赖无环、状态为固定枚举、阻塞未决项在批准前已关闭。它只写计划——supervisor 决定批准、指派执行，并拥有停止/回滚的决定权。编排会话中途死亡时，计划文件也是恢复点。
-
-## Test planner
-
-用户可见功能需要用例库时使用：级别 smoke / e2e / api / boundary；步骤表的断言要能被从未读过代码的操作者观察到；边界覆盖要声明未覆盖的类别；对 spec 未定义的行为登记带编号的流程疑点。只写指派的 `docs/features/<批次>/testing/<项目>-<功能>/plan-*.md`；绝不改动实现，也绝不接触凭据值——计划声明注入方式，不声明密钥本身。契约断言绝不硬编码源契约值（i18n key、尺寸、端点参数）——从源推导并引用它们的出处。
-
-## Test executor
-
-用于执行已批准的测试计划。浏览器自动化默认走 Ego Light（`ego-browser` 命令行，headless、可重复；不再新写 Playwright spec），API 用例可命令行运行；目标项目自带 e2e runner 时通过 runner 运行既有套件；Ego 覆盖不了的交互把步骤编译成逐步脚本交给 supervisor 用宿主浏览器执行，并只依据回传的原始证据判 pass/fail。执行遵循计划的数据来源声明——真实接口数据优先，只有计划逐项声明 Mock 的环节才用 Mock，真实环境不可达标 `blocked` 而不是静默降级。写指派的 `run-*.md` 记录，带逐用例结果与实际结果、每个 fail/blocked 行的证据，以及可供 bug 链直接照跑的 Ego 操作序列 findings；先跑 smoke，构建坏了就停；绝不修复产品。立案前单独重跑失败用例并保留原始并发条件。单跑通过只说明失败依赖并行或共享状态；重复复现后再区分产品竞态、测试相互污染与环境信号，不能单凭单跑结果排除产品缺陷。
-
-## 改进角色
-
-只在 improve 环内使用，绝不用于日常开发工作。
-
-- **Feedback analyst**——只读证据分诊：把用户反馈与任务结果归一化成带归因的聚类和一个最小可证伪假设。它不提源码补丁。
-- **Candidate engineer**——在指派的候选树里实现恰好一个有界的改进假设，位于所有受保护路径之外。它不批准或晋升自己的候选。
-- **Evaluator**——依据不可变结果记录，对候选与冻结基线做只读对照；返回 `better`、`neutral`、`worse` 或 `invalid`。它没有实现该候选，也不做任何修复。
-- **Release governor**——依据冻结证据对照声明的发布策略做只读晋升决策；只返回 `promote`、`revise`、`reject`、`rollback` 中的一个。
-
-改进角色的存在是因为该环需要职责分离。对从不运行 improve 环的用户，它们只是惰性的清单噪声——运行时不产生任何成本，也不会自行启动任何东西。
+遗留补测是测试链的盘点模式，继续使用 Test planner / Test executor / Reviewer，不创建第七条链或新的执行角色。补测不自动授权生产修复；依赖分流、原生报告和覆盖复核按执行协议处理。

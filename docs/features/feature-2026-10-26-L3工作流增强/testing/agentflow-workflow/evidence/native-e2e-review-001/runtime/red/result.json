@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "phase": "red",
+  "execution_status": "pass",
+  "coverage_status": "needs_review",
+  "fingerprint": "sha256:f77c8e4f77cacbb343c9d1f08aad17e298ea185e955662b6bfb87a9259f3f7a1",
+  "execution_snapshot": "sha256:d1876a68533ad5a9ba0b94e3de1ff309d90eef1b121020093b2da7366a681295",
+  "tasks": [
+    {
+      "id": "preflight",
+      "status": "pass",
+      "cases": [],
+      "error_kind": null,
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-zs673age/.git/agentflow/red/preflight.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-zs673age/.git/agentflow/red/preflight.stderr",
+        "returncode": 0,
+        "duration_seconds": 0.027005
+      },
+      "kind": "preflight"
+    },
+    {
+      "id": "target",
+      "status": "pass",
+      "cases": [
+        {
+          "id": "TC-VALUE-001",
+          "report_name": "returns confirmed value",
+          "status": "fail"
+        }
+      ],
+      "error_kind": null,
+      "evidence": {
+        "stdout": "/private/tmp/agentflow-native-e2e-zs673age/.git/agentflow/red/target.stdout",
+        "stderr": "/private/tmp/agentflow-native-e2e-zs673age/.git/agentflow/red/target.stderr",
+        "returncode": 1,
+        "duration_seconds": 0.071657,
+        "report": "/private/tmp/agentflow-native-e2e-zs673age/.git/agentflow/red/target.stdout",
+        "discovered_cases": [
+          {
+            "name": "returns confirmed value",
+            "status": "fail"
+          }
+        ],
+        "failure_cause_review": "required"
+      },
+      "kind": "test"
+    }
+  ]
+}

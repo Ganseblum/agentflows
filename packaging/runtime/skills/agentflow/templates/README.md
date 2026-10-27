@@ -1,12 +1,13 @@
-# templates — 文档链模板（先抄模板，再填占位符）
+# templates — 按任务选择材料
 
-> 固定标题字面量：模板章节不得改名或删除；不适用的节写 `N/A: 原因`。目标仓已有模板体系时用其的，本目录是下限。
+> 先按[文档档位](../references/document-chain.md#文档档位)选择轻量或完整模板。完整链固定标题不得改名或删除，不适用节写 `N/A: 原因`；轻量使用单份 README 的四个固定章节。目标仓已有体系时复用，不另建重复正文。
 > 写前自查（术语与指称）：按「换 > 释 > 删」处理；**代号裸用**（代号只在定义处出现，正文以「白话（代号）」或「代号（白话）」成对伴随）与**模式词分域**（标识符留在代码、SQL、日志语境，正文用业务白话）两条形态同受约束；判据见 [`document-chain.md` 表达纪律节](../references/document-chain.md)。
 > 命名与目录形态：骨架按链契约的角色目录组织——`spec/be/backend.md` ↔ `design/be/backend.md`、`spec/fe/frontend.md` ↔ `design/fe/frontend.md`、`spec/qa/acceptance.md` ↔ `design/qa/testing.md`、`spec/ui/visual.md` ↔ `design/ui/visual.md` 镜像；proposal 使用 `proposal/proposal.md`。计划按使用位置选择：目标仓使用自身约定；没有约定时复制 `plan/execution.md`。Agentflow 仓库的批次记录使用 `plan/<plan_id>.md` 混合契约。复制时保持对应形态的文件名与信封。
 > 三条跨阶段贯通项（复制骨架时不要漏）：**产品原型**（目标仓已维护原型库 → 必须形态 A：正文在库内、批次 `prototype/index.html` 只做入口页；确无原型库 → 形态 B：批次内可编辑 HTML 是正文。两种形态都沿用项目真实视觉基线，跨批次登记上游路径与 revision，截图可由 HTML 导出）；**视觉来源** `spec/ui` §2.1 → `design/ui` §0.1（组件库/主题机制/token 源文件给 `path:line`，A 复用 / B 移植 / C 冷启动三档，禁凭空造色值）；**埋点** 三处口径——`proposal/proposal.md` §6.2 决策 → `spec/fe/frontend.md` §4 口径 → `design/fe/frontend.md` §1.7 事件契约，验收在 `spec/qa` 与 `design/qa`（评审清单与隐私红线见 [`telemetry.md`](../references/telemetry.md)）。
 
 | 模板 | 用法（复制到 feature 目录的对应路径） |
 | --- | --- |
+| [feature/lightweight.md](feature/lightweight.md) | 满足六条适用判据的任务：复制为 feature README，集中需求、实施证据与恢复；不能用轻量省略评审或验证 |
 | [feature/README.md](feature/README.md) | 批次入口：元信息 + 推进进度（阶段门）+ 当前步骤 + 模块总览 + 分支基线与落库映射 |
 | [feature/proposal/proposal.md](feature/proposal/proposal.md) | 需求提案（单文档阶段，`proposal/proposal.md`） |
 | [feature/spec/be/backend.md](feature/spec/be/backend.md) · [fe](feature/spec/fe/frontend.md) · [qa](feature/spec/qa/acceptance.md) · [ui](feature/spec/ui/visual.md) | 各角色规格（`spec/<角色>/`） |
@@ -28,3 +29,7 @@
 - `复盘.md`：feature 收口后的复盘（喂改进环的证据来源）。
 - `code-gap-matrix`：文档 vs 代码现状完成度矩阵（在既有代码上落地的 feature 强烈建议）。
 - 超大 feature 的模块化拆分：一模块一套 proposal/spec/design/plan 四件套 + 总控 spec。
+
+## 执行证据工具输入
+
+[执行请求](testing/execution-request.json)与[补测映射](testing/backfill-map.json)是字段示例，复制后按实际项目替换并完整分类输入；不直接代表现有项目。字段和命令见[工具用法](../references/workflow-tool.md)。

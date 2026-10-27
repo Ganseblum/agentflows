@@ -258,7 +258,10 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                     # literally could not pass their own gate (evaluation G11).
                     if n == 4 and under[3] in ("evidence", "scratch") and path.is_dir():
                         continue
-                    if n == 5 and under[3] in ("evidence", "scratch"):
+                    # Raw evidence/automation may contain runner-native subdirectories.
+                    # Only the exact authorized sibling roots are exempt; a similarly
+                    # named folder elsewhere still falls through to the layout error.
+                    if n >= 5 and under[3] in ("evidence", "scratch"):
                         continue
                     if n == 4 and path.is_file() and path.suffix == ".md":
                         if re.fullmatch(r"plan-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name):

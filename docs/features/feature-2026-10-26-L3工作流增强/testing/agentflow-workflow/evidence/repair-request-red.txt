@@ -1,0 +1,15 @@
+F
+======================================================================
+FAIL: test_validation_cannot_change_request_outside_project_snapshot (test_workflow.WorkflowCliTests.test_validation_cannot_change_request_outside_project_snapshot)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/lihanghang1/.codex/worktrees/l3-workflow-enhancement/agentflows/tests/test_workflow.py", line 254, in test_validation_cannot_change_request_outside_project_snapshot
+    self.assertEqual(self.run_plan(self.seal(tasks=[self.task(code=code)]))[0], 3)
+AssertionError: 0 != 3
+
+----------------------------------------------------------------------
+Ran 1 test in 0.383s
+
+FAILED (failures=1)
+
+EXIT_CODE=1

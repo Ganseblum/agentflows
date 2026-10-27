@@ -305,10 +305,135 @@ def find_stage(files: list[Path], *parts: str | Path) -> list[Path]:
     ]
 
 
+LIGHTWEIGHT_CRITERIA = (
+    "目标与行为已确认",
+    "无跨层或公开契约变更",
+    "无持久化或权限变更",
+    "无共享时序或不可逆变更",
+    "单一部署单元且回退明确",
+    "验收可执行",
+)
+
+
+def _light_section(text: str, title: str) -> str:
+    match = re.search(r"(?m)^##\s+" + re.escape(title) + r"\s*$", text)
+    if match is None:
+        return ""
+    tail = text[match.end():]
+    end = re.search(r"(?m)^##\s+", tail)
+    return tail[:end.start()] if end else tail
+
+
+def _filled_light_cell(value: str) -> bool:
+    clean = value.strip().strip("`* ")
+    placeholders = {"", "—", "-", "无", "未知", "待确认", "待核实", "待填写", "（填写）", "TBD"}
+    return clean not in placeholders and not re.fullmatch(r"<[^>]*>", clean)
+
+
+def _light_values(text: str, key: str) -> list[str]:
+    fences = fenced_lines(text)
+    pattern = re.compile(r"\s*(?:>\s*)?" + re.escape(key) + r"\s*[:：]\s*(.*?)\s*")
+    return [match.group(1) for i, line in enumerate(text.splitlines(), 1)
+            if i not in fences and (match := pattern.fullmatch(line)) is not None]
+
+
+def _light_declaration(text: str, key: str, value: str) -> bool:
+    return _light_values(text, key) == [value]
+
+
+def lightweight_findings(feature_dir: Path, repo_root: Path) -> list[str]:
+    """C26: a compact document is allowed only with explicit scope and real evidence.
+
+    This validates the declared eligibility, not the truth of a semantic risk assessment.
+    The independent reviewer still checks the actual changes. Existing full-chain opt-ins
+    and stage artifacts cannot be hidden merely by adding the compact-profile declaration.
+    """
+    readme = feature_dir / "README.md"
+    text = read(readme)
+    errors: list[str] = []
+    if not _light_declaration(text, "文档档位", "轻量"):
+        errors.append(f"C26 轻量档: 文档档位声明必须唯一且为轻量，实际为 {_light_values(text, '文档档位')!r}")
+    if not _light_declaration(text, "完整文档要求", "否"):
+        errors.append(f"C26 轻量档: 完整文档要求声明必须唯一且为否，实际为 {_light_values(text, '完整文档要求')!r}；是、未知或缺失均使用完整档")
+    if TRACE_MARKER in text or "agentflow 链路收口" in text:
+        errors.append("C26 轻量档: 已承诺完整目标承接或链路收口的批次不能借换档跳过检查")
+    for stage in STAGE_DIRS:
+        if (feature_dir / stage).is_dir() and any((feature_dir / stage).rglob("*.md")):
+            errors.append(f"C26 轻量档: 存在 {stage}/ 阶段文档，应保持完整档或显式完成迁移")
+    fences = fenced_lines(text)
+    structural = "\n".join(line if i not in fences else ""
+                           for i, line in enumerate(text.splitlines(), 1))
+    sections = {title: _light_section(structural, title) for title in (
+        "适用性", "需求与验收", "实施与证据", "风险与恢复"
+    )}
+    for title, body in sections.items():
+        if not body.strip():
+            errors.append(f"C26 轻量档: 缺少有内容的「{title}」章节")
+    tables = _tables_with_columns(sections["适用性"], ["判据", "结论", "依据"])
+    criteria: dict[str, tuple[str, str]] = {}
+    for header, rows in tables:
+        for row in rows:
+            cell = _cells(header, row)
+            name = _col(cell, "判据").strip().strip("`* ")
+            if name in criteria:
+                errors.append(f"C26 轻量档: 适用判据重复: {name}")
+            criteria[name] = (_col(cell, "结论").strip().strip("`* "), _col(cell, "依据"))
+    for name in LIGHTWEIGHT_CRITERIA:
+        verdict, reason = criteria.get(name, ("", ""))
+        if verdict != "是" or not _filled_light_cell(reason):
+            errors.append(f"C26 轻量档: 「{name}」必须为是并有具体依据，实际为「{verdict or '缺失'}」")
+    acceptance = _tables_with_columns(sections["需求与验收"], ["行为", "预期结果", "验证"])
+    if not acceptance or not any(rows for _, rows in acceptance):
+        errors.append("C26 轻量档: 需求与验收须有行为、预期结果、验证的实际条目")
+    for header, rows in acceptance:
+        for row in rows:
+            cell = _cells(header, row)
+            if any(not _filled_light_cell(_col(cell, name)) for name in ("行为", "预期结果", "验证")):
+                errors.append("C26 轻量档: 验收条目不能使用空值或占位符")
+    tasks = _tables_with_columns(sections["实施与证据"], ["任务", "代码落点", "状态", "证据"])
+    if not tasks or not any(rows for _, rows in tasks):
+        errors.append("C26 轻量档: 实施与证据须有任务、代码落点、状态、证据的实际条目")
+    valid_statuses = {"☐", "◐", "☑", "⚠", "—", "☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻塞", "— 本期不做"}
+    task_ids: set[str] = set()
+    for header, rows in tasks:
+        for row in rows:
+            cell = _cells(header, row)
+            task, location = _col(cell, "任务"), _col(cell, "代码落点")
+            status, evidence = _col(cell, "状态").strip(), _col(cell, "证据")
+            if not _filled_light_cell(task) or not _filled_light_cell(location):
+                errors.append("C26 轻量档: 每项任务必须有具体任务与代码落点")
+            task_token = task.strip().split()[0].strip("`*") if task.strip() else ""
+            task_match = TASK_ID_RE.match(task_token)
+            if task_match is None or task_match.group(0) in task_ids:
+                errors.append(f"C26 轻量档: 任务须以唯一稳定的T/FT编号开头: {task}")
+            else:
+                task_ids.add(task_match.group(0))
+            if status not in valid_statuses:
+                errors.append(f"C26 轻量档: 非法任务状态: {status}")
+            if status.startswith("☑") and not evidence_carriers(evidence, repo_root, feature_dir):
+                errors.append(f"C26 轻量档: 已完成任务「{task}」缺少可复核证据")
+            if status not in ("—", "— 本期不做"):
+                candidates = path_candidates(location)
+                if not candidates:
+                    errors.append(f"C26 轻量档: 任务「{task}」没有精确文件落点")
+                for candidate in candidates:
+                    path = candidate.split(":", 1)[0]
+                    if Path(path).is_absolute() or ".." in Path(path).parts:
+                        errors.append(f"C26 轻量档: 非法代码落点: {path}")
+                    elif not (repo_root / path).is_file() and "待新增" not in location:
+                        errors.append(f"C26 轻量档: 代码落点不存在且未标待新增: {path}")
+    errors.extend(text_form_findings(str(readme), text, [feature_dir, repo_root]))
+    return errors
+
+
 def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     errors: list[str] = []
     if not feature_dir.is_dir():
         return [f"{feature_dir}: 目录不存在"]
+
+    compact_readme = feature_dir / "README.md"
+    if compact_readme.is_file() and "轻量" in _light_values(read(compact_readme), "文档档位"):
+        return lightweight_findings(feature_dir, repo_root)
 
     files = sorted(feature_dir.rglob("*"))
     md_files = [f for f in files if f.is_file() and f.suffix == ".md" and f.name != ".gitkeep"]

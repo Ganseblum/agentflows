@@ -1,7 +1,7 @@
 {
   "name": "agentflow",
-  "version": "0.18.4",
-  "description": "运行宿主原生的多智能体开发与受治理的证据驱动改进工作流。",
+  "version": "0.19.1",
+  "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
   "author": {
     "name": "Ganseblum"
   },
@@ -14,8 +14,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Agentflow",
-    "shortDescription": "以评审与可追溯性协调多智能体编码。",
-    "longDescription": "把编码宿主的原生智能体作为一支有界的工程团队使用，涵盖前端、后端、技术负责人、主管与评审角色。Agentflow 只定义工作流与契约，不调用独立的编排 CLI，也不需要额外的提供方凭证。",
+    "shortDescription": "先明确验收，再连续执行与独立核验。",
+    "longDescription": "按风险选择轻量或完整材料，复用宿主原生角色；行为变更测试先行，以计划指纹、真实报告和独立评审支撑交付。工具不启动第二套模型循环，也不扩大操作授权。",
     "developerName": "Ganseblum",
     "category": "Developer Tools",
     "capabilities": [
@@ -25,6 +25,6 @@
       "Architecture decision gates",
       "Evidence-driven improvement candidates"
     ],
-    "defaultPrompt": "Use $agentflow to coordinate this coding task with bounded delegation, independent review, and a concise decision record."
+    "defaultPrompt": "Use $agentflow to confirm behavior and risk, prepare executable verification, implement test-first, independently review current evidence, and report remaining gaps."
   }
 }

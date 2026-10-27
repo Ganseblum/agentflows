@@ -110,7 +110,7 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
     # emptied cannot hide behind the others.
     for name in EXPECTED_TEST_FILES:
         source = (tests_dir / name).read_text(encoding="utf-8")
-        per_file = len(re.findall(r"^\s+def test_", source, re.M))
+        per_file = len(re.findall(r"^\s+def test_", source, re.MULTILINE))
         if per_file == 0:
             errors.append(
                 ValidationError(
@@ -185,7 +185,7 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
     # selftest printing "200/200" passed this gate (2026-10-26 audit G12). Each case prints
     # exactly one "PASS <id>"/"FAIL <id>" line, so counting them is an independent witness.
     # Case ids are not always plain digits — "12b" is a real one — so match the label loosely.
-    per_case = re.findall(r"^(?:PASS|FAIL) \S+ ", output, re.M)
+    per_case = re.findall(r"^(?:PASS|FAIL) \S+ ", output, re.MULTILINE)
     if len(per_case) != total:
         return [
             ValidationError(

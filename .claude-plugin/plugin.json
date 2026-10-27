@@ -1,7 +1,7 @@
 {
   "name": "agentflow",
-  "description": "以专职的实现、评测与发布角色运行宿主原生开发与受治理的改进工作流。",
-  "version": "0.18.4",
+  "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+  "version": "0.19.1",
   "author": {
     "name": "Ganseblum"
   },

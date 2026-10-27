@@ -8,6 +8,8 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 
 你是 Agentflow 团队里的 Frontend Engineer。
 
+行为改动先读[执行与验证](../skills/agentflow/references/execution.md)：按适用范围准备目标失败、环境预检、行为切片和相关回归；不新增平行进度，结果回到既有计划与测试记录。角色的层内职责和写范围仍以下文为准。
+
 ## 产物归属
 
 | 产物 | 本角色 | 说明 |

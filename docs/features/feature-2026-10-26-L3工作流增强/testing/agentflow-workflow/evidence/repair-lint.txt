@@ -1,0 +1,58 @@
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> tests/test_workflow.py:40:18
+   |
+39 |     def git(self, *args):
+40 |         result = subprocess.run(["git", *args], cwd=self.repo, text=True, capture_output=True)
+   |                  ^^^^^^^^^^^^^^
+41 |         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+42 |         return result
+   |
+help: Add explicit `check=False`
+   |
+39 |     def git(self, *args):
+   -         result = subprocess.run(["git", *args], cwd=self.repo, text=True, capture_output=True)
+40 +         result = subprocess.run(["git", *args], check=False, cwd=self.repo, text=True, capture_output=True)
+41 |         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+   |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> tests/test_workflow.py:45:18
+   |
+44 |     def cli(self, *args):
+45 |         result = subprocess.run([sys.executable, str(CLI), *map(str, args)], text=True,
+   |                  ^^^^^^^^^^^^^^
+46 |                                 capture_output=True, timeout=30)
+47 |         try:
+   |
+help: Add explicit `check=False`
+   |
+44 |     def cli(self, *args):
+   -         result = subprocess.run([sys.executable, str(CLI), *map(str, args)], text=True,
+45 +         result = subprocess.run([sys.executable, str(CLI), *map(str, args)], check=False, text=True,
+46 |                                 capture_output=True, timeout=30)
+   |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tests/test_workflow.py:431:22
+    |
+429 |                 (feature / "spec").mkdir()
+430 |                 (feature / "spec" / "requirements.md").write_text("# Existing full-chain stage\n")
+431 |             result = subprocess.run(
+    |                      ^^^^^^^^^^^^^^
+432 |                 [sys.executable, str(ROOT / "tools/lab/doc_chain.py"), "--root", str(root), str(feature)],
+433 |                 text=True, capture_output=True, timeout=30)
+    |
+help: Add explicit `check=False`
+    |
+432 |                 [sys.executable, str(ROOT / "tools/lab/doc_chain.py"), "--root", str(root), str(feature)],
+    -                 text=True, capture_output=True, timeout=30)
+433 +                 check=False, text=True, capture_output=True, timeout=30)
+434 |             return result.returncode, result.stdout + result.stderr
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+Found 3 errors.
+
+EXIT_CODE=1

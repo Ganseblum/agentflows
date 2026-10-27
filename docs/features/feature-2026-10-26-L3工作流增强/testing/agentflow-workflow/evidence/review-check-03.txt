@@ -1,0 +1,4 @@
+COMMAND: python3 tools/lab/doc_chain.py docs/features/feature-2026-10-26-L3工作流增强
+PASS doc-chain docs/features/feature-2026-10-26-L3工作流增强
+
+EXIT_CODE=0

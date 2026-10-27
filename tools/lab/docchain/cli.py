@@ -21,7 +21,13 @@ import json
 import sys
 from pathlib import Path
 
-from .checks import lint, read, repo_policy_findings, text_form_findings, closure_claim_findings
+from .checks import (
+    closure_claim_findings,
+    lint,
+    read,
+    repo_policy_findings,
+    text_form_findings,
+)
 from .constants import REPO_ROOT
 from .selftest import self_test
 

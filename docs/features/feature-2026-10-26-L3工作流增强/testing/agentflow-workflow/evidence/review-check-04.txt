@@ -1,0 +1,4 @@
+COMMAND: python3 tools/lab/validate.py installed --path packaging/runtime
+PASS installed
+
+EXIT_CODE=0

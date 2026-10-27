@@ -1,0 +1,16 @@
+{
+  "plan": "plan.md",
+  "allowed_writes": ["src/value.cjs", "tests/value.test.cjs"],
+  "tasks": [
+    {
+      "id": "target",
+      "depends_on": [],
+      "argv": ["node", "--test", "--test-reporter=tap", "tests/value.test.cjs"],
+      "cwd": ".",
+      "timeout_seconds": 30,
+      "kind": "test",
+      "reporter": "tap",
+      "cases": [{"id": "TC-VALUE-001", "report_name": "returns confirmed value"}]
+    }
+  ]
+}

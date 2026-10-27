@@ -235,7 +235,8 @@ def validate_static_checks(root: Path = ROOT) -> list[ValidationError]:
             [
                 sys.executable, "-m", "ruff", "check",
                 "--exclude", *exclude,
-                "tools", "packaging",
+                "tools", "packaging", "skills/agentflow/scripts/workflow.py",
+                "skills/agentflow/scripts/workflow_lib",
             ],
         ),
         (
@@ -243,7 +244,8 @@ def validate_static_checks(root: Path = ROOT) -> list[ValidationError]:
             [
                 sys.executable, "-m", "mypy",
                 "--exclude", r"(^|/)packaging/runtime/",
-                "tools", "packaging",
+                "tools", "packaging", "skills/agentflow/scripts/workflow.py",
+                "skills/agentflow/scripts/workflow_lib",
             ],
         ),
     )

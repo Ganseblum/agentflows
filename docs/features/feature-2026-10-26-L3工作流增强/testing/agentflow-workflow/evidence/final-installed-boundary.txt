@@ -1,0 +1,5 @@
+["/tmp/agentflows-l3-venv-20261026/bin/python3", "tools/lab/validate.py", "installed"]
+FAIL installed (1 error(s))
+  - ~/.zcode/cli/plugins/cache/agentflow-local/agentflow: no snapshot for source version 0.19.0; installed versions: 0.16.0, 0.17.0, 0.17.1, 0.17.2, 0.17.3, 0.18.0, 0.18.1, 0.18.2. Refresh the marketplace and reinstall — source edits do not reach the installed copy, so role behavior still comes from the stale snapshot.
+
+EXIT_CODE=1

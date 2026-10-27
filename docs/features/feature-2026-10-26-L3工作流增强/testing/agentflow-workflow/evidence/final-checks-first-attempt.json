@@ -1,0 +1,40 @@
+[
+  {
+    "command": [
+      "/tmp/agentflows-l3-venv-20261026/bin/python3",
+      "tools/lab/validate.py",
+      "all"
+    ],
+    "exit_code": 1,
+    "raw_output": "final-check-01-all.txt"
+  },
+  {
+    "command": [
+      "/tmp/agentflows-l3-venv-20261026/bin/python3",
+      "tools/lab/doc_chain.py",
+      "docs/features/feature-2026-10-26-L3工作流增强"
+    ],
+    "exit_code": 0,
+    "raw_output": "final-check-02-docchain.txt"
+  },
+  {
+    "command": [
+      "/tmp/agentflows-l3-venv-20261026/bin/python3",
+      "tools/lab/validate.py",
+      "installed",
+      "--path",
+      "packaging/runtime"
+    ],
+    "exit_code": 0,
+    "raw_output": "final-check-03-generated.txt"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "raw_output": "final-check-04-diff.txt"
+  }
+]
