@@ -25,7 +25,7 @@
 - 五份 manifest 同步至 0.19.1，`packaging/runtime` 生成树逐字节重建。
 - 边界：实际宿主加载与双端安装结果以安装后 `validate.py installed` 为准；方法疗效未测量。
 
-## 0.18.4 — 2026-10-27（未单独发布，随 0.19.1 一并发出）
+## 0.18.4 — 2026-10-27（未单独发布，随 0.19.1 一并登记；0.19.1 尚未推送与安装）
 
 - **`skills/agentflow/templates/host/global-rules.md`（§7–§11）**：新增五节宿主级纪律——
   §7「先问再假设」（简报/设计缺关键要素先反问，代码与文档冲突先确认，开工前对齐计费/权限/副作用等隐藏约束）；
@@ -39,9 +39,6 @@
   起因是这轮复盘把失败按会话与时间聚簇后，发现"表面行为"与"真实病因"不一致：读相关失败 383 次里多数是重试风暴；限流类 70 次集中在两天、属环境侧；合并流程实际约 8 个会话而非关键词误抓的 15 个。
 - **五份 manifest 同步 bump 至 0.18.4**，`packaging/runtime` 生成树逐字节同步。模板变更必须 bump：同版本重跑 Host Init 是 no-op，宿主里会留下旧副本（`references/hosts.md` 规则 4）。
 - 未改动受保护面：`skills/agentflow/references/contracts.md` 在 `protected-paths.txt` 内，本轮只把纪律放进宿主模板，契约层改动仍待用户授权。
-
-## 未发布 — 2026-10-27
-
 > 评审读取纪律与 delta 重审（用户指示：改 reviewer / SKILL / 简报三处，contracts 保护面不动）。`measurement: none`。
 
 - **`agents/reviewer.md`（读取纪律）**：新增按断言类型区分证据要求的条款——肯定断言（字段存在、调用发生）

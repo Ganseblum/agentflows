@@ -34,17 +34,12 @@
 
 - `.workbuddy/`（已被 `.gitignore` 排除）：本机调试 / 复盘 / 记忆的**草料区**，内容不入版本库、不进入任何门禁与文档链、不构成本仓交付物；其中结论若可复用，应落回 `docs/evaluations/`、`episodes/` 或 `docs/issues/` 后才算现行记录。活文档面（索引、README、AGENTS）不引用其路径。
 
-## L3 增强实施
-
-[工作流增强批次](docs/features/feature-2026-10-26-L3工作流增强/README.md)：十四项落地对照、执行协议与文档分档，状态以批次计划为准。
-
-[测试结果](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md) · [独立批准](docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-002.md) · [任务级记录](episodes/2026-10-27/EP-20261027-001.json)。
-
 ## 迁移与清理记录
 
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.1）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
 - 2026-10-25 总体评审吸收与修复批（立项：会话总体评审结论入仓——问题清单、四维评分与理由、26 项修复任务）
 - 2026-10-25 测试链路 Ego Light 切换批 / 门与测试拆分批（0.15.0）
 - 2026-10-24 宿主接入批（Host Init：跨仓全局规则分发、托管块模板、0.14.0）

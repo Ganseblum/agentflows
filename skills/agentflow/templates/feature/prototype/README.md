@@ -55,7 +55,7 @@
 - 文件名固定 `index.html`：README 元信息与 design 文档都指向它，避免每个批次换个名字。
 - 形态 A 下这个 `index.html` 是入口页而不是正文：正文在原型库内，批次目录不出现库内页面的副本。
 - 一个页面一个 `<section class="screen">`，页签自动生成；新增页面不改脚本（形态 A 的入口页不需要这层骨架）。
-- 先读取实际产品页面及组件/主题/token 源文件；`design/ui §0.1` 或 `design/fe §1.1.4` 写具体路径与
+- 先读取实际产品页面及组件/主题/token 源文件；`design/ui §0.1` 或 `design/fe §1.1.5` 写具体路径与
   revision。截图可帮助比对布局，但不能作为取色依据或替代实现来源。
 - 形态 B 下新 feature 改动已存在的页面时，复制最近一次用户确认的原型到本 feature 的
   `prototype/index.html`（并带齐依赖闭包），在 README 记下来源 feature、原型路径和 revision；在 design
