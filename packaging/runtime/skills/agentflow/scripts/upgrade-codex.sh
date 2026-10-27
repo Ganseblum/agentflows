@@ -75,12 +75,9 @@ else
   REQUIRED_KINDS="all installed lint report recurrence"
   TARGETS="$(python3 "$REPO_ROOT/tools/lab/validate.py" --list \
     | grep -vE 'all runs [0-9]+ checks' \
-    | while read -r kind; do
-        case " $REQUIRED_KINDS " in
-          *" $kind "*) ;;
-          *) echo "$kind" ;;
-        esac
-      done)"
+    | grep -vxE 'all|installed|lint|report|recurrence' \
+    | tr '
+' ' ')"
   for target in $TARGETS; do
     if ! python3 "$REPO_ROOT/tools/lab/validate.py" "$target"; then
       fail "门禁红（${target}）——先在仓内修好再装进宿主"

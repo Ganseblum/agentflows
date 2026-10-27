@@ -129,12 +129,8 @@ else
   REQUIRED_KINDS="all installed lint report recurrence"
   TARGETS="$(python3 tools/lab/validate.py --list \
     | grep -vE 'all runs [0-9]+ checks' \
-    | while read -r kind; do
-        case " $REQUIRED_KINDS " in
-          *" $kind "*) ;;
-          *) echo "$kind" ;;
-        esac
-      done)"
+    | grep -vxE 'all|installed|lint|report|recurrence' \
+    | tr '\n' ' ')"
   for target in $TARGETS; do
     python3 tools/lab/validate.py "$target" || fail "门禁红（${target}）——修好再发版"
   done
