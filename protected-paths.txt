@@ -52,7 +52,7 @@ tests/test_gate_records.py
 tests/test_doc_chain.py
 tests/test_record_store.py
 tests/test_workflow.py
-
+tests/test_pre_push.py
 # The lab tools decide whether a candidate is measured or judged. tools/lab/gate/,
 # counts.py, and mutate.py were added 2026-10-19 (gate change, human-directed): the
 # 2026-10-13 split moved the check bodies into gate/ while this list still named only
