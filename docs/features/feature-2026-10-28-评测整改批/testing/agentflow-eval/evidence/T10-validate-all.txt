@@ -1,0 +1,38 @@
+# T10 validate.py all 实跑（2026-10-28 11:29:57 CST）
+
+$ python3.12 tools/lab/validate.py all
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+EXIT=0
+
+$ python3.12 tools/lab/validate.py --list
+schemas
+examples
+artifacts
+protected
+manifests
+docs
+tests
+doc_chain
+doc_chain_live
+decision_gate
+lint
+all runs 11 checks
+
+$ python3.12 -m unittest discover -s tests
+Ran 169 tests in 16.984s
+
+OK
+
+$ python3.12 tools/lab/doc_chain.py --self-test
+PASS C26-08 C26 repeated identical declarations are not unique
+124/124 self-test cases pass

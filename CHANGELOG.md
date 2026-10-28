@@ -1,5 +1,30 @@
 # 变更日志
 
+## 0.20.0 — 2026-10-28
+
+2026-10-28 全面评测（`docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md`）的五批整改。`measurement: none`。
+
+- **整改可追踪**：10-26 审计的发现总表加 `整改状态` / `fix_revision` 两列并逐行回写 35 项；
+  `repo-audit.md` 写入「发现总表必须带整改状态列」的固定列约定与五词取值域。起因是实测发现
+  「谁修了、谁没修」无单一真源，且评测自身把**已修复**的 G14 误判为漏网。
+- **评审能力分级**：`contracts.md` 新增「评审能力分级」节——L2/L1/L0 三档 + 三条不变式
+  （降级必须留痕、L0 不适用于用户可见行为的最终放行、补门是欠账不是豁免）；`SKILL.md` 第 8 步
+  引用它并要求记录 `review_tier`。起因是本轮实测宿主子代理并发额度耗尽，五次派发全失败，
+  而方法对此无降级定义。
+- **表达面收敛**：`SKILL.md` 的 `execution-coordinator` 不存在性声明由两处合并为一处；
+  `document-chain.md` 增加「降档速查」表；`roles.md` 写出 frontend / backend 是否合并的
+  **裁决规则**（不一致率 <10%、产物所有权分歧为 0、合并后 ≤60 行，其一不满足即保持分立），
+  关闭该悬案的空悬状态。
+- **本地门基线可达**：`validate.py` 与 `pre-push.sh` 新增仓内 `.venv` 探测（优先级：显式环境
+  变量 > `.venv` > `python3`），只扩大「找得到工具」的路径，**不新增放行分支**；`README.md`
+  给出 `python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt` 一行就绪。
+  效果：本机 `validate.py lint` 由长期 `FAIL` 转为 `PASS`（此前 PEP 668 使 lint 永久红）。
+- **改进环首次真实闭环**：产出一份 schema 可编译的候选记录与发布记录
+  （`docs/features/feature-2026-10-28-评测整改批/testing/agentflow-eval/evidence/improvement/`），
+  两份改进契约第一次在真实记录上编译。`decision: revise`、`evaluation_result: neutral`——
+  如实反映本轮评审档位是 L0（无独立评审），不构成已验证提效。
+- 新增批次 `docs/features/feature-2026-10-28-评测整改批/`（完整档五段成文，链 linter 全绿）。
+
 ## 0.19.3 — 2026-10-27
 
 - 版本号提升，无行为改动：0.19.2 的推送与双端安装状态已在 `a05276a` 回写；本次把五份 manifest、

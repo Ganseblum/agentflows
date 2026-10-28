@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "candidate_version": "0.20.0-candidate.1",
+  "parent_version": "0.19.3",
+  "source_revision": "de806947d22665d347007b690d22136a1a442dca",
+  "artifact_digest": "sha256:9721a9bb3a800aa360a71248df78dff5efc3a9607c5644123f2ddc8426460d0c",
+  "hypothesis": "评测发现 B1/B2/B3/B4 的共同机制是「声明在场但无载体」：审计整改无状态列、评审能力无降级档、本地 lint 常红、同一规则多处维护。给每项补一个可核验载体（状态列 / review_tier / .venv 探测 / 判据速查），可使这些声明从『读文本才知道』变成『跑一条命令就能查』。",
+  "evidence_ids": [
+    "AGENTFLOW-EVAL-2026-10-28",
+    "AGENTFLOW-AUDIT-2026-10-26"
+  ],
+  "changed_components": [
+    "skills/agentflow/references/contracts.md",
+    "skills/agentflow/references/roles.md",
+    "skills/agentflow/references/document-chain.md",
+    "skills/agentflow/references/repo-audit.md",
+    "skills/agentflow/SKILL.md",
+    "tools/lab/validate.py",
+    "skills/agentflow/scripts/pre-push.sh"
+  ],
+  "risk_class": "medium",
+  "primary_metrics": [
+    "审计发现总表 35 行的整改状态列非空率（目标 100%）",
+    "评审门决策记录中出现 review_tier 的比例（目标：新建决策记录 100%）"
+  ],
+  "guardrails": [
+    "validate.py all 的 fail-closed 语义不变：无 .venv 或缺 ruff/mypy 时 lint 仍为红",
+    "不新增门项、不放宽任何既有判据",
+    "受保护面改动（validate.py / pre-push.sh / contracts.md）逐条留证据"
+  ],
+  "rejection_criteria": [
+    "任一既有门从红转绿但原因不是环境补齐（即放宽判据）→ 拒绝",
+    "doc_chain.py --self-test 低于 124/124 → 拒绝",
+    "unittest 数量下降 → 拒绝"
+  ],
+  "protected_slices": [
+    "tools/lab/gate/",
+    "tools/lab/docchain/",
+    "schemas/",
+    "tests/",
+    "skills/improve/references/"
+  ]
+}

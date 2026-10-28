@@ -1,0 +1,5 @@
+header columns: 7 ['#', '严重度', '发现', '位置', '解锁条件', '整改状态', 'fix_revision']
+G rows: 35
+rows with != 7 cells: []
+rows with empty status/fix_revision: []
+PASS

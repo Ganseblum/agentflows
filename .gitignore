@@ -12,3 +12,5 @@ command-code-session-*.html
 # ignored, every fresh clone lacked the directory and install failed with "plugin source not
 # found". `validate.py manifests` keeps the committed snapshot byte-identical to the source.
 .workbuddy/
+# Local dev interpreter for the `lint` gate item (see README). Generated, never shipped.
+.venv/
