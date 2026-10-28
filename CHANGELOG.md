@@ -1,5 +1,16 @@
 # 变更日志
 
+## 0.22.1 — 2026-10-28
+
+发版脚本在缺宿主的机器上不再「推完才报错」。`measurement: none`。
+
+- `publish.sh` 的第 6/7、7/7 步先看本机有没有对应 CLI：没有 `codex` 就打印「跳过：本机没有
+  codex CLI」，没有 ZCode CLI（`/Applications/ZCode.app/.../zcode.cjs` 或 PATH 里的 `zcode`）
+  就打印「跳过：本机没有 ZCode CLI」，然后继续跑完，不再以失败退出。有就照旧安装。
+- 保留 `--skip-codex` / `--skip-zcode`；`--no-push` 与 ZCode 的 upstream 一致性检查不变。
+- **发布方式**：`publish.sh`（门 → 推送 → Codex → ZCode）；Qoder 无 CLI，按
+  `docs/host-platform-facts.md` Q6 手工同步缓存目录与登记表。
+
 ## 0.22.0 — 2026-10-28
 
 保全快照的口径、生命周期与一批过时文档的清理。`measurement: none`（工具与文本改动，无仪器化对照）。

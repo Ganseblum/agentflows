@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
   "author": {
     "name": "Ganseblum"

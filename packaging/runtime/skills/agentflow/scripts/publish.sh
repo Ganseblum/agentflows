@@ -185,10 +185,13 @@ else
   say "  已推送 $(git rev-parse --short HEAD) → origin/${BRANCH}"
 fi
 
-# --- 7. 双端安装 ------------------------------------------------------------
+# --- 7. 双端安装（有就装，没就跳过）-----------------------------------------
 if [ "$SKIP_CODEX" = "1" ]; then
   step "6/7 Codex"
   say "  --skip-codex：跳过"
+elif ! command -v codex >/dev/null 2>&1; then
+  step "6/7 Codex"
+  say "  跳过：本机没有 codex CLI"
 else
   step "6/7 装进 Codex"
   if [ "$DRY_RUN" = "1" ]; then
@@ -201,16 +204,19 @@ fi
 if [ "$SKIP_ZCODE" = "1" ]; then
   step "7/7 ZCode"
   say "  --skip-zcode：跳过"
+elif [ ! -f "/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs" ] && ! command -v zcode >/dev/null 2>&1; then
+  step "7/7 ZCode"
+  say "  跳过：本机没有 ZCode CLI"
+elif [ "$DO_PUSH" = "0" ]; then
+  step "7/7 ZCode"
+  say "  跳过：--no-push 时本地 HEAD ≠ upstream，ZCode 那段（要求两者一致）会拒绝。"
+  say "        要装 ZCode，去掉 --no-push。"
+elif [ "$DRY_RUN" = "1" ]; then
+  step "7/7 ZCode"
+  say "  [dry-run] bash skills/agentflow/scripts/upgrade-zcode.sh"
 else
   step "7/7 装进 ZCode"
-  if [ "$DO_PUSH" = "0" ]; then
-    say "  跳过：--no-push 时本地 HEAD ≠ upstream，ZCode 那段（要求两者一致）会拒绝。"
-    say "        要装 ZCode，去掉 --no-push。"
-  elif [ "$DRY_RUN" = "1" ]; then
-    say "  [dry-run] bash skills/agentflow/scripts/upgrade-zcode.sh"
-  else
-    bash skills/agentflow/scripts/upgrade-zcode.sh
-  fi
+  bash skills/agentflow/scripts/upgrade-zcode.sh
 fi
 
 step "完成"
