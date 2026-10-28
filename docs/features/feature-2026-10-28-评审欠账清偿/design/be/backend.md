@@ -4,11 +4,13 @@
 
 | 决策 | 选项 | 选定 | 理由 |
 | --- | --- | --- | --- |
-| D1 欠账清单放哪 | A 新建顶层目录 / B `docs/releases/` 加一节 / C 派生成视图 | **B** | 新建顶层目录需用户确认且本批只是索引；`todo.md` 已是在途批次的索引位。派生视图无可执行消费者，属过度设计 |
-| D2 伪降级校验落在哪 | A 文档链新增 C 判据 / B 记录 schema + 记录校验器 / C 只写契约不校验 | **B** | 判断对象在 `reviews/` 的 frontmatter，不在文档链文本里；A 会把判据与对象分置两处（ISS-2026-061 的形态），C 就是现状 |
+| D1 欠账清单放哪 | A 新建顶层目录 / B `docs/releases/todo.md` 加一节 / C 只做派生视图不落文档 | **C 派生视图为主、B 为辅** | 清单若只由手工维护即为自指判据（表漏行则命令与表同时为 0，仍判绿）。真源必须是仓内可派生事实：批次 README/计划声明 L0 且 `reviews/` 为空、`fixed-pending-review` 且无 reviewer。`todo.md` 那一节只是人读镜像 |
+| D2 伪降级校验落在哪 | A 文档链新增 C 判据 / B 记录 schema + 记录校验器 + 欠账派生 / C 只写契约不校验 | **B** | 判断对象在 `reviews/` frontmatter 与批次文档声明两处；A 会把判据与对象分置（ISS-2026-061 的形态），C 就是现状 |
 | D3 缺 `review_tier` 的存量记录 | A 判红 / B 判绿 / C 标注未声明、不红不绿 | **C** | 契约明写「未声明不得推定已过评审」；判红会一次打红全部既有记录，判绿等于默认 L2 |
 | D4 五条 ISS 的清偿顺序 | A 全部推 verified / B 逐条判定、允许退回 open / C 只补字段不改状态 | **B** | A 是为了清账而伪造结论；C 会让欠账继续存在 |
 | D5 受保护面动作时机 | A 与其余任务同批 / B 单列一条、需授权后才开工 | **B** | `schemas/` 与 `tools/lab/` 在 `protected-paths.txt` 内，未经授权不得改 |
+| D6 `review_tier` 该写进哪 | A 只写评审记录 / B 同时补 episode 与决策记录 schema / C 写评审记录 + 用派生清单覆盖批次文档层 | **C** | 契约点名的是「决策记录或 episode」，但那两处当前都没有该字段且属受保护面；本批的真实欠账发生在批次 README/计划层。B 会把门变更面扩大到两份 schema，收益不足。缺口登记为 Q-03 交用户选 |
+| D7 档位判定 | A 立项时一次探测定档 / B 实施时两组探测定档 | **B** | 一次成功只证明「≥1 个只读角色可用」；L1 与 L2 的界线是「第 2 个能否派出」，必须两次实测 |
 
 ## 2. 欠账清偿的状态模型
 
@@ -26,23 +28,24 @@ stateDiagram-v2
 **关键不变式**：`未清偿 → 已清偿` 没有直达边。这条边缺失是刻意的——它挡住「自审后直接标已清偿」
 这条捷径，正是本批要清的欠账形态。
 
-## 3. 欠账清单的读取与清点
+## 3. 欠账清单的派生与清点
 
 ```mermaid
 flowchart TD
-    A[docs/releases/todo.md 的欠账清单节] --> B[逐行解析: 编号/来源批次/类型/revision/清偿条件/状态]
-    B --> C{来源批次目录在盘?}
-    C -->|否| D[该行判无效并打印]
-    C -->|是| E{状态=未清偿?}
-    E -->|是| F[计入清点结果]
-    E -->|否| G{reviews/ 有对应记录?}
-    G -->|否| H[状态与证据矛盾, 判红]
-    G -->|是| I[通过]
-    F --> J[输出行数 = 未清偿计数]
+    A1[批次 README/计划: 声明 L0 且 reviews/ 为空] --> D[派生未清偿集合]
+    A2[docs/issues: status=fixed-pending-review 且无 reviewer] --> D
+    A3[docs/releases/todo.md 清单节: 人读镜像] -.->|只作对照, 不作真源| E[清单声明已清偿]
+    D --> F{清单把集合内某项写成已清偿?}
+    F -->|是| G[判红: 状态与仓内事实矛盾]
+    F -->|否| H[输出行数 = |派生集合|]
+    H --> I[退出码 0]
 ```
 
-清点命令的契约是「输出行数等于清单未清偿行数」。选输出到 stdout 而不是退出码，
-是因为退出码只能表达二值，而欠账数量本身是信息。
+**关键改变（相对前一版草案）**：清点的真源是**仓内可派生事实**（A1 与 A2），不是手工清单。
+前一版草案写「输出行数 = 清单未清偿行数」，那是自指判据——清单漏行时命令输出 0、清单也是 0，
+判据仍然绿。这是本轮独立评审的 P0 发现。
+
+选输出到 stdout 而不是只用退出码，是因为退出码只能表达二值，而欠账数量本身是信息。
 
 ## 4. 伪降级校验的失败分支
 
@@ -72,27 +75,31 @@ sequenceDiagram
 
 | 接口 | 请求字段 | 响应字段 | 失败行为 |
 | --- | --- | --- | --- |
-| 欠账清单行（`docs/releases/todo.md`） | `欠账编号`、`来源批次`、`欠账类型`、`被评审 revision`、`清偿条件`、`状态` | 六列非空；`来源批次` 路径在盘；`状态` ∈ {未清偿, 已清偿} | 任一不满足 → 清点脚本打印该行原文并计入无效行 |
-| 清点命令 `python3.12 tools/lab/validate.py review_debt`（待实现） | 无参数；读仓内清单 | stdout 每行一个未清偿欠账；退出码 0 表示解析成功 | 清单不存在 → 退出码 1 并打印路径；清单存在但 0 行未清偿 → 退出码 0、输出为空 |
+| 欠账清单行（`docs/releases/todo.md`，人读镜像） | `欠账编号`、`来源批次`、`欠账类型`、`被评审 revision`、`清偿条件`、`状态` | 六列非空；`来源批次` 路径在盘；`状态` ∈ {未清偿, 已清偿} | 任一不满足 → 清点脚本打印该行原文并计入无效行 |
+| 清点命令 `python3.12 tools/lab/validate.py review_debt`（待实现） | 无参数；从仓内派生（批次 README/计划的 L0 声明 + `reviews/` 空 + `fixed-pending-review` 无 reviewer） | stdout 每行一个未清偿欠账；行数 = 派生集合大小；退出码 0 表示派生成功 | 清单把派生集合内某项写成已清偿 → 退出码 1 并打印该行；`docs/issues/` 不可读 → 退出码 2 |
 | 伪降级校验（记录校验器） | 评审记录 frontmatter 的 `review_tier`、`dispatch_errors` | 合规 ⇒ 无 finding；伪降级 ⇒ 一条 finding 指向该记录 | `review_tier` 值不在 {L0,L1,L2} → schema 层拒绝 |
+| 生成树新鲜度（既有门） | 源 `schemas/review.schema.json` 与快照逐字节 | PASS / FAIL | 源改而快照未重建 ⇒ `manifests` 红，须跑 `packaging/build_runtime.py` |
 
 **关于 `review_debt` 子命令**：它是可选的实现路径。若 T04 因受保护面未获授权，清点可以退回
-「表驱动脚本放在批次 `testing/` 下」，此时 G2-AC-01 的判据改指该脚本；但 G2-AC-02 必须落在
-记录校验器上，不能退。
+「脚本放在批次 `testing/` 下」，此时 G2-AC-01 的判据改指该脚本——但**派生口径不变**
+（仍从仓内事实派生，不读手工清单）。G2-AC-02(a) 必须落在记录校验器上，不能退。
 
 ## 6. 影响面评估
 
 | 改动 | 影响面 | 回滚 |
 | --- | --- | --- |
-| `docs/releases/todo.md` 加欠账清单节 | 发布待办索引（人读） | 删除该节（git） |
+| `docs/releases/todo.md` 加欠账清单节（人读镜像） | 发布待办索引 | 删除该节（git） |
 | `schemas/review.schema.json` 两字段 + 一条 `allOf` | 全部评审记录校验；`reviews/` 既有记录 | 恢复 schema 原文；已写字段的记录需同批回退 |
+| **`packaging/runtime/schemas/review.schema.json` 重建** | 安装面快照 | 重跑 `packaging/build_runtime.py` 回退快照字节 |
 | 记录校验器新增伪降级判据 | `validate.py artifacts`、`tests/` 相关用例 | 恢复校验器原文 |
 | 五条 ISS frontmatter | 缺陷记录面、`validate.py artifacts` | 逐条恢复 frontmatter |
 | 两批 `reviews/` 新增记录 | 批次内文档链材料（不受评审契约四项校验） | 删除记录文件 |
 
-**受保护面清单（需逐项授权）**：`schemas/review.schema.json`、`tools/lab/gate/` 或 `tools/lab/validate.py`
-中新增的判据、以及任何因此新增的 `tests/` 用例（`tests/` 条目需同时登记进
-`validate.py` 的 `EXPECTED_TEST_FILES` 与 `protected-paths.txt`）。
+**受保护面清单（需逐项授权）**：`schemas/review.schema.json`、`packaging/runtime/schemas/`（生成树，
+由脚本重建）、`tools/lab/gate/` 或 `tools/lab/validate.py` 中新增的判据、以及任何因此新增的
+`tests/` 用例（`tests/` 条目需同时登记进 `validate.py` 的 `EXPECTED_TEST_FILES` 与
+`protected-paths.txt`——2026-10-28 已实测：资产改源 schema 而不重建快照时，`manifests` 报
+`packaging/runtime/schemas/review.schema.json: content differs from source`）。
 
 ## 7. 回滚点
 

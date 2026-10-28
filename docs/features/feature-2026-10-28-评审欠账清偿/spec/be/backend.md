@@ -27,61 +27,92 @@
 
 ### 1.2 判据
 
-- **G1-AC-01**：两个 2026-10-28 批次各有至少一份独立评审记录落在各自 `reviews/` 下，
-  且记录含 `review_tier: L1`（或能力更强时 `L2`）、`reviewed_revision`、`decision` 三个字段。
-  判据：对 `reviews/` 逐个文件读取 frontmatter，断言三字段存在且 `review_tier` 不为 `L0`。
-- **G1-AC-02**：两份评审记录的 `decision` 为 `changes_requested` 时，其 findings 全部能在
-  `docs/issues/` 找到对应 `ISS-*` 记录（或记录正文逐条列出「已就地修复」并给 fix_revision）。
-  判据：交叉校验 findings 与 `docs/issues/` 的存在性，缺失即红。
-- **G2-AC-01**：「当前欠几次独立评审」可由一条命令输出，输出行数等于欠账清单里 `状态=未清偿` 的行数。
-  判据：命令输出与清单计数逐行比对。
-- **G2-AC-02**：`review_tier: L0` 且 `dispatch_errors` 为空的评审记录被判红（伪降级）。
-  判据：构造一份伪降级夹具，断言校验器拒绝它；再构造一份带 `dispatch_errors` 的 L0 记录，断言通过。
+- **G1-AC-01**：两个 2026-10-28 批次各有至少一份独立评审记录落在各自 `reviews/` 下。
+  判据用**记录契约已有的字段名**（`schemas/review.schema.json` 的 `source_revision`，不是
+  `reviewed_revision`——后者只存在于 reviewer 结果信封 `contracts.md:132`，不是记录字段）：
+  `review_tier ∈ {L1, L2}` 且 `source_revision` 非空且 `git cat-file -e <值>^{commit}` 退出 0
+  且 `decision ∈ {approved, changes_requested, blocked}`。
+- **G1-AC-02**：评审记录的 `decision` 为 `changes_requested` 时，其 `findings` 里每个 `ISS-*`
+  都必须在 `docs/issues/` 存在。**不设「正文写已就地修复」的旁路**——`reviews/README.md:59-61`
+  要求「发现的问题一条一条写进 issues/」，`schemas/review.schema.json:40-45` 也把 findings 定义为
+  必须存在于 `docs/issues/` 的 bug_id。判据：`findings ⊆ {docs/issues/ISS-*.md 的 bug_id}`。
+- **G2-AC-01**：清点命令的输出必须与**从仓内事实派生的欠账数**一致，而不是与它自己读取的手工表一致
+  （后者是自指判据：表里漏行时命令输出 0 行、表也 0 行，仍判绿）。派生口径三条，缺一即判红：
+  ①批次 README/计划声明 L0 且 `reviews/` 无记录；②`status: fixed-pending-review` 且无 `reviewer` 的
+  `docs/issues/` 记录；③欠账清单里 `状态=未清偿` 的行。判据：`命令输出行数 == ①+②的并集大小`，
+  且 `清单未清偿行 ⊆ ①∪②`（清单里写已清偿但 ①∪② 仍计入 ⇒ 红）。
+- **G2-AC-02**：伪降级被判红，**且覆盖两处载体**——(a) 评审记录：`review_tier: L0` 且
+  `dispatch_errors` 缺失/为空 ⇒ 校验器红；(b) 批次文档：README/计划声明 L0 且对应 `reviews/`
+  为空 ⇒ 计入 G2-AC-01 的「未清偿」派生集合，不得被标成已清偿。判据：(a) 两个反向夹具各跑一次断言
+  退出码；(b) 拿现存两批实测，断言派生集合恰好含这两条。
 - **G3-AC-01**：五条 `fixed-pending-review` 记录（ISS-2026-057/058/060/061/066）逐条有结论：
-  转 `verified`（带 `reviewer` + `review_decision: approved` + `regression_status: pass`）或退回 `open`
-  并写明缺什么。判据：逐条读 frontmatter，断言状态与所需字段齐备。
-- **G3-AC-02**：四条缺 `fix_revision` 的记录补齐 `fix_revision`（可解析的提交号或版本）
-  或显式写 `N/A: 理由`。判据：逐条断言字段存在且非空。
+  转 `verified`（frontmatter 需 `reviewer` + `review_decision: approved` + `regression_status: pass`
+  + `closure_criteria`，**且正文含 `## 审查` 节**——`tools/lab/gate/records.py:317` 对 verified
+  记录强制该标题）或退回 `open` 并写明缺什么。
+  判据：逐条读 frontmatter + 断言正文 `## 审查` 存在（转 verified 的条目）。
+- **G3-AC-02**：`fix_revision` 的值域**只有一种合法形态**：可被 `git cat-file -e <值>^{commit}`
+  解析的提交号。仓内无版本 tag（`git tag` 只有一个历史 tag `workbuddy-merge-2026-10-18`），
+  版本号（如 `0.20.0`）不是 git 对象，不能作为 `fix_revision` 的值。
+  记录若保持 `fixed-pending-review` / `verified`，`fix_revision` 必填且必须是提交号；
+  记录退回 `open` 时该字段按模板可缺省，若保留则写 `N/A: 复核不成立，修复未落地`（open 状态下
+  该字段无「修复已落地」的语义）。判据：逐条 `git cat-file -e <值>^{commit}` 断言退出 0，或状态为
+  `open` 且值为 `N/A: ` 前缀。
 
-## 2. M-B `review_tier` 伪降级的记录侧校验（G2 的实现形态）
+## 2. M-B `review_tier` 伪降级的校验（G2 的实现形态）
 
-**契约**：不给文档链 linter 新增 C 检查号。伪降级的判断对象是**评审记录**，因此判据落在
-记录侧，分两层：
+**契约：判据必须覆盖契约点名的载体，而不只是最容易落 schema 的那一处。**
+`contracts.md:42-43` 说的是「**决策记录或 episode** 里没有 `review_tier` 字段时，视为未声明」，
+并给出伪降级判据。实测这条契约当前无处落地：
 
-| 层 | 落点 | 内容 |
+| 契约点名的载体 | 现状 | 后果 |
 | --- | --- | --- |
-| schema 层 | `schemas/review.schema.json` | 新增可选字段 `review_tier`（枚举 L0/L1/L2）与 `dispatch_errors`（字符串数组）；`allOf` 加一条：`review_tier` 为 `L0` 时 `dispatch_errors` 必须非空且每项非空字符串 |
-| 校验器层 | `tools/lab/gate/records.py`（或评审记录校验入口） | 对缺 `review_tier` 的记录不判红（存量记录兼容），对 `review_tier: L0` 且 `dispatch_errors` 缺失/为空判红 |
+| episode | `skills/improve/references/episode.schema.json` 为 `additionalProperties: false`，属性表无 `review_tier` | 写进去即被拒 |
+| 决策记录 | 无 schema；`docs/PENDING-DECISIONS.md` 是被 `decision_gate`（C16）校验的台账，八列里没有该字段 | 写进去无人校验 |
+| 批次 README / 计划（**两批 L0 声明的真实所在**） | 不受任何记录契约校验 | 伪降级真实发生的地方，恰恰零校验 |
+
+因此 M-B 分两层，且**明确声明覆盖范围与不覆盖的部分**：
+
+| 层 | 落点 | 覆盖什么 | 不覆盖什么 |
+| --- | --- | --- | --- |
+| 记录层 | `schemas/review.schema.json` + `tools/lab/gate/records.py` | 根 `reviews/` 下的评审记录：`review_tier` 与 `dispatch_errors` 的一致性 | 批次内 `docs/features/<批次>/reviews/`（按 `reviews/README.md:13-18`，该目录 2026-10-19 已决定不纳入契约校验，改变它需另立门变更决策——本批不改变该决定，登记为 Q-03） |
+| 欠账层 | 清点命令（M-A 清单为派生视图） | 批次 README/计划声明 L0 而 `reviews/` 为空 ⇒ 计入「未清偿」 | 不在文档链新增 C 判据号 |
 
 - **M-B-01**：`review_tier` 缺省时不得推定已过独立评审——校验器对它只做「未声明」标注，不判红也不判绿。
 - **M-B-02**：schema 的 `additionalProperties: false` 意味着新增字段必须同时写进 schema，
   否则既存记录一旦带上该字段即被拒；该约束决定了 T04 必须是一处改动、同时改 schema 与校验器。
+- **M-B-03**：`episode.schema.json` 与决策记录两处载体是否补 `review_tier` 字段，**本批不做**。
+  理由是它们同属受保护面或需新的决策记录契约，而本批的真实欠账出现在批次 README/计划层；
+  把它们并入只会扩大门变更面。该缺口登记为 Q-03，留给用户在「补载体 / 改契约措辞指向新载体」之间选。
 
 **为什么不是新增 C 判据**：C 判据扫的是文档链文本（`docs/features/` 下的 `.md`），而欠账的真身在
-`reviews/` 与 `docs/issues/` 的 frontmatter 里。把记录侧规则写进文本 linter，会造成「判据在 A 处、
-对象在 B 处」的第二套口径——这正是 ISS-2026-061 记录的失败形态。
+`reviews/`、`docs/issues/` 的 frontmatter 与批次 README/计划的声明里。把记录侧规则写进文本 linter，
+会造成「判据在 A 处、对象在 B 处」的第二套口径——这正是 ISS-2026-061 记录的失败形态。
+批次 README/计划层的覆盖走 M-A 的派生清单（G2-AC-01 的 ①），不新增判据号。
 
 ## 3. M-C 五条待评审缺陷的清偿路径（G3）
 
 | 缺陷 | 当前状态 | 清偿动作 | 关闭条件 |
 | --- | --- | --- | --- |
-| ISS-2026-057 | `fixed-pending-review`，缺 `fix_revision` | 独立评审复核修复是否成立；成立则补 `fix_revision` + `reviewer` + `review_decision`，转 `verified` | frontmatter 五字段齐备 |
+| ISS-2026-057 | `fixed-pending-review`，缺 `fix_revision` | 独立评审复核修复是否成立；成立则补 `fix_revision` + `reviewer` + `review_decision` + `closure_criteria`，转 `verified` | `reviewer`、`review_decision: approved`、`regression_status: pass`、`closure_criteria`、`fix_revision`（提交号）五字段齐备 + 正文含 `## 审查` |
 | ISS-2026-058 | 同上 | 同上 | 同上 |
 | ISS-2026-060 | 同上 | 同上 | 同上 |
 | ISS-2026-061 | 同上 | 该条原文本就写着「待独立评审第二轮复跑」，直接走第二轮 | 同上 |
-| ISS-2026-066 | `fixed-pending-review`，`fix_revision` 过期表述 | 评审确认四处不同步是否已消除；`fix_revision` 改写为已并入的提交号 | frontmatter 五字段齐备且 `fix_revision` 可解析 |
+| ISS-2026-066 | `fixed-pending-review`，`fix_revision` 为过期的版本表述 | 评审确认四处不同步是否已消除；`fix_revision` 改写为 `26988a4` 这类可解析的提交号 | 同上，且 `fix_revision` 能被 `git cat-file -e <值>^{commit}` 解析 |
 
 - **M-C-01**：任一条经评审判定「修复不成立」时，退回 `open` 并在正文 `## 修复` 节追加一节
   「## 复核结论（2026-10-28）」写明缺什么，**不得**为了清账而推成 `verified`。
+  退回 `open` 的记录不要求 `fix_revision`（该字段的语义是「修复已落地」）。
 
 ## 4. 影响面
 
 | 改动 | 影响面 | 说明 |
 | --- | --- | --- |
 | `review.schema.json` 新增两字段 + 一条 `allOf` | 全部评审记录的校验；`reviews/` 既有记录 | 新增字段可选，存量记录不合规风险为零；但 `additionalProperties: false` 使「加字段」与「用字段」必须同批 |
-| 记录校验器判据 | `validate.py artifacts` 与相关单测 | 属受保护面（`tools/lab/gate/`、`schemas/`） |
+| **`packaging/runtime/schemas/review.schema.json` 重建** | 安装面快照 | `schemas` 在 `build_runtime.RUNTIME_DIRECTORIES` 内，`validate_runtime_freshness` 逐字节比对源与快照；只改源不重建 ⇒ `validate.py manifests` 红（2026-10-28 实测原文：`packaging/runtime/schemas/review.schema.json: content differs from source`）。T04 必须含 `python3 packaging/build_runtime.py` |
+| 记录校验器判据 | `validate.py artifacts` 与相关单测 | 属受保护面（`tools/lab/gate/`、`schemas/`）；新增单测须同批登记进 `validate.py` 的 `EXPECTED_TEST_FILES` 与 `protected-paths.txt` |
 | 五条 ISS 的 frontmatter | 缺陷记录面与 `validate.py artifacts` | 状态机迁移须字段齐备，否则门红 |
 | 两个批次的 `reviews/` | 批次内文档链材料 | 按 `reviews/README.md` 的「校验范围」条，批次内记录不受评审契约四项校验 |
+| `docs/releases/todo.md` 的欠账清单节 | 发布待办索引（人读） | 清单是**派生视图**（来源见 G2-AC-01 ①②），不是手工真源 |
 
 ## 5. 验证命令
 
@@ -92,5 +123,8 @@ python3.12 tools/lab/doc_chain.py --self-test
 python3.12 -m unittest discover -s tests
 ```
 
-四项全绿才算可接受。`validate.py all` 中 `installed` 项在未重装宿主时会红——本批不改角色面，
-不得因此重装；该项按既有口径单独判断，不并入本批验收结论。
+四项全绿才算可接受。**注意 `installed` 不在这四项之内**：`validate.py --list` 实测输出 11 项，
+逐项为 schemas / examples / artifacts / protected / manifests / docs / tests / doc_chain /
+doc_chain_live / decision_gate / lint，`installed` 是独立 target（`tools/lab/validate.py:403-408`），
+`all` 不运行它。本批不改角色面，不重装宿主；若需核对安装面，单独跑
+`python3.12 tools/lab/validate.py installed` 并把结果与批次的验收结论分开记。
