@@ -22,7 +22,7 @@
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录与改进环 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）；改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
-| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新整体审核见 [2026-10-26 整体审核](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)（含覆盖清单与评分卡两个附录）；历史报告按文件日期查阅 |
+| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）；上一轮 [2026-10-26 整体审核](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
 
 ## 维护纪律
 
@@ -39,6 +39,7 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线 / 改进环首份真实记录；0.20.0 未发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
 - 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
 - 2026-10-25 总体评审吸收与修复批（立项：会话总体评审结论入仓——问题清单、四维评分与理由、26 项修复任务）
 - 2026-10-25 测试链路 Ego Light 切换批 / 门与测试拆分批（0.15.0）

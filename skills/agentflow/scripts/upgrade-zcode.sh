@@ -116,7 +116,15 @@ else
       fail "门禁红（$target）——先在仓内修好再发版，不要带着红门装进宿主"
     fi
   done
-  LINT_PYTHON="${AGENTFLOW_LINT_PYTHON:-python3}"
+  # 解释器优先级与 pre-push.sh / validate.py 保持一致：显式环境变量 > 仓内 .venv > python3。
+# 探测只扩大「找得到工具」的路径；缺 ruff/mypy 仍按未运行处理（2026-10-28 评测整改批 G4）。
+if [ -n "${AGENTFLOW_LINT_PYTHON:-}" ]; then
+  LINT_PYTHON="$AGENTFLOW_LINT_PYTHON"
+elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
+  LINT_PYTHON="$REPO_ROOT/.venv/bin/python"
+else
+  LINT_PYTHON="python3"
+fi
   if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
     "$LINT_PYTHON" "$REPO_ROOT/tools/lab/validate.py" lint || fail "门禁红（lint）"
   else

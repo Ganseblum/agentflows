@@ -283,6 +283,67 @@ class PrePushHookTests(unittest.TestCase):
         listing = self.git("worktree", "list", "--porcelain").stdout
         self.assertEqual(1, listing.count("worktree "), listing)
 
+    # --- interpreter precedence: explicit env > repo .venv > python3 (2026-10-28 batch) ---
+
+    def run_hook_without_explicit_interpreter(self):
+        """Run the hook with every AGENTFLOW_* variable stripped from the environment."""
+        env = {k: v for k, v in os.environ.items() if not k.startswith("AGENTFLOW_")}
+        return subprocess.run(
+            ["bash", str(HOOK)],
+            cwd=str(self.repo),
+            env=env,
+            input=self.ref_line(self.head()),
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+
+    def test_repo_venv_is_picked_up_when_no_explicit_interpreter(self):
+        """.venv is used only when no explicit interpreter is set.
+
+        A repo-local dev environment is how the local lint baseline becomes reachable
+        (2026-10-28 batch G4). The marker proves the hook actually resolved the interpreter
+        from .venv rather than the ambient python3.
+        """
+        marker = self.root / "venv-used"
+        venv_python = self.repo / ".venv" / "bin" / "python"
+        venv_python.parent.mkdir(parents=True)
+        venv_python.write_text(
+            f'#!/bin/sh\necho used > "{marker}"\nexec "{self.shim}" "$@"\n', encoding="utf-8"
+        )
+        venv_python.chmod(0o755)
+        result = self.run_hook_without_explicit_interpreter()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertTrue(marker.is_file(), "hook did not resolve the interpreter from .venv")
+
+    def test_explicit_interpreter_wins_over_repo_venv(self):
+        """AGENTFLOW_GATE_PYTHON outranks .venv — precedence must not silently invert."""
+        marker = self.root / "venv-used"
+        venv_python = self.repo / ".venv" / "bin" / "python"
+        venv_python.parent.mkdir(parents=True)
+        venv_python.write_text(
+            f'#!/bin/sh\necho used > "{marker}"\nexit 7\n', encoding="utf-8"
+        )
+        venv_python.chmod(0o755)
+        result = self.run_hook(self.ref_line(self.head()))
+        # run_hook sets AGENTFLOW_GATE_PYTHON to the lint-capable shim. A .venv stub that
+        # exits 7 would make every check unrunnable if it had won precedence.
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertFalse(marker.is_file(), "explicit interpreter lost to .venv")
+
+    def test_repo_venv_without_dev_deps_still_blocks(self):
+        """The .venv probe must not become a pass path: missing ruff/mypy stays 'unrun'."""
+        venv_python = self.repo / ".venv" / "bin" / "python"
+        venv_python.parent.mkdir(parents=True)
+        venv_python.write_text(
+            f'#!/bin/sh\nif [ "$1" = "-c" ]; then exit 1; fi\nexec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        venv_python.chmod(0o755)
+        result = self.run_hook_without_explicit_interpreter()
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertIn("lint", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

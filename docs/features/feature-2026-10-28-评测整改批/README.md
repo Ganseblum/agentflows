@@ -57,10 +57,10 @@
 
 | 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |
 | --- | --- | --- | --- | --- |
-| G1 整改可追踪 | `proposal/proposal.md` §1.2 | M01，G1-AC-01、G1-AC-02 | T01、T02 | ☑ 已完成 |
+| G1 整改可追踪 | `proposal/proposal.md` §1.2 | M01，G1-AC-01、G1-AC-02 | T01、T02、T12 | ☑ 已完成 |
 | G2 评审能力可分级 | `proposal/proposal.md` §1.2 | M02，G2-AC-01 至 G2-AC-03 | T03、T04 | ☑ 已完成 |
 | G3 表达面收敛 | `proposal/proposal.md` §1.2 | M03，G3-AC-01、G3-AC-02 | T05、T06 | ☑ 已完成 |
-| G4 本地门基线可达 | `proposal/proposal.md` §1.2 | M04，G4-AC-01、G4-AC-02 | T07、T08 | ☑ 已完成 |
+| G4 本地门基线可达 | `proposal/proposal.md` §1.2 | M04，G4-AC-01、G4-AC-02 | T07、T08、T11、T12 | ☑ 已完成 |
 | G5 改进环首次真实闭环 | `proposal/proposal.md` §1.2 | M05，G5-AC-01、G5-AC-02 | T09、T10 | ☑ 已完成 |
 
 ## 当前步骤
