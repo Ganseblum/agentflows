@@ -2,7 +2,7 @@
 
 下表每一行都在本机直接观察得到，除非其证据标记为 `doc`；`doc` 行来自宿主官方指南，尚未经运行检验。每行都标明其证据与适用范围。不得把一条事实推广到超出其适用范围。重新验证请重跑该行指名的检查，而不是编辑本文件。
 
-最后验证：2026-10-28（Q1–Q5 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI `1.1.80`）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
+最后验证：2026-10-28（Q1–Q6 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI 未常驻，Q1 用的是临时 npm 前缀，见 Q6）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
 ## ZCode（桌面版）
 
@@ -67,6 +67,7 @@
 | Q3 | 插件角色在新会话中注册为 `agentflow:<role>`，全部 enabled/ready；实际派发成功。 | Observed：`list_agents` 返回 14 条 `agent-definition:["plugin","agentflow@local","<role>"]`，均 `enabled=true, ready=true`；新建会话 `fdced5ad-c7fa-59fd-aa15-cb64b3ffccc0` 使用 `reviewer`，该角色用 `Glob` + `Read` 读取 `AGENTS.md`，回传首行 `# Agentflow 仓库规则` 与 `dispatch-ok`。 | Qoder Desktop 0.4.11，新会话，用户作用域插件 | Qoder 可以承载 14 角色面；角色调用名是 `agentflow:<role>`，插件内 agent id 是 `agent-definition:["plugin","agentflow@local","<role>"]`。 |
 | Q4 | 角色 frontmatter 的 `tools` / `disallowedTools` 在 Qoder 是否被强制执行未验证；只观察到 `reviewer` 使用 Glob/Read，未尝试其被禁的 Bash/Write/Edit。 | 未实际触发禁用工具；一次只读派发完成后仅见 Glob/Read 调用记录。 | Qoder Desktop 0.4.11，插件角色 | 不得把提示词里的工具纪律当作宿主强制；需要强制的角色边界仍按提示词与评审门执行。 |
 | Q5 | 桌面端设置工具 `install_extension` 可以安装本地 `.zip`，但校验失败只返回通用 `EXTENSION_PLUGIN_VALIDATION_FAILED`，不指出具体字段；同一包用 CLI `plugins validate` 才得到字段级错误。 | Observed 2026-10-28：用 `"agents": "./agents/"` 的包调 `mcp__qoder-settings__install_extension` → 通用错误码；`qoder plugins validate` → `[plugin.manifest.schema_invalid] .qoder-plugin/plugin.json: Path must end with .md`；修正为显式 `.md` 列表后，同一 zip 入口返回 `{"kind":"qoder.extensionZip.installed","status":"complete","pluginId":"agentflow@local","enabled":true}`。 | Qoder Desktop 0.4.11，设置工具 | 校验失败先用 `qoder plugins validate <目录>` 拿字段级原因；zip 与本地目录两条安装入口都可用。 |
+| Q6 | Qoder 的插件安装面是「缓存目录 + 登记表」两处：`~/.qoder/plugins/cache/<marketplace>/<name>/<version>/` 与 `~/.qoder/plugins/installed_plugins_v2.json`（`scope` / `installPath` / `version` / `appRowId`），启用态在 `~/.qoder/settings.json` 的 `enabledPlugins`。`qoder plugins install` 需要独立安装的 `qodercli`；只装 IDE 时拿不到 CLI。 | Observed 2026-10-28：`qoder --help` → `Qoder CLI is not installed`（PATH 与 `~/.qoder/entry/qoder` 均无 CLI）；把 `packaging/runtime` 拷进 `cache/local/agentflow/0.22.0` 并同步登记表的 `version` / `installPath` / `lastUpdated` 后，`validate.py installed --path <该目录>` PASS，97 个文件与 `packaging/runtime` 逐字节一致（0 差异）；`~/.qoder` 下无数据库类第二记录源。 | Qoder Desktop `0.4.11`，用户作用域，本地目录插件 | 没有 CLI 时升级靠「拷缓存 + 改登记表」；**宿主是否需重启才加载新版本尚未观察**，下次启动前不得声称已生效。`publish.sh` 不覆盖 Qoder，发版需另做这一步。 |
 
 ## 宿主全局指令文件
 
