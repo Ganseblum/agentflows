@@ -1,0 +1,33 @@
+{
+  "name": "agentflow",
+  "version": "0.21.0",
+  "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+  "author": {
+    "name": "Ganseblum"
+  },
+  "license": "MIT",
+  "keywords": [
+    "multi-agent",
+    "development-workflow",
+    "architecture",
+    "code-review",
+    "continuous-improvement"
+  ],
+  "skills": "./skills/",
+  "agents": [
+    "./agents/backend-engineer.md",
+    "./agents/bug-fixer.md",
+    "./agents/bug-investigator.md",
+    "./agents/bug-recorder.md",
+    "./agents/candidate-engineer.md",
+    "./agents/evaluator.md",
+    "./agents/feedback-analyst.md",
+    "./agents/frontend-engineer.md",
+    "./agents/plan-architect.md",
+    "./agents/release-governor.md",
+    "./agents/reviewer.md",
+    "./agents/technical-director.md",
+    "./agents/test-executor.md",
+    "./agents/test-planner.md"
+  ]
+}

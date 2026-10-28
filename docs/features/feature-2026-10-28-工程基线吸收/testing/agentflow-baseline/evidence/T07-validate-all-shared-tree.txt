@@ -1,0 +1,14 @@
+$ python3.12 tools/lab/validate.py all
+# run_at=2026-10-28T17:07:49+0800
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+exit=0

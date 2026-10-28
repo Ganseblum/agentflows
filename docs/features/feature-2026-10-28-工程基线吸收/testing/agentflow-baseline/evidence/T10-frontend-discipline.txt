@@ -1,0 +1,31 @@
+$ python3.12 docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/scratch/verify.py
+# FE 五组纪律、两层模板与工程基线
+frontend-engineer 命中：14/14；缺：[]
+  fe: 请求、缓存与生命周期
+  fe: 取消
+  fe: 晚到响应
+  fe: 缓存键
+  fe: 失效
+  fe: 登出
+  fe: 401
+  fe: 零值
+  fe: 必需回调
+  fe: unknown
+  fe: 纯计算
+  fe: 可访问名称
+  fe: Blob URL
+  fe: 公开配置
+design/fe 命中：7/7；缺：[]
+design/fe 自检：4/4
+  design: 缓存键与失效
+  design: 身份与生命周期
+  design: 省略 / null / 空串 / 零值 / 空数组
+  design: 金额 / 点数 / 大整数
+  design: 取消与资源释放
+  design: 登录态与权限变化
+  design: 写后缓存失效
+spec/fe 命中：7/7；缺：[]
+工程基线命中：6/6；缺：[]
+
+RESULT: PASS
+exit=0

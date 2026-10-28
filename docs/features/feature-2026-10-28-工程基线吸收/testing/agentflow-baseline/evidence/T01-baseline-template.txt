@@ -1,0 +1,21 @@
+$ python3.12 docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/scratch/verify.py
+# 工程基线模板：小节、可填性、指针、生成树
+  ## 0. 适用范围与优先级
+  ## 1. 技术栈与运行环境
+  ## 2. 目录与文件职责
+  ## 3. 命名与类型
+  ## 4. 禁止的平行方案
+  ## 5. 新增模块必做清单
+  ## 6. 测试栈与运行方式
+  ## 7. 质量门与顺序
+  ## 8. 配置与边界
+  ## 9. 规范入口与规则写法
+  ## 维护
+固定小节：10/10；缺失：无
+1–9 节可填（含占位或表格）：True；缺：[]
+templates/README.md 指针：True
+index.md 指针：True
+生成树同名且逐字节一致：True
+
+RESULT: PASS
+exit=0

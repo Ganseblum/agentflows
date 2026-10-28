@@ -1,0 +1,31 @@
+# clean-base replay
+base_ref=153cd2bb36240933b81350a3e9d05fca2b9fa484
+dest=/tmp/af-clean-base-IvlLxM
+shared docs patched
+mixed files patched hunk-only
+plugin.json: 0.21.0
+marketplace.json: 0.21.0
+.zcode-plugin/plugin.json: 0.21.0
+.claude-plugin/plugin.json: 0.21.0
+.codex-plugin/plugin.json: 0.21.0
+已写入 /private/tmp/af-clean-base-IvlLxM/packaging/runtime
+已复制 agents, skills, schemas, .zcode-plugin, .claude-plugin, .codex-plugin, tools/lab/doc_chain.py, tools/lab/docchain, plugin.json, marketplace.json, protected-paths.txt
+clone_commit=6df428655d8ade3476be52db0cd055be61703bc5
+
+$ python3.12 tools/lab/doc_chain.py "docs/features/feature-2026-10-28-工程基线吸收"
+PASS doc-chain docs/features/feature-2026-10-28-工程基线吸收
+doc_chain_exit=0
+
+$ AGENTFLOW_LINT_PYTHON=<real .venv>/bin/python python3.12 tools/lab/validate.py all
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+validate_all_exit=0
