@@ -21,9 +21,10 @@
   改动）；L3 批「本批尚未提交」改为已进入 git 历史；`index.md`、批次状态表与 `docs/releases/` 的
   版本标签对齐当前源面。
 
-**未发布**：本版只落本地仓，未推送、未重装宿主。
+**已发布（2026-10-28）**：`publish.sh` 一次跑完门禁 → 推送 `origin/main`（`de80694..2b0e857`）→
+装入 Codex 与 ZCode，`validate.py installed` PASS。ZCode 需重启才加载新快照，Codex 重开会话即可。
 
-## 未发布 — 评审耗时治理（2026-10-28）
+## 0.22.0 同版 — 评审耗时治理（2026-10-28）
 
 > 改动日期：**2026-10-28**。改动前基线快照与复测判据见
 > `docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md`；复测脚本
