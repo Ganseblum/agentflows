@@ -39,6 +39,7 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-28 评审欠账清偿批（立项：两批 L0 欠账清偿 / `review_tier` 伪降级记录侧校验 / 五条待评审缺陷逐条清偿；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-评审欠账清偿/README.md)、[计划](docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md)
 - 2026-10-28 表达面与角色治理批（立项：载体归属表 / 同步义务退场 / document-chain 拆分 / FE-BE 裁决 / 实现角色深度；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)
 - 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线 / 改进环首份真实记录；0.20.0 未发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
 - 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
