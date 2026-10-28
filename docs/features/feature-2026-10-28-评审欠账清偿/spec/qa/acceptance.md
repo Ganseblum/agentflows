@@ -103,4 +103,4 @@ protected / manifests / docs / tests / doc_chain / doc_chain_live / decision_gat
 - 委派：2026-10-28 实测**至少 1 个只读角色可派**（向 `reviewer` 派发探测任务成功返回）。
   **但一次成功不足以定 L1**——按 `contracts.md:34-38`，L2 要求「至少能派出 2 个只读角色」。
   档位由 T01 的两组探测决定（1 成功 + 第 2 个失败 ⇒ L1；2 个都成功 ⇒ L2），不按成本偏好选档。
-- 安装面：`validate.py installed` 当前红（无 0.20.0 快照，已装至 0.19.3）。本批不改角色面，不重装。
+- 安装面：`validate.py installed` 当前红（无 0.22.0 快照，已装至 0.19.3）。本批不改角色面，不重装。
