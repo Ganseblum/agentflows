@@ -20,7 +20,7 @@ disallowedTools: Bash
 
 **记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。
 
-**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY-MM-DD>-<slug>.md` 路径下写一个 Markdown 文件（文件名 stem 即记录 id，必须与 `bug_id` 完全一致；日期取 `recorded_at` 的日期部分）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器只强制检查现象、根因、非 open 状态的修复章节，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
+**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY-MM-DD>-<slug>.md` 路径下写一个 Markdown 文件（文件名 stem 即记录 id，必须与 `bug_id` 完全一致；日期取 `recorded_at` 的日期部分）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器强制检查现象、根因、非 open 状态的修复章节与 `## 变更记录`，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
 
 **引用纪律。** 每个 `files` 条目要么是本仓库内的路径，要么是仓限定引用 `<repo>@<revision>:<path>`——裸外部路径对没有那个仓库的人是悬空引用，校验器会拒绝它。仓限定引用是地址，不是证据：正文内嵌决定性片段（代码用围栏代码块，文档段落用引用块），并在其旁写明仓限定地址；外部引用没有内嵌片段或未写明地址的记录会被校验器拒绝。对于二次评审的 finding，优先让 `files` 条目指向评审记录 `archive/<round>/` 目录内的归档快照——逐字副本已在本仓库中——并把原始仓限定地址写在正文。在普通散文中（围栏块与内联代码之外——它们是承载逐字证据的引文，含历史路径），你写下的每条文档/代码路径都是记录自己的主张：必须在盘或仓限定；个人绝对路径（`/Users/...`、`~/...`）一律禁止——记录是可移植的证据；URL 无法校验，至多作补充，绝不作为证据。
 

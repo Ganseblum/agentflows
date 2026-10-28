@@ -39,6 +39,7 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门待跑；已并入 `main`、未推送未发布）——见 [批次入口](docs/features/feature-2026-10-28-关闭证据门/README.md)、[计划](docs/features/feature-2026-10-28-关闭证据门/plan/PLAN-CLOSE-001.md)
 - 2026-10-28 工程基线吸收批（工程基线模板与 Init 六项 / 后端数据与配置核对 / 原型可点性 / 测试设计三维 / 前端实现纪律；原四项已评审，FE 增量独立评审未运行；0.21.0 未发布）——见 [批次入口](docs/features/feature-2026-10-28-工程基线吸收/README.md)、[计划](docs/features/feature-2026-10-28-工程基线吸收/plan/PLAN-BASE-001.md)
 - 2026-10-28 评审欠账清偿批（立项：两批 L0 欠账清偿 / `review_tier` 伪降级记录侧校验 / 五条待评审缺陷逐条清偿；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-评审欠账清偿/README.md)、[计划](docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md)
 - 2026-10-28 表达面与角色治理批（立项：载体归属表 / 同步义务退场 / document-chain 拆分 / FE-BE 裁决 / 实现角色深度；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)

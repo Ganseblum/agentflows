@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-28-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows 工作树未提交（2026-10-28，分支 feature-2026-10-28-关闭证据门）",
+    "base": "c134d0b"
+  },
+  "objective": "把下游 Youc 暴露的「关单无证据 / 文档声称门不存在」问题回灌 agentflow：对齐契约文档、为非 open 记录补流转记录门、补齐 schema 条件的负例回归，并用端到端实验证明门真实生效。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "measurement",
+      "value": "none"
+    },
+    {
+      "kind": "gate_behavior_change",
+      "value": "非 open 记录缺 ## 变更记录 由静默通过改为报错；旧门 0 错误、新门精确点名、补齐后 PASS",
+      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+    },
+    {
+      "kind": "regression_cases_added",
+      "value": 4,
+      "evidence_ref": "tests/test_gate_schema.py"
+    },
+    {
+      "kind": "mutation_new_item",
+      "value": "records.bug-closed-change-log M11 已杀死",
+      "evidence_ref": "tools/lab/mutate.py"
+    },
+    {
+      "kind": "existing_records_impact",
+      "value": "66 条记录 0 误伤（44 verified / 5 fixed-pending-review / 17 open）",
+      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "CLM-CLOSE-01",
+      "claim": "缺失 ## 变更记录 的非 open 记录会被门拒绝",
+      "status": "verified",
+      "check": "临时记录在新门 FAIL、旧门 0 错误；补齐后 PASS；临时文件已删除",
+      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+    },
+    {
+      "claim_id": "CLM-CLOSE-02",
+      "claim": "改动不误伤存量记录与文档链",
+      "status": "verified",
+      "check": "validate.py all 11 项 PASS；doc_chain.py 本批 PASS",
+      "evidence_ref": "reviews/agentflow-关闭证据门/review-2026-10-28-001.md"
+    }
+  ],
+  "feedback_summary": "下游 Youc 的关单/归档缺口促使回灌：核实后确认 schema 条件早已存在，缺的是文档一致性、流转记录门与负例回归；本批补三处载体并以端到端实验钉住。",
+  "agentflow_version": "0.21.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "本会话工作树（Qoder，独立 worktree，未提交）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-28T15:20:00+08:00",
+      "reviewer": "代码审查员（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "4 项：role 文案漏变更记录；两个 verified 反例失去单钉性；证据 grep 无区分力；标题清单/待评审声明/变异登记漏改",
+      "resolution": "全部修复并通过 validate.py all、unittest、doc_chain 与新增变异 M11；独立复审未跑，按 L0 修复轮自审登记（见 review 记录残余风险）",
+      "evidence_ref": "reviews/agentflow-关闭证据门/review-2026-10-28-001.md"
+    }
+  ],
+  "occurred_at": "2026-10-28T15:00:00+08:00"
+}

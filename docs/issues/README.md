@@ -32,7 +32,7 @@ issues/
 [`schemas/bug-record.schema.json`](../../schemas/bug-record.schema.json)）加一段给人读的
 Markdown 正文。正文使用固定的中文小节标题——校验器匹配这些精确字面量：`## 现象`、
 `## 根因` 和 `## 修复`（当前校验器对所有非 `open` 状态要求该标题）；`verified` 还必须有
-`## 审查`。新建记录按模板填写 `## 修复方案`：发现时先写候选建议、依据、风险和未决事项；
+`## 审查`，所有非 `open` 状态还必须有 `## 变更记录`。新建记录按模板填写 `## 修复方案`：发现时先写候选建议、依据、风险和未决事项；
 方案标明待审核，审核后再实施。`## 修复` 只写实际落地的改动。修复落地后填写 `## 回归检查`，
 记录命令、结果和可复核证据。`## 怎么避免` 区分候选措施与已落实措施；有决定性代码时用
 `## 问题代码`，有可复核的修复前后证据时可用 `## 前后对比`。不适用的小节整节删除，不留空标题。
@@ -54,8 +54,15 @@ logic-error / host-compat / environment / other）、`attribution`、`provenance
 `reviewer` + `review_decision` +
 `regression_status` + `closure_criteria`（可度量的关闭条件：指标、日志缺席或检查输出）；
 rejected 时要有 `rejection_reason`；记录属于某个再犯类时要带 `class_id` + `occurrence`；
-修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。当前 schema 尚不
-按状态强制该字段，填写时仍遵守本条约定。外部产物或代码问题记录其来源 `source_revision`；归因到
+修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。
+
+**关闭条件已由门强制（schema 条件自 0.13.0 起，流转记录自 2026-10-28 起）**：
+`schemas/bug-record.schema.json` 按 `status` 编译——
+verified 必须同时具备 `reviewer`、`review_decision: approved`、`regression_status: pass` 与
+`closure_criteria`，缺一项或取值矛盾即 FAIL；rejected 必须带 `rejection_reason`。
+`tools/lab/gate/records.py` 另要求所有非 open 记录正文含 `## 变更记录`（每次状态流转追加一行）。
+`fix_revision` 仍为散文要求，未做条件必填（存量 verified 中有无单一提交号的文档修正，见
+`docs/features/feature-2026-10-28-关闭证据门/proposal/proposal.md` Q-01）。外部产物或代码问题记录其来源 `source_revision`；归因到
 Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 
 **引用自包含**：`files` 条目要么是本仓路径（校验器查在盘），要么是仓限定引用

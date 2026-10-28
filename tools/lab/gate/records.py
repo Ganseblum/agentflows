@@ -319,6 +319,10 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
         errors.append(ValidationError(str(path), "body section '## 修复' is required unless the bug is open"))
     if frontmatter.get("status") == "verified" and not heading_present(body, "## 审查"):
         errors.append(ValidationError(str(path), "body section '## 审查' is required for a verified record"))
+    if frontmatter.get("status") != "open" and not heading_present(body, "## 变更记录"):
+        errors.append(
+            ValidationError(str(path), "body section '## 变更记录' is required once a record leaves open")
+        )
     return errors
 
 

@@ -25,3 +25,11 @@ agentflow_version: 0.2.0
 ## 修复
 
 不适用——这是刻意的非法示例；校验器必须拒绝它。
+
+## 审查
+
+（本示例的非法点只在 frontmatter 缺 reviewer / review_decision / regression_status。）
+
+## 变更记录
+
+- 2026-09-14 09:00 +00:00 · verified · 刻意缺 schema 审查字段（示例）

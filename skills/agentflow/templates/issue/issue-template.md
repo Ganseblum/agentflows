@@ -32,7 +32,7 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不�
 - `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
 - `## 怎么避免` 要区分候选建议与已落实措施：open 写建议状态；修复后写实际增加的规则、检查或其它控制及证据。若没有可行措施，说明原因，不把愿望写成已落实机制。
 - 「为什么出现」要在 `## 根因` 里人话点破属于哪一类：`error_kind: ai-ignored-doc` = 文档写明了但没照做；`ai-ignored-code` = 代码写明了但没照做；`missing-constraint` = 文档/契约压根没说清（缺约束）；`hallucination` = 无中生有；`logic-error` = 推理/逻辑错。归因要有依据，不能只贴一个标签。
-- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
+- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。**所有非 open 状态的正文必须有 `## 变更记录`**（每次流转追加一行日期 + 时区 + 动作 + 证据）。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
 - `provenance: undetermined` 时正文必须写明缺的是什么证据；`files` 的外部引用要带仓限定地址，并在正文内嵌决定性片段或引用原句。
 - 状态机为 `open → fixed-pending-review → verified`，或 `rejected` 移入 `归档/`；各状态的字段要求见上方条件字段一览，可运行的填写范例见 `examples/issues/`（正例）与 `examples/invalid/`（反例）。
 -->

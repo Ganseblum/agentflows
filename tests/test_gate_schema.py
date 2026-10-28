@@ -233,6 +233,113 @@ class ValidatorRegressionTests(unittest.TestCase):
             validator.validate(dict(base, closure_criteria="validate.py tests no longer reports the bypass"))
         )
 
+    def test_bug_record_verified_requires_review_evidence_fields(self) -> None:
+        # 0.13.0 added these as schema conditions; pin each one so a future loosening is red.
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "ISS-2026-01-01-d",
+            "title": "t",
+            "status": "verified",
+            "severity": "P2",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+            "reviewer": "r",
+            "review_decision": "approved",
+            "regression_status": "pass",
+            "closure_criteria": "validate.py artifacts exits 0",
+        }
+        self.assertFalse(validator.validate(dict(base)))
+        for field in ("reviewer", "review_decision", "regression_status"):
+            data = dict(base)
+            data.pop(field)
+            errors = validator.validate(data)
+            self.assertTrue(
+                any(field in f"{error.path} {error.message}" for error in errors),
+                [error.message for error in errors],
+            )
+
+    def test_bug_record_verified_requires_approved_review_and_passing_regression(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "ISS-2026-01-01-e",
+            "title": "t",
+            "status": "verified",
+            "severity": "P2",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+            "reviewer": "r",
+            "review_decision": "approved",
+            "regression_status": "pass",
+            "closure_criteria": "validate.py artifacts exits 0",
+        }
+        for label, override in (
+            ("review_decision", {"review_decision": "changes_requested"}),
+            ("regression_status", {"regression_status": "not-run"}),
+        ):
+            errors = validator.validate(dict(base, **override))
+            self.assertTrue(
+                any(label in f"{error.path} {error.message}" for error in errors),
+                [error.message for error in errors],
+            )
+
+    def test_bug_record_rejected_requires_rejection_reason(self) -> None:
+        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
+        base = {
+            "bug_id": "ISS-2026-01-01-f",
+            "title": "t",
+            "status": "rejected",
+            "severity": "P2",
+            "error_kind": "other",
+            "attribution": "unknown",
+            "provenance": "agentflow",
+            "project": "p",
+            "files": ["a.py"],
+            "recorded_at": "2026-01-01T00:00:00Z",
+        }
+        errors = validator.validate(dict(base))
+        self.assertTrue(any("rejection_reason" in f"{e.path} {e.message}" for e in errors))
+        self.assertFalse(validator.validate(dict(base, rejection_reason="not a defect")))
+
+    def test_bug_record_closed_states_require_change_log_section(self) -> None:
+        body = "## 现象\nx\n\n## 根因\ny\n\n## 修复\nz\n"
+        frontmatter = (
+            "---\n"
+            "bug_id: ISS-2026-01-01-g\n"
+            "title: t\n"
+            "status: fixed-pending-review\n"
+            "severity: P2\n"
+            "error_kind: other\n"
+            "attribution: unknown\n"
+            "provenance: agentflow\n"
+            "project: p\n"
+            "files:\n"
+            "  - a.py\n"
+            "recorded_at: 2026-01-01T00:00:00Z\n"
+            "regression_status: pass\n"
+            "---\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "ISS-2026-01-01-g.md"
+            path.write_text(frontmatter + body, encoding="utf-8")
+            errors = validate.validate_bug_markdown(path)
+            self.assertTrue(
+                any("变更记录" in error.message for error in errors),
+                [error.message for error in errors],
+            )
+            path.write_text(
+                frontmatter + body + "\n## 变更记录\n2026-01-01 00:00 +00:00 · 修复落地 · unit test\n",
+                encoding="utf-8",
+            )
+            self.assertEqual([error.message for error in validate.validate_bug_markdown(path)], [])
+
     def test_external_references_require_embedded_fragment_and_inline_citation(self) -> None:
         path = ROOT / "issues" / "fixture.md"
         frontmatter = {

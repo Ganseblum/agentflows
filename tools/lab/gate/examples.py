@@ -90,6 +90,8 @@ INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
 # rejection to the specific judgement the example was written for.
 INVALID_EXAMPLE_EXPECTS: dict[str, str] = {
     "test-run-bad-status.md": "must be one of",
+    "bug-record-verified-without-review.md": "reviewer",
+    "bug-record-verified-heading-missing.md": "## 审查",
 }
 
 

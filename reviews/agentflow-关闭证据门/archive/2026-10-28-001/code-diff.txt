@@ -1,0 +1,464 @@
+diff --git a/.claude-plugin/plugin.json b/.claude-plugin/plugin.json
+index 3839d18..7744115 100644
+--- a/.claude-plugin/plugin.json
++++ b/.claude-plugin/plugin.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "agentflow",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "author": {
+     "name": "Ganseblum"
+   },
+diff --git a/.codex-plugin/plugin.json b/.codex-plugin/plugin.json
+index c2be18c..7407421 100644
+--- a/.codex-plugin/plugin.json
++++ b/.codex-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/.zcode-plugin/plugin.json b/.zcode-plugin/plugin.json
+index d4435f4..e72a84f 100644
+--- a/.zcode-plugin/plugin.json
++++ b/.zcode-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c64adeb..f11a1af 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,15 @@
+ # 变更日志
+ 
++## 0.21.0 — 2026-10-28
++
++关闭证据门：把「已关闭」从自报状态改成可编译声明。`measurement: none`。
++
++- **记录门收紧**：`tools/lab/gate/records.py` 要求所有非 `open` 记录正文含 `## 变更记录`（原先只有散文要求，49 条存量记录 100% 已满足）。端到端实验：同一条缺节记录在旧门静默通过、新门精确点名，补齐后恢复 PASS。
++- **契约文档对齐**：`docs/issues/README.md` 删除「当前 schema 尚不按状态强制该字段」的过期表述——schema 自 0.13.0 起已强制 verified 四项（reviewer / review_decision=approved / regression_status=pass / closure_criteria）与 rejected 的 rejection_reason；补状态条件矩阵与流转记录要求，issue 模板同步。
++- **回归补齐**：`tests/test_gate_schema.py` 新增 4 个用例，钉住 verified 三项缺失、approved/pass 取值、rejected 理由与 `## 变更记录`；`tools/lab/mutate.py` 登记 `records.bug-closed-change-log`（变异 M11 已杀死）。
++- **样例与运行时**：两个 verified 非法样例补节并在 `INVALID_EXAMPLE_EXPECTS` 绑定其声称的规则；合法样例补 `## 变更记录`；`packaging/runtime` 重新生成。
++- 新增批次 `docs/features/feature-2026-10-28-关闭证据门/`（完整档五段成文，链 linter 全绿）；首轮独立评审 changes_requested 的 4 项已修复，修复轮按 L0 自审登记（独立复审待补，见 `reviews/agentflow-关闭证据门/review-2026-10-28-001.md`）。**未提交、未发布、未重装宿主**。
++
+ ## 0.20.0 — 2026-10-28
+ 
+ 2026-10-28 全面评测（`docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md`）的五批整改。`measurement: none`。
+diff --git a/agents/bug-recorder.md b/agents/bug-recorder.md
+index f940c2f..dba1029 100644
+--- a/agents/bug-recorder.md
++++ b/agents/bug-recorder.md
+@@ -20,7 +20,7 @@ disallowedTools: Bash
+ 
+ **记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。
+ 
+-**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径下写一个 Markdown 文件（文件名与 `bug_id` 共用同一个编号）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器只强制检查现象、根因、非 open 状态的修复章节，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
++**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径下写一个 Markdown 文件（文件名与 `bug_id` 共用同一个编号）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器强制检查现象、根因、非 open 状态的修复章节与 `## 变更记录`，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
+ 
+ **引用纪律。** 每个 `files` 条目要么是本仓库内的路径，要么是仓限定引用 `<repo>@<revision>:<path>`——裸外部路径对没有那个仓库的人是悬空引用，校验器会拒绝它。仓限定引用是地址，不是证据：正文内嵌决定性片段（代码用围栏代码块，文档段落用引用块），并在其旁写明仓限定地址；外部引用没有内嵌片段或未写明地址的记录会被校验器拒绝。对于二次评审的 finding，优先让 `files` 条目指向评审记录 `archive/<round>/` 目录内的归档快照——逐字副本已在本仓库中——并把原始仓限定地址写在正文。在普通散文中（围栏块与内联代码之外——它们是承载逐字证据的引文，含历史路径），你写下的每条文档/代码路径都是记录自己的主张：必须在盘或仓限定；个人绝对路径（`/Users/...`、`~/...`）一律禁止——记录是可移植的证据；URL 无法校验，至多作补充，绝不作为证据。
+ 
+diff --git a/docs/features/README.md b/docs/features/README.md
+index 804f15f..76d56e8 100644
+--- a/docs/features/README.md
++++ b/docs/features/README.md
+@@ -31,6 +31,7 @@ docs/features/
+ | [`feature-2026-10-26-L3工作流增强`](feature-2026-10-26-L3工作流增强/) | L3 工作流增强（十四项吸收 / 执行协议与证据工具 / 轻量档 / pre-push 门禁修正） | 实施已完成，0.19.3 已推送并装入 ZCode 与 Codex；状态以 `plan/PLAN-L3-001.md` 为准 |
+ | [`feature-2026-10-28-表达面与角色治理`](feature-2026-10-28-表达面与角色治理/) | 表达面收敛与角色深度（载体归属表 / 同步义务退场 / document-chain 拆分 / FE-BE 裁决 / 实现角色深度） | **立项与范围冻结**：T01–T08 全部 ☐ 未开始，本批只定范围与判据；状态以 `plan/PLAN-GOV-001.md` 为准 |
+ | [`feature-2026-10-28-评测整改批`](feature-2026-10-28-评测整改批/) | 2026-10-28 全面评测的五批整改（整改状态列 / 评审分级 / 表达收敛 / 本地门基线 / 改进环闭环） | 实施已完成（0.20.0）；2026-10-28 并入 `main`（合并提交 `26988a4`），未推送、未重装宿主；状态以 `plan/PLAN-EVAL-001.md` 为准 |
++| [`feature-2026-10-28-关闭证据门`](feature-2026-10-28-关闭证据门/) | 记录契约收紧（verified/rejected 按状态强制关闭证据 / 非 open 必须有变更记录 / 负例回归） | 实施与确定性门已完成；两个评审门待跑；未提交、未推送；状态以 `plan/PLAN-CLOSE-001.md` 为准 |
+ 
+ ## 纪律
+ 
+diff --git a/docs/issues/README.md b/docs/issues/README.md
+index 70c65d5..53e43c5 100644
+--- a/docs/issues/README.md
++++ b/docs/issues/README.md
+@@ -28,7 +28,7 @@ issues/
+ [`schemas/bug-record.schema.json`](../../schemas/bug-record.schema.json)）加一段给人读的
+ Markdown 正文。正文使用固定的中文小节标题——校验器匹配这些精确字面量：`## 现象`、
+ `## 根因` 和 `## 修复`（当前校验器对所有非 `open` 状态要求该标题）；`verified` 还必须有
+-`## 审查`。新建记录按模板填写 `## 修复方案`：发现时先写候选建议、依据、风险和未决事项；
++`## 审查`，所有非 `open` 状态还必须有 `## 变更记录`。新建记录按模板填写 `## 修复方案`：发现时先写候选建议、依据、风险和未决事项；
+ 方案标明待审核，审核后再实施。`## 修复` 只写实际落地的改动。修复落地后填写 `## 回归检查`，
+ 记录命令、结果和可复核证据。`## 怎么避免` 区分候选措施与已落实措施；有决定性代码时用
+ `## 问题代码`，有可复核的修复前后证据时可用 `## 前后对比`。不适用的小节整节删除，不留空标题。
+@@ -50,8 +50,15 @@ logic-error / host-compat / environment / other）、`attribution`、`provenance
+ `reviewer` + `review_decision` +
+ `regression_status` + `closure_criteria`（可度量的关闭条件：指标、日志缺席或检查输出）；
+ rejected 时要有 `rejection_reason`；记录属于某个再犯类时要带 `class_id` + `occurrence`；
+-修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。当前 schema 尚不
+-按状态强制该字段，填写时仍遵守本条约定。外部产物或代码问题记录其来源 `source_revision`；归因到
++修复已落地则要带 `fix_revision`（修复落地的 commit/PR/版本，跨仓时带仓限定）。
++
++**关闭条件已由门强制（schema 条件自 0.13.0 起，流转记录自 2026-10-28 起）**：
++`schemas/bug-record.schema.json` 按 `status` 编译——
++verified 必须同时具备 `reviewer`、`review_decision: approved`、`regression_status: pass` 与
++`closure_criteria`，缺一项或取值矛盾即 FAIL；rejected 必须带 `rejection_reason`。
++`tools/lab/gate/records.py` 另要求所有非 open 记录正文含 `## 变更记录`（每次状态流转追加一行）。
++`fix_revision` 仍为散文要求，未做条件必填（存量 verified 中有无单一提交号的文档修正，见
++`docs/features/feature-2026-10-28-关闭证据门/proposal/proposal.md` Q-01）。外部产物或代码问题记录其来源 `source_revision`；归因到
+ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
+ 
+ **引用自包含**：`files` 条目要么是本仓路径（校验器查在盘），要么是仓限定引用
+diff --git a/examples/invalid/bug-record-verified-heading-missing.md b/examples/invalid/bug-record-verified-heading-missing.md
+index ab2142f..53f6ddd 100644
+--- a/examples/invalid/bug-record-verified-heading-missing.md
++++ b/examples/invalid/bug-record-verified-heading-missing.md
+@@ -32,3 +32,7 @@ regression_status / closure_criteria）全部在场——它的非法点**只在
+ ## 修复
+ 
+ 不适用——这是刻意的非法示例；校验器必须拒绝它。
++
++## 变更记录
++
++- 2026-09-14 09:00 +00:00 · verified · 刻意缺 `## 审查`（示例）
+diff --git a/examples/invalid/bug-record-verified-without-review.md b/examples/invalid/bug-record-verified-without-review.md
+index cd6e19b..cb0f524 100644
+--- a/examples/invalid/bug-record-verified-without-review.md
++++ b/examples/invalid/bug-record-verified-without-review.md
+@@ -25,3 +25,11 @@ agentflow_version: 0.2.0
+ ## 修复
+ 
+ 不适用——这是刻意的非法示例；校验器必须拒绝它。
++
++## 审查
++
++（本示例的非法点只在 frontmatter 缺 reviewer / review_decision / regression_status。）
++
++## 变更记录
++
++- 2026-09-14 09:00 +00:00 · verified · 刻意缺 schema 审查字段（示例）
+diff --git "a/examples/issues/ISS-2026-906-\350\257\204\345\256\241\346\274\217\346\212\245\351\224\231\350\257\257\345\245\221\347\272\246.md" "b/examples/issues/ISS-2026-906-\350\257\204\345\256\241\346\274\217\346\212\245\351\224\231\350\257\257\345\245\221\347\272\246.md"
+index 80aab08..445c7e6 100644
+--- "a/examples/issues/ISS-2026-906-\350\257\204\345\256\241\346\274\217\346\212\245\351\224\231\350\257\257\345\245\221\347\272\246.md"
++++ "b/examples/issues/ISS-2026-906-\350\257\204\345\256\241\346\274\217\346\212\245\351\224\231\350\257\257\345\245\221\347\272\246.md"
+@@ -67,6 +67,11 @@ reviewer 契约现在显式要求错误结构与兼容性检查（见
+ > 残余风险：同类 `resp.data.error` 读取只核对了 orders 客户端，未做全仓扫描——其他服务端
+ > 点可能存在同形信封变更未被覆盖（演示：原视觉标注约定文件已随归档桶删除，见 git 历史）。
+ 
++## 变更记录
++
++- 2026-01-02 00:00 +00:00 · verified · 独立审查通过且回归检查 pass（示例）
++- 2026-01-01 00:00 +00:00 · fixed-pending-review · 修复落地，等待审查（示例）
++
+ ## 备注
+ 
+ 脱敏示例记录。
+diff --git a/index.md b/index.md
+index 3254ff2..bc9407f 100644
+--- a/index.md
++++ b/index.md
+@@ -39,6 +39,7 @@
+ > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
+ > 不再复述改动细节——索引只描述现行结构。
+ 
++- 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；未提交、未发布）——见 [批次入口](docs/features/feature-2026-10-28-关闭证据门/README.md)、[计划](docs/features/feature-2026-10-28-关闭证据门/plan/PLAN-CLOSE-001.md)
+ - 2026-10-28 表达面与角色治理批（立项：载体归属表 / 同步义务退场 / document-chain 拆分 / FE-BE 裁决 / 实现角色深度；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)
+ - 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线 / 改进环首份真实记录；0.20.0 未发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
+ - 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
+diff --git a/marketplace.json b/marketplace.json
+index 09e951f..65ecf8e 100644
+--- a/marketplace.json
++++ b/marketplace.json
+@@ -7,7 +7,7 @@
+       "name": "agentflow",
+       "source": "./packaging/runtime",
+       "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-      "version": "0.20.0",
++      "version": "0.21.0",
+       "author": {
+         "name": "Ganseblum"
+       },
+diff --git a/packaging/runtime/.claude-plugin/plugin.json b/packaging/runtime/.claude-plugin/plugin.json
+index 3839d18..7744115 100644
+--- a/packaging/runtime/.claude-plugin/plugin.json
++++ b/packaging/runtime/.claude-plugin/plugin.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "agentflow",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "author": {
+     "name": "Ganseblum"
+   },
+diff --git a/packaging/runtime/.codex-plugin/plugin.json b/packaging/runtime/.codex-plugin/plugin.json
+index c2be18c..7407421 100644
+--- a/packaging/runtime/.codex-plugin/plugin.json
++++ b/packaging/runtime/.codex-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/packaging/runtime/.zcode-plugin/plugin.json b/packaging/runtime/.zcode-plugin/plugin.json
+index d4435f4..e72a84f 100644
+--- a/packaging/runtime/.zcode-plugin/plugin.json
++++ b/packaging/runtime/.zcode-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+   "author": {
+     "name": "Ganseblum"
+diff --git a/packaging/runtime/agents/bug-recorder.md b/packaging/runtime/agents/bug-recorder.md
+index f940c2f..dba1029 100644
+--- a/packaging/runtime/agents/bug-recorder.md
++++ b/packaging/runtime/agents/bug-recorder.md
+@@ -20,7 +20,7 @@ disallowedTools: Bash
+ 
+ **记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。
+ 
+-**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径下写一个 Markdown 文件（文件名与 `bug_id` 共用同一个编号）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器只强制检查现象、根因、非 open 状态的修复章节，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
++**文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md` 路径下写一个 Markdown 文件（文件名与 `bug_id` 共用同一个编号）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器强制检查现象、根因、非 open 状态的修复章节与 `## 变更记录`，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
+ 
+ **引用纪律。** 每个 `files` 条目要么是本仓库内的路径，要么是仓限定引用 `<repo>@<revision>:<path>`——裸外部路径对没有那个仓库的人是悬空引用，校验器会拒绝它。仓限定引用是地址，不是证据：正文内嵌决定性片段（代码用围栏代码块，文档段落用引用块），并在其旁写明仓限定地址；外部引用没有内嵌片段或未写明地址的记录会被校验器拒绝。对于二次评审的 finding，优先让 `files` 条目指向评审记录 `archive/<round>/` 目录内的归档快照——逐字副本已在本仓库中——并把原始仓限定地址写在正文。在普通散文中（围栏块与内联代码之外——它们是承载逐字证据的引文，含历史路径），你写下的每条文档/代码路径都是记录自己的主张：必须在盘或仓限定；个人绝对路径（`/Users/...`、`~/...`）一律禁止——记录是可移植的证据；URL 无法校验，至多作补充，绝不作为证据。
+ 
+diff --git a/packaging/runtime/marketplace.json b/packaging/runtime/marketplace.json
+index 09e951f..65ecf8e 100644
+--- a/packaging/runtime/marketplace.json
++++ b/packaging/runtime/marketplace.json
+@@ -7,7 +7,7 @@
+       "name": "agentflow",
+       "source": "./packaging/runtime",
+       "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。",
+-      "version": "0.20.0",
++      "version": "0.21.0",
+       "author": {
+         "name": "Ganseblum"
+       },
+diff --git a/packaging/runtime/plugin.json b/packaging/runtime/plugin.json
+index 38cbccc..e99bf26 100644
+--- a/packaging/runtime/plugin.json
++++ b/packaging/runtime/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。"
+ }
+diff --git a/packaging/runtime/skills/agentflow/templates/issue/issue-template.md b/packaging/runtime/skills/agentflow/templates/issue/issue-template.md
+index 77ae123..25f3ab6 100644
+--- a/packaging/runtime/skills/agentflow/templates/issue/issue-template.md
++++ b/packaging/runtime/skills/agentflow/templates/issue/issue-template.md
+@@ -32,7 +32,7 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不
+ - `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
+ - `## 怎么避免` 要区分候选建议与已落实措施：open 写建议状态；修复后写实际增加的规则、检查或其它控制及证据。若没有可行措施，说明原因，不把愿望写成已落实机制。
+ - 「为什么出现」要在 `## 根因` 里人话点破属于哪一类：`error_kind: ai-ignored-doc` = 文档写明了但没照做；`ai-ignored-code` = 代码写明了但没照做；`missing-constraint` = 文档/契约压根没说清（缺约束）；`hallucination` = 无中生有；`logic-error` = 推理/逻辑错。归因要有依据，不能只贴一个标签。
+-- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
++- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。**所有非 open 状态的正文必须有 `## 变更记录`**（每次流转追加一行日期 + 时区 + 动作 + 证据）。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
+ - `provenance: undetermined` 时正文必须写明缺的是什么证据；`files` 的外部引用要带仓限定地址，并在正文内嵌决定性片段或引用原句。
+ - 状态机为 `open → fixed-pending-review → verified`，或 `rejected` 移入 `归档/`；各状态的字段要求见上方条件字段一览，可运行的填写范例见 `examples/issues/`（正例）与 `examples/invalid/`（反例）。
+ -->
+diff --git a/plugin.json b/plugin.json
+index 38cbccc..e99bf26 100644
+--- a/plugin.json
++++ b/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+   "name": "agentflow",
+-  "version": "0.20.0",
++  "version": "0.21.0",
+   "description": "宿主原生的测试先行、执行证据、按需多智能体协作与独立评审工作流。"
+ }
+diff --git a/skills/agentflow/templates/issue/issue-template.md b/skills/agentflow/templates/issue/issue-template.md
+index 77ae123..25f3ab6 100644
+--- a/skills/agentflow/templates/issue/issue-template.md
++++ b/skills/agentflow/templates/issue/issue-template.md
+@@ -32,7 +32,7 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不
+ - `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
+ - `## 怎么避免` 要区分候选建议与已落实措施：open 写建议状态；修复后写实际增加的规则、检查或其它控制及证据。若没有可行措施，说明原因，不把愿望写成已落实机制。
+ - 「为什么出现」要在 `## 根因` 里人话点破属于哪一类：`error_kind: ai-ignored-doc` = 文档写明了但没照做；`ai-ignored-code` = 代码写明了但没照做；`missing-constraint` = 文档/契约压根没说清（缺约束）；`hallucination` = 无中生有；`logic-error` = 推理/逻辑错。归因要有依据，不能只贴一个标签。
+-- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
++- frontmatter 条件字段一览：`fixed-pending-review` 与 `verified` 需要 `regression_status`；`verified` 另需 `reviewer`、`review_decision: approved` 与可判定的 `closure_criteria`；`rejected` 需要 `rejection_reason`；修复已落地需 `fix_revision`；再犯类带 `class_id` 与 `occurrence`。**所有非 open 状态的正文必须有 `## 变更记录`**（每次流转追加一行日期 + 时区 + 动作 + 证据）。open 记录要么被带 `agentflow 目标承接` 标记的批次承接表引用，要么填写 `disposition: deferred` / `not-doing`；`disposition` 只说明归属，不是状态，也不代表已修复。
+ - `provenance: undetermined` 时正文必须写明缺的是什么证据；`files` 的外部引用要带仓限定地址，并在正文内嵌决定性片段或引用原句。
+ - 状态机为 `open → fixed-pending-review → verified`，或 `rejected` 移入 `归档/`；各状态的字段要求见上方条件字段一览，可运行的填写范例见 `examples/issues/`（正例）与 `examples/invalid/`（反例）。
+ -->
+diff --git a/tests/test_gate_schema.py b/tests/test_gate_schema.py
+index f851fef..9b198ad 100644
+--- a/tests/test_gate_schema.py
++++ b/tests/test_gate_schema.py
+@@ -233,6 +233,113 @@ class ValidatorRegressionTests(unittest.TestCase):
+             validator.validate(dict(base, closure_criteria="validate.py tests no longer reports the bypass"))
+         )
+ 
++    def test_bug_record_verified_requires_review_evidence_fields(self) -> None:
++        # 0.13.0 added these as schema conditions; pin each one so a future loosening is red.
++        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
++        base = {
++            "bug_id": "ISS-2026-904",
++            "title": "t",
++            "status": "verified",
++            "severity": "P2",
++            "error_kind": "other",
++            "attribution": "unknown",
++            "provenance": "agentflow",
++            "project": "p",
++            "files": ["a.py"],
++            "recorded_at": "2026-01-01T00:00:00Z",
++            "reviewer": "r",
++            "review_decision": "approved",
++            "regression_status": "pass",
++            "closure_criteria": "validate.py artifacts exits 0",
++        }
++        self.assertFalse(validator.validate(dict(base)))
++        for field in ("reviewer", "review_decision", "regression_status"):
++            data = dict(base)
++            data.pop(field)
++            errors = validator.validate(data)
++            self.assertTrue(
++                any(field in f"{error.path} {error.message}" for error in errors),
++                [error.message for error in errors],
++            )
++
++    def test_bug_record_verified_requires_approved_review_and_passing_regression(self) -> None:
++        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
++        base = {
++            "bug_id": "ISS-2026-905",
++            "title": "t",
++            "status": "verified",
++            "severity": "P2",
++            "error_kind": "other",
++            "attribution": "unknown",
++            "provenance": "agentflow",
++            "project": "p",
++            "files": ["a.py"],
++            "recorded_at": "2026-01-01T00:00:00Z",
++            "reviewer": "r",
++            "review_decision": "approved",
++            "regression_status": "pass",
++            "closure_criteria": "validate.py artifacts exits 0",
++        }
++        for label, override in (
++            ("review_decision", {"review_decision": "changes_requested"}),
++            ("regression_status", {"regression_status": "not-run"}),
++        ):
++            errors = validator.validate(dict(base, **override))
++            self.assertTrue(
++                any(label in f"{error.path} {error.message}" for error in errors),
++                [error.message for error in errors],
++            )
++
++    def test_bug_record_rejected_requires_rejection_reason(self) -> None:
++        validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
++        base = {
++            "bug_id": "ISS-2026-906",
++            "title": "t",
++            "status": "rejected",
++            "severity": "P2",
++            "error_kind": "other",
++            "attribution": "unknown",
++            "provenance": "agentflow",
++            "project": "p",
++            "files": ["a.py"],
++            "recorded_at": "2026-01-01T00:00:00Z",
++        }
++        errors = validator.validate(dict(base))
++        self.assertTrue(any("rejection_reason" in f"{e.path} {e.message}" for e in errors))
++        self.assertFalse(validator.validate(dict(base, rejection_reason="not a defect")))
++
++    def test_bug_record_closed_states_require_change_log_section(self) -> None:
++        body = "## 现象\nx\n\n## 根因\ny\n\n## 修复\nz\n"
++        frontmatter = (
++            "---\n"
++            "bug_id: ISS-2026-907\n"
++            "title: t\n"
++            "status: fixed-pending-review\n"
++            "severity: P2\n"
++            "error_kind: other\n"
++            "attribution: unknown\n"
++            "provenance: agentflow\n"
++            "project: p\n"
++            "files:\n"
++            "  - a.py\n"
++            "recorded_at: 2026-01-01T00:00:00Z\n"
++            "regression_status: pass\n"
++            "---\n"
++        )
++        with tempfile.TemporaryDirectory() as temporary:
++            path = Path(temporary) / "ISS-2026-907-change-log.md"
++            path.write_text(frontmatter + body, encoding="utf-8")
++            errors = validate.validate_bug_markdown(path)
++            self.assertTrue(
++                any("变更记录" in error.message for error in errors),
++                [error.message for error in errors],
++            )
++            path.write_text(
++                frontmatter + body + "\n## 变更记录\n2026-01-01 00:00 +00:00 · 修复落地 · unit test\n",
++                encoding="utf-8",
++            )
++            self.assertEqual([error.message for error in validate.validate_bug_markdown(path)], [])
++
+     def test_external_references_require_embedded_fragment_and_inline_citation(self) -> None:
+         path = ROOT / "issues" / "fixture.md"
+         frontmatter = {
+diff --git a/tools/lab/gate/examples.py b/tools/lab/gate/examples.py
+index 1293931..c5c2464 100644
+--- a/tools/lab/gate/examples.py
++++ b/tools/lab/gate/examples.py
+@@ -90,6 +90,8 @@ INVALID_EXAMPLES: dict[str, tuple[str, Any]] = {
+ # rejection to the specific judgement the example was written for.
+ INVALID_EXAMPLE_EXPECTS: dict[str, str] = {
+     "test-run-bad-status.md": "must be one of",
++    "bug-record-verified-without-review.md": "reviewer",
++    "bug-record-verified-heading-missing.md": "## 审查",
+ }
+ 
+ 
+diff --git a/tools/lab/gate/records.py b/tools/lab/gate/records.py
+index f9cd798..a0eaf17 100644
+--- a/tools/lab/gate/records.py
++++ b/tools/lab/gate/records.py
+@@ -316,6 +316,10 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
+         errors.append(ValidationError(str(path), "body section '## 修复' is required unless the bug is open"))
+     if frontmatter.get("status") == "verified" and not heading_present(body, "## 审查"):
+         errors.append(ValidationError(str(path), "body section '## 审查' is required for a verified record"))
++    if frontmatter.get("status") != "open" and not heading_present(body, "## 变更记录"):
++        errors.append(
++            ValidationError(str(path), "body section '## 变更记录' is required once a record leaves open")
++        )
+     return errors
+ 
+ 
+diff --git a/tools/lab/mutate.py b/tools/lab/mutate.py
+index 5165db0..ee2a9fb 100755
+--- a/tools/lab/mutate.py
++++ b/tools/lab/mutate.py
+@@ -70,6 +70,7 @@ ITEMS: dict[str, tuple[str, str]] = {
+     "plan.row-width": ("tools/lab/gate/plan.py", "任务表行识别（列数下限）"),
+     "records.bug-verified-review": ("tools/lab/gate/records.py", "bug 记录 verified 须含审查节"),
+     "records.bug-open-fix": ("tools/lab/gate/records.py", "bug 记录非 open 须含修复节"),
++    "records.bug-closed-change-log": ("tools/lab/gate/records.py", "bug 记录非 open 须含变更记录"),
+     "records.bug-layout": ("tools/lab/gate/records.py", "bug 记录布局（扁平 / 归档目录）"),
+     "records.recurrence-name": ("tools/lab/gate/records.py", "recurrence 台账文件名 = class_id"),
+     "workspace.issues-layout": ("tools/lab/gate/workspace.py", "issues/ 下未知条目拒绝"),
+@@ -145,6 +146,7 @@ SPECS: list[tuple[str, str, str, str]] = [
+     ("plan.row-width", "if len(cells) < 5:", "relax_strict", "examples"),
+     ("records.bug-verified-review", 'if frontmatter.get("status") == "verified" and not heading_present(body, "## 审查"):', "invert_cmp", "examples"),
+     ("records.bug-open-fix", 'if frontmatter.get("status") != "open" and not heading_present(body, "## 修复"):', "invert_cmp", "artifacts"),
++    ("records.bug-closed-change-log", 'if frontmatter.get("status") != "open" and not heading_present(body, "## 变更记录"):', "disable_if", "tests"),
+     ("records.recurrence-name", 'if path.stem != frontmatter.get("class_id"):', "disable_if", "tests"),
+     ("records.bug-layout", "elif len(parts) != 3:", "invert_cmp", "artifacts"),
+     ("workspace.issues-layout", "unexpected entry under issues/; live issue records", "drop_statement", "tests"),
+
+### untracked feature tree
+?? "docs/features/feature-2026-10-28-\345\205\263\351\227\255\350\257\201\346\215\256\351\227\250/"

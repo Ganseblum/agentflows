@@ -38,7 +38,7 @@
 
 ## 0.21.0 — 2026-10-28
 
-两处外部工程语料的吸收（`total-security` 与 `youc-workflow-ai/workflow` 的活规则）。`measurement: none`。
+两组改动合入同一版本号：两处外部工程语料的吸收（`total-security` 与 `youc-workflow-ai/workflow` 的活规则），以及关闭证据门——把「已关闭」从自报状态改成可编译声明。`measurement: none`（均为方法级改动，无仪器化对照）。
 
 - **目标仓工程基线**：新增 `skills/agentflow/templates/engineering/baseline.md`，含十个固定小节（0–9）
   （适用范围与优先级、技术栈与运行环境、目录与文件职责、命名与类型、禁止的平行方案、新增模块必做清单、
@@ -60,11 +60,19 @@
   UI/文案/可访问性基线同步补齐。起因是用户指出第一轮只补后端与测试，FE 与 BE 不对称。
   **FE 增量的独立评审未运行**：用户 2026-10-28 明确拒绝派发子代理，按未评审记录，不写成已批准。
 - 新增批次 `docs/features/feature-2026-10-28-工程基线吸收/`（完整档五段成文，链 linter 全绿）。
-  未推送、未合并、未重装宿主。
+  2026-10-28 并入 `main`；未推送、未重装宿主。
 - **Qoder 宿主清单**：新增 `.qoder-plugin/plugin.json`（`skills` 指向插件根，`agents` 显式列出 14 个角色文件以排除目录索引 README），并把它接进
   `validate.py manifests` 的清单指针与 `installed` 比对面、`packaging/runtime` 生成白名单、
   `publish.sh` 的版本 bump 列表与 `upgrade-zcode.sh` 的脏树检查。已在 Qoder Desktop `0.4.11` 上安装并实测：
   14 个角色注册为 ready，`reviewer` 实际派发完成只读任务；`tools` 白名单是否由宿主强制执行未验证。
+
+**关闭证据门（同批并入 0.21.0）**——把「已关闭」从自报状态改成可编译声明：
+
+- **记录门收紧**：`tools/lab/gate/records.py` 要求所有非 `open` 记录正文含 `## 变更记录`（原先只有散文要求，49 条存量记录 100% 已满足）。端到端实验：同一条缺节记录在旧门静默通过、新门精确点名，补齐后恢复 PASS。
+- **契约文档对齐**：`docs/issues/README.md` 删除「当前 schema 尚不按状态强制该字段」的过期表述——schema 自 0.13.0 起已强制 verified 四项（reviewer / review_decision=approved / regression_status=pass / closure_criteria）与 rejected 的 rejection_reason；补状态条件矩阵与流转记录要求，issue 模板同步。
+- **回归补齐**：`tests/test_gate_schema.py` 新增 4 个用例，钉住 verified 三项缺失、approved/pass 取值、rejected 理由与 `## 变更记录`；`tools/lab/mutate.py` 登记 `records.bug-closed-change-log`（变异 M11 已杀死）。
+- **样例与运行时**：两个 verified 非法样例补节并在 `INVALID_EXAMPLE_EXPECTS` 绑定其声称的规则；合法样例补 `## 变更记录`；`packaging/runtime` 重新生成。
+- 新增批次 `docs/features/feature-2026-10-28-关闭证据门/`（完整档五段成文，链 linter 全绿）；首轮独立评审 changes_requested 的 4 项已修复，修复轮按 L0 自审登记（独立复审待补，见 `reviews/agentflow-关闭证据门/review-2026-10-28-001.md`）。2026-10-28 并入 `main`；未发布、未重装宿主。
 
 ## 0.20.0 — 2026-10-28
 
