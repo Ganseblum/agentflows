@@ -20,7 +20,7 @@
   "properties": {
     "test_plan_id": {
       "type": "string",
-      "pattern": "^TP-\\d{8}-\\d{3}$"
+      "pattern": "^TP-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"
     },
     "title": { "type": "string", "minLength": 1 },
     "project": {
@@ -64,7 +64,7 @@
     "superseded_by": {
       "description": "test_plan_id of the plan that supersedes this one.",
       "type": "string",
-      "pattern": "^TP-\\d{8}-\\d{3}$"
+      "pattern": "^TP-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"
     },
     "recorded_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" }

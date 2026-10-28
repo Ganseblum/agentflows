@@ -177,7 +177,7 @@ class GoalTraceabilityEvidenceTests(unittest.TestCase):
 
     def test_disposition_field_is_optional_and_enumerated(self) -> None:
         base = {
-            "bug_id": "ISS-2026-900",
+            "bug_id": "ISS-2026-10-22-归属示例",
             "title": "归属示例",
             "status": "open",
             "severity": "P2",
@@ -241,10 +241,10 @@ class ReviewRoundTwoFixTests(unittest.TestCase):
             root = Path(temporary)
             issues = root / "docs" / "issues"
             issues.mkdir(parents=True)
-            (issues / "ISS-2026-001-x.md").write_text("---\nstatus: open\n---\n", encoding="utf-8")
+            (issues / "ISS-2026-01-02-x.md").write_text("---\nstatus: open\n---\n", encoding="utf-8")
             readme = ("# 批次\n\n本批启用 agentflow 决策归属 标记。\n\n"
                       "| **记录编号** | `任务号` | 说明 |\n| --- | --- | --- |\n"
-                      "| ISS-2026-001-x | T01 | 承接 |\n")
+                      "| ISS-2026-01-02-x | T01 | 承接 |\n")
             (root / "docs" / "features" / "b").mkdir(parents=True)
             self.assertEqual(
                 doc_chain.ownership_findings("b/README.md", readme, root), [],

@@ -18,7 +18,7 @@
 | D6 | 计划形态 | Markdown 融合契约（信封 + 看板任务表 + 机器断言） | 人读性与机器校验合一；plan 是执行契约不是改码授权，且随批次走 | `docs/features/README.md` 计划形态节 |
 | D7 | 失败语义 | crash/timeout/empty 三类成文，编排层不做保底 | 降级=结果降级+丢弃在途；产品级 fallback 归异常矩阵 | spec S5 |
 | D8 | 打包 | 瘦快照：`build_runtime.py` 生成，marketplace 源指向生成树 | 用户装的不是整仓死重；运行时面与实验室控制面分开 | spec S9 |
-| D9 | 版本事实源 | 五份 manifest + CHANGELOG 唯一；文档禁复述版本号 | 版本散文化曾三次漂移，守卫检查执行 | spec S9、`validate.py docs` |
+| D9 | 版本事实源 | manifest + CHANGELOG 唯一；文档禁复述版本号 | 版本散文化曾三次漂移，守卫检查执行 | spec S9、`validate.py docs` |
 | D10 | 评测仪器 | ~~公开套件 + 业务切片~~ **已整线裁撤**（2026-10-12）；设计知识与恢复清单留存 | 仪器化度量暂停，方法级改动 `measurement: none` | 原始决策见 PLAN-LOOP-SMOKE-001 |
 | D11 | 度量效度 | **随装置裁撤（2026-10-12）**：原口径为「被测树含 seeds 即 fail-closed；authoritative 运行强制隔离参数」，现存 `artifact_digest.py` 与 `isolation.py check-diff` 仍在，仪器化对照面已不在盘 | 种子泄漏=考试漏题；不可信基线不如不测。恢复仪器化时按 `docs/design-decisions.md` §3 的重建清单执行，与 D10 同批处置 | spec S10 |
 | D12 | 文档链吸收 | 方法增加 proposal→spec→design→plan 交付链（对外生成 + 对内自举），**推翻**早期"只吸收评审判据、不建模板体系"的取舍 | 只有评审判据没有生成契约时，文档质量靠当次会话自觉——与方法的其余部分治理哲学不一致；用户 2026-09-20 拍板补链 | spec S11/S13；本文件 §1.4 |

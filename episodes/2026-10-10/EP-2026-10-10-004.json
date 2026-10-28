@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-10-004",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree（接入与文档链触发修复批：SKILL / 链契约 / 模板角色目录化 / hub 骨架 / 典型案例；随本批提交）",
+    "base": "af1ba3dc194bd39ef2616a46046bf2cb686153b6"
+  },
+  "run": {
+    "run_id": "session-20261010-doc-chain-trigger-fix",
+    "started_at": "2026-10-10T16:10:00+08:00",
+    "ended_at": "2026-10-10T17:50:00+08:00",
+    "status": "complete"
+  },
+  "objective": "按用户指示（「所以要全部大改动，按照 youc-workflow-ai 那样，做典型案例」）修复 2026-10-10 首次真实新项目运行（test-login 登录功能）暴露的四条问题：文档链在实施型请求上不触发（采集访谈 / 落点 / 质量门缺席）、目标仓会话读取插件仓内部记录、模板命名与链契约不一致；并以 test-login 为典型案例建成完整文档链。",
+  "outcome": "accepted",
+  "signals": [
+    { "kind": "user_feedback_quote", "value": "感觉这次新对话新项目有以下几个问题：1.读了很多没用的文件比如 episodes/、plans/…2.文件目录创建的不对…正常应该是创建xxx-workflow-ai/feature/…3.并没有触发反问和确认…4.文档质量不合格…" },
+    { "kind": "user_feedback_quote", "value": "所以要全部大改动，按照youc-workfow-ai那样，做典型案例，看看你怎么改这些" },
+    { "kind": "acceptance_output", "value": "validate.py all 10×PASS（改动后复跑）；典型案例目录 doc_chain.py PASS（C1–C14）；/tmp 副本注入 alt→opt 负向对照 → C4 FAIL 复现后删除副本" },
+    { "kind": "measurement", "value": "none (method-level change, no instrumented business task)" }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "触发面修复：SKILL 与链契约把「在目标仓实施新 feature」纳入链，链序含接入与采集访谈；Init 增第五项「文档与记录落点」（默认枢纽仓、不得自创第三形态）",
+      "status": "verified",
+      "check": "两文件逐段核对 + validate.py docs（含断链 / 退役路径扫描）通过",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "上下文边界：新增「目标仓会话不读写插件仓内部记录」条款；episode 条款限定为插件仓会话并给出目标仓记录落点",
+      "status": "verified",
+      "check": "SKILL.md 条款逐字核对；修复记录 ISS-2026-10-10-目标会话读插件仓记录",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "模板面与契约对齐：feature 骨架改为角色目录命名（proposal/prd.md、spec/<角色>/、design/<角色>/、单份 plan/execution.md），新增 templates/hub 三件；templates/README 与 project-structure 同步",
+      "status": "verified",
+      "check": "git status 文件清单核对 + templates/README 链接逐条解析 + validate.py docs PASS",
+      "evidence_ref": "E2"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "典型案例：test-login 建 test-login-workflow-ai 枢纽 + feature-2026-10-10-登录功能 全链 14 件（案例链 9 + 枢纽 5），含时序 / 流程图 / 架构图、字段级契约表、异常矩阵、2 张线框、data-testid 清单、待冻结问题台账（Q1–Q4 待 owner 关闭）",
+      "status": "verified",
+      "check": "doc_chain.py <案例目录> PASS；/tmp 负向对照 FAIL 复现",
+      "evidence_ref": "E3"
+    }
+  ],
+  "evidence": [
+    { "evidence_id": "E1", "kind": "books", "ref": "skills/agentflow/SKILL.md、skills/agentflow/references/document-chain.md（本批工作树）" },
+    { "evidence_id": "E2", "kind": "books", "ref": "skills/agentflow/templates/（角色目录重组 + hub/）、skills/agentflow/templates/README.md、docs/project-structure.md" },
+    { "evidence_id": "E3", "kind": "chain_output", "ref": "test-login/test-login-workflow-ai/features/feature-2026-10-10-登录功能/（14 件：案例链 9 + 枢纽 5；并含 archive/prior-run-2026-10-10/ 逐字副本）；doc_chain.py PASS 原始输出；/tmp 负向对照已删" }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-10T18:15:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "changes_requested",
+      "finding": "F1–F11（均 P2）：F1 案例章节指针×5 失效；F2 缺文件落点表与落点校对表；F3 模板缺项×4；F4「未关闭阻塞项不得开始 design」与建议值草案流程口径未收口；F5 链契约开头定位语未随触发面更新；F6 SKILL 与契约「两种形态」枚举不一致；F7 pending-test「Init 四项」陈旧；F8 件数 13≠14；F9 评审往返未回填；F10 前版材料未归档进 feature 目录；F11 覆盖映射缺口两处",
+      "resolution": "一轮聚焦修复全部处理并复跑：validate all 10×PASS；案例 doc_chain PASS；/tmp 负向对照（alt→opt）FAIL 复现后删副本；runtime 重建 + cache 同步，installed PASS",
+      "evidence_ref": "E1"
+    },
+    {
+      "at": "2026-10-10T18:40:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读；含独立代码锚点与快照核查）",
+      "decision": "changes_requested",
+      "finding": "F1–F11 全部闭合（其独立核验：代码锚点逐条属实、runtime/cache 快照为 round-2 修订、归档副本逐段一致）；残余 R1–R4（P2）：R1 案例状态行未用契约标注「草案：随建议值」；R2 TC-13 归属与 B1 标尺不一致；R3 提测 P0 清单漏 TC-03/TC-07；R4 plan 落点校对表 vite 锚点应为 8-14；另两条可选微项（门 1「下游阶段」细化、spec/qa「本批」无指代）",
+      "resolution": "R1–R4 与两条微项已修（案例 9 份文档状态行统一「草案：随建议值」；TC-13 挂 ACC-01/ACC-09 并改述为 Network 单请求断言；P0 清单补齐；锚点改 8-14；门 1 注明 design/plan 与 ◐）；提示词面审计增量（AGENTS.md 接入节五项、reviewer.md 计划模式指针、SKILL 简报映射句、plan 模板与案例补节）随后并入；待第 3 轮 delta 复核"
+    },
+    {
+      "at": "2026-10-10T18:50:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读；逐字 diff 已核）",
+      "decision": "changes_requested",
+      "finding": "该轮 status=complete（逐字 diff 已提供并核对：23 条 diff 条目全在披露集合内、无受保护前缀；untracked 新件直接读验）；R1–R4、微项②、增量 1/3/4/5 全部闭合；增量 2 部分（缺「目标仓自有约定优先」限定）。残余 A–D（均 P2）：A 门 1「下游的 design / plan 阶段」措辞未落地而记录已宣称；B 案例 G1 通过条件与「不得过门」相抵；C reviewer 计划指针缺「目标仓自有约定优先」限定；D 融合形态组件「接口与共享机制」在目标链模板无对应节。另三条微项：旧扁平模板删除数口径（12 件删除 + README 改写）、ISS-043 措辞、案例 G3 用词。",
+      "resolution": "A–D 与三条微项已修：门 1 落词「下游的 design / plan 阶段」；案例 G1 改「Q1–Q4 关闭（关闭前仅按『草案：随建议值』标注，不得过门）」；reviewer 指针补「目标仓有自己计划约定时以它为准」；模板与案例 plan 补「接口与共享机制」节（注明契约细节留 design、不双源）；ISS-043 改「计划契约指针」、案例 G3 改「委派证据」；件数口径不再复述（删除 12 件 + 改写 1 件）。复跑：validate all 10×PASS、案例 doc_chain PASS、runtime 重建 + cache 同步、installed PASS；待第 4 轮 delta 收口。",
+      "evidence_ref": "E3"
+    },
+    {
+      "at": "2026-10-10T19:05:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "approved",
+      "finding": "无新 finding：A–D 与三条微项逐条闭合（门 1 落词、G1 口径、reviewer 限定词、「接口与共享机制」节；微项①按 12 件删除 + 1 件改写记录）；落点治理的归档 / 引用 / 可解析链成立（工作树清除、归档副本逐段一致、引用带原址 revision 限定、无存活引用依赖已删副本）；runtime / cache 内容与该轮修订一致。",
+      "resolution": "收口：issues 043 / 044 / 045 升 verified（review_decision=approved + 可判定 closure_criteria）；最终复跑 validate all 10×PASS、案例 doc_chain PASS、installed PASS；历史钉复算：git show 5097938:records/plans/login_feature.md 经 shasum -a 256 输出 7daaa7c8811326a843aa78ef2589a12e1d91c2233f6cb022998298bb5dcd2794，与案例 archive 副本一致。",
+      "evidence_ref": "E3"
+    }
+  ],
+  "feedback_summary": "用户对首次新项目运行（test-login 登录功能）的四条反馈驱动：①读取插件仓内部记录 ②落点自创 records/plans/（期望 xxx-workflow-ai 形态）③未触发提问与确认 ④文档质量不合格（无图 / 契约 / 异常处理）。用户指示全面改造并做典型案例。修复：链触发面 / Init 落点 / 上下文纪律 / 模板角色目录化 + hub 骨架 + test-login 典型案例；measurement: none",
+  "agentflow_version": "0.10.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "ZCode 会话（主对话）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-10T17:50:00+08:00"
+}

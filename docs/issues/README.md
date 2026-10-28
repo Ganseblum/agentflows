@@ -1,28 +1,32 @@
 # issues — 缺陷与事项
 
 给人读的缺陷与事项归档：每个缺陷或事项一个 Markdown 文件，命名为
-`ISS-<YYYY>-<NNN>-<slug>.md`（slug 用中文短语，无中文译法的技术词保留原文）；复发的失败类另在 `recurrence/` 下配一本台账：
+`ISS-<YYYY-MM-DD>-<slug>.md`（日期取记录 `recorded_at` 的日期部分；文件名去掉 `.md` 就是记录 id，
+`bug_id` 与它完全一致；slug 用中文短语，无中文译法的技术词保留原文）；复发的失败类另在 `recurrence/` 下配一本台账：
 
 ```text
 issues/
-  ISS-2026-001-claude-json-schema-被拒.md      # 编号逐项递增（缺陷与事项同一编号家族）
+  ISS-2026-09-14-claude-json-schema-被拒.md      # 日期 + 中文短语整体构成 id（缺陷与事项同一家族）
   recurrence/                 # 每个复发或已归纳的类一本台账
     unverified-behavior-claims.md
   归档/                        # rejected 记录，保留其日期目录（目录随首个 rejected
     2026-08-01/                                  # 记录创建——当前 0 条 rejected，故尚不存在）
-      ISS-2026-999-陈旧-flaky-测试.md          # 示例编号，与现行记录不撞号
+      ISS-2026-08-01-陈旧-flaky-测试.md        # 示例 id，与现行记录不撞名
 ```
 
 ## 编号与看板
 
-- **编号**：`ISS-<YYYY>-<NNN>-<slug>.md`（逐项递增；缺陷与事项同一编号家族；slug 用中文短语）。起稿用
+- **编号**：`ISS-<YYYY-MM-DD>-<slug>.md`——日期取 `recorded_at` 的日期部分，日期与中文短语
+  合起来就是 id（缺陷与事项同一编号家族）；文件名 stem 必须等于 frontmatter 的 `bug_id`，
+  文件名日期必须等于 `recorded_at` 的日期（校验器强制）。同一天可以并存多条，靠 slug 区分；
+  编号不再表达先后顺序，时间顺序看 `recorded_at`。起稿用
   `skills/agentflow/templates/issue/issue-template.md`。
 - **看板**：开放条目平铺于本目录；仅 `rejected` 记录移入 `归档/<日期>/`，其余状态（含
   `verified`）原地保留（见下文归档规则）。
 - **升级通道**：小修在本目录内解决；中/大问题经用户确认后升格为 `docs/features/` 批次，
   并在原条目登记去向。
-- **状态**：历史缺陷记录已随 2026-10 结构改造迁移执行批次迁入本目录并统一编号
-  （编号连续递增；旧编号对照随迁移批次留存在 git 历史）。
+- **状态**：历史缺陷记录已随 2026-10 结构改造迁移执行批次迁入本目录；2026-10-28 起编号改为
+  日期 + 中文短语（旧短号与新 id 的对照随本次改名留存在 git 历史）。
 
 每个文件是 YAML frontmatter（机器校验的契约，
 [`schemas/bug-record.schema.json`](../../schemas/bug-record.schema.json)）加一段给人读的

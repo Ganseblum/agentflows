@@ -557,22 +557,22 @@ def self_test() -> int:
     run_repo_case("69 C15 ledger row with status word and no ISS trips C15", 1,
                   ["C15 ledger-index", "台账行自带状态词"],
                   {"docs/issues/README.md": ledger_file(LED_HEAD + "| #1 | 渠道知识已修复 |  | 批次 T07 |\n")},
-                  with_issues={"ISS-2026-001-x.md": "---\nstatus: fixed\n---\n"})
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: fixed\n---\n"})
     run_repo_case("70 C15 compliant ledger row (ISS link resolves) passes", 0, [],
-                  {"docs/issues/README.md": ledger_file(LED_HEAD + "| #1 | 渠道知识 | ISS-2026-001-x | 批次 T07 |\n")},
-                  with_issues={"ISS-2026-001-x.md": "---\nstatus: fixed\n---\n"})
+                  {"docs/issues/README.md": ledger_file(LED_HEAD + "| #1 | 渠道知识 | ISS-2026-01-02-x | 批次 T07 |\n")},
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: fixed\n---\n"})
 
     OWN_HEAD = ("| 记录编号 | 任务号 | 说明 |\n| --- | --- | --- |\n")
     run_repo_case("71 C18 open issue not attached to a batch 承接表 trips C18", 1,
-                  ["C18 ownership", "ISS-2026-001-x"],
+                  ["C18 ownership", "ISS-2026-01-02-x"],
                   {"docs/features/batch-a/README.md":
                    "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD + "| — | T01 | 收尾 |\n"},
-                  with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: open\n---\n"})
     run_repo_case("72 C18 open issue covered by 承接表 passes", 0, [],
                   {"docs/features/batch-a/README.md":
                    "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD
-                   + "| ISS-2026-001-x | T01 | 收尾 |\n"},
-                   with_issues={"ISS-2026-001-x.md": "---\nstatus: open\n---\n"})
+                   + "| ISS-2026-01-02-x | T01 | 收尾 |\n"},
+                   with_issues={"ISS-2026-01-02-x.md": "---\nstatus: open\n---\n"})
 
     # --- Unreadable marker file must not pass silently (2026-10-26 audit G02). The old
     # `except OSError: continue` turned a violating-but-unreadable decision record into a

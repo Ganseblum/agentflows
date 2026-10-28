@@ -94,6 +94,7 @@ from gate.docs import (
     strip_quotation_fences,
     validate_agents_md_plan_contract,
     validate_doc_consistency,
+    validate_init_section_template,
     validate_live_doc_references,
 )
 from gate.examples import (

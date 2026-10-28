@@ -13,7 +13,7 @@ Skill 直接链接到它们；校验器加载两处位置，并检查单份 JSON
 
 | 文件 | 描述什么记录 | 落点 |
 | --- | --- | --- |
-| [`bug-record.schema.json`](bug-record.schema.json) | 缺陷记录 frontmatter：`bug_id` / `status` / `severity` / `error_kind` / `attribution` / `provenance`（字符串枚举，判定该记录是否 Agentflow 证据）与状态相关的必填项（`verified` 需 `reviewer` + `review_decision=approved` + `regression_status=pass` + `closure_criteria`）。 | `docs/issues/ISS-<YYYY>-<NNN>-<slug>.md`（平铺）；被拒记录移入 `docs/issues/归档/<YYYY-MM-DD>/` |
+| [`bug-record.schema.json`](bug-record.schema.json) | 缺陷记录 frontmatter：`bug_id` / `status` / `severity` / `error_kind` / `attribution` / `provenance`（字符串枚举，判定该记录是否 Agentflow 证据）与状态相关的必填项（`verified` 需 `reviewer` + `review_decision=approved` + `regression_status=pass` + `closure_criteria`）。 | `docs/issues/ISS-<YYYY-MM-DD>-<slug>.md`（平铺）；被拒记录移入 `docs/issues/归档/<YYYY-MM-DD>/` |
 | [`recurrence.schema.json`](recurrence.schema.json) | 再犯类台账 frontmatter：`class_id` / `status` / `first_record` / `occurrences`（只存 bug_id，版本随记录走，单一真源）；`consolidated` 时需 `consolidated_in`。 | `docs/issues/recurrence/<class_id>.md` |
 | [`plan.schema.json`](plan.schema.json) | 执行计划 frontmatter 的机器校验信封（`plan_id` / `plan_version` / `status` / `objective`）；正文的人类叙述与任务表断言由校验器另行强制。 | `docs/features/<批次>/plan/<plan_id>.md` |
 | [`review.schema.json`](review.schema.json) | 评审记录 frontmatter：`review_id` / 目标项目与 feature / `source_revision` / `reviewed_docs`（归档快照路径） / `decision` / `findings`（指向现存 `docs/issues/` 记录）。 | `reviews/<project>-<feature-slug>/review-<YYYY-MM-DD>-<NNN>.md` |

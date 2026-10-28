@@ -71,7 +71,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
     "source_revision": "git:<frozen parent revision>",
     "artifact_digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "hypothesis": "one falsifiable improvement claim",
-    "evidence_ids": ["EP-20260101-001"],
+    "evidence_ids": ["EP-2026-01-01-001"],
     "changed_components": ["agents/reviewer.md"],
     "risk_class": "low",
     "primary_metrics": ["review first-pass rate (declared intent, not instrumented)"],
@@ -81,7 +81,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
   },
   "measurement": {
     "status": "none",
-    "basis": "human review: release governor approved 2026-01-01, evidence EP-20260101-001"
+    "basis": "human review: release governor approved 2026-01-01, evidence EP-2026-01-01-001"
   },
   "evaluation_result": "neutral",
   "decision": "promote",
@@ -89,7 +89,7 @@ episode 应记录这样的逻辑形态。`revision`、`run`、`claims` 与 `evid
     {
       "actor": "agentflow:release-governor",
       "decision": "approved",
-      "evidence_ref": "review round EP-20260101-001 / review_roundtrips[0]",
+      "evidence_ref": "review round EP-2026-01-01-001 / review_roundtrips[0]",
       "recorded_at": "2026-01-01T00:00:00Z"
     }
   ],

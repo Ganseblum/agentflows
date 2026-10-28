@@ -138,7 +138,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_severity_uses_priority_grades(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "ISS-2026-901",
+            "bug_id": "ISS-2026-01-02-a",
             "title": "t",
             "status": "open",
             "severity": "high",
@@ -156,7 +156,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_provenance_is_required_and_guards_agentflow_attribution(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "ISS-2026-902",
+            "bug_id": "ISS-2026-01-02-b",
             "title": "t",
             "status": "open",
             "severity": "P2",
@@ -185,8 +185,8 @@ class ValidatorRegressionTests(unittest.TestCase):
             "class_id": "some-class",
             "title": "t",
             "status": "consolidated",
-            "first_record": "ISS-2026-901",
-            "occurrences": ["ISS-2026-901"],
+            "first_record": "ISS-2026-01-02-a",
+            "occurrences": ["ISS-2026-01-02-a"],
             "recorded_at": "2026-01-01T00:00:00Z",
         }
         self.assertTrue(validator.validate(dict(base)))
@@ -200,9 +200,9 @@ class ValidatorRegressionTests(unittest.TestCase):
                 "class_id: right-name\n"
                 "title: t\n"
                 "status: unconsolidated\n"
-                "first_record: ISS-2026-901\n"
+                "first_record: ISS-2026-01-02-a\n"
                 "occurrences:\n"
-                "  - ISS-2026-901\n"
+                "  - ISS-2026-01-02-a\n"
                 "recorded_at: 2026-01-01T00:00:00Z\n"
                 "---\n",
                 encoding="utf-8",
@@ -213,7 +213,7 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_bug_record_verified_requires_closure_criteria(self) -> None:
         validator = validate.SchemaValidator(ROOT / "schemas" / "bug-record.schema.json")
         base = {
-            "bug_id": "ISS-2026-903",
+            "bug_id": "ISS-2026-01-02-c",
             "title": "t",
             "status": "verified",
             "severity": "P2",
@@ -301,7 +301,7 @@ class ValidatorRegressionTests(unittest.TestCase):
             path = record_dir / "review-20260101-001.md"
             path.write_text(
                 "---\n"
-                "review_id: REV-20260101-001\n"
+                "review_id: REV-2026-01-01-001\n"
                 "title: t\n"
                 "target_project: p\n"
                 "target_feature: f\n"
@@ -326,10 +326,10 @@ class ValidatorRegressionTests(unittest.TestCase):
 
     def test_episode_record_validates_and_pins_filename_to_id(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "EP-20260101-001.json"
+            path = Path(temporary) / "EP-2026-01-01-001.json"
             record = {
                 "schema_version": 1,
-                "episode_id": "EP-20260101-001",
+                "episode_id": "EP-2026-01-01-001",
                 "source_type": "acceptance",
                 "objective": "o",
                 "outcome": "partial",
@@ -351,7 +351,7 @@ class ValidatorRegressionTests(unittest.TestCase):
                 any("sanitized" in error.message for error in errors),
                 [error.message for error in errors],
             )
-            path.write_text(json.dumps(dict(record, episode_id="EP-20260101-002")), encoding="utf-8")
+            path.write_text(json.dumps(dict(record, episode_id="EP-2026-01-01-002")), encoding="utf-8")
             errors = validate.validate_episode_document(path)
             self.assertTrue(any("must equal episode_id" in error.message for error in errors))
 
@@ -364,6 +364,29 @@ class ValidatorRegressionTests(unittest.TestCase):
     def test_doc_consistency_passes_on_the_current_tree(self) -> None:
         errors = validate.validate_doc_consistency()
         self.assertEqual(errors, [])
+
+    def test_init_section_template_ships_markers_and_the_three_gate_clauses(self) -> None:
+        # Init used to be prose-only, so each target repo invented its own section shape.
+        # The template is now the carrier; losing a marker or a gate clause silently turns a
+        # re-run into a full rewrite or drops the gate obligations from the repo rules.
+        self.assertEqual(validate.validate_init_section_template(), [])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            missing = [error.message for error in validate.validate_init_section_template(root)]
+            self.assertTrue(any("repo-rules template is missing" in message for message in missing), missing)
+            template = root / "skills" / "agentflow" / "templates" / "hub" / "repo-rules.md"
+            template.parent.mkdir(parents=True)
+            template.write_text(
+                "<!-- agentflow:repo-rules:begin v0 -->\n"
+                "<!-- agentflow:repo-rules:end -->\n",
+                encoding="utf-8",
+            )
+            (root / "skills" / "agentflow" / "SKILL.md").write_text(
+                "Init 见 templates/hub/repo-rules.md\n", encoding="utf-8"
+            )
+            messages = [error.message for error in validate.validate_init_section_template(root)]
+            self.assertEqual(len(messages), 3, messages)
+            self.assertTrue(all("lacks gate clause" in message for message in messages), messages)
 
     def test_live_doc_scan_flags_broken_links_and_retired_paths(self) -> None:
         # Discrimination fixtures for the 2026-10 residue scans. The good file pins every
@@ -598,13 +621,27 @@ class ValidatorRegressionTests(unittest.TestCase):
 
     def test_bug_layout_archive_date_message_is_pinned(self) -> None:
         # Item F (helper extraction): the archive date check must keep its exact behavior.
-        relative = Path("docs/issues/归档/2026-01-01/ISS-2026-910-archived.md")
-        frontmatter = {"bug_id": "ISS-2026-910", "recorded_at": "2026-01-02T00:00:00Z"}
+        relative = Path("docs/issues/归档/2026-01-01/ISS-2026-01-02-archived.md")
+        frontmatter = {"bug_id": "ISS-2026-01-02-archived", "recorded_at": "2026-01-02T00:00:00Z"}
         errors = validate.validate_bug_layout(frontmatter, ROOT / relative, relative, {})
         self.assertEqual(
             [error.message for error in errors],
             ["date directory '2026-01-01' does not match recorded_at date 2026-01-02"],
         )
+
+    def test_bug_layout_requires_stem_equals_bug_id_and_date_matches_recorded_at(self) -> None:
+        # The id IS the filename stem (2026-10-28 rename): a record whose bug_id or date drifts
+        # from its own name points at an id no other record resolves, so both are gate failures.
+        relative = Path("docs/issues/ISS-2026-09-14-重命名口径.md")
+        consistent = {"bug_id": "ISS-2026-09-14-重命名口径", "recorded_at": "2026-09-14T12:00:00+08:00"}
+        self.assertEqual(validate.validate_bug_layout(consistent, ROOT / relative, relative, {}), [])
+        drifted = {"bug_id": "ISS-2026-09-14-别的名字", "recorded_at": "2026-09-15T12:00:00+08:00"}
+        messages = [e.message for e in validate.validate_bug_layout(drifted, ROOT / relative, relative, {})]
+        self.assertIn(
+            "filename stem must equal bug_id 'ISS-2026-09-14-别的名字' (the stem is the record id)",
+            messages,
+        )
+        self.assertIn("filename date must match recorded_at date 2026-09-15", messages)
 
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:

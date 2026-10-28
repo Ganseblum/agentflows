@@ -14,7 +14,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 >
 > **2026-10-18 合并说明**：本计划随 `workbuddy/main-b0d8652c` 分支并入 `main`。其中提及的
 > 8 指标单点 schema、BT 对照装置、`policy.py` 裁决、逐版本结果 JSON 等，均指 2026-10-12
-> 评测装置裁撤（ISS-2026-052）**之前**的状态，仅作历史参照，不代表现行仓库结构；现存替代与
+> 评测装置裁撤（ISS-2026-10-12-评测装置裁撤）**之前**的状态，仅作历史参照，不代表现行仓库结构；现存替代与
 > 恢复清单以 `docs/design-decisions.md` §3 为准。本说明只增不改，原任务行与证据回写保持原样。
 
 > 执行契约，不是改代码授权。本计划管理的是 2026-10-12 评审优化批的**收尾动作**：
@@ -53,7 +53,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 | `T01` | Git 提交 4+1 结构：①安全批（`packaging/build_runtime.py`、`tools/lab/isolation.py`、`skills/agentflow/scripts/check-write-scope.sh`）②治理批（`skills/improve/SKILL.md`、`skills/improve/references/evidence-and-release.md`、`agents/bug-recorder.md`、`README.md`、`docs/product/spec/method-spec.md`）③结构批（`tools/lab/validate.py`、`schemas/` 下三个文件、`document-chain.md`、`backend.md`、feature `README.md`）④门健全批（`tools/lab/eval_runner.py`）⑤报告批（两份 AGENTFLOW `.md`，可选）。提交前跑 `validate.py all` 留证；③的提交信息注明已知回归；逐文件 add，防 `.workbuddy/` 误入；不 push | P0 | 待核实（无固定代码落点：提交步骤） | — | ☑ 已完成 | 实际 7 个主题 commit（4+1 基础上扩展：拍板后新增计划记录、`.gitignore`、再审计 episode 三类产物各自独立成批）：`9caf54a` 安全 / `65731d3` 治理 / `9e5396c` 结构（T2.12 回归修复随同批提交，每 commit 均绿）/ `d9f30f7` 门健全 / `327048e` 边角+报告 / `6443887` episode / 本计划与清单出账为第 7 批。提交前留证：`validate.py all` 9×PASS + `FAIL tests (errors=2)`（全 EEXIST 环境假红）；逐文件 add，`.workbuddy/` 已被 `.gitignore` 挡在暂存区外；未 push |
 | `T02` | T2.12 回归修复（方案A）：`tests/test_gate_schema.py` 的 `test_metric_names_are_exactly_the_eight_contract_metrics` 改为读 `metrics.schema.json` 的 `$defs/metricSummary` 钉 8 指标，并断言 `evaluation-result`/`comparison` 三处确为该 `$ref`。改动属受保护路径，须单独授权 | P1 | `tests/test_gate_schema.py` | — | ☑ 已完成 |  用户 2026-10-12「先全部修复处理」授权；独立评审 `approved`/`complete`（无 P0/P1，P2-1/P2-2 均闭环）；单测全量 errors 3→2 且剩余全为 `PermissionError: EEXIST` 环境假红；MUT1（$ref 回退）/MUT2（metricSummary 删指标）/MUT3（comparison 接线回退）/MUT4（metricDeltas 删指标）均 `FAILED (failures=1)`、未变异对照 OK；`validate.py schemas`/`artifacts` PASS；详见优化报告 §8.3 第二轮更新 ｜载体补充（2026-10-23 C23 回写）：优化报告落 `docs/evaluations/AGENTFLOW-OPTIMIZATION-2026-10-12.md`；MUT1–MUT4 的对照对象（评测装置与结果记录）已随 2026-10-12 整线裁撤，N/A: 原始件不在盘，仅结论留存，裁撤依据与恢复清单见 `docs/design-decisions.md` §3 |
 | `T03` | BT 首次真实对照：用已有夹具跑 baseline/candidate，落 `improvements/` 结果 JSON，过 `policy.py` 裁决，写 measurement 记录 | P1 | 待核实（`improvements/` 与 `policy.py` 已随 2026-10-12 装置裁撤删除，见 `docs/design-decisions.md` §3） | — | — 本期不做（2026-10-12 装置裁撤后对象已失；`host_adapter`、`policy.py`、`evals/` 均不存在） | 已失对象 |
-| `T04` | 治理收尾三小项：`.gitignore` 收录 `.workbuddy/`（或明确手动排除并记录）；两份报告的归宿（保持面外 / 登记 `index.md`）；0.8.6 历史矛盾补再审计记录（只增不改） | P2 | `.gitignore` / `index.md` / `reviews/` 或 `episodes/` | `T01` | ☑ 已完成 | 三小项均执行：①`.gitignore` 追加 `.workbuddy/` ②报告归宿=保持受治理文档面外、随提交入库留证（未登记 index.md）③再审计记录 `episodes/2026-10-12/EP-20261012-008.json` 落盘——`policy.py` 对 0.8.6 实跑 `invalid`/`reject`（exit=1，digest 相同为首条理由）一手复现，历史 release 记录不翻案；`validate.py artifacts` PASS |
+| `T04` | 治理收尾三小项：`.gitignore` 收录 `.workbuddy/`（或明确手动排除并记录）；两份报告的归宿（保持面外 / 登记 `index.md`）；0.8.6 历史矛盾补再审计记录（只增不改） | P2 | `.gitignore` / `index.md` / `reviews/` 或 `episodes/` | `T01` | ☑ 已完成 | 三小项均执行：①`.gitignore` 追加 `.workbuddy/` ②报告归宿=保持受治理文档面外、随提交入库留证（未登记 index.md）③再审计记录 `episodes/2026-10-12/EP-2026-10-12-008.json` 落盘——`policy.py` 对 0.8.6 实跑 `invalid`/`reject`（exit=1，digest 相同为首条理由）一手复现，历史 release 记录不翻案；`validate.py artifacts` PASS |
 
 ### 未决项
 
@@ -61,7 +61,7 @@ updated_at: 2026-10-22T00:00:00+08:00
 | --- | --- | --- | --- |
 | U-01 | T02 授权与激活时机：用户 2026-10-12 已拍板「记录在案暂不修」（优化报告 §8.3），本项问的是何时激活方案 A | 是 | 已关闭：用户 2026-10-12 晚指示「先全部修复处理」授权激活；修复、独立评审、四组变异证据齐（见 T02 证据列与优化报告 §8.3 第二轮更新） |
 | U-02 | T03 三样输入的规格与提供：业务快照根（形态/位置）、可信端点（adapter 调什么、凭据注入）、权限档（`--allowed-tools` 范围、是否 `--isolate-host-config`） | 否 | 已关闭：2026-10-12 评测装置裁撤后对象已失，T03 改为本期不做；如恢复仪器化则另立计划 |
-| U-03 | T04 三小项取舍（每项都可单独拍板） | 否 | 已关闭：三小项均按推荐执行——`.gitignore` 收录 `.workbuddy/`、报告保持面外随提交留证、0.8.6 再审计记录补记（EP-20261012-008） |
+| U-03 | T04 三小项取舍（每项都可单独拍板） | 否 | 已关闭：三小项均按推荐执行——`.gitignore` 收录 `.workbuddy/`、报告保持面外随提交留证、0.8.6 再审计记录补记（EP-2026-10-12-008） |
 
 ## 接口与共享机制
 

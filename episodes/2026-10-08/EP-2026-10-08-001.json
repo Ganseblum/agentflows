@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-08-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflow working tree (8 clause files + 5 manifests + CHANGELOG.md + docs/iteration-log.md + docs/agent-roles.md 镜像行), base d7461e68a09c084b89e614d276dae1ac4036b362",
+    "base": "d7461e68a09c084b89e614d276dae1ac4036b362"
+  },
+  "run": {
+    "run_id": "session-20261008-agentflow-0.8.7",
+    "started_at": "2026-10-08T18:00:00+08:00",
+    "ended_at": "2026-10-08T23:30:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户两轮反馈驱动的方法级候选 0.8.7：①「实现和执行的时候老是跑偏…遇到阻塞的问题时会出现不思考、不确认、不参考」；②「提问比较重要的」。外部方法源（mattpocock/skills 逐字精读：grilling/wayfinder/diagnosing-bugs/prototype/writing-for-agents/code-review/retro）经对照后仅保留与本仓条款可接线的机制，全部重新锚定到本仓证据。产出五批：E 提问程序（intake interview）、A 未被要求行为发现项+Change discipline、B 首次遇阻四步协议、C design_refs 执行接线、D contracts 双源去重。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_feedback_quote",
+      "value": "实现和执行的时候，发现老是跑偏，或者说做一些无关的东西，而且在遇到阻塞的问题的时候会出现不思考、不确认、不参考的情况"
+    },
+    {
+      "kind": "user_feedback_quote",
+      "value": "而且这个提问是比较重要的"
+    },
+    {
+      "kind": "gap_evidence",
+      "value": "boundary 14/write-scope enforcement 仅覆盖路径级；reviewer 检查全部为「对着 objective 查缺的/错的」无反向问句；boundary 10 与 repair-once 停机纪律全部挂「重复失败之后」；「关联 design 条目」列仅作文档链追溯、无条款要求执行者读它——逐字核实于本仓条款，非印象"
+    },
+    {
+      "kind": "external_method_source",
+      "value": "mattpocock/skills@main 逐字精读（/tmp/mp-skills*），采纳：grilling 的 frontier/rounds/事实-决策分流/无问题数上限、wayfinder 的雾分层判据、code-review 的 scope-creep 检测器与两轴分离、retro 的「评审侧担标准」分工理由、diagnosing-bugs 的 list-what-you-tried、prototype 的「问不出来的做出来」；拒绝：caveman/zoom-out（作者已删）、to-spec 免采访、tracker 集成、结构化提问 UI"
+    },
+    {
+      "kind": "coverage_check",
+      "value": "演示验证（登录功能四轮推演 Q1→Q22）：格式可读、范围推翻后问题树重算、通道选择撤销姐妹问题、注册形态先对齐术语再分叉——注：演示为格式验证非有效性验证，护栏是各批拒绝判据"
+    },
+    {
+      "kind": "isolation_gate",
+      "value": "blocked=[] (isolation.py check-diff，候选副本还原门变更三文件后对比 base d7461e6)",
+      "evidence_ref": "E6"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (method-level change, no instrumented business task)；预防效果待首个真实交付对照",
+      "evidence_ref": "CHANGELOG.md 0.8.7"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "五批条款写入 8 个非保护面文件，未触碰任何受保护路径",
+      "status": "verified",
+      "check": "git diff --name-only 对照 protected-paths.txt；评审员独立复核；isolation.py check-diff blocked=[]（门变更三文件在一次性副本还原后，base d7461e6）",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "contracts.md 双源已去重（Worker result / Review result 各恰一处）",
+      "status": "verified",
+      "check": "grep -c '^## Worker result' == 1；grep -c '^## Review result' == 1；评审员确认 failure semantics/degradation/cost-duration/compile-before-accept/budget-discipline 全部幸存",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "SKILL.md 锚点 references/contracts.md#blocking-a-task-first-blocker 可解析",
+      "status": "verified",
+      "check": "评审员 slug 推导核对（contracts.md:121 标题 ↔ SKILL.md:160 链接）",
+      "evidence_ref": "E1"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "确定性检查全绿",
+      "status": "verified",
+      "check": "doc_chain.py --self-test 38/38 exit 0；unittest discover -s tests Ran 155 OK exit 0；validate.py all 10×PASS exit 0",
+      "evidence_ref": "E3"
+    },
+    {
+      "claim_id": "C5",
+      "claim": "installed 漂移集与改动面精确一致（8 文件）",
+      "status": "verified",
+      "check": "validate.py installed 重跑 exit 1 恰列 8 处漂移（含两个 engineer 角色文件）——修复轮前一次 6 处的输出已过时，评审员指出后重跑确认",
+      "evidence_ref": "E4"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "raw_diff",
+      "ref": "本会话产物：change-round2.diff（363 行 8 文件 vs HEAD d7461e6，sha256:00c9b9958da0d887 前缀，会话内 /tmp 副本，关键行引文本 episode 与 CHANGELOG 内嵌）",
+      "digest": "sha256:00c9b9958da0d887（前 16 位）"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "acceptance_output",
+      "ref": "本会话产物：acceptance-round2.txt（sha256:17600d4fbf50dad2 前缀；self-test 38/38、unittest 155、validate all 10 PASS、installed 6 处漂移时点快照）",
+      "digest": "sha256:17600d4fbf50dad2（前 16 位）"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "acceptance_output",
+      "ref": "本会话产物：修复轮后复跑输出（self-test 38/38 exit 0；unittest Ran 155 OK exit 0；validate all 10×PASS exit 0——复跑命令与逐行 PASS 清单内嵌于本 episode claims C4 的 check 字段）",
+      "digest": "命令与逐行清单内嵌本文件"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "acceptance_output",
+      "ref": "本会话产物：installed 重跑输出（exit 1，8 处漂移逐文件列举，与 8 文件改动面精确一致；全文内嵌于 CHANGELOG 0.8.7 Verification 节的表述与 SHA 记录 sha256:40cee79bdeecc180 前缀）",
+      "digest": "sha256:40cee79bdeecc180（前 16 位）"
+    },
+    {
+      "evidence_id": "E5",
+      "kind": "external_corpus",
+      "ref": "mattpocock/skills@main（github.com/mattpocock/skills）：grilling/skills/productivity/grilling/SKILL.md sha256:befdff1e27a1dfe2；engineering/prototype/SKILL.md sha256:714de632d116bb73；engineering/diagnosing-bugs/SKILL.md sha256:849198df88cdb65f；engineering/code-review/SKILL.md sha256:09eb147f793e4647；productivity/writing-for-agents/SKILL.md sha256:551adca942227b44（均前 16 位，下载于 2026-10-08，main 分支）——采纳/拒绝机制的关键句已内嵌于本 episode signals 与 CHANGELOG 0.8.7",
+      "digest": "五文件 sha256 前缀逐文件列于 ref"
+    },
+    {
+      "evidence_id": "E6",
+      "kind": "isolation_check",
+      "ref": "isolation.py check-diff 输出（blocked=[]，候选副本还原门变更三文件，base d7461e6；sha256:b8a629cd008273ee 前缀；forbidden 列表与 changed_paths 摘要：0.8.7 批 8 文件 + 5 manifest + CHANGELOG/iteration-log + runtime 重建产物，无任何保护路径命中）",
+      "digest": "sha256:b8a629cd008273ee（前 16 位）"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-08T20:10:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读，未参与实现）",
+      "decision": "changes_requested",
+      "finding": "F1 方向引用写反（intake 节引 wireframe/prototype route『below』而该规则在上方）；F2 原型保留规则双源矛盾（一处『结论落账后处置原型』vs 另一处『留作证据』，即本仓『同一结论双源并存』反模式现身方法自身文本）；F3 『requirement gate』指名不可解析（无此字面门名，实为 Spec re-audit gate/Gate 1）；F4 两 engineer 角色的 result 字段枚举落后于契约、架空 design_refs（在目标文件清单之外，按外延报告）",
+      "resolution": "全部修复：below→above；保留规则合一（结论=交付物落台账；原型按线框/原型轨存放位置留作证据，非交付物亦不删）；指名改 Spec re-audit gate；两 engineer 角色改为指回契约+显式 design_refs_implemented 义务（写范围 6→8 文件）",
+      "evidence_ref": "/tmp/agentflow-review-20261008/change-round2.diff"
+    },
+    {
+      "at": "2026-10-08T21:50:00+08:00",
+      "reviewer": "agentflow:reviewer（同一独立子代理，round 2 复审增量）",
+      "decision": "approved",
+      "finding": "四项修复逐条核对通过；round-2 diff 与 round-1 除四处修复外逐字节一致（无夹带）；单副本不变量成立；残留风险 6 条：①installed 输出时点错位（已按其要求重跑闭掉：8 处漂移精确一致）②round-2 验收尾行较薄（已补逐行输出）③重装前宿主仍跑旧条款 ④基线外门变更三文件留独立轨道 ⑤新条款无机器检查可钉（方法级文本，回归靠 bug 记录→条款+用例反馈环）⑥reviewer frontmatter description 未列新发现类（宿主触发摘要非清单，留档不改）",
+      "resolution": "supervisor 即时闭环残留 ①②（installed 重跑 8 处漂移、逐行验收输出补齐）；③属 human-gated 发布前预期态——宿主注册表仍指 0.8.3，需客户端刷新+重装（后续审计确认此点并已修正 CHANGELOG 表述）；④⑤⑥ 如实留档；diff 无必改项",
+      "evidence_ref": "E2 + E4"
+    },
+    {
+      "at": "2026-10-08T23:20:00+08:00",
+      "reviewer": "只读审计员（Explore 子代理，发布完整性面，非 diff 评审）",
+      "decision": "changes_requested",
+      "finding": "发布完整性审计：B1 CHANGELOG『reinstall 后转绿』失实（宿主注册表仍指 0.8.3，validate installed 只比版本同名 cache 目录）；B2 improve 环四件套（candidates/evaluations/comparisons/releases）整链缺失且裸 releases/0.8.7.json 无法通过 artifacts 交叉校验——需显式声明治理轨道；S3 episode 缺 run 块、claims 零 evidence_ref 接线、E5 无 repo 限定引用与 sha256；S4 快照 protected-paths.txt 内嵌未提交门行（build_runtime 复制工作树）；S5 iteration-log §0.8.7 插错位置（应按版本序在文件末尾）；S6 isolation check-diff 从未运行",
+      "resolution": "机械项全部即时修复：CHANGELOG 失实句重写+治理轨道显式声明+快照混合态披露；iteration-log 节移至末尾并同步声明；episode 补 run 块/claims→E1-E6 接线/E1-E6 sha256 与 repo 限定引用/isolation 信号；isolation.py check-diff 于一次性候选副本（门变更三文件还原）运行 blocked=[]；agent-roles.md 镜像 Reviewer 行补「无人要求行为」。两项留用户裁决：improve 环四件套是否补齐（推荐后续批）；快照门行纯度（推荐披露已落，根治需门变更三文件先行评审提交）",
+      "evidence_ref": "E6 + CHANGELOG 0.8.7 Governance lane 节"
+    }
+  ],
+  "feedback_summary": "用户两轮反馈（执行跑偏/遇阻三不 + 提问重要）经外部方法逐字对照后落地为 0.8.7 五批条款（E 提问程序/A 防跑偏/B 首阻协议/C design 引用/D 去重），独立评审两轮（changes_requested 4 项全修 → approved 0 必改）；验收 self-test 38/38、unittest 155、validate all 10×PASS、installed 漂移精确 8 处；五 manifest bump 0.8.7 + CHANGELOG + 本 episode；基线外门变更三文件（AGENTS.md/protected-paths.txt/tools/lab/validate.py）经用户裁决保持不动、留独立轨道；measurement: none，预防效果待首个真实交付对照",
+  "agentflow_version": "0.8.6",
+  "host": "other",
+  "provenance": {
+    "carrier": "ZCode 会话（supervisor 主对话 + agentflow:reviewer 独立子代理两轮）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-08T20:00:00+08:00"
+}

@@ -8,9 +8,9 @@
 
 | 层 | 解决什么 | 载体 | 何时生效 |
 | --- | --- | --- | --- |
-| 插件安装 | 角色、工作流、模板 | 宿主插件缓存（如 `~/.zcode/cli/plugins/cache/...`；源面的 `.zcode-plugin/`、`.codex-plugin/`、`.claude-plugin/` 是 manifest 目录，不是缓存） | 宿主加载插件时 |
+| 插件安装 | 角色、工作流、模板 | 宿主插件缓存（如 `~/.zcode/cli/plugins/cache/...`；源面的 `.zcode-plugin/`、`.codex-plugin/`、`.claude-plugin/`、`.qoder-plugin/` 是 manifest 目录，不是缓存） | 宿主加载插件时 |
 | **宿主接入（Host Init）** | **跨仓纪律：写前查分支、合并与推送授权、证据纪律、合并收口、评审绑定 revision** | 宿主自己的全局指令文件 | 该宿主的每个会话 |
-| 仓库接入（Init） | 该仓的具体约定：检查命令、文档落点、分支前缀实例 | 目标仓 `AGENTS.md` 的「Agentflow 接入约定」节 | 在该仓工作时 |
+| 仓库接入（Init） | 该仓的具体约定：检查命令、文档落点、工程基线入口、分支前缀实例 | 目标仓 `AGENTS.md` 的「Agentflow 接入约定」节（骨架：[templates/hub/repo-rules.md](../templates/hub/repo-rules.md)） | 在该仓工作时 |
 
 为什么需要中间这层：仓库接入只在该仓被打开时加载，换一个仓就没有了；插件只在该技能被调用时加载。分支纪律与证据纪律必须在**任何仓、任何会话**默认在场，否则一个没有加载到规则的会话会在 release 分支上直接改代码——2026-10-23 的一次 Codex 合并会话就是这样发生的：插件与 SKILL 都在，但分支规则只存在于另一台宿主的用户级文件里。
 
@@ -84,7 +84,7 @@ begin 标记含版本号时，用 `--begin-marker` 指定文件中的旧标记�
 
 ## 版本与漂移
 
-- 托管块头的版本号必须等于当前插件版本（五份 manifest 的 `version`）。插件升级后，Host Init 需要重跑一次；版本不同就是漂移。
+- 托管块头的版本号必须等于当前插件版本（manifest 的 `version`）。插件升级后，Host Init 需要重跑一次；版本不同就是漂移。
 - **改模板必须同时 bump 插件版本。** 只改 [global-rules.md](../templates/host/global-rules.md) 而不 bump 时，按规则 4「版本相同不写」，重跑 Host Init 是 no-op，宿主里会留下旧副本——这正是"模板改了、宿主里旧副本没人发现"的路径，必须避免。
 - README 的升级步骤（重建生成树、刷新 marketplace、重装）里应同时包含"用过 Host Init 的宿主重跑一次"。
 - `validate.py installed` 只比对**插件快照**，不检查宿主全局指令文件。本仓尚未提供 `validate.py host_init`：`tools/lab/validate.py` 在受保护面内，新增门项属于门变更，需单独人工评审。在那之前，托管块的版本行、第 6 条的三项校验输出、以及 `docs/host-platform-facts.md` 的记录就是审计线索。

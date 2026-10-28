@@ -1,8 +1,8 @@
 ---
-test_run_id: TR-20260917-002
+test_run_id: TR-2026-09-17-002
 title: "登录用例回归执行（演示项目，非法状态负例）"
 project: demo-webapp
-test_plan_id: TP-20260917-001
+test_plan_id: TP-2026-09-17-001
 test_plan_version: "1"
 target_revision: 9f2c1a7
 environment: staging（base_url 见计划）；宿主浏览器由 supervisor 按步骤脚本执行；账号角色 tester-01

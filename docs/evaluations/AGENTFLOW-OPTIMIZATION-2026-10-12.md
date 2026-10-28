@@ -29,7 +29,7 @@
 
 ### T0.2 · check-write-scope.sh 中文路径误 FAIL + 失败静默 OK
 - **为什么改**：硬边界 14 的随附工具若误判，会让合法变更被拒（误 FAIL）或让越界变更蒙混过关（fail-open）。
-- **什么问题**：(a) `git diff --name-only` / `git ls-files` 缺 `-z`，git 默认对**非 ASCII 路径做 C-quote**，`case` 模式拿不到原始路径 → 中文变更**永远越界 FAIL**（ISS-2026-041 同根因，修复不完整）；(b) `< <(git ...)` 进程替换吞掉 git 退出码，`set -eu` 不传播其内部失败 → git 报错时循环读到空、`changed` 为空、脚本打印 "OK exit 0"（**fail-open**）。
+- **什么问题**：(a) `git diff --name-only` / `git ls-files` 缺 `-z`，git 默认对**非 ASCII 路径做 C-quote**，`case` 模式拿不到原始路径 → 中文变更**永远越界 FAIL**（ISS-2026-10-10-写范围dot-scope静默不匹配 同根因，修复不完整）；(b) `< <(git ...)` 进程替换吞掉 git 退出码，`set -eu` 不传播其内部失败 → git 报错时循环读到空、`changed` 为空、脚本打印 "OK exit 0"（**fail-open**）。
 - **怎么改**：diff/ls-files 加 `-z`，用 `read -r -d ''` 读取；先把输出落临时文件并**检查 git 退出码**，失败即 fail-closed。
 - **前后对比**：见"变更记录 T0.2"。
 
@@ -60,7 +60,7 @@
 - **前后对比**：见"变更记录 T1.6"。
 
 ### T1.7 · method-spec "12 条硬边界" → 14（E3 修正后真实路径）
-- **为什么改**：与现行 contracts.md（编号 1–14）及 SKILL.md 不一致，已立案（REV-20261010-001 F3）未修。
+- **为什么改**：与现行 contracts.md（编号 1–14）及 SKILL.md 不一致，已立案（REV-2026-10-10-001 F3）未修。
 - **什么问题**：`docs/product/spec/method-spec.md:52` 与 `:194` 写"12 条硬边界"。
 - **怎么改**：两处"12 条"→"14 条"；reviews 归档副本属冻结历史，不动。
 - **前后对比**：见"变更记录 T1.7"。

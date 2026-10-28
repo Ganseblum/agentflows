@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-09-22-002",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows working tree at git:e32ef14 + uncommitted 0.8.5/0.8.6 candidate（0.8.6 delta：document-chain.md 表达纪律两形态规则+作用域声明、roles.md supervisor 写前自查职责、reviewer.md 两个可引用检查项+会话交付物指派路径、doc_chain.py C14+--file 单文件模式+自测 26→38）；缺陷语料 aiwork working tree（未 commit）：temp/AIPPT专家-交付漏斗与积分消耗异常分析-20260916.md + temp/会话聚合分析-近7天全专家-20260910至0916.md",
+    "base": "agentflows git:e32ef14 (0.8.4)"
+  },
+  "run": {
+    "run_id": "jargon-recurrence-086-001",
+    "started_at": "2026-09-22T12:55:00+08:00",
+    "ended_at": "2026-09-22T15:15:00+08:00",
+    "status": "complete"
+  },
+  "objective": "用户反馈 agentflow 写出的产物仍有黑话（九组自制对照词），按 improve 治理环走证据归一→归因→候选→独立评审→裁决：定位缺陷面为表达纪律作用域缺口（三件套全锚文档链，会话交付物零覆盖），声明 0.8.6 候选（两形态规则+作用域声明+C14/--file 装置）并完成评估",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "user_feedback",
+      "value": "九组黑话对照词（撞墙/积分墙、免费档/付费档、A 桶/D 桶/G 桶、零交付/零制品、白烧、跑飞、草稿泄漏、prepared 会话、Run）——用户自行做了解码表，证明读者负担已实际发生",
+      "evidence_ref": "会话原话；ISS-2026-09-22-会话交付物术语范围缺口 现象节全文转录"
+    },
+    {
+      "kind": "corpus_verification",
+      "value": "九组词七组逐字命中 aiwork temp/ 两份分析报告（09-16/09-17，均早于全部条款）；报告无自带术语表；免费档/草稿泄漏无落盘命中（按无落盘证据记录）",
+      "evidence_ref": "ISS-2026-09-22-会话交付物术语范围缺口 现象节引文；feedback-analyst 报告（agent_2bbe200f，本 episode review_roundtrips 前置输入）"
+    },
+    {
+      "kind": "attribution",
+      "value": "产物级 provenance=session-artifact（无条款可违）；方法面缺陷对象=作用域声明本身（attribution=workflow_policy ⇒ provenance=agentflow）；台账立新类 session-deliverable-jargon-scope 而非升级 expression-discipline-jargon（0.8.4 吸收在其声明作用域内未被证伪）",
+      "evidence_ref": "issues/ISS-2026-09-22-会话交付物术语范围缺口.md 备注；issues/recurrence/session-deliverable-jargon-scope.md"
+    },
+    {
+      "kind": "isolation_gate",
+      "value": "isolation.py check-diff --candidate <一次性副本> --base HEAD：blocked=[]，0.8.6 delta 未触及受保护路径",
+      "evidence_ref": "isolation.py 输出（/tmp/af-candidate-086，supervisor 执行）"
+    },
+    {
+      "kind": "deterministic_checks",
+      "value": "candidate-engineer 声称的全部检查由 supervisor 本机复现：doc_chain --self-test 38/38、unittest 155 OK、validate.py all 9 项 PASS；真实缺陷语料 --file：AIPPT 报告 C14×4（:40/:274/:280/:648，:99 括注豁免属声明容差）、姊妹报告与 Youc『IP 桶』文件零误报",
+      "evidence_ref": "RL-0.8.6-baseline/candidate.json + comparisons/RL-0.8.6.json"
+    },
+    {
+      "kind": "deliverable_fix",
+      "value": "用户点名的两份报告已按其对照表就地去黑话（AIPPT 报告约 47 处、会话聚合分析 8 处）：桶号→白话组名成对（已交付组 A/积分耗尽组 D/停在确认或异常组 G）、撞墙→积分不足被中断、零交付/零制品→没拿到成品、白烧→完全浪费、跑飞→消耗异常、prepared 会话→前端预建的空会话、Run→执行（代码/SQL/标识符保留）；数字/session_id/SQL 逐字未动、行数不变；修后两文件 --file exit 0（含 SQL 注释行残留两处补修）；免费档/草稿泄漏两词盘上无命中未处理；原文快照留存 /tmp/backup-AIPPT分析-20260916.md 与 /tmp/backup-会话聚合分析-0910至0916.md",
+      "evidence_ref": "supervisor 复跑 --file exit 0×2 + diff 对照备份 166 行变更全为同行词位替换"
+    },
+    {
+      "kind": "release",
+      "value": "0.8.5+0.8.6 单批双发获用户批准（AskUserQuestion「两个都批准并发布」）：两份 release record 落盘、五 manifest（+两处 runtime 补漏）bump 0.8.4→0.8.6、重装快照 cache/0.8.6、validate.py installed 留痕、台账 session-deliverable-jargon-scope 置 consolidated_in 0.8.6、ISS-2026-09-22-会话交付物术语范围缺口 回锚 fix_revision",
+      "evidence_ref": "releases/0.8.5.json + 0.8.6.json"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C-1",
+      "claim": "0.8.6 候选四文件改动不触及保护路径且全仓校验零回归",
+      "status": "verified",
+      "check": "isolation.py check-diff blocked=[] + validate.py all 9 PASS + unittest 155 OK",
+      "evidence_ref": "E-2"
+    },
+    {
+      "claim_id": "C-2",
+      "claim": "新机器检查 C14 对真实缺陷语料的代号裸用形态有检出且对干净语料零误报",
+      "status": "verified",
+      "check": "doc_chain.py --file 双报告 + Youc IP 桶文件（supervisor 原始输出）",
+      "evidence_ref": "E-3"
+    },
+    {
+      "claim_id": "C-3",
+      "claim": "表达纪律作用域已扩展到会话交付物并配可达装置（条款+supervisor 职责+reviewer 路径+--file 入口）",
+      "status": "verified",
+      "check": "独立 evaluator 第 2 项四文件交叉核对 pass + R1-R6 协议复现",
+      "evidence_ref": "E-4"
+    },
+    {
+      "claim_id": "C-4",
+      "claim": "0.8.6 对会话交付物措辞质量的改进效果已被度量",
+      "status": "unverified",
+      "check": "无 instrumented business task（evals/business 切片不覆盖会话交付物分析报告面）",
+      "evidence_ref": "E-5"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E-1",
+      "kind": "user_feedback",
+      "ref": "九组对照词原话（本 episode signals[0]）"
+    },
+    {
+      "evidence_id": "E-2",
+      "kind": "test",
+      "ref": "isolation blocked=[]；self-test 38/38；unittest 155 OK；validate.py all 9 PASS（supervisor 原始输出）"
+    },
+    {
+      "evidence_id": "E-3",
+      "kind": "test",
+      "ref": "--file AIPPT 报告 exit 1 C14×4；姊妹报告/Youc IP 桶 exit 0（supervisor 原始输出）"
+    },
+    {
+      "evidence_id": "E-4",
+      "kind": "review",
+      "ref": "evaluator 报告（agent_bd186183，本 episode review_roundtrips）：7 项内容核对 pass，0 阻塞 8 非阻塞；R1-R6 协议由 supervisor 补跑全符合"
+    },
+    {
+      "evidence_id": "E-5",
+      "kind": "scope_note",
+      "ref": "measurement: none (method-level change, no instrumented business task)——与 0.8.4/0.8.5 同口径"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-09-22T14:35:00+08:00",
+      "reviewer": "agentflow:evaluator（独立子代理，只读，未参与实现）",
+      "decision": "approved",
+      "finding": "7 项内容核对全 pass（条款两形态规则/作用域声明四文件交叉/文档-实现枚举一致/实现质量抽查/0.8.5 不破坏/记录互洽），0 阻塞、8 非阻塞：N1 语料未固定（R4 sha256 落账后缓解）、N2 基线语料 case 为能力缺失推定、N3 model 记 session default、N4 条款『代号+白话』记法与机器豁免的括注形态字面歧义（留后续批）、N5 C14 豁免覆盖全部表格行（已披露 floor 假阴性）、N6 模板写前提醒未点名两新形态、N7 validate.py:99 陈旧注释（受保护文件，人工门变更）、N8 roles.md 先存版本字面量",
+      "resolution": "supervisor 按 evaluator 署名协议 R1-R6 补跑全部运行时检查，全部符合期望：R1 38/38；R2 validate 9 PASS+unittest OK；R3 blocked=[]+diff 恰 5 文件；R4 AIPPT exit 1 C14×4 行号吻合、姊妹报告/Youc backend.md exit 0、语料 sha256 前缀 2cffeac5a462b0fc/b0db2e6a089c4681/6c2f3c3840767d7b 落账；R5 c15-pin exit 0、双参 exit 2；R6 installed 漂移（0.8.4 快照 vs 源树）=发布前预期态，0.8.6 需批准后重装才在宿主运行时生效。N4 留后续批，避免评审后改动已审工件"
+    },
+    {
+      "at": "2026-09-22T14:50:00+08:00",
+      "reviewer": "agentflow:release-governor（独立子代理，只读）",
+      "decision": "approved",
+      "finding": "human-gated 附发盘条件：证据满足全部 primary_metrics/guardrails、rejection_criteria 四条全未触发、measurement:none 如实、N1-N8 八项非阻塞全部可带病发布（N7 转人工门）；门序条件=同一道门须先批准 0.8.5 并先写其 release record，0.8.5 被否决则本 promote 失效；发布记录必含 digest/三语料 sha256/uncertainty/known-issues/回滚阈值/批准条目；回滚目标=0.8.4（0.8.5 未发布前）；批准后须重装+validate.py installed 留绿痕+台账回写 consolidated_in 0.8.6+bug 记录回锚 fix_revision",
+      "resolution": "promote 条件已转述用户发布门；发布记录/manifests bump/重装/台账回写待用户批准后执行"
+    }
+  ],
+  "feedback_summary": "用户九组黑话反馈驱动 0.8.6 候选并已发布：作用域扩展+两形态规则+可达装置，evaluator pass（0 阻塞/8 非阻塞）+governor promote+用户批准；存量报告已按用户对照表修复（--file exit 0）；measurement: none，预防效果待首个真实交付物对照；N4/N6 留后续批、N7 待人工门",
+  "agentflow_version": "0.8.4",
+  "host": "other",
+  "provenance": {
+    "carrier": "zcode session（agentflows 仓 + aiwork 缺陷语料只读核验）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-22T12:55:00+08:00"
+}

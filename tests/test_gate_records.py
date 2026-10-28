@@ -30,7 +30,7 @@ class TestRecordContractTests(unittest.TestCase):
     """Test records under features/<batch>/testing/ (0.7.0): plan registry contract and run invariants."""
 
     PLAN_MD = """---
-test_plan_id: TP-20260917-001
+test_plan_id: TP-2026-09-17-001
 title: 登录用例
 project: demo-webapp
 feature: feature-login
@@ -69,10 +69,10 @@ recorded_at: "2026-09-17T15:00:00Z"
 """
 
     RUN_MD = """---
-test_run_id: TR-20260917-001
+test_run_id: TR-2026-09-17-001
 title: 首轮执行
 project: demo-webapp
-test_plan_id: TP-20260917-001
+test_plan_id: TP-2026-09-17-001
 test_plan_version: "1"
 target_revision: 9f2c1a7
 environment: staging
@@ -165,7 +165,7 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def test_run_with_summary_mismatch_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(temporary, plans, p="3")
             self.assertTrue(any("summary_pass" in message for message in self._messages(errors)))
 
@@ -176,7 +176,7 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def test_fail_row_requires_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(
                 temporary, plans, row2="| TC-LOGIN-002 | fail | — | 提示缺失 |", p="1", f="1", decision="partial"
             )
@@ -184,19 +184,19 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def test_result_row_outside_the_plan_registry_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(temporary, plans, row2="| TC-OTHER-009 | pass | — | ok |")
             self.assertTrue(any("not in plan" in message for message in self._messages(errors)))
 
     def test_current_version_run_must_account_for_every_case(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(temporary, plans, row2="", p="1")
             self.assertTrue(any("does not account for cases" in message for message in self._messages(errors)))
 
     def test_decision_pass_with_failures_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            plans = {"TP-20260917-001": self._plan_entry(temporary)}
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(
                 temporary, plans, row2="| TC-LOGIN-002 | fail | 见证据块 1 | 提示缺失 |", p="1", f="1"
             )
@@ -213,7 +213,7 @@ recorded_at: "2026-09-17T16:00:00Z"
             )
             errors, _ = validate.validate_test_plan_markdown(plan_path, plan_path.relative_to(temporary), {})
             self.assertIn(
-                "filename must be plan-2026-09-17-001.md to match test_plan_id 'TP-20260917-001'",
+                "filename must be plan-2026-09-17-001.md to match test_plan_id 'TP-2026-09-17-001'",
                 self._messages(errors),
             )
             drifted_plan = self._write(

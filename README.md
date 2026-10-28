@@ -38,7 +38,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 ## 当前成熟度
 
-版本只在五份 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->14<!-- /count -->个角色档案、六份记录契约 schema、Codex / Claude Code / ZCode 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
+版本只在 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->14<!-- /count -->个角色档案、六份记录契约 schema、Codex / Claude Code / ZCode / Qoder 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
 
 两条别处没有的边界说明：
 
@@ -57,7 +57,7 @@ python3 tools/lab/isolation.py check-diff \
 ```
 
 `validate.py protected` 防止清单被悄悄删减。`validate.py all` 运行全套检查——schema、
-examples、记录产物、受保护清单、五份 manifest 一致性（含 `packaging/runtime` 生成树新鲜度）、文档面（含版本散文守卫与断链 /
+examples、记录产物、受保护清单、manifest 一致性（含 `packaging/runtime` 生成树新鲜度）、文档面（含版本散文守卫与断链 /
 退役路径扫描）、`tests/` 回归测试、文档链 linter 的判别自测、文档链 linter 对活文档面
 （`docs/product/`、`docs/features/`）的扫描、追溯类检查 decision_gate
 （C15–C18 与 C22–C23，标记启用），以及 lint（ruff + mypy，依赖
@@ -106,8 +106,8 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
 粗线条，按面记：
 
 - **交付给宿主的面**：`agents/`（角色档案）、`skills/`（`agentflow` 开发工作流与
-  `improve` 自迭代环），以及五份 manifest（`plugin.json`、`marketplace.json`、
-  `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`）。
+  `improve` 自迭代环），以及各 manifest（`plugin.json`、`marketplace.json`、
+  `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`）。
 - **契约与门**：`schemas/` 是记录契约；`tools/lab/` 是确定性的检查与工具——
   `validate.py` 薄入口 + `gate/` 检查模块包（全套检查）、`doc_chain.py`（文档链 linter）、
   `isolation.py`（候选禁区检查）、`artifact_digest.py`（产物摘要）、`counts.py`（文档计数
@@ -128,7 +128,7 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) 了解已观察到的宿主约束；
 每个版本为何变更见 [`CHANGELOG.md`](CHANGELOG.md) 各版本条目。
 
-源码检出的版本活在 manifest 中（`python3 tools/lab/validate.py manifests` 断言五份一致，
+源码检出的版本活在 manifest 中（`python3 tools/lab/validate.py manifests` 断言全部一致，
 并顺带核对 `packaging/runtime` 生成树与源面逐字节一致）。声明了
 版本本身并不证明某个宿主正在运行该版本：ZCode 加载安装快照，Codex 可能加载单独的插件缓存。
 dogfood 之前，用 `python3 tools/lab/validate.py installed

@@ -105,7 +105,7 @@
 | G1-AC-04、G1-AC-05 | TC-TRACE-04、TC-TRACE-05 | ☑ 已覆盖（用例 92 与 97 钉住「未打标不误伤」；`doc_chain.py --repo .` → `PASS decision-gate`；`docs/features/feature-2026-09-19-产品线完善` 目录模式 PASS） |
 | G2-AC-01、G2-AC-02 | TC-EVID-01、TC-EVID-02 | ☑ 已覆盖（用例 93/94 + `tests/test_lab_contracts.py` 的 `test_commit_sha_counts_only_when_git_can_resolve_it`） |
 | G2-AC-03、G2-AC-04 | TC-EVID-03、TC-EVID-04 | ☑ 已覆盖（无 git 时提交号判不可核；用例 95 与 `test_rows_that_are_not_done_carry_no_evidence_duty`） |
-| G3-AC-01 至 G3-AC-04 | TC-LEDS-01、TC-LEDS-02 | ☑ 已覆盖（`examples/invalid/bug-record-disposition-unknown.md` 被拒、`examples/issues/ISS-2026-908-开放记录显式延后归属.md` 通过；拍板口八列化后 `decision_gate` 对其零 finding） |
+| G3-AC-01 至 G3-AC-04 | TC-LEDS-01、TC-LEDS-02 | ☑ 已覆盖（`examples/invalid/bug-record-disposition-unknown.md` 被拒、`examples/issues/ISS-2026-10-23-开放记录显式延后归属.md` 通过；拍板口八列化后 `decision_gate` 对其零 finding） |
 | G4-AC-01 至 G4-AC-03 | TC-TEXT-01 | ☑ 已覆盖（八条缺陷逐项闭合，证据见 `plan/PLAN-TRACE-001.md` T09 行；`validate.py docs` PASS） |
 | G5-AC-01 至 G5-AC-03 | TC-REL-01、TC-REL-02 | ◐ 进行中（TC-REL-01 报告落盘与 TC-REL-02 版本/快照比对在 T10、T12 收口） |
 

@@ -28,6 +28,7 @@ RUNTIME_DIRECTORIES = (
     ".zcode-plugin",
     ".claude-plugin",
     ".codex-plugin",
+    ".qoder-plugin",
 )
 # 运行期检查器随插件交付（2026-10-26，安装面断裂修复）：SKILL 的「首次接入」要求目标仓运行
 # doc_chain.py，而此前 tools/ 被排除在运行时之外——装完插件的用户照抄命令只会得到

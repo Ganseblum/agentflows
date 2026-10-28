@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-09-19-004",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "working tree on ceb639f56c940939c36c745e739c237167048159 (packaging/runtime marketplace source)",
+    "base": "ceb639f56c940939c36c745e739c237167048159"
+  },
+  "run": {
+    "run_id": "product-packaging-001",
+    "started_at": "2026-09-19T12:55:00Z",
+    "ended_at": "2026-09-19T13:00:00Z",
+    "status": "complete"
+  },
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "marketplace.json plugins[0].source is ./packaging/runtime, not the repository root",
+      "status": "verified",
+      "check": "python3.12 -c \"import json; print(json.load(open('marketplace.json'))['plugins'][0]['source'])\"",
+      "evidence_ref": "./packaging/runtime"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "packaging/build_runtime.py writes a tree without records/tests/tools/docs/evals/mock/examples/.git",
+      "status": "verified",
+      "check": "python3.12 packaging/build_runtime.py; listing of packaging/runtime",
+      "evidence_ref": "43 files; forbidden_present []; copied agents, skills, schemas, host manifests, protected-paths.txt"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "A newly installed ZCode snapshot is slim",
+      "status": "unverified",
+      "check": "ls of a cache directory created after regenerate + marketplace refresh + reinstall",
+      "evidence_ref": "not run; Z10 still describes the 2026-09-18 whole-tree 0.7.5 cache"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "command",
+      "ref": "python3.12 packaging/build_runtime.py exit 0"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "command",
+      "ref": "python3.12 tools/lab/validate.py all 9xPASS"
+    }
+  ],
+  "objective": "把 ZCode 安装源从整仓快照改为生成的运行时目录，不碰门工具，不声称现有缓存已经变瘦",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "packaging",
+      "value": "generated copy at packaging/runtime; gitignored; source of truth remains repo root",
+      "evidence_ref": "marketplace.json source; .gitignore packaging/runtime/"
+    },
+    {
+      "kind": "review_isolation",
+      "value": "role separation via host Task subagent; same product/model family",
+      "evidence_ref": "review_roundtrips"
+    }
+  ],
+  "feedback_summary": "用户继续。U-01 仍开，故实施 T07 打包：marketplace 指向 packaging/runtime。独立评审 approved。评审后补了禁止把目的地写成 agents/ 或 packaging/ 本身。未重装、未提交、未声称现有快照已瘦。",
+  "agentflow_version": "0.8.1",
+  "host": "other",
+  "provenance": {
+    "carrier": "cursor-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-19T13:00:00Z",
+  "review_roundtrips": [
+    {
+      "at": "2026-09-19T12:58:00Z",
+      "reviewer": "independent-task:packaging",
+      "decision": "approved",
+      "finding": "source pointer, generated copy, gitignore split, and Z10 honesty match intent. Residual: --destination could rmtree agents/; generated tree is gitignored; slim cache unverified until reinstall.",
+      "resolution": "accepted; supervisor added destination guards refusing repo root, packaging/, and source trees (agents/ refused with exit 1). Slim-cache claim remains unverified.",
+      "evidence_ref": "packaging/build_runtime.py assert_safe_destination; validate.py all PASS"
+    }
+  ]
+}

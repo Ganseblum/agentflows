@@ -1,9 +1,9 @@
 # Agentflow 方法行为规格（spec）
 
 > 适用阶段：`spec/`。前置依赖：`proposal/proposal.md`（原文不改）、`../README.md`。
-> 文档状态：需求评审已通过（REV-20261019-003，2026-10-19）；条目变更仍走版本批 + 独立评审。
+> 文档状态：需求评审已通过（REV-2026-10-19-003，2026-10-19）；条目变更仍走版本批 + 独立评审。
 > 冻结语义：本文件的条目即方法的行为承诺。条目变更 = 方法变更，走版本批（CHANGELOG）+
-> 独立评审；不悄悄改。当前版本以五份 manifest 与 `CHANGELOG.md` 为准，本文不复述版本号。
+> 独立评审；不悄悄改。当前版本以 manifest 与 `CHANGELOG.md` 为准，本文不复述版本号。
 
 ## 0. Proposal 反审 checklist
 
@@ -117,13 +117,13 @@
 ### S9 打包与安装
 
 - **陈述**：marketplace 源指向 `packaging/build_runtime.py` 生成的瘦快照（含 agents /
-  skills / schemas / 五份 manifest / 宿主包装 / protected-paths；排除 `docs/`、`episodes/`、
-  `reviews/` 与 tests / tools / evals / examples / packaging/CHANGELOG）；五份 manifest 是唯一
+  skills / schemas / manifest / 宿主包装 / protected-paths；排除 `docs/`、`episodes/`、
+  `reviews/` 与 tests / tools / evals / examples / packaging/CHANGELOG）；manifest 是唯一
   版本事实源；源码编辑在重装前不改变宿主行为。
 - **验收口径**：生成目录存在且组件齐全，与源面逐字节一致（`validate.py manifests` 门内
   新鲜度检查）；宿主安装面由 `validate.py installed` 在重装后核实；克隆后先跑构建脚本
   （gitignore 产物）。
-- **标尺**：`validate.py manifests`（名称/版本五处一致 + runtime 与源面新鲜度）；`validate.py
+- **标尺**：`validate.py manifests`（名称/版本全部一致 + runtime 与源面新鲜度）；`validate.py
   installed`（宿主安装面，重装后适用）。
 - **状态**：生效（生成树与源逐字节一致，`packaging/runtime` 已纳入版本控制）；宿主安装快照
   见 `docs/releases/pending-test.md` 第 5 行——0.15.0 快照曾于 2026-10-25 复核 PASS，但仓内已

@@ -53,13 +53,13 @@
 |---|---|---|---|---|---|---|
 | G01 | **P1** | CHANGELOG 的 lint SKIP 声称在 `validate.py` 本身不成立，两个口径并存 | `CHANGELOG.md:7,:42`；`validate.py:250-282` | 选定 (a) 让 validate.py 也 SKIP 或 (b) 改 CHANGELOG 措辞；均需人工评审 | 已修 | CHANGELOG.md:86 逐字勘误（方案 b）；validate.py 保持 fail-closed |
 | G02 | **P1** | `docchain/checks.py:1142` 对不可读文件 fail-open：`chmod 000` 使 8 findings 变 PASS | `checks.py:1141-1142` | 改为 append finding（与 `doc_chain_live` 同构）+ chmod 000 夹具 | 已修 | tools/lab/docchain/checks.py:1314 改为 append finding，注释引 G02 |
-| G03 | **P1** | `templates/feature/plan/execution.md` 照抄产出必被本仓门拒 | `execution.md:14` vs `gate/plan.py` 的 `PLAN_REQUIRED_HEADINGS` | 模板改混合形态标题，或 plan 门接受编号族；补「抄模板→跑门→PASS」夹具 | 已修 | ISS-2026-063 verified：改模板标题不放宽检查器 + 新增照抄模板回归 |
+| G03 | **P1** | `templates/feature/plan/execution.md` 照抄产出必被本仓门拒 | `execution.md:14` vs `gate/plan.py` 的 `PLAN_REQUIRED_HEADINGS` | 模板改混合形态标题，或 plan 门接受编号族；补「抄模板→跑门→PASS」夹具 | 已修 | ISS-2026-10-27-计划模板验证标题不匹配 verified：改模板标题不放宽检查器 + 新增照抄模板回归 |
 | G04 | **P1** | `test-records.md` 与 `test-executor.md` 对「能否编辑已写执行记录」给出矛盾指令 | 两处逐字相反 | 统一为「executor 不编辑自己的记录」；`test-records.md` 改为指针引用角色档案 | 已修 | test-records.md:36-38 改为指针引用角色档案，与 test-executor 同向 |
 | G05 | **P1** | C23 对「证据列无载体」判绿 | `PLAN-PRODUCT-001` T07 证据列无四类载体仍 PASS | `evidence_carriers` 加反向判据；T07 行补载体或 `N/A: 理由` | 已修 | C23 反向判据证据列空/无载体即红（docchain/checks.py:413,1077） |
 | G06 | **P1** | 门 6「链路收口通读」是死条款：文本定义 + 四批次/六计划/43 episode 零命中 + 无机器判据 | `document-chain.md:232-250`、`roles.md:24-26` | 加记录载体 + opt-in C25（打标即承诺）；属门变更需人工评审 | 已修 | C25 链路收口标记落地（docchain/checks.py:108）+ 定义处 document-chain.md:286 |
 | G07 | **P1** | canary/automatic 只进不出，且 `automatic` 在 `measurement: none` 下结构上不可能通过 | `improve/SKILL.md` 步骤 13 + `release-record.schema.json` 的 rollout.mode | 三处载体各加「当前不可达」标注；构造 automatic 记录实证被拒 | 已修 | improve/SKILL.md 两处标注 canary/automatic 当前不可达 |
 | G08 | **P1** | 写范围执法器不在任何自动路径上：非注释调用点 = 1 且是「保护它自己」 | `check-write-scope.sh` | 接入 pre-push 或 CI（需评估误报面），或显式登记为已声明未缓释 | 已登记待拍板 | PENDING-DECISIONS 第 11 条：登记为已知人工步骤，不自动接入 |
-| G09 | **P1** | `verified` 的 `closure_criteria` 行号会过期且无门看守 | ISS-2026-030 声称 284-286，实为 387-389 | 记录侧改「条款名 + 路径」；门侧加弱校验或登记为 C17 扩展 | 已修 | ISS-2026-030 closure_criteria 改为条款名+路径，不再引行号 |
+| G09 | **P1** | `verified` 的 `closure_criteria` 行号会过期且无门看守 | ISS-2026-09-20-先写契约后核实平台约定 声称 284-286，实为 387-389 | 记录侧改「条款名 + 路径」；门侧加弱校验或登记为 C17 扩展 | 已修 | ISS-2026-09-20-先写契约后核实平台约定 closure_criteria 改为条款名+路径，不再引行号 |
 | G10 | **P1** | 两份改进契约零真实记录被编译；改进环四角色边裁撤后零走通 | 候选/发布记录文件数 = 0 | `examples/` 下为正反例各放一对并登记进 `INVALID_EXAMPLES`；todo.md 含现状行 | 已修 | 4bb29dc：examples/ 补候选与发布记录正反例，门钉 none⇒not-better |
 | G11 | **P1** | `.workbuddy/` 是未登记的活目录：gitignore 但盘上多份 md，活文档零提及 | `.gitignore:14` | 删除 / 冻结并登记 / 标注为非权威，三选一需用户确认 | 已修 | index.md:35 登记 .workbuddy 为非权威草料区 |
 | G12 | **P2** | 自测计数可向上谎报：摘要改 `200/200` 或硬编码 `110/110`+`ok=True` 均 PASS | `gate/checks.py:135-164` | 从输出结构（逐条结果行数）交叉验证 N | 已修 | gate/checks.py:183-194 逐案 PASS/FAIL 行数交叉验证，注释引 G12 |
@@ -249,15 +249,15 @@
 **亮点（证据）**
 - 61 条 ISS：`verified` 40（65.6%）、`open` 17、`fixed-pending-review` 4。40 条 verified 中 `reviewer`/`regression_status`/`closure_criteria` **缺失均为 0**——不是只改状态字。
 - 47 轮独立评审中 25 轮 `changes_requested`（53.2%），每轮带逐字 finding 与 resolution。
-- 7 份 `partial` 负向 episode 在场，其中 `EP-20261018-001` 有一条 claim 主动标 `failed`，否证自己的合并提交（「提交信息称只并入记录类内容，实际 14 个文件中 6 个不是记录类」）。
+- 7 份 `partial` 负向 episode 在场，其中 `EP-2026-10-18-001` 有一条 claim 主动标 `failed`，否证自己的合并提交（「提交信息称只并入记录类内容，实际 14 个文件中 6 个不是记录类」）。
 - 变异测试仓内载体可核：`mutation-results-2026-10-23.json` 58 项 = 51 杀死 / 7 存活，与计划行声称逐项对上。
-- 门红后修复链完整：`EP-20261023-001` 第二轮发现「五处载体把十一项全 PASS 写成事实依据，而冻结提交上 `decision_gate` 实为红」→ 修 → 复绿。
+- 门红后修复链完整：`EP-2026-10-23-001` 第二轮发现「五处载体把十一项全 PASS 写成事实依据，而冻结提交上 `decision_gate` 实为红」→ 修 → 复绿。
 
 **硬伤（证据 + 触发条件）**
 - **P2 · 改进环疗效证据为零**：0 候选 0 发布记录，其发布门的运行时正确性（含 schema `allOf`）只有静态校验背书。与 G10 同一事实，此处从「疗效」角度计分——D9 已就「契约无消费者」扣过分，本维扣的是「方法产出不可考」。
 - **P2 · 反馈闭环最后一环不可见**：35 份 `user_feedback` episode，但 `recurrence` 9 本台账档位是 `recurred` ×4 / `single` ×5，没有一本降到 single 后再未复发——「记录→修复→不再犯」在数据上不可见。
 - **P2 · 批次完成率换分母**：`PLAN-PRODUCT-001` README 写 7/12，看板实为 14 行（☑7/◐1/☐1/—5）；`PLAN-LOOP-SMOKE-001` 写 5/9，看板 10 行。
-- **P1 · `verified` 的 `closure_criteria` 行号会过期且无门看守**：抽核 ISS-2026-030，其声称 `document-chain.md:284-286 契约先核实条款`，而该条款现已漂到 `387-389`（284-286 现在是一条代码围栏收尾）。事实为真、行号过期，属 C17 类核验过期，但 ISS 记录的 `closure_criteria` 不在 C17 检查范围内。
+- **P1 · `verified` 的 `closure_criteria` 行号会过期且无门看守**：抽核 ISS-2026-09-20-先写契约后核实平台约定，其声称 `document-chain.md:284-286 契约先核实条款`，而该条款现已漂到 `387-389`（284-286 现在是一条代码围栏收尾）。事实为真、行号过期，属 C17 类核验过期，但 ISS 记录的 `closure_criteria` 不在 C17 检查范围内。
 
 ---
 
@@ -291,7 +291,7 @@
 5. `.workbuddy/` 下历史复盘所指事项今日是否仍成立——未逐字比对两份文本全部差异。
 6. `publish.sh`/`upgrade-*.sh` 非 dry-run 路径的真实行为——未实跑，CHANGELOG 对其端到端实测的声称本轮未复现。
 7. 宿主是否真的按 `disallowedTools` 强制拦截、`maxTurns` 是否生效——依据是 `host-platform-facts.md` 的已观察记录，非本轮现场实验。
-8. `PLAN-PRODUCT-001` 其余 `verified` 记录的 `closure_criteria` 是否同样行号漂移——本轮只抽核了 ISS-2026-030 一条。
+8. `PLAN-PRODUCT-001` 其余 `verified` 记录的 `closure_criteria` 是否同样行号漂移——本轮只抽核了 ISS-2026-09-20-先写契约后核实平台约定 一条。
 9. `MIN_UNIT_TEST_COUNT = 20` 的原始选取理由——注释只写「far above a trivial suite」，未记载权衡过程。
 
 ---
@@ -407,7 +407,7 @@ OK：标记共 4 处，全部与计算值一致。
 |---|---|---|
 | `doc_chain.py --self-test` | 110/110 | ✅ `110/110 self-test cases pass` |
 | `.workbuddy/` 未登记 | 活文档零提及 | ✅ index/README/AGENTS 零命中；`.gitignore:14` 命中 |
-| 门 6 链路收口通读零发生 | 四批次/六计划/43 episode 零命中 | ✅ 全仓 7 处命中中仅 2 处为定义处，其余为 ISS-2026-035（另一问题）、`.workbuddy` 历史、生成树副本 |
+| 门 6 链路收口通读零发生 | 四批次/六计划/43 episode 零命中 | ✅ 全仓 7 处命中中仅 2 处为定义处，其余为 ISS-2026-09-21-文档链陈旧前向引用无收口（另一问题）、`.workbuddy` 历史、生成树副本 |
 | T09 证据列双基准 | 仓根路径不在盘 | ✅ `reviews/review-2026-10-19-001.md` 仓根不存在，批次内存在 |
 | trend.jsonl 陈旧 | 末行 unittest_count 89，实跑 92 | ✅ 逐字一致 |
 | `checks.py:1142` fail-open | `except OSError: continue` | ✅ 逐字在 `:1141-1142` |
@@ -636,9 +636,9 @@ OK：标记共 4 处，全部与计算值一致。
 |---|---|---|---|
 | issue 走完全流程且字段真实 | 已核实 | 61 条中 40 verified；四类必填字段缺失均为 0 | 0 |
 | 独立评审真实轮次密集 | 已核实 | 47 轮中 25 轮 changes_requested，每轮带逐字 finding 与 resolution | 0 |
-| 负向结果被真实收录 | 已核实 | 7 份 partial；EP-20261018-001 一条 claim 主动标 failed 否证自己的合并提交 | 0 |
-| 门红后修复链完整 | 已核实 | EP-20261023-001 + PLAN-TRACE-001 T03 双向证据；变异 58 项目仓 JSON 与计划行对上 | 0 |
-| 疗效可全考 | 已核实（有硬伤） | **G10** 改进环 0 候选；**G09** closure_criteria 行号过期无门看守（ISS-2026-030 声称 284-286 实为 387-389）；**G18** 完成率换分母；反馈闭环最后一环不可见 | −3 |
+| 负向结果被真实收录 | 已核实 | 7 份 partial；EP-2026-10-18-001 一条 claim 主动标 failed 否证自己的合并提交 | 0 |
+| 门红后修复链完整 | 已核实 | EP-2026-10-23-001 + PLAN-TRACE-001 T03 双向证据；变异 58 项目仓 JSON 与计划行对上 | 0 |
+| 疗效可全考 | 已核实（有硬伤） | **G10** 改进环 0 候选；**G09** closure_criteria 行号过期无门看守（ISS-2026-09-20-先写契约后核实平台约定 声称 284-286 实为 387-389）；**G18** 完成率换分母；反馈闭环最后一环不可见 | −3 |
 
 ### D.12 竞品比对
 

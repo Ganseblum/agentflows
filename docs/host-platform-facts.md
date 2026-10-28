@@ -2,7 +2,7 @@
 
 下表每一行都在本机直接观察得到，除非其证据标记为 `doc`；`doc` 行来自宿主官方指南，尚未经运行检验。每行都标明其证据与适用范围。不得把一条事实推广到超出其适用范围。重新验证请重跑该行指名的检查，而不是编辑本文件。
 
-最后验证：2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
+最后验证：2026-10-28（Q1–Q5 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI `1.1.80`）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
 ## ZCode（桌面版）
 
@@ -57,6 +57,16 @@
 | W2 | agentflow 插件未在该宿主上安装：未观察到角色加载、技能触发或 frontmatter 工具白名单被宿主强制执行的任何行为。 | 未实际触发——该宿主无插件安装通道，本次只做门与工具层面的执行 | WorkBuddy | 不得把「门在本会话跑绿」外推为「角色在该宿主上按契约运行」。角色面、技能触发与工具白名单的强制执行仍待 dogfood；README 的 dogfood 前置条件（先跑 `validate.py installed` 并记录结果）不变。 |
 
 | X3 | Codex 的插件安装面是**本地目录 source**，不是远端 marketplace：`~/.agents/plugins/marketplace.json` 声明 `source: {source: "local", path: "./plugins/agentflow"}`（相对 `~`），而 `~/plugins/agentflow` 是指向本仓工作树的符号链接。`codex plugin add agentflow@personal` 把该目录快照进 `~/.codex/plugins/cache/personal/agentflow/<version>/`，**内容取自工作树当时的样貌，含未提交改动**。 | Observed 2026-10-26：`codex plugin list` 显示 `agentflow@personal … 0.17.3 … /Users/lihanghang1/plugins/agentflow`；`readlink` 指向本仓；重跑 `codex plugin add` 后缓存内 `plugin.json`、`CHANGELOG.md`、`tools/lab/docchain/cli.py` 与工作树逐字节一致；`codex plugin marketplace upgrade --help` 自述只刷新 "Git marketplace snapshots"，对 local 源不适用。 | Codex CLI 0.161.0，本机 personal 市场 | 更新 Codex 侧不需要推送、不需要刷市场，只需 `codex plugin add`（本仓脚本 `skills/agentflow/scripts/upgrade-codex.sh` 封装：先跑门再安装再逐文件比对）。代价是「装进去的」可能与「提交过的」不同——脏树会被一起装上，所以发版前应先提交。与 ZCode 的差异见 Z12。 |
+
+## Qoder（Desktop，macOS）
+
+| # | 事实 | 证据 | 适用范围 | 后果 |
+| --- | --- | --- | --- | --- |
+| Q1 | agentflow 插件可以从本地目录安装到用户作用域，注册为 `agentflow@local`（enabled=true），并从已安装快照加载 2 个 skill 与 14 个角色。 | Observed 2026-10-28，Qoder Desktop `0.4.11`，Qoder CLI `1.1.80`（临时 npm 前缀运行）：`qoder plugins validate packaging/runtime` → `Plugin "agentflow" is valid and ready to install.`；`qoder plugins install packaging/runtime --scope user` → `Plugin "agentflow@local" installed successfully.`；`qoder plugins list --json` → `id=agentflow@local, version=0.21.0, scope=user, enabled=true, skills=2, agents=14`；`~/.qoder/settings.json` 的 `enabledPlugins` 含 `agentflow@local: true`；缓存位于 `~/.qoder/plugins/cache/local/agentflow/0.21.0`。 | Qoder Desktop 0.4.11，用户作用域，本地目录安装 | 源编辑只有重建 `packaging/runtime` 并重新安装后才进入宿主；`validate.py installed --path <安装根>` 可对照快照。 |
+| Q2 | manifest 的 `agents` 字段要求 `.md` **文件**路径，不能指向目录；若不声明，Qoder 会把 `agents/` 下每个 `.md` 都当角色，包括无 frontmatter 的 `README.md`，导致校验失败。 | Observed：`"agents": "./agents/"` → `[plugin.manifest.schema_invalid] .qoder-plugin/plugin.json: Path must end with .md`；删掉该字段后 → `[plugin.agent.invalid] agents/README.md: ... Missing mandatory YAML frontmatter`；改为显式列出 14 个角色文件后 → `Components loaded successfully: skills (2), agents (14)`。 | Qoder CLI 1.1.80 插件校验器 | 清单显式列 14 个角色文件；不要给目录索引 README 加 frontmatter 来掩盖，否则它会作为一个角色被注册。 |
+| Q3 | 插件角色在新会话中注册为 `agentflow:<role>`，全部 enabled/ready；实际派发成功。 | Observed：`list_agents` 返回 14 条 `agent-definition:["plugin","agentflow@local","<role>"]`，均 `enabled=true, ready=true`；新建会话 `fdced5ad-c7fa-59fd-aa15-cb64b3ffccc0` 使用 `reviewer`，该角色用 `Glob` + `Read` 读取 `AGENTS.md`，回传首行 `# Agentflow 仓库规则` 与 `dispatch-ok`。 | Qoder Desktop 0.4.11，新会话，用户作用域插件 | Qoder 可以承载 14 角色面；角色调用名是 `agentflow:<role>`，插件内 agent id 是 `agent-definition:["plugin","agentflow@local","<role>"]`。 |
+| Q4 | 角色 frontmatter 的 `tools` / `disallowedTools` 在 Qoder 是否被强制执行未验证；只观察到 `reviewer` 使用 Glob/Read，未尝试其被禁的 Bash/Write/Edit。 | 未实际触发禁用工具；一次只读派发完成后仅见 Glob/Read 调用记录。 | Qoder Desktop 0.4.11，插件角色 | 不得把提示词里的工具纪律当作宿主强制；需要强制的角色边界仍按提示词与评审门执行。 |
+| Q5 | 桌面端设置工具 `install_extension` 可以安装本地 `.zip`，但校验失败只返回通用 `EXTENSION_PLUGIN_VALIDATION_FAILED`，不指出具体字段；同一包用 CLI `plugins validate` 才得到字段级错误。 | Observed 2026-10-28：用 `"agents": "./agents/"` 的包调 `mcp__qoder-settings__install_extension` → 通用错误码；`qoder plugins validate` → `[plugin.manifest.schema_invalid] .qoder-plugin/plugin.json: Path must end with .md`；修正为显式 `.md` 列表后，同一 zip 入口返回 `{"kind":"qoder.extensionZip.installed","status":"complete","pluginId":"agentflow@local","enabled":true}`。 | Qoder Desktop 0.4.11，设置工具 | 校验失败先用 `qoder plugins validate <目录>` 拿字段级原因；zip 与本地目录两条安装入口都可用。 |
 
 ## 宿主全局指令文件
 

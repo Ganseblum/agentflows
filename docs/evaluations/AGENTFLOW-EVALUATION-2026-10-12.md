@@ -60,7 +60,7 @@
   - `agent-roles.md` 与角色文件 / SKILL 重述同一内容。
   - 活跃面 102 个相对链接 **0 断链**（机器门有效，赞），但**内联死引用 21 处**（CHANGELOG 10 + iteration-log 10 + 其他），含 `docs/audit-2026-09-18-followups.md` 这类已迁移路径（subagent F 证据）。
 - **已立案却未修的自相矛盾**：
-  - `method-spec.md:52` 称"12 条硬边界"，实际 contracts.md 编号 1–14、SKILL.md:61 写"硬边界 14"（REV-20261010-001 F3 已立案未修）。
+  - `method-spec.md:52` 称"12 条硬边界"，实际 contracts.md 编号 1–14、SKILL.md:61 写"硬边界 14"（REV-2026-10-10-001 F3 已立案未修）。
   - `proposal.md:37` 称 U-01"live 对照进行中"，同文件:92 称"无可信 claude 族端点……无法执行"，而 `PLAN-LOOP-SMOKE-001.md:53` 与 host-platform-facts C12 已逐字记录"U-01 已关闭（2026-10-10 3/3 通过）"（已立案未修）。
 - **记录面的系统性脱节**：台账 `occurrences`、episode `evidence_ref`、计划"未决项"三处尤为突出（详见第六节）。
 
@@ -76,7 +76,7 @@
 3. `isolation.py:124` `f"{base}^{{commit}}"`：base 以 `-` 开头（如 `--help`）时被 git 当选项 → 静默 `PASS`（fail-open 参数注入，无 shell 注入风险）。
 4. `eval_runner.py:405-412` adapter 子进程**无 timeout**：挂起的 adapter 永久挂死门。
 5. `build_runtime.py:108-112` `assert_safe_destination` 只拒 ROOT/packaging/源树，**不拒包含仓库的目录**：`--destination ..` 会 `rmtree` 掉仓库根全部内容——破坏性默认值。
-6. `check-write-scope.sh:44` 无 `-z`：git 对非 ASCII 路径默认 C-quote（已实测复现 `features/feature-2026-10-09-\345\...`），中文 scope 永配 → **误 FAIL**，重演 ISS-2026-041 同根因；且进程替换吞掉 git 退出码，失败时 "OK exit 0"（fail-open）。
+6. `check-write-scope.sh:44` 无 `-z`：git 对非 ASCII 路径默认 C-quote（已实测复现 `features/feature-2026-10-09-\345\...`），中文 scope 永配 → **误 FAIL**，重演 ISS-2026-10-10-写范围dot-scope静默不匹配 同根因；且进程替换吞掉 git 退出码，失败时 "OK exit 0"（fail-open）。
 7. **手写 schema 子集静默失明**：`validate_schemas`(:1437) 不限定词汇表，用了未实现关键字的 schema 被静默不校验（缺 `exclusiveMinimum/multipleOf/patternProperties/unevaluatedProperties`），当前 schema 恰在子集内故潜伏。
 8. `host_adapter.py:167` `snapshot_diff_digest` 未传 `--no-renames/--no-textconv`，摘要依赖操作者 git config，跨机器不确定。
 9. `seed_grader.py:388-390` main 调 `grade_case` 不传 `target_docs` → off_target 与每文档 unmatched 上限在文档化路径上全部失效。
@@ -91,7 +91,7 @@
 ### 角色分类（14 角）
 - 严谨面：六个只读角色 `tools` 白名单完全同构（R/G/G + 禁 Bash/Write/Edit），`disallowedTools` 与正文互相印证；三只读角色不合并（investigator/analyst/TD/reviewer 输入契约异质）有文档依据（roles.md:33）。
 - **问题**：
-  - `agents/bug-recorder.md:21` frontmatter 清单**漏列** schema 必填字段（`verified` 需 reviewer/review_decision/regression_status/closure_criteria；`rejected` 需 rejection_reason；正文还需 `## 变更记录` 节）。照此产出必被 schema 拒——而实证记录（ISS-2026-043 等）确实带这些字段，说明契约真实存在、recorder 指令面却漏列。
+  - `agents/bug-recorder.md:21` frontmatter 清单**漏列** schema 必填字段（`verified` 需 reviewer/review_decision/regression_status/closure_criteria；`rejected` 需 rejection_reason；正文还需 `## 变更记录` 节）。照此产出必被 schema 拒——而实证记录（ISS-2026-10-10-文档链对实施请求不触发 等）确实带这些字段，说明契约真实存在、recorder 指令面却漏列。
   - `agents/evaluator.md:3` description 称"**compares** with frozen baseline **on predeclared cases**"，正文却是不跑命令、只读 runner 产出的"对照结果记录"。路由者会被描述误导。
   - `agents/bug-fixer.md:26` 与 `candidate-engineer.md:39-41` partial 规则复制粘贴两遍，稀释"绝不报完成"的单一权威。
   - `roles.md:14/91` 裸用"专家"一词无定义；test-executor 的 Edit 禁用语义未进入路由表。
@@ -113,7 +113,7 @@
 
 ### 记录面是"活的"还是"仪式的"？
 - 45 份 issue：仅 **15 份**走完 `open→fixed-pending-review→verified` 全流程（001-009、026-029、043-045，closure_criteria 带可执行命令）；**16 份** open 后未动（010-025，单次外部评审 findings，无 updated_at）；**0 份** rejected，且 `归档/` 目录不存在（归档规则空转）。
-- 29 个 episode：`review_roundtrips` 16 个有实质内容（EP-20260921-001 六轮逐条 finding+resolution 可审计），**13 个为 `[]`**；`evidence_ref` 大量是叙述句/`/tmp` 易失路径/个人绝对路径；**最新 7 个 EP（10-08~10-10）的 signals.evidence_ref 大面积缺席**（5/5、4/4）——证据密度随时间递减。
+- 29 个 episode：`review_roundtrips` 16 个有实质内容（EP-2026-09-21-001 六轮逐条 finding+resolution 可审计），**13 个为 `[]`**；`evidence_ref` 大量是叙述句/`/tmp` 易失路径/个人绝对路径；**最新 7 个 EP（10-08~10-10）的 signals.evidence_ref 大面积缺席**（5/5、4/4）——证据密度随时间递减。
 - 计划看板：PLAN-LOOP-SMOKE-001 与 git 高度吻合（赞）；但 PLAN-PRODUCT-001 概览"4 未开始"与任务表 5 个 ☐ 算术不符（6+1+4+2=13≠14），U-02"未关闭"而 T05 已 ☑ 且 commit 在 origin/main。
 
 ### 核心差异点尚未兑现
@@ -163,7 +163,7 @@
 1. **补 policy.py 与环文档的接线**（SKILL.md/evidence-and-release.md 显式引用并消费其裁决），消除 0.8.6 的 invalid/reject ↔ better/promote 矛盾。
 2. **修 build_runtime.py:108 的 `..` rmtree 漏洞**（破坏性默认值）。
 3. **修 isolation.py:124 的 `-` 开头 base 静默 PASS**（fail-open 注入）。
-4. **补 check-write-scope.sh 的 `-z` + 退出码回传**，根除中文路径误 FAIL（ISS-2026-041 修复不完整）。
+4. **补 check-write-scope.sh 的 `-z` + 退出码回传**，根除中文路径误 FAIL（ISS-2026-10-10-写范围dot-scope静默不匹配 修复不完整）。
 5. **收敛 resultSet 四份拷贝**为单一 `$defs` 共享。
 6. **修 validator 的异常逃逸**（validate.py:2659/:375、isolation:115/:138）。
 7. **给 bug-recorder 补列 schema 必填字段**，消除"照指令产出必被拒"。
@@ -221,7 +221,7 @@ Agentflow 是一个**设计哲学明显领先于工程落地的受治理多 agen
 
 ### 13.2 逐维明细（修了什么、什么还压着）
 
-**架构设计 7 → 7.5**。原五条硬伤：①提示词级强制（README:38 自承宿主不强制 `Write` 路径约束）——**仍在，属宿主侧天花板**；②policy.py 孤儿门——**已修**（SKILL 第 10 步强制先跑机器裁决、release 记录须与之一致；0.8.6 矛盾另以 EP-20261012-008 固定事实）；③schema 结果集形状重复——原判「四份拷贝」经勘误实为「8 指标形状跨文件重复」，**已单点化**（`schemas/` 下的 metrics schema，四处 `$ref` 复用）；④validate.py 三处重复登记——**已修**（`checks["all"]` 从单目标推导；`sys.path.insert` 副作用仍在，未处置）；⑤「全绿」绝对化——**文档层已修**（README 增运行环境说明；环境假红根因在宿主 shim，非仓库缺陷）。5 条中 3 条全清、1 条部分清、1 条外部依赖。
+**架构设计 7 → 7.5**。原五条硬伤：①提示词级强制（README:38 自承宿主不强制 `Write` 路径约束）——**仍在，属宿主侧天花板**；②policy.py 孤儿门——**已修**（SKILL 第 10 步强制先跑机器裁决、release 记录须与之一致；0.8.6 矛盾另以 EP-2026-10-12-008 固定事实）；③schema 结果集形状重复——原判「四份拷贝」经勘误实为「8 指标形状跨文件重复」，**已单点化**（`schemas/` 下的 metrics schema，四处 `$ref` 复用）；④validate.py 三处重复登记——**已修**（`checks["all"]` 从单目标推导；`sys.path.insert` 副作用仍在，未处置）；⑤「全绿」绝对化——**文档层已修**（README 增运行环境说明；环境假红根因在宿主 shim，非仓库缺陷）。5 条中 3 条全清、1 条部分清、1 条外部依赖。
 
 **目录结构 8 → 8**。`feature-2026-10-09-结构改造` 的批次链不完整**已修**（README 补「轻量模式：无 spec/design 轨」声明，闭合链规则）；`mock/plans` 与 `examples/plans` 的 `PLAN-DEMO-SHARE-001.md` **仍逐字节相同**（复评时 `diff -q` 实测），双份维护的漂移风险未除；`features/` 仅 2 个批次属时间性事实，非缺陷。一修两留，不上浮。
 
@@ -231,7 +231,7 @@ Agentflow 是一个**设计哲学明显领先于工程落地的受治理多 agen
 
 **Agent/Skill 质量 7 → 7.5**。已修：`bug-recorder.md` 补 verified/fixed-pending-review/rejected 必填字段（T1.6）；`backend.md` 缺 §3 断号已补占位（T2.10）；「照模板填必挂 C7/C8」经复核**不成立**（C7/C8 只查 design/fe 线框图，原判撤回）。仍在 5 项：`evaluator.md` description 称「compares on predeclared cases」而正文是只读记录（路由误导，**保护路径**）；SKILL 判断词「小改动 vs risky」优先级未裁决（:68 称「按此顺序应用」但顺序未给出——单文件改持久化默认值可同时落进两类）；`bug-fixer.md:26` 与 `candidate-engineer.md:40-41` partial 规则复制粘贴（且各文件内同句重复两遍）；`roles.md:14/83` 裸用「专家」无定义；test-executor 的 Edit 禁用语义未进路由表。
 
-**整体效果 6.5 → 7.5**。原两大缺口清一半：「确定性晋升链在真实循环被绕开」——**已闭环**（policy.py 入环 + 0.8.6 再审计记录，`policy.py` 实跑判 invalid/reject 与 release 记录 better/promote 的矛盾被固定为机器可复现的事实，exit=1 一手证据）；「确定性测量从未发生」——**仍在**，BT-001/002/003 夹具就绪但缺业务快照/端点/权限档。记录面历史账（16 份 open issue 停滞、12/30 episode 的 `review_roundtrips` 为空、0 rejected 故 `issues/归档/` 空转）属只增不改的历史包袱，无法本轮补救；但本轮新产记录（EP-20261012-008 全程 signals/evidence/claims 齐全，PLAN-OPT-CLOSEOUT-001 看板实跑回写纪律）提供了可复制的正面样板。
+**整体效果 6.5 → 7.5**。原两大缺口清一半：「确定性晋升链在真实循环被绕开」——**已闭环**（policy.py 入环 + 0.8.6 再审计记录，`policy.py` 实跑判 invalid/reject 与 release 记录 better/promote 的矛盾被固定为机器可复现的事实，exit=1 一手证据）；「确定性测量从未发生」——**仍在**，BT-001/002/003 夹具就绪但缺业务快照/端点/权限档。记录面历史账（16 份 open issue 停滞、12/30 episode 的 `review_roundtrips` 为空、0 rejected 故 `issues/归档/` 空转）属只增不改的历史包袱，无法本轮补救；但本轮新产记录（EP-2026-10-12-008 全程 signals/evidence/claims 齐全，PLAN-OPT-CLOSEOUT-001 看板实跑回写纪律）提供了可复制的正面样板。
 
 ### 13.3 剩余缺口清单（复评后仍开的项，逐条附解锁条件）
 

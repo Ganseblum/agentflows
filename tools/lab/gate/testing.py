@@ -124,7 +124,7 @@ def validate_test_plan_markdown(
             )
         else:
             seen_plan_ids[test_plan_id] = path
-        match = re.fullmatch(r"TP-(\d{4})(\d{2})(\d{2})-(\d{3})", test_plan_id)
+        match = re.fullmatch(r"TP-(\d{4})-(\d{2})-(\d{2})-(\d{3})", test_plan_id)
         if match:
             errors.extend(dated_id_errors(path, frontmatter, match, "plan", "test_plan_id"))
         else:
@@ -212,7 +212,7 @@ def validate_test_run_markdown(
             )
         else:
             seen_run_ids[test_run_id] = path
-        match = re.fullmatch(r"TR-(\d{4})(\d{2})(\d{2})-(\d{3})", test_run_id)
+        match = re.fullmatch(r"TR-(\d{4})-(\d{2})-(\d{2})-(\d{3})", test_run_id)
         if match:
             errors.extend(dated_id_errors(path, frontmatter, match, "run", "test_run_id"))
         else:

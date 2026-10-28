@@ -9,7 +9,7 @@ claims、评审决策、成本）。写在会话结束**之前**——对话历�
 ```text
 episodes/
   2026-09-16/
-    EP-20260916-001.json        # 文件名 = episode_id（校验器强制，全局唯一）
+    EP-2026-09-16-001.json        # 文件名 = episode_id（校验器强制，全局唯一）
   README.md
 ```
 

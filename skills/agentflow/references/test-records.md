@@ -17,14 +17,14 @@ schema：`schemas/test-plan.schema.json` 与 `schemas/test-run.schema.json`（fr
 frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校验器在 schema 之外还强制以下交叉检查：
 
 - **布局**：两份记录都位于 `docs/features/<批次>/testing/<project>-<feature-slug>/`；文件名与
-  id 一致（`TP-<YYYYMMDD>-<NNN>` → `plan-<YYYY-MM-DD>-<NNN>.md`，
-  `TR-<YYYYMMDD>-<NNN>` → `run-<YYYY-MM-DD>-<NNN>.md`），且 id 的日期与 `recorded_at` 的日期
+  id 一致（`TP-<YYYY-MM-DD>-<NNN>` → `plan-<YYYY-MM-DD>-<NNN>.md`，
+  `TR-<YYYY-MM-DD>-<NNN>` → `run-<YYYY-MM-DD>-<NNN>.md`），且 id 的日期与 `recorded_at` 的日期
   相符。目录锚在被测的 feature 而不是日期：同一个 feature 的计划修订与执行轮次累积在一处。
   直接落在 feature 目录下的意外文件被拒绝；`README.md` 与 `evidence/` 豁免。
 - **计划正文**：`## 用例` 以注册表开头（`| 用例 ID | 级别 | 优先级 | 标题 | 来源 |`），
   且每个用例一个 `### <用例 id>` 详情标题；用例 id（`TC-*`）唯一；级别与优先级是固定枚举；
   **来源列指向该用例的验收出处**——proposal 的目标/AC 编号（如 `G2-AC-03`）或工单记录
-  （`ISS-<YYYY>-<NNN>`），没有对应出处时写 `无 — <理由>`，不许留空；`case_count` 等于注册表
+  （`ISS-<YYYY-MM-DD>-<slug>`），没有对应出处时写 `无 — <理由>`，不许留空；`case_count` 等于注册表
   行数。每个用例详情块带**测试功能**一行（被测功能点，如「登录-账号密码登录」）、前置条件与
   步骤表（`操作 → 输入 → 预期可观察结果`）。`## 边界覆盖`、`## 数据来源` 与 `## 流程疑点`
   是必需章节。计划就地修订——递增 `test_version`。
@@ -40,7 +40,7 @@ frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校�
   `project` 匹配。当执行轮次钉住计划当前的 `test_version` 时，注册表中的每个用例都在结果表里
   有交代（针对旧版本的一次执行则记录它自己的覆盖情况）。
 - **Findings**：`findings` / `flow_findings` 列出必须存在于 `docs/issues/` 下的 `ISS-*` id
-  （本仓缺陷编号家族是 `ISS-<YYYY>-<NNN>`；schema 以 `^ISS-\d{4}-\d{3,}$` 强制）。
+  （本仓缺陷编号家族是 `ISS-<YYYY-MM-DD>-<slug>`，schema 以 `^ISS-\d{4}-\d{2}-\d{2}-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*$` 强制）。
   失败的用例带可直接复现的 findings（步骤、期望与实际、证据引用），让 supervisor 无需重新推导
   即可立 bug 记录；归因遵循标准规则（目标项目缺陷取 `external`，Agentflow 自身方法缺口取
   `agentflow`）。
@@ -83,7 +83,7 @@ YAML 驱动的 e2e 套件）时，执行记录的结论按下面这条对齐链�
 
 ## Bug 回归用例与状态联动
 
-- 来源为已立工单 `ISS-<YYYY>-<NNN>`，预期写修复后的可观察行为；缺陷现象写在复现轮的实际结果。
+- 来源为已立工单 `ISS-<YYYY-MM-DD>-<slug>`，预期写修复后的可观察行为；缺陷现象写在复现轮的实际结果。
 - 复现用例失败支撑 `open`；修后回归通过是 `regression_status: pass` 的证据，供主任务或 recorder 回写 `fixed-pending-review`。
 - 独立评审 `approved` 加回归 `pass`，recorder 才能写 `verified`；回归 `fail/blocked` 不前进或退回。
 - executor 只产出运行证据并说明它支撑的状态变化，不编辑 Bug 状态；fixer 不批准自己的修复。

@@ -30,6 +30,6 @@
 > 任务级看板在各计划自身的「任务清单」表内回写——本节只记批次级阶段。
 
 - ☑ 产品提案（`docs/product/proposal/proposal.md`）
-- ☑ 方法规格与验收矩阵（`docs/product/spec/`；需求评审已于 2026-10-19 通过——REV-20261019-003，F1–F12 全关闭）
+- ☑ 方法规格与验收矩阵（`docs/product/spec/`；需求评审已于 2026-10-19 通过——REV-2026-10-19-003，F1–F12 全关闭）
 - ◐ 产品设计（`docs/product/design/product-design.md` 成稿；技术方案评审门未跑）
-- ◐ 执行计划（`plan/`：PLAN-PRODUCT-001 与 PLAN-LOOP-SMOKE-001 在册；PLAN-LOOP-SMOKE 5/9 任务完成，T06–T08 与 T10 已失对象（评测装置随 ISS-2026-052 删除，本期不做）；PLAN-PRODUCT 7/12 完成）
+- ◐ 执行计划（`plan/`：PLAN-PRODUCT-001 与 PLAN-LOOP-SMOKE-001 在册；PLAN-LOOP-SMOKE 5/9 任务完成，T06–T08 与 T10 已失对象（评测装置随 ISS-2026-10-12-评测装置裁撤 删除，本期不做）；PLAN-PRODUCT 7/12 完成）

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record one row of improvement-loop health signals into docs/trend.jsonl.
 
-The 2026-10-12 裁撤批 (ISS-2026-052) removed the automatic measurement apparatus — evals/, the
+The 2026-10-12 裁撤批 (ISS-2026-10-12-评测装置裁撤) removed the automatic measurement apparatus — evals/, the
 runner, the adapter, the policy engine. The loop kept its four governance roles
 (feedback-analyst / candidate-engineer / evaluator / release-governor) but lost the signal that
 fed them: `validate.py recurrence` reports 0 escalated classes, so they had nothing to act on.

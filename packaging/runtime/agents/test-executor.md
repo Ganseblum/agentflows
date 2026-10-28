@@ -42,7 +42,7 @@ disallowedTools: Edit
 写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）。
 frontmatter 必填（schema required）：`test_run_id`、`test_plan_id`、`test_plan_version`、
 `target_revision`、`title`、`project`、`recorded_at`。`test_run_id`
-（`TR-<YYYYMMDD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
+（`TR-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
 钉住的 `test_plan_id`/`test_plan_version`、实际测试的 `target_revision`、`title`、`project`、
 `recorded_at`（与文件名日期一致，ISO 8601 UTC）、`environment`
 （origin、路由、账号角色、实际使用的执行路线——Ego Light / runner / API / 宿主浏览器）、

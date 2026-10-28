@@ -16,10 +16,10 @@
     "skills/agentflow/templates/feature/plan/execution.md": "095652498706795e54b38e51cf26ae452b63a37d20aeb40b4587c157d97b8d7b",
     "tests/test_gate_schema.py": "57d74b7140b887eb72c63fdf1381372e1933cf0b9c94abbdcc85d191e4dd769d",
     "tests/test_pre_push.py": "bd3f3b07a1f02538de1653c65344cd73120c3784640f38a8ca96fbdf2e393ebb",
-    "docs/issues/ISS-2026-062-门清单部分输出失败仍被放行.md": "31dc9c435cb9dc124718d2fd27f00b5a7676bf1d93f59fcf98aceaa50f9cec3c",
-    "docs/issues/ISS-2026-063-计划模板验证标题不匹配.md": "1a95b2b0d472788ee2c49fa1fc3f2a54f0ca90f8a37f94113f5044581a18f623",
-    "docs/issues/ISS-2026-064-测试入口重复定义失败范围.md": "fc73cb06464c65dafb902bf7fee57c3e45984880985998461acc2360e837e194",
-    "docs/issues/ISS-2026-065-L3批次安装摘要前后矛盾.md": "89f7fd6d83cb8b2cac63ffa8981fd6abd74772d5f53c8776148a0e77e41edbd4"
+    "docs/issues/ISS-2026-10-27-门清单部分输出失败仍被放行.md": "31dc9c435cb9dc124718d2fd27f00b5a7676bf1d93f59fcf98aceaa50f9cec3c",
+    "docs/issues/ISS-2026-10-27-计划模板验证标题不匹配.md": "1a95b2b0d472788ee2c49fa1fc3f2a54f0ca90f8a37f94113f5044581a18f623",
+    "docs/issues/ISS-2026-10-27-测试入口重复定义失败范围.md": "fc73cb06464c65dafb902bf7fee57c3e45984880985998461acc2360e837e194",
+    "docs/issues/ISS-2026-10-27-L3批次安装摘要前后矛盾.md": "89f7fd6d83cb8b2cac63ffa8981fd6abd74772d5f53c8776148a0e77e41edbd4"
   },
   "generated_files": {
     "packaging/runtime/.claude-plugin/plugin.json": "f02ab6e357af43ae87dfa73b4294df709f57bf75064487e93bb61be265430d36",

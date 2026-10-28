@@ -26,15 +26,18 @@ from .schema import SchemaValidator
 BUG_REQUIRED_HEADINGS = ("## 现象", "## 根因")
 
 
-# Issue records are flat: issues/ISS-<YYYY>-<NNN>-<slug>.md. Only rejected records live under
-# issues/归档/<YYYY-MM-DD>/; recurrence ledgers live under issues/recurrence/.
+# Issue records are flat: issues/ISS-<YYYY-MM-DD>-<slug>.md, the id being the whole stem. Only
+# rejected records live under issues/归档/<YYYY-MM-DD>/; recurrence ledgers live under
+# issues/recurrence/. The date in the id is the record's own recorded_at date.
 BUG_ARCHIVE_DIR = "归档"
 
 
 RECURRENCE_DIR = "recurrence"
 
 
-BUG_FILENAME_PATTERN = re.compile(r"^ISS-\d{4}-\d{3,}-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*$")
+BUG_FILENAME_PATTERN = re.compile(
+    r"^ISS-(\d{4})-(\d{2})-(\d{2})-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*$"
+)
 
 
 def validate_recurrence_markdown(path: Path) -> list[ValidationError]:
@@ -247,7 +250,7 @@ def validate_review_markdown(
                 ValidationError(str(path), "review directory must be named <project>-<feature-slug>")
             )
         if isinstance(review_id, str):
-            m = re.fullmatch(r"REV-(\d{4})(\d{2})(\d{2})-(\d{3})", review_id)
+            m = re.fullmatch(r"REV-(\d{4})-(\d{2})-(\d{2})-(\d{3})", review_id)
             if m:
                 errors.extend(dated_id_errors(path, frontmatter, m, "review", "review_id"))
             elif path.stem != review_id:
@@ -322,8 +325,9 @@ def validate_bug_markdown(path: Path) -> list[ValidationError]:
 def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path, seen_ids: dict[str, Path]) -> list[ValidationError]:
     """Validate filename shape and bug_id uniqueness for one record.
 
-    Live records are flat: issues/ISS-<YYYY>-<NNN>-<slug>.md. Archived (rejected) records keep
-    a date directory: issues/归档/<YYYY-MM-DD>/ISS-<YYYY>-<NNN>-<slug>.md.
+    Live records are flat: issues/ISS-<YYYY-MM-DD>-<slug>.md; the stem is the id, so it must
+    equal bug_id, and its date must equal recorded_at's date. Archived (rejected) records keep
+    a date directory: issues/归档/<YYYY-MM-DD>/ISS-<YYYY-MM-DD>-<slug>.md.
     """
     errors: list[ValidationError] = []
     bug_id = frontmatter.get("bug_id")
@@ -334,14 +338,31 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
             )
         else:
             seen_ids[bug_id] = path
-    if not BUG_FILENAME_PATTERN.match(path.stem):
+    filename_match = BUG_FILENAME_PATTERN.match(path.stem)
+    if not filename_match:
         errors.append(
             ValidationError(
                 str(path),
-                "filename must be ISS-<YYYY>-<NNN>-<slug> "
-                "(letters, digits, Chinese, hyphens) — e.g. ISS-2026-001-claude-json-schema-被拒.md",
+                "filename must be ISS-<YYYY-MM-DD>-<slug> "
+                "(letters, digits, Chinese, hyphens) — e.g. ISS-2026-09-14-claude-json-schema-被拒.md",
             )
         )
+    else:
+        if isinstance(bug_id, str) and bug_id != path.stem:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"filename stem must equal bug_id {bug_id!r} (the stem is the record id)",
+                )
+            )
+        recorded_date = record_date_of(frontmatter)
+        if recorded_date is not None and recorded_date.isoformat() != "-".join(filename_match.group(1, 2, 3)):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"filename date must match recorded_at date {recorded_date.isoformat()}",
+                )
+            )
 
     parts = relative.parts  # ("docs", "issues", "ISS-…-slug.md") or ("docs", "issues", "归档", "YYYY-MM-DD", "ISS-…-slug.md")
     if BUG_ARCHIVE_DIR in parts:
@@ -361,6 +382,6 @@ def validate_bug_layout(frontmatter: dict[str, Any], path: Path, relative: Path,
             )
     elif len(parts) != 3:
         errors.append(
-            ValidationError(str(path), "live issue records live directly under docs/issues/ (docs/issues/ISS-<YYYY>-<NNN>-<slug>.md)")
+            ValidationError(str(path), "live issue records live directly under docs/issues/ (docs/issues/ISS-<YYYY-MM-DD>-<slug>.md)")
         )
     return errors

@@ -391,7 +391,7 @@ D13 竞品比对。
 - `__pycache__` 会出现在 `check-diff` 的变更路径里但不被阻塞；在副本上跑过门后预期看到它。
 - YAML frontmatter 的列表不支持注释行（`  # ...` 会报 nested mapping）——审 schema 与
   frontmatter 时别被这个假象误导。
-- 非 ASCII 路径 + git 的 C-quote 输出曾导致 `check-write-scope` 误 FAIL（ISS-2026-041 同根因）
+- 非 ASCII 路径 + git 的 C-quote 输出曾导致 `check-write-scope` 误 FAIL（ISS-2026-10-10-写范围dot-scope静默不匹配 同根因）
   ——审这类脚本时专门测一条中文路径。
 - `record_store.py` 需先 `index` 再 `query`；它是词法索引，不是向量库，也不替代记录文件本身。
 - 做 D4 静态统计时不得向被评测环境安装任何包；宿主没有 pyflakes / ruff 时，用标准库 `ast`

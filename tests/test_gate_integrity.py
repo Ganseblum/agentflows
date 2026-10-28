@@ -377,12 +377,12 @@ class ValidateResidualTests(unittest.TestCase):
             repo = base / "repo"
             (repo / "issues" / "recurrence").mkdir(parents=True)
             (repo / "issues" / "归档" / "2026-09-15").mkdir(parents=True)
-            (repo / "issues" / "归档" / "2026-09-15" / "ISS-2026-905-record.md").write_text(
+            (repo / "issues" / "归档" / "2026-09-15" / "ISS-2026-09-15-record.md").write_text(
                 "x", encoding="utf-8"
             )
             record = repo / "issues" / "recurrence" / "ledger.md"
             errors = self._contained_reference_errors(
-                repo, "see ../归档/2026-09-15/ISS-2026-905-record.md for evidence", record
+                repo, "see ../归档/2026-09-15/ISS-2026-09-15-record.md for evidence", record
             )
         self.assertEqual(errors, [])
 
@@ -395,7 +395,7 @@ class ValidateResidualTests(unittest.TestCase):
             repo = base / "repo"
             (repo / "issues").mkdir(parents=True)
             (base / "secret.md").write_text("outside evidence", encoding="utf-8")
-            record = repo / "issues" / "ISS-2026-001-record.md"
+            record = repo / "issues" / "ISS-2026-01-02-record.md"
             errors = self._contained_reference_errors(repo, "evidence at ../secret.md here", record)
         self.assertEqual(len(errors), 1)
         self.assertIn("exists neither in this repository", errors[0].message)
@@ -435,7 +435,7 @@ class ValidateResidualTests(unittest.TestCase):
         # as /etc/hosts ignored ROOT, and ../ climbed out of it; both passed as if they were evidence.
         bug = (
             "---\n"
-            "bug_id: ISS-2026-920\n"
+            "bug_id: ISS-2026-01-01-escape\n"
             "title: 绝对路径与上溯\n"
             "status: open\n"
             "severity: P2\n"
@@ -455,7 +455,7 @@ class ValidateResidualTests(unittest.TestCase):
             self._live_fixture(repo)
             (repo / "docs" / "kept.md").write_text("kept", encoding="utf-8")
             (Path(temporary) / "outside.md").write_text("outside", encoding="utf-8")
-            (repo / "docs" / "issues" / "ISS-2026-920-escape.md").write_text(bug, encoding="utf-8")
+            (repo / "docs" / "issues" / "ISS-2026-01-01-escape.md").write_text(bug, encoding="utf-8")
             errors = self._artifact_errors(repo)
         self.assertTrue(any("'/etc/hosts'" in error for error in errors), errors)
         self.assertTrue(any("'../outside.md'" in error for error in errors), errors)

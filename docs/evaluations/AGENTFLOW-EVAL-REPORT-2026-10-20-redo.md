@@ -186,7 +186,7 @@
 **硬伤（死条款 / 隐性惯例）**
 1. `rejected`/`归档/` 状态分支从未触发（死条款，证据同 D1 硬伤 2）。
 2. 改进环第 8 步「对照」在记录中未真实发生（死条款）。
-3. 隐性惯例：「被拒」记录却标 `verified`（如 ISS-2026-005/006 实质为被拒/证伪，状态仍 verified）——文本未定义此路径，记录中真实发生。
+3. 隐性惯例：「被拒」记录却标 `verified`（如 ISS-2026-09-15-真树故障注入checkout还原丢工作/006 实质为被拒/证伪，状态仍 verified）——文本未定义此路径，记录中真实发生。
 
 ---
 
@@ -214,7 +214,7 @@
 - 五份 manifest 版本对齐 0.11.0（`validate.py manifests` PASS）。
 
 **硬伤**
-1. **发布审计链断裂**：episode `EP-20260922-001` 等引用 `releases/0.8.5.json`/`0.8.6.json`/`0.8.7.json`，但 `docs/releases/` **0 个 .json**（仅 `pending-test.md`/`todo.md`）；per-version 发布 JSON 随 0.11.0 瘦身批停用，致「release governor approved/promoted」声明不可核验（D11 同）。
+1. **发布审计链断裂**：episode `EP-2026-09-22-001` 等引用 `releases/0.8.5.json`/`0.8.6.json`/`0.8.7.json`，但 `docs/releases/` **0 个 .json**（仅 `pending-test.md`/`todo.md`）；per-version 发布 JSON 随 0.11.0 瘦身批停用，致「release governor approved/promoted」声明不可核验（D11 同）。
 2. **CHANGELOG 计数不实**：0.11.0 段称「单元测试 78→95」，实跑 78（95 为被后续「还原提交版」撤销的临时态，CHANGELOG 未讲清净结果）。
 
 ---
@@ -224,7 +224,7 @@
 **意图卡片**：职责=worker write_scope 是提示词级还是机械级；自述契约=`check-write-scope.sh` + `gate/` 覆盖、退出码 fail-closed；消费者=Supervisor 接受产物。
 
 **亮点（实证）**
-- `check-write-scope.sh` 已修中文路径误判：`:48` 用 `git diff -z` 原始路径，`set -eu`，git 失败 fail-closed（exit 1）。`-z` 直击 ISS-2026-041 同根因。
+- `check-write-scope.sh` 已修中文路径误判：`:48` 用 `git diff -z` 原始路径，`set -eu`，git 失败 fail-closed（exit 1）。`-z` 直击 ISS-2026-10-10-写范围dot-scope静默不匹配 同根因。
 - isolation `check-diff` 对改动受保护文件/非 ASCII/`-` base 均 fail-closed（D2 实验 ✅）。
 - `contracts.md` 硬边界 14 条中机械强制部分（protected 反向校验、isolation）经实跑坐实。
 
@@ -239,11 +239,11 @@
 **意图卡片**：职责=疗效（更新是否产生可验证结果）；自述契约=走完全流程占比/证据密度/评审轮次；消费者=方法本身演进。
 
 **疗效取证（统计 + 抽查）**
-- **走完全流程 issue**：40/56 verified = **71.4%**（抽查 ISS-2026-001/005/026，verified 属实）。
-- **episode 实质轮次**：41 episode 中 19 个（46%）有非空 `review_roundtrips`（抽查 `EP-20260922-001`：3 轮，含 2×`changes_requested`+1×`approved`，属实）。
+- **走完全流程 issue**：40/56 verified = **71.4%**（抽查 ISS-2026-09-14-claude-json-schema-被拒/005/026，verified 属实）。
+- **episode 实质轮次**：41 episode 中 19 个（46%）有非空 `review_roundtrips`（抽查 `EP-2026-09-22-001`：3 轮，含 2×`changes_requested`+1×`approved`，属实）。
 - **`evidence_ref` 密度**：41 episode **0 个**填充顶层 `evidence_ref`（字段存在但恒空；内部 `evidence[]`/`signals[].evidence_ref` 有内容）→ schema 字段空转。
 - **recurrence 台账**：9 类（`crammed-contract-table-form` 等），档位 `recurred`(2 occ)/`single`(1 occ)，无 `escalated`。
-- **独立评审真实轮次 & changes_requested**：抽查 EP-20260922-001 含 `changes_requested` 两轮 → 评审非走过场。
+- **独立评审真实轮次 & changes_requested**：抽查 EP-2026-09-22-001 含 `changes_requested` 两轮 → 评审非走过场。
 - **改进环产出**：确产出自举候选（0.8.5 ui 轨经 evaluator+reviewer+release-governor 闭环），但**发布 JSON 被删**（D9 硬伤 1）→ 晋升/拒绝分布不可全考。
 - **门禁拦截证据**：CHANGELOG 0.11.0「门健全批」记「51 变异=杀死 51/存活 0」——门红后修复闭环有记录。
 
@@ -256,7 +256,7 @@
 **意图卡片**：职责=价值主张（为何存在、成本收益比、砍什么更好）；自述契约=确定性门+受治理发布+记录即编译不可替代；消费者=目标用户（单人/小团队开发者）。
 
 **场景对照（有/无 agentflow）**
-- 跨层 feature（如 office-agent 文档链）：无 → 缺 contract 表/失败分支/状态机，且「说完就走」；有 → doc_chain 门强制密度下限（ISS-2026-027/031/034 即此类缺陷被拦）。
+- 跨层 feature（如 office-agent 文档链）：无 → 缺 contract 表/失败分支/状态机，且「说完就走」；有 → doc_chain 门强制密度下限（ISS-2026-09-20-文档链首轮密度缺口/031/034 即此类缺陷被拦）。
 - 反复缺陷（crammed-contract-table 复发 2 次）：无 → 同类错误重复；有 → recurrence 台账定级、改进环加固。
 
 **真实空白创新点（R7 实证）**：**「方法自改进时的防自篡改」**——`improve/SKILL.md:24/55` 明确「候选不得批准自己的证据」「none 与 better 不可同称」，竞品（superpowers/BMAD/spec-kit）均无此机制，回应了「agent 改自己评估规则」的具名风险。
@@ -405,7 +405,7 @@ $ python3 tools/lab/validate.py recurrence     # 9 类台账
 
 **R4（D5）**：已读 agents/ 14 份 + skills/agentflow 全量 + skills/improve 全量 + schemas/6 + README。抽取报告污染检测通过。
 
-**R5（D8/D11）**：Supervisor 亲跑 `validate.py report/recurrence`、issue 状态统计、episode 41 全量 JSON 解析（evidence_ref/review_roundtrips）、reviews 结构、抽样 EP-20260922-001 全文。未读：docs/ 全量散文（仅结构+关键文件）。
+**R5（D8/D11）**：Supervisor 亲跑 `validate.py report/recurrence`、issue 状态统计、episode 41 全量 JSON 解析（evidence_ref/review_roundtrips）、reviews 结构、抽样 EP-2026-09-22-001 全文。未读：docs/ 全量散文（仅结构+关键文件）。
 
 **R6（D9）**：已读 skills/improve/SKILL.md、CHANGELOG(抽样)、docs/releases/、五份 manifest、measurement 诚信 grep。未读：docs/trend.jsonl（空/不存在）。
 

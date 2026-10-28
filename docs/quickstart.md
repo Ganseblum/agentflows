@@ -17,7 +17,7 @@
 
 ## 第一次接入项目
 
-复用已有 AGENTS.md 和项目文档位置；只有缺失项需要确认。检查命令必须有仓库依据并实际核验，不猜值。按 Skill 的 [Init](../skills/agentflow/SKILL.md#首次接入init) 写一次项目约定，以后沿用。跨仓全局规则是另外一次[宿主接入](../skills/agentflow/references/hosts.md)，不由项目初始化顺带写入。
+复用已有 AGENTS.md 和项目文档位置；只有缺失项需要确认。检查命令必须有仓库依据并实际核验，不猜值。按 Skill 的 [Init](../skills/agentflow/SKILL.md#首次接入init) 写一次项目约定（含工程基线入口），以后沿用。跨仓全局规则是另外一次[宿主接入](../skills/agentflow/references/hosts.md)，不由项目初始化顺带写入。
 
 ## 六组短提示词
 

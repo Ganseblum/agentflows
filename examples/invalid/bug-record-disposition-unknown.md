@@ -1,5 +1,5 @@
 ---
-bug_id: ISS-2026-909
+bug_id: ISS-2026-10-23-非法disposition取值
 title: 非法的 disposition 取值必须被记录契约拒绝
 status: open
 disposition: wontfix

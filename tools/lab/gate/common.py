@@ -117,7 +117,7 @@ EXPECTED_TEST_FILES = (
 LIVE_RECORD_ROOTS = ("docs/issues", "docs/releases", "docs/features", "episodes", "reviews")
 
 
-# 2026-10-12 slimming batch (user-authorized gate change, ISS-2026-047): the frozen `_archive/`
+# 2026-10-12 slimming batch (user-authorized gate change, ISS-2026-10-12-瘦身二批归档清除): the frozen `_archive/`
 # tree was removed outright — the repository keeps no archive bucket. Its former exemptions
 # (scan exclusions, the handoff-pointer waiver) are deleted with it, and the retired doc
 # carriers `docs/iteration-log.md` / `docs/agent-roles.md` joined RETIRED_PATH_TOKENS below so
@@ -148,6 +148,7 @@ MANIFEST_POINTERS = (
     (".zcode-plugin/plugin.json", ()),
     (".claude-plugin/plugin.json", ()),
     (".codex-plugin/plugin.json", ()),
+    (".qoder-plugin/plugin.json", ()),
 )
 
 
@@ -163,6 +164,7 @@ INSTALLED_FILES = (
     ".zcode-plugin/plugin.json",
     ".claude-plugin/plugin.json",
     ".codex-plugin/plugin.json",
+    ".qoder-plugin/plugin.json",
 )
 
 
@@ -404,7 +406,7 @@ def record_date_of(frontmatter: dict[str, Any]) -> dt.date | None:
 def dated_id_errors(
     path: Path, frontmatter: dict[str, Any], match: re.Match[str], stem_prefix: str, id_field: str
 ) -> list[ValidationError]:
-    """Filename stem and recorded_at date must agree with a dated id (<PREFIX>-YYYYMMDD-NNN).
+    """Filename stem and recorded_at date must agree with a dated id (<PREFIX>-YYYY-MM-DD-NNN).
 
     `match` is the fullmatch of that id. Shared by review, test-plan and test-run records; the
     caller keeps the id-shape decision and any fallback message for ids that do not match.

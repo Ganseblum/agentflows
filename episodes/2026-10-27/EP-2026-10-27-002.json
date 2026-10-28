@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-27-002",
+  "source_type": "user_feedback",
+  "objective": "先将全部有效代码与分支历史整入main，再修复门禁、模板、方法重复和安装摘要四项问题",
+  "outcome": "accepted",
+  "revision": {
+    "source": "sha256:7410c2bb714a0b9baeb6c09d7f6c7244f1e125054615771ae7c01063e0ed5ad8",
+    "base": "57e45d23f1aa9ff158ddb9641a5018d5d9d0ef66"
+  },
+  "signals": [
+    {
+      "kind": "measurement",
+      "value": "none"
+    },
+    {
+      "kind": "integration_strategy",
+      "value": "保留已验证main树的ours合并；备份有效hook已被替代，故意断链不回流",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json"
+    },
+    {
+      "kind": "old_worker_files",
+      "value": 28,
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/worker-file-hashes.json"
+    },
+    {
+      "kind": "new_behavior_regressions",
+      "value": 2,
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/fix-target-red.txt"
+    },
+    {
+      "kind": "hook_regression_count",
+      "value": 18,
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/check-02-hook-tests.txt"
+    },
+    {
+      "kind": "interpreter_boundary",
+      "value": "裸python3为CLT3.9.6，安装检查退出2、未运行；使用已有3.13开发解释器重跑，不把旧解释器报错算通过",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/checks-first-attempt.json"
+    },
+    {
+      "kind": "host_activation",
+      "value": "0.19.2仅本地修复，宿主仍为旧安装；未发布、未重装",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/check-10-installed-boundary-python313.txt"
+    },
+    {
+      "kind": "review_time_semantics",
+      "value": "review_roundtrips.at为回执本地登记时间，不重建宿主未报告的精确事件时间"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "全部本地和已取回远端分支已包含在main历史中，旧工作树没有遗漏新候选",
+      "status": "verified",
+      "check": "git merge-base --is-ancestor <branch> main；逐文件摘要对照已提交候选来源",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/all-branches-integrated.json"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "备份历史整合未改变已验证main文件树",
+      "status": "verified",
+      "check": "git diff eaa3d6c 57e45d2为空；树对象相等",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/after-merge-identity.txt"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "四项修正经实际回归和独立批准",
+      "status": "verified",
+      "check": "完整检查、18项hook回归、真实模板实例及独立只读评审",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "本地生成树与源面一致",
+      "status": "verified",
+      "check": "python3 tools/lab/validate.py installed --path packaging/runtime（实际使用已记录的3.13解释器）",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/check-09-runtime-python313.txt"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "EV1",
+      "kind": "integration",
+      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json"
+    },
+    {
+      "evidence_id": "EV2",
+      "kind": "frozen_diff",
+      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/fix-review.diff",
+      "digest": "sha256:7410c2bb714a0b9baeb6c09d7f6c7244f1e125054615771ae7c01063e0ed5ad8"
+    },
+    {
+      "evidence_id": "EV3",
+      "kind": "checks",
+      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/checks.json"
+    },
+    {
+      "evidence_id": "EV4",
+      "kind": "independent_review",
+      "ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-27T19:13:05+08:00",
+      "reviewer": "implementation_review",
+      "decision": "approved",
+      "finding": "备份只有故障注入及被替代hook，无有效独有行为；28旧文件来源摘要一致",
+      "resolution": "采用ours合并保留主线树，保存双侧差异、树对象和祖先检查",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json"
+    },
+    {
+      "at": "2026-10-27T19:13:05+08:00",
+      "reviewer": "implementation_review",
+      "decision": "approved",
+      "finding": "冻结四修无剩余阻塞，17源文件与8生成文件无漂移",
+      "resolution": "关闭 ISS-2026-10-27-门清单部分输出失败仍被放行 … ISS-2026-10-27-L3批次安装摘要前后矛盾（062–065 四条），完成最终检查后提交本地main",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+    }
+  ],
+  "feedback_summary": "用户明确要求先把所有代码和分支合并到main，然后处理已确认四项问题；合并和本地提交已获授权，未扩大为远端推送或宿主更新。",
+  "agentflow_version": "0.19.2",
+  "host": "codex",
+  "provenance": {
+    "carrier": "当前Codex会话、实际Git祖先与树检查、仓内原始输出及独立回执",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-27T19:13:05+08:00"
+}

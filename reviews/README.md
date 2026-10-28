@@ -29,7 +29,7 @@ agentflow 的 reviewer 契约做第二道评审，评审记录与证据回收到
 reviews/
   aiwork-2026-09-04-对话分享/          # <target_project>-<feature-slug>，一个 feature 一个目录
     review-2026-09-16-001.md           # 一轮评审一个文件：review-<日期>-<NNN>.md
-    review-2026-09-17-002.md           # 明天再评同一 feature = 追加一轮（review_id REV-20260917-002）
+    review-2026-09-17-002.md           # 明天再评同一 feature = 追加一轮（review_id REV-2026-09-17-002）
     archive/
       2026-09-16-001/                  # 每轮自己的快照目录（日期+序号），同名文档跨轮不冲突
         design-be.md
@@ -42,7 +42,7 @@ reviews/
 - 再评审（re-review）聚焦自上一轮以来的 delta，`review.md` 正文可引用上轮 `review_id`；
 - 每轮的快照进 `archive/<该轮日期>-<序号>/`——评审针对的是快照而非业务仓当前文件，
   业务仓后续演变不追溯改变评审对象；
-- 校验器强制：文件名 = `review_id`（REV-YYYYMMDD-NNN，日期与文件名一致）、目录名形如
+- 校验器强制：文件名 = `review_id`（REV-YYYY-MM-DD-NNN，日期与文件名一致）、目录名形如
   `<project>-<feature-slug>`、`reviewed_docs` 列出的快照必须在盘。
 
 ## 工作流

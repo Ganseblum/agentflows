@@ -50,6 +50,62 @@ VERSION_PROSE_FILES = (
 )
 
 
+# Init's repo-level AGENTS section used to be prose-only: the SKILL asked for "a compact
+# section with three gate clauses" but shipped no carrier, so every target repo wrote its own
+# shape (Youc's section, added 2026-09-19, had already drifted from the SKILL wording). The
+# template is now the contract: markers make a re-run a block replacement instead of a
+# rewrite, and the gate clauses plus the baseline entry are the parts that must survive it.
+INIT_RULES_TEMPLATE = "skills/agentflow/templates/hub/repo-rules.md"
+INIT_RULES_SKILL_REFERENCE = "templates/hub/repo-rules.md"
+INIT_RULES_MARKERS = (
+    "<!-- agentflow:repo-rules:begin",
+    "<!-- agentflow:repo-rules:end -->",
+)
+INIT_RULES_GATE_CLAUSES = (
+    "doc_chain.py --root",
+    "宣布任何批次完成前",
+    "finding 要么修",
+)
+
+
+def validate_init_section_template(root: Path = ROOT) -> list[ValidationError]:
+    """The Init repo-rules section ships as a marked template and SKILL.md points at it."""
+    errors: list[ValidationError] = []
+    template = root / INIT_RULES_TEMPLATE
+    if not template.is_file():
+        return [ValidationError(INIT_RULES_TEMPLATE, "Init repo-rules template is missing")]
+    text, read_errors = read_document_text(template)
+    if read_errors:
+        return read_errors
+    for marker in INIT_RULES_MARKERS:
+        if marker not in text:
+            errors.append(
+                ValidationError(
+                    INIT_RULES_TEMPLATE,
+                    f"template lacks {marker!r}; a re-run could not replace only this block",
+                )
+            )
+    for clause in INIT_RULES_GATE_CLAUSES:
+        if clause not in text:
+            errors.append(
+                ValidationError(INIT_RULES_TEMPLATE, f"template lacks gate clause {clause!r}")
+            )
+    skill = root / "skills" / "agentflow" / "SKILL.md"
+    if skill.is_file():
+        skill_text, skill_errors = read_document_text(skill)
+        if skill_errors:
+            errors.extend(skill_errors)
+        elif INIT_RULES_SKILL_REFERENCE not in skill_text:
+            errors.append(
+                ValidationError(
+                    str(skill),
+                    f"Init section does not reference {INIT_RULES_SKILL_REFERENCE!r}; "
+                    "the template would be dead weight",
+                )
+            )
+    return errors
+
+
 VERSION_LITERAL_PATTERN = re.compile(r"\bv?\d+\.\d+\.\d+\b")
 
 
@@ -76,7 +132,7 @@ RETIRED_PATH_TOKENS = (
 )
 
 
-# Migrated, not deleted (2026-10-12 phased overhaul, ISS-2026-048 / ISS-2026-049). A migration
+# Migrated, not deleted (2026-10-12 phased overhaul, ISS-2026-10-12-记录迁入docs改进停用 / ISS-2026-10-12-计划并入features撤销死代码). A migration
 # differs from a retired tree only in what the old spelling leaves behind: the two plural moves
 # issues/ -> docs/issues/ and releases/ -> docs/releases/ survive as the live path's own
 # suffix, so a bare token would punish the new path — those are deliberately NOT tokens. The one
@@ -185,7 +241,8 @@ def validate_doc_consistency() -> list[ValidationError]:
     frontmatter name equals its filename; every `agentflow:<role>` referenced by a SKILL
     resolves to an agent file; every `schemas/*.schema.json` path named anywhere in the
     docs/live-roots/skills/agents surface or in AGENTS.md exists; AGENTS.md carries no
-    pre-0.5.0 JSON plan contract markers. (A fifth group — "the Chinese mirror keeps section
+    pre-0.5.0 JSON plan contract markers; Init's repo-rules section ships as a marked
+    template that SKILL.md references. (A sixth group — "the Chinese mirror keeps section
     parity with its English contract documents" — was claimed here until 2026-10-20 but never
     implemented; the claim was removed rather than the check invented, evaluation G05.)
     Two live-surface scans close the 2026-10 residue classes:
@@ -255,6 +312,7 @@ def validate_doc_consistency() -> list[ValidationError]:
                     )
 
     errors.extend(validate_agents_md_plan_contract(ROOT / "AGENTS.md"))
+    errors.extend(validate_init_section_template())
 
     # Version-in-prose guard: the current-version claims in these files were hand-synced
     # at every bump and drifted more than once (0.6.0 was still being declared after

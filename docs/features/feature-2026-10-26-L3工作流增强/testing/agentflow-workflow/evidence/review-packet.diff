@@ -492,7 +492,7 @@
 +| T05 | 完成回归、文档分档判定及门登记，并修复已观察的四项ruff问题 | P0 | 待核实（最终登记）`tests/test_workflow.py`；`tests/test_doc_chain.py`、`tools/lab/docchain/checks.py`、`tools/lab/docchain/selftest.py`、`tools/lab/gate/common.py`、`tools/lab/gate/checks.py`、`tools/lab/docchain/cli.py`、`tools/lab/gate/manifests.py`、`protected-paths.txt` | T02、T03、T04 | 测试与门维护者 | 技术方案 §3–6 | 原生报告、漂移、路径、依赖、轻量误降档及托管负例均被钉住；新测试同步声明和保护；不减少旧测试或放宽原门换绿 | ◐ 进行中 | 候选实现与证据正在最终复核，未代替独立批准 |
 +| T06 | 按用例库真实运行CLI的成功与失败路径，复核覆盖 | P0 | `skills/agentflow/scripts/workflow.py`；待核实（本任务创建）`docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/cli-e2e.txt` | T02、T03、T04、T05 | 测试执行者 | 技术方案 §4–5；验证方案 §3–17 | 一次性项目真实runner先失败后通过；空/旧/重复/跳过报告、漂移、依赖及托管冲突按设计拒绝；逐用例保留实际输出与退出码 | ◐ 进行中 | 候选实现与证据正在最终复核，未代替独立批准 |
 +| T07 | 对冻结差异执行独立评审，限定修复后复审 | P0 | 待核实（本任务创建）`docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-26-001.md`；必要的修复仅限已评差异 | T06 | 独立评审者、相应修复者 | 技术方案 §7–8 | 需求、设计、实际差异和端到端证据一致；作者不批准自己实现；未获批准不称完成 | ☐ 未开始 | — |
-+| T08 | 本地版本收口、重建生成树，完成最终证据和决策记录 | P0 | `plugin.json`、`marketplace.json`、`.zcode-plugin/plugin.json`、`.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`CHANGELOG.md`、`packaging/runtime/`、`index.md`；待核实（写前确认编号）`episodes/2026-10-26/EP-20261026-001.json` | T07 | 执行负责人 | 技术方案 §7；验证方案 §覆盖复核 | 五份版本一致、生成树可运行同一CLI、全套检查及本批文档链通过；episode记录评审各轮及未验证边界，不提交、发布或重装 | ◐ 进行中 | 候选实现与证据正在最终复核，未代替独立批准 |
++| T08 | 本地版本收口、重建生成树，完成最终证据和决策记录 | P0 | `plugin.json`、`marketplace.json`、`.zcode-plugin/plugin.json`、`.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`CHANGELOG.md`、`packaging/runtime/`、`index.md`；待核实（写前确认编号）`episodes/2026-10-26/EP-2026-10-26-001.json` | T07 | 执行负责人 | 技术方案 §7；验证方案 §覆盖复核 | 五份版本一致、生成树可运行同一CLI、全套检查及本批文档链通过；episode记录评审各轮及未验证边界，不提交、发布或重装 | ◐ 进行中 | 候选实现与证据正在最终复核，未代替独立批准 |
 +
 +测试先行不形成依赖环：任务 T01 先提供最小用例设计与失败测试；任务 T05 对完整回归及门登记作最终验收。因此测试文件可以在任务 T02 的实现之前编写，任务 T05 并不因文件已经出现而置为完成。执行负责人是任务状态与证据列的唯一写入者。
 +
@@ -724,7 +724,7 @@
 +++ b/docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/plan-2026-10-26-001.md
 @@ -0,0 +1,186 @@
 +---
-+test_plan_id: TP-20261026-001
++test_plan_id: TP-2026-10-26-001
 +title: 工作流证据工具与文档档位验收
 +project: agentflows
 +feature: L3工作流增强
@@ -1344,7 +1344,7 @@
 -| --- | --- | --- | --- |
 -| 1 | 你 | "全局导航自动登录复用了 login()，方法没问题，但 401 拦截器跳登录页，忘记密码页合法未登录态被打断" | ——（任务文本按数据处理，进简报前会核实） |
 -| 2 | Supervisor | Intake：读 diff/架构/测试；定性为跨切面行为 → 触发**隐式行为检查** | —— |
--| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-004-axios拦截器401跳转冲突.md` |
+-| 3 | Bug Investigator（只读） | 追注册点：`src/utils/request.ts` 拦截器 `code===401 → router.push('/login')`；枚举"表面 × 合法状态"交集（忘记密码页未登录是**正确状态**）；归因 `missing-constraint` | `docs/issues/ISS-2026-09-15-axios拦截器401跳转冲突.md` |
 -| 4 | Bug Fixer | 候选树内最小修复 + 回归检查（`regression_status` 先标 not-run） | 代码 + 记录转 `fixed-pending-review` |
 -| 5 | Reviewer（独立） | 指定检查命令与预期，只认原始输出；验证全局导航/登录页/忘记密码三场景 | 评审结论写回记录 |
 -| 6 | Bug Recorder | 评审 approved + 回归过 → 记录转 `verified`，补 `closure_criteria` | 同一条记录 |
@@ -1360,7 +1360,7 @@
 -
 -1. Supervisor 落 episode（先留证），派 **Feedback Analyst**（只读）：评估 SKILL 触发描述预算；
 -2. Analyst 结论：触发判据句在宿主 250 字符窗口内，**不需要改**——但发现缺口"前置化纪律零确定性保护"，
--   立案为 `EP-20260917-001`，记入台账待办（用户裁决定期）；
+-   立案为 `EP-2026-09-17-001`，记入台账待办（用户裁决定期）；
 -3. 若决定改：**Candidate Engineer** 在 candidate worktree 实施 → `check-diff` 证明没碰禁区 →
 -   **Evaluator** 跑对照（出 better/neutral/worse）→ **Release Governor**
 -   给 `promote/revise/reject` + rollback 块 → **你批** → bump 版本、回写台账、重装；
@@ -1368,7 +1368,7 @@
 -
 -### 例 3：你问"现在有什么高优任务？"（状态类问题的纪律）
 -
--这类问题的教训是 ISS-2026-009：**凭会话记忆回答状态类问题 = 没回答**（别的会话可能已推进）。
+-这类问题的教训是 ISS-2026-09-17-状态建议用陈旧仓库状态：**凭会话记忆回答状态类问题 = 没回答**（别的会话可能已推进）。
 -现在的标准动作：Supervisor 先 `git fetch` + `log/status` 校准仓库事实，回答时**带证据命令**
 -（如"以 `git log --oneline -5` 为准：…"）。你若发现回答没带证据命令，可以直接打回——这有记录撑腰。
 -
@@ -1390,7 +1390,7 @@
 -3. **编译**：`validate.py all` 全套检查全绿才算完（FAIL 是编译错误，不是警告）；
 -4. **故障注入**（可选但推荐）：在 /tmp 副本上破坏新机制验证它真的会 FAIL，恢复后复跑观察 PASS
 -   ——未观察的恢复不算恢复；
--5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；**写任何日期之前先跑 `date` 取当前时间**——估出来的时间戳会被 `validate.py artifacts` 以 `stamps must reflect real time` 拒，且记录与台账的 `updated_at` 一旦无效会连带让`class_id → 台账` 的解析整链失效；台账类记录立录的同一轮就补齐 `occurrences` 与再犯历史行（先例：ISS-2026-055、ISS-2026-060）；
+-5. **落账**：CHANGELOG 版本条目（带 `measurement:` 状态，首句写明为什么迭代）+ 台账追加式更新；**写任何日期之前先跑 `date` 取当前时间**——估出来的时间戳会被 `validate.py artifacts` 以 `stamps must reflect real time` 拒，且记录与台账的 `updated_at` 一旦无效会连带让`class_id → 台账` 的解析整链失效；台账类记录立录的同一轮就补齐 `occurrences` 与再犯历史行（先例：ISS-2026-10-14-复发台账计数与再犯事实矛盾、ISS-2026-10-23-仓扫PASS被当作门有效的证据）；
 -6. **版本 bump**：五份 manifest 同步（`validate.py manifests` 强制）；
 -7. **重装**：刷新 marketplace → 重装 → `validate.py installed` 转绿；
 -8. **收口**：episode 落盘（含 `review_roundtrips`），负向结果如实记。

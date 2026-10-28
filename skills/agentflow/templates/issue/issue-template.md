@@ -1,5 +1,5 @@
 ---
-bug_id: ISS-<YYYY>-<NNN>
+bug_id: ISS-<YYYY-MM-DD>-<slug>
 title: <一句话标题>
 status: open
 disposition: <仅 open 且未被批次承接表承接时填写：deferred | not-doing；否则删行>
@@ -26,7 +26,7 @@ source_revision: <外部产物或代码发现的源 revision；不适用时删�
 agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不适用时删行>
 ---
 
-<!-- 填写说明（复制本文件到 `issues/ISS-<YYYY>-<NNN>-<slug>.md` 后：文件名与 `bug_id` 一致（slug 用中文短语，无中文译法的技术词保留原文，如 `ISS-2026-001-claude-json-schema-被拒.md`）；替换全部占位符；不适用或未满足条件的行整行删除；完成后删掉本注释，并运行 `python3 tools/lab/validate.py artifacts` 校验）：
+<!-- 填写说明（复制本文件到 `issues/ISS-<YYYY-MM-DD>-<slug>.md` 后：文件名 stem 与 `bug_id` 完全一致，日期取 `recorded_at` 的日期部分（slug 用中文短语，无中文译法的技术词保留原文，如 `ISS-2026-09-14-claude-json-schema-被拒.md`）；替换全部占位符；不适用或未满足条件的行整行删除；完成后删掉本注释，并运行 `python3 tools/lab/validate.py artifacts` 校验）：
 
 - 固定标题不得改名。`## 现象`、`## 根因`、`## 修复方案` 与 `## 变更记录` 都要填写；open 阶段先记录待审核建议，并标明审核状态，证据不足时写清缺什么。`## 修复` 只记实际改动；open 可省略。当前校验器对所有非 open 状态都要求 `## 修复`，因此 rejected 记录在该节写明“未实施”并指向拒绝原因。`verified` 还需 `## 审查`。
 - `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。

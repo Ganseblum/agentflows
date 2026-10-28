@@ -26,7 +26,7 @@ disallowedTools: Bash
 
 - **frontmatter 机器信封**（`schemas/test-plan.schema.json` 必填：`test_plan_id`、`title`、
   `project`、`feature`、`target_revision`、`recorded_at`）：`test_plan_id`
-  （`TP-<YYYYMMDD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、
+  （`TP-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、
   `project`、`feature`、`target_revision`（用例所对照的目标仓 commit）、`recorded_at`
   （与文件名日期一致，ISO 8601 UTC）、`credentials`（一行写明注入方式——绝不是值）、可选的
   `base_url`、`case_count`、`test_version`（每次修订递增）、`status`
@@ -49,6 +49,7 @@ disallowedTools: Bash
   - `## 边界覆盖` 把每个覆盖的边界类映射到其用例。默认清单为空输入、非法格式、最大长度或
     超长输入、特殊字符、重复提交、登录态过期、数据缺失、网络失败，以及（本期有埋点时）
     上报失败或关键参数缺失——未覆盖的类要在表中声明，绝不沉默。
+  - 除默认边界类外，逐项判定三类易漏维度并写进计划：并发与竞态（连点、重复提交、旧响应晚返回覆盖新状态、重试导致重复副作用）、生命周期与清理（卸载后回调、路由切换残留、轮询/监听/Observer/对象 URL 释放）、契约与兼容（字段省略、空串、`null`、零值、未知枚举、旧数据与老配置）。按功能形态取最小必测集：表单提交、异步列表、上传、登录/会话、配置开关各自至少覆盖主路径、最关键失败、状态切换与重复提交；取舍与不适用显式声明，不静默省略。
   - 本期带埋点事件契约时，每个 P0 事件至少一条用例把「上报 payload 含事件名与关键参数」
     写成步骤表的可观察结果（附上报通道与观察方式，如网络日志或 debug 面板），并把事件 ID
     与用例编号的对应关系留在用例标题或 `## 边界覆盖` 的说明里；契约写 N/A 时不要凭空造事件断言。

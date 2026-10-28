@@ -1,8 +1,8 @@
 ---
-test_run_id: TR-<YYYYMMDD>-<NNN>
+test_run_id: TR-<YYYY-MM-DD>-<NNN>
 title: "<本轮执行名称>"
 project: <项目名>
-test_plan_id: TP-<YYYYMMDD>-<NNN>
+test_plan_id: TP-<YYYY-MM-DD>-<NNN>
 test_plan_version: "<钉住的计划 test_version>"
 target_revision: <被测 revision>
 environment: <环境：origin / 浏览器 / 账号角色>
@@ -61,7 +61,7 @@ updated_at: "<RFC 3339 含时区>"
 ## 结论
 
 - 冒烟集与主流程：<通过 / 有失败逐条说明>
-- 失败项：<可直接照跑的 Ego 操作序列（步骤、期望与实际、证据）、bug 记录去向（ISS-<YYYY>-<NNN> id）>
+- 失败项：<可直接照跑的 Ego 操作序列（步骤、期望与实际、证据）、bug 记录去向（`ISS-<YYYY-MM-DD>-<slug>` id）>
 - 状态联动：<本轮为已立 bug 的回归轮时，逐条点名结果支撑的 bug 状态变化——用例 pass 即支撑
   该 `ISS-*` 的 `regression_status: pass`（供 supervisor 评审后转 fixed-pending-review）；
   fail/blocked 则写明对应 bug 不前进或退回。executor 只报证据，bug 状态由 supervisor/recorder 回写>

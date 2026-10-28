@@ -1,5 +1,5 @@
 ---
-bug_id: ISS-2026-908
+bug_id: ISS-2026-09-14-缺审查标题
 title: verified 记录缺少「## 审查」正文节
 status: verified
 severity: P3

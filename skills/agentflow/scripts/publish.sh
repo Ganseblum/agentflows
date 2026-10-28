@@ -86,7 +86,7 @@ PY
 )"
   step "1/7 bump 版本 ${CURRENT_VERSION} → ${NEW_VERSION}"
   if [ "$DRY_RUN" = "1" ]; then
-    say "  [dry-run] 将改写五份 manifest"
+    say "  [dry-run] 将改写六份 manifest"
   else
     python3 - "$NEW_VERSION" <<'PY'
 import json, pathlib, sys
@@ -97,6 +97,7 @@ targets = [
     (".zcode-plugin/plugin.json", None),
     (".claude-plugin/plugin.json", None),
     (".codex-plugin/plugin.json", None),
+    (".qoder-plugin/plugin.json", None),
 ]
 for name, pointer in targets:
     path = pathlib.Path(name)
@@ -106,7 +107,7 @@ for name, pointer in targets:
     else:
         document["version"] = new
     path.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-print("  五份 manifest 已更新")
+print("  六份 manifest 已更新")
 PY
     CURRENT_VERSION="$NEW_VERSION"
   fi

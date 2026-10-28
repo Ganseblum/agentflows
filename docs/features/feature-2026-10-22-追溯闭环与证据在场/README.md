@@ -71,7 +71,7 @@
 
 | 记录编号 | 任务号 | 说明 |
 | --- | --- | --- |
-| ISS-2026-059-变异存活项长期无逐项处置 | — | 本批实跑整门变异时确认的存量疑点（6 个存活项无逐项归宿）。修复要把存活变成有归宿的语料或豁免，属下一批范围；此处按 C18 显式承接并声明本批不做 |
+| ISS-2026-10-23-变异存活项长期无逐项处置 | — | 本批实跑整门变异时确认的存量疑点（6 个存活项无逐项归宿）。修复要把存活变成有归宿的语料或豁免，属下一批范围；此处按 C18 显式承接并声明本批不做 |
 | — | T07 | 本批不承接外部项目记录。`docs/issues/` 下 16 条 `status: open` 记录全部是 2026-09-19 对另一项目方案文档的评审发现（`provenance: external`），归属该项目；本批把 C18 要求的显式豁免通道（`disposition` 字段）补进记录契约后，它们逐条登记为 `deferred`，不再靠「没打标所以不红」悬空 |
 
 ## 模块进度总览
@@ -81,8 +81,8 @@
 | M-A C22 目标承接闭环 | 后端 | ☑ | `tools/lab/docchain/checks.py` 的 `goal_traceability_findings()` 落地（经薄启动器 `tools/lab/doc_chain.py` 调用），自测夹具 86–92/97，仓扫与目录模式共用实现 | 无 |
 | M-B C23 证据在场 | 后端 | ☑ | `evidence_presence_findings()` 与四类载体识别落地，夹具 93–96，plan 扫描改递归 | 无 |
 | M-C 决策门落地 | 后端 | ☑ | `disposition` 进契约与正反例；16 条 open 记录登记 deferred；拍板口八列化并打标，C16/C17/C18 首次照到活文件 | 无 |
-| M-D 文本与双源收口 | 文档 | ☑ | 八条缺陷逐条闭合（含实现中新发现的三条，立为 `docs/issues/ISS-2026-057-元信息同行声明默认落点基准被误判.md` 等） | 无 |
-| M-E 证据落盘 | 测试 | ☑ | 门基线已落 `testing/agentflows-gate-evidence/evidence/baseline-96e0383.md`；整门变异第一轮 49 杀死/6 存活/1 无效 | 无（存活项处置已转 `docs/issues/ISS-2026-059-变异存活项长期无逐项处置.md`） |
+| M-D 文本与双源收口 | 文档 | ☑ | 八条缺陷逐条闭合（含实现中新发现的三条，立为 `docs/issues/ISS-2026-10-23-元信息同行声明默认落点基准被误判.md` 等） | 无 |
+| M-E 证据落盘 | 测试 | ☑ | 门基线已落 `testing/agentflows-gate-evidence/evidence/baseline-96e0383.md`；整门变异第一轮 49 杀死/6 存活/1 无效 | 无（存活项处置已转 `docs/issues/ISS-2026-10-23-变异存活项长期无逐项处置.md`） |
 | M-F 发布 | 后端 | ◐ | 发布动作已随 `861b6ef` 完成：五份 manifest、CHANGELOG 0.13.0 条目、episode、`index.md` 与 `docs/releases/` 回写 | T11 第三轮独立评审；`validate.py all` 全绿原始输出留档 |
 
 ## 当前步骤

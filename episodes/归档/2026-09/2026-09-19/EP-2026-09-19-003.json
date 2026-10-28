@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-09-19-003",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "working tree on ceb639f56c940939c36c745e739c237167048159 (probe hang; --case-ids review; SKILL default path)",
+    "base": "ceb639f56c940939c36c745e739c237167048159"
+  },
+  "run": {
+    "run_id": "loop-smoke-continue-001",
+    "started_at": "2026-09-19T12:43:00Z",
+    "ended_at": "2026-09-19T12:55:00Z",
+    "status": "partial"
+  },
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "一词 Claude 探测在 90s 内未返回任何 stdout/stderr",
+      "status": "verified",
+      "check": "claude --print --output-format json --no-session-persistence with a one-word prompt, python TimeoutExpired 90s",
+      "evidence_ref": "exit 124; empty stdout/stderr; PLAN-LOOP-SMOKE-001 T05; host-platform-facts C10 re-verify"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "eval_runner --case-ids 门变更经独立评审 approved",
+      "status": "verified",
+      "check": "python3.12 -m unittest tests.test_lab_contracts.CaseIdSubsetTests plus independent reviewer reading eval_runner.py and protected-paths.txt",
+      "evidence_ref": "Ran 6 tests ... OK; review decision approved; suite_revision not rewritten from the id list"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "SKILL Bind 不再把 14 个角色写成默认流水线",
+      "status": "verified",
+      "check": "python3.12 tools/lab/validate.py docs; independent review of skills/agentflow/SKILL.md Bind",
+      "evidence_ref": "PASS docs; Bind review approved; single agentflow:reviewer example remains"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "command",
+      "ref": "one-word claude --print probe TimeoutExpired 90s exit 124"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "test",
+      "ref": "tests/test_lab_contracts.py CaseIdSubsetTests"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "plan",
+      "ref": "plans/PLAN-LOOP-SMOKE-001.md"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "plan",
+      "ref": "plans/PLAN-PRODUCT-001.md"
+    }
+  ],
+  "objective": "继续第一次噪声底闭环；端点不可用时推进不依赖 live 的评审与默认路径缩短，不声称闭环已跑通",
+  "outcome": "partial",
+  "signals": [
+    {
+      "kind": "endpoint",
+      "value": "U-01 still open: 90s hang, empty body, not a 502 JSON",
+      "evidence_ref": "C10 re-verify 2026-09-19T12:46Z"
+    },
+    {
+      "kind": "review_isolation",
+      "value": "role separation via host Task subagent; same product/model family, not a second workspace",
+      "evidence_ref": "review_roundtrips"
+    },
+    {
+      "kind": "measurement",
+      "value": "none (no live baseline/candidate evaluations)",
+      "evidence_ref": "improvements/evaluations empty of smoke results"
+    }
+  ],
+  "feedback_summary": "用户说继续。一词探测 90s 无输出，未开 18 次 live。转而完成 --case-ids 与 SKILL 默认路径的独立评审（均 approved）。未提交、未 bump、未重装、未 promote。",
+  "agentflow_version": "0.8.1",
+  "host": "other",
+  "provenance": {
+    "carrier": "cursor-session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-09-19T12:55:00Z",
+  "review_roundtrips": [
+    {
+      "at": "2026-09-19T12:50:00Z",
+      "reviewer": "independent-task:--case-ids",
+      "decision": "approved",
+      "finding": "suite_revision is copied from CLI and not rewritten; CaseIdSubsetTests 6 OK; unknown/duplicate/empty fail closed before adapter. Untested: CLI help, suite_revision independence, business suite + --case-ids, duplicate ids already in the loaded suite.",
+      "resolution": "accepted with residual risks recorded; README empty-list clause added after review as documentation of existing fail-closed behavior",
+      "evidence_ref": "tools/lab/eval_runner.py parse_case_ids/select_cases; tests.test_lab_contracts.CaseIdSubsetTests"
+    },
+    {
+      "at": "2026-09-19T12:54:00Z",
+      "reviewer": "independent-task:skill-bind",
+      "decision": "approved",
+      "finding": "Bind no longer enumerates 14 plugin agents; routing table remains selection source; ZCode drift warning kept; later bug/plan/test chains still named. Residual: later steps use un-namespaced role ids.",
+      "resolution": "accepted; namespaced form documented by the agentflow:reviewer example; no further Bind edit this session",
+      "evidence_ref": "skills/agentflow/SKILL.md Bind; python3.12 tools/lab/validate.py docs PASS"
+    }
+  ]
+}

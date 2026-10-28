@@ -70,7 +70,7 @@
 1. 「九项」口径漂移：`README.md:51`、`AGENTS.md:19`、`docs/system-guide.md` §7、`docs/quickstart.md:48` 均称 `all` 九项，`validate.py`（main 函数分发处）实为十项（lint 已并入）。四处文档未同步。
 2. `test-records.md:17,36` 声称 findings 交叉校验「校验器强制」，`gate/workspace.py:301-303` 实际丢弃返回值、`:357-361` 注释自承 deferred。
 3. `validate.yml` 无 `pip install` 步，而 lint 门对缺失 ruff/mypy 大声报错——CI 环境下 lint 子项将红（R2 保守口径：未实跑 CI，定「高概率」）。
-4. `EP-20261019-001.json` 的 `evidence_ref` 指向 `/tmp` 路径——会话外不可移植，episode 契约无禁绝对路径条款。
+4. `EP-2026-10-19-001.json` 的 `evidence_ref` 指向 `/tmp` 路径——会话外不可移植，episode 契约无禁绝对路径条款。
 **亮点**：fail-closed 贯穿工具层细节——schema 未知关键字拒载（`gate/schema.py:286-405`）、checks 拒 skip（`gate/checks.py:84-86`）、manifests 生成树新鲜度（`gate/manifests.py:122-152`）、build_runtime 危险目标拒绝（`build_runtime.py:61-76`）；诚实披露文化（硬边界 7 自承「角色分离，不是环境隔离」）。
 
 ### D2 门禁有效性（×2）—— 8.5/10
@@ -147,7 +147,7 @@
 2. `trend.py` exit 1（同 D2）。
 3. `docs/features/README.md:28` 与 `index.md:14` 在途批次括注停留在计划中途状态。
 4. AGENTS.md「共九项」vs 实测 10 项。
-5. `PLAN-QUALITY-001.md:7` `updated_at` 10-19 vs 正文含 10-20 回写；`EP-20261019-001` 在 T09 approved 后未补 review_roundtrips。
+5. `PLAN-QUALITY-001.md:7` `updated_at` 10-19 vs 正文含 10-20 回写；`EP-2026-10-19-001` 在 T09 approved 后未补 review_roundtrips。
 **统计（均抽查验证）**：issue 56（40 verified / 16 open）；episode 41（accepted 36 / partial 5），signals 带证 111/179（62%），轮次 42 轮、changes_requested 50%；计划看板 4/4 算术自洽；台账 single 4 / recurred 5 / escalated 0；PENDING-DECISIONS 真实维护（含回溯评审登记）。
 
 ### D9 治理与发布闭环 —— 8/10
@@ -158,7 +158,7 @@
 3. `protected-paths.txt:21-22` 注释仍列已删除的 eval-case schema——门自述与实际保护集不符。
 4. none 支发布记录形态当前零在盘实例——晋升规则存在空转面（装置裁撤已知代价，恢复清单已在 `docs/design-decisions.md` §3）。
 5. `docs/trend.jsonl` 最新行停在 f76094a，HEAD 前两批未落趋势行，断更未登记。
-**亮点**：none/better 互斥是编译级强制（release-record allOf），全库零违例；SKILL.md:24 自承原句仍在且成立；负向案例自查闭环（f76094a 受保护面无评审 → EP-20261018-001 自查 → 回溯评审 approved）。
+**亮点**：none/better 互斥是编译级强制（release-record allOf），全库零违例；SKILL.md:24 自承原句仍在且成立；负向案例自查闭环（f76094a 受保护面无评审 → EP-2026-10-18-001 自查 → 回溯评审 approved）。
 **实跑**：`validate.py manifests` PASS、`installed` PASS；五份 manifest + 生成树全部 0.11.0，与 CHANGELOG 一致。
 
 ### D10 安全与权限边界 —— 8/10
@@ -173,7 +173,7 @@
 
 ### D11 实现的效果 —— 6.5/10
 
-**疗效实证**：门拦截有逐字记录（manifests 门 3 次触发、check-diff 拦 gate 改动、变异 51/51 全杀）；changes_requested 50%（21/21 轮）证明独立评审真在推拒；负向证据一等公民（EP-20261018-001 自开 failed claim、REV-002 撤回「无回归」、ISS-038 复审删注水声称）；两次用户反馈四步闭环（反馈→改动→门验→评审）。
+**疗效实证**：门拦截有逐字记录（manifests 门 3 次触发、check-diff 拦 gate 改动、变异 51/51 全杀）；changes_requested 50%（21/21 轮）证明独立评审真在推拒；负向证据一等公民（EP-2026-10-18-001 自开 failed claim、REV-002 撤回「无回归」、ISS-038 复审删注水声称）；两次用户反馈四步闭环（反馈→改动→门验→评审）。
 **硬伤**
 1. 方法疗效自认未决：run-2026-10-19-003「样本量为 1，不构成结论」。
 2. 改进环产出 1 候选 0 晋升后停用；trend 观测 3 行且工具停摆。
@@ -182,7 +182,7 @@
 
 ### D12 存在意义 —— 6/10
 
-**场景推演**：① 跨层 feature——裸宿主无评审独立性纪律，recurrence 台账实证「以推演代替最小实验」2 次再犯且曾掩盖门绕过，agentflow 的架构门 + 独立评审 + 台账是真实增益；② 同因再犯缺陷——裸宿主会话消失即遗忘，agentflow 有机器判档 escalated 并触发条款升级（检索范围内独有）；③ 多分支合并——ISS-2026-026 实证裸宿主「只 grep 冲突标记」致重复函数声明进交付（但预防效果未对照验证）。
+**场景推演**：① 跨层 feature——裸宿主无评审独立性纪律，recurrence 台账实证「以推演代替最小实验」2 次再犯且曾掩盖门绕过，agentflow 的架构门 + 独立评审 + 台账是真实增益；② 同因再犯缺陷——裸宿主会话消失即遗忘，agentflow 有机器判档 escalated 并触发条款升级（检索范围内独有）；③ 多分支合并——ISS-2026-09-20-合并冲突解决质量门缺口 实证裸宿主「只 grep 冲突标记」致重复函数声明进交付（但预防效果未对照验证）。
 **成本**：material 改动从 Intake 到 Decision 需产生 issue + episode + 评审 + 计划看板 + 双向校验，对单人开发者的多数日常工作成本倒挂；SKILL 对 trivial single-step work 的跳过划线合理但划得太窄。
 **关键限制**：「确定性门」主要绑定插件仓自身（tools/lab + protected-paths），不随方法旅行到目标仓——目标仓用户拿到的只是提示词纪律。
 **砍什么更好**：冻结/砍掉 improve 治理机器（evaluator / release-governor 角色、candidate / release-record schema、isolation 候选语义及相应保护面）——它在治理一个不产仪器化证据的流程；保留 episode + bug 记录 + 再犯台账，14 角色收敛至约 9，更诚实更轻。

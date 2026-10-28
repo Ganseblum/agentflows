@@ -98,7 +98,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                         ValidationError(
                             str(path),
                             "unexpected entry under issues/; live issue records are "
-                            "ISS-<YYYY>-<NNN>-<slug>.md directly under issues/, with 归档/ and "
+                            "ISS-<YYYY-MM-DD>-<slug>.md directly under issues/, with 归档/ and "
                             "recurrence/ the only subdirectories — see issues/README.md",
                         )
                     )

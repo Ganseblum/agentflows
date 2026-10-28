@@ -92,7 +92,7 @@
 | L2 | **测试运行记录可「零用例、零证据、pass」**：`gate/testing.py:322-334` 的覆盖完整性检查只在 `test_plan_version` 等于计划当前版本时执行；版本号无历史可核，写旧值即永久免检 | 构造「计划 3 用例、run 仅 1 行、`decision: pass`、版本写旧值」→ 零报错；写当前版本才报 | T06 |
 | L3 | **无尾随竖线的 CommonMark 表格对 `gate/plan.py` 与 `gate/testing.py` 整表不可见**（`gate/common.py` 的行解析强制首尾竖线）；`docchain/` 另有一套解析器不要求尾随竖线——同一份产物两门异判 | 结果表去掉尾竖线后 fail 行不被读取，`decision: pass` + 全零摘要通过 | T05 |
 | L4 | **schema 类型检查 fail-open**：`gate/common.py:326` `is_type` 对未知 `type` 返回 True；`check_schema_keywords` 又不校验 `type` 取值——schema 把 `string` 拼错即静默关闭该字段校验 | `is_type({}, "objct")` 实测返回 True | T08 |
-| L5 | **顶层门输出不带扫描对象计数**：`validate.py:207` 的 `report()` 只打印 PASS/FAIL——`PASS artifacts` 无法区分「128 条记录都合规」与「一条都没读到」。`ISS-2026-060` 的教训只修在 `doc_chain` 内部 | `tools/lab/validate.py` 源码 | T03 |
+| L5 | **顶层门输出不带扫描对象计数**：`validate.py:207` 的 `report()` 只打印 PASS/FAIL——`PASS artifacts` 无法区分「128 条记录都合规」与「一条都没读到」。`ISS-2026-10-23-仓扫PASS被当作门有效的证据` 的教训只修在 `doc_chain` 内部 | `tools/lab/validate.py` 源码 | T03 |
 | L6 | **`record_store` 索引只增不删**：删除源文件并重建索引后，查询仍返回已删记录 | `/tmp` 副本实测：索引 1 条 → 删文件 → 重建（0 条）→ 查询仍命中 | T04 |
 | L7 | **CLI 与环境体验**：`doc_chain.py --help` 把 `--help` 当目录（FAIL 退出 1）；干净环境 `validate.py all` 因缺 ruff/mypy 整体红（未运行 ≠ 失败，违反仓内自己的口径） | 实测 | T03 |
 | L8 | **两条判据形态盲区**：`C3` 只抓「阻塞 + ☐」同行，官方 `spec/checklist.md` 模板用「未确认 + 阻塞阶段」列，开放阻塞项完全不被抓；`C16` 的来源回溯把不存在的仓内 `ISS-*` 当外部来源放行 | `docchain/checks.py:332-352`、`:591-595`；构造假 `ISS` 实测零 findings | T09 |
@@ -111,8 +111,8 @@
 
 | # | 问题 | 证据 | 任务 |
 | --- | --- | --- | --- |
-| D1 | **违反自定「白话优先」纪律**：全仓「批次」355 次、「口径」250 次、「台账」201 次、「落点」178 次、「收口」114 次；47 行的 `index.md` 含 11 个未解释内部词；`system-guide.md` 单篇「台账」17 次。纪律的作用域只盖文档链产物，不盖仓自己的核心文档（`ISS-2026-040` 已记录该缺口） | 可计数检索（脚本统计，非裸 `grep`） | T23 |
-| D2 | **幽灵测试类勘误只落到 2/9 处**：`PLAN-QUALITY-001.md` T05 行（计划的恢复锚点）、`review-2026-10-19-001.md` 两处（独立评审记录）、`EP-20261019-001.json` 两处（改进环输入）、`AGENTFLOW-EVALUATION-2026-10-20.md` 两处仍把从未存在过的 `MutationKillCorpusTests` 当完成证据传播；勘误只落在 CHANGELOG 与 PENDING 两处——「追加式更正」无传播机制 | `grep -rn` 全仓九处；`git log --all -S` 零命中证明类从未进历史 | T15、T16、T17 |
+| D1 | **违反自定「白话优先」纪律**：全仓「批次」355 次、「口径」250 次、「台账」201 次、「落点」178 次、「收口」114 次；47 行的 `index.md` 含 11 个未解释内部词；`system-guide.md` 单篇「台账」17 次。纪律的作用域只盖文档链产物，不盖仓自己的核心文档（`ISS-2026-09-22-会话交付物术语范围缺口` 已记录该缺口） | 可计数检索（脚本统计，非裸 `grep`） | T23 |
+| D2 | **幽灵测试类勘误只落到 2/9 处**：`PLAN-QUALITY-001.md` T05 行（计划的恢复锚点）、`review-2026-10-19-001.md` 两处（独立评审记录）、`EP-2026-10-19-001.json` 两处（改进环输入）、`AGENTFLOW-EVALUATION-2026-10-20.md` 两处仍把从未存在过的 `MutationKillCorpusTests` 当完成证据传播；勘误只落在 CHANGELOG 与 PENDING 两处——「追加式更正」无传播机制 | `grep -rn` 全仓九处；`git log --all -S` 零命中证明类从未进历史 | T15、T16、T17 |
 | D3 | **自评通胀**（§1.1 第 4 条）：7.6 / 7.7 两份自我评分引用被 6.43 实测证伪的「51/51 全杀」与「零 fail-open」 | `docs/evaluations/` 三份同树报告对照 | T19 |
 | D4 | **状态多源漂移**：安装面状态三说（method-spec「生效」/ acceptance-matrix「部分」/ pending-test「0.15.0 PASS」）；同日 0.15.0 安装面 CHANGELOG 写 FAIL、pending-test 写 PASS；变异数字四组并存；只读角色数 5 对 6；`host-platform-facts.md` W1 行「四份 manifest」对实际五份 | 逐处 file:line 对照（深审文档面报告，主对话抽查确认） | T18、T21、T23 |
 | D5 | **体量倒挂**：记录面 23,030 行对运行面 5,599 行（约 1:4）；CHANGELOG 136KB / 1,442 行；三份同树评测 1,505 行；16 条外部项目记录 758 行；1,357 行的单份测试计划 | 全仓行数统计 | T18 至 T22 |
@@ -206,7 +206,7 @@
 1. **反向索引算出来，不写出来**。手写反向表与「九项/十项检查」「95/78 测试数」是同一类东西，
    会自己腐烂。
 2. **假红比假绿更伤门**。若只允许钉死版本，一次撤回会牵动几十个文档、逼出大量豁免，机制随即
-   退化；因此必须同时支持「钉不变式」与 `equivalent_to`——`ISS-2026-060` 学到的是「0 findings
+   退化；因此必须同时支持「钉不变式」与 `equivalent_to`——`ISS-2026-10-23-仓扫PASS被当作门有效的证据` 学到的是「0 findings
    是哪一种 0」，这里是它的镜像：「N findings 里有几条是真的」。
 
 **立账门槛**（防止重演记录面膨胀）：一条决策只有满足以下任一条件才登记——① 有第二个文档复述
@@ -332,4 +332,4 @@
 - Plan：`plan/PLAN-REVIEW-001.md`（执行契约与看板，26 项任务）
 - 承接：批次 README「目标承接表」（C22 机器校验）
 - 评审输入：2026-10-25 会话总体评审全文（问题清单 §二、评分 §三、方案 §四 即其收口）
-- 关联既有记录：`docs/PENDING-DECISIONS.md` 第 10 条（Q-03 同题）、`docs/issues/ISS-2026-060-仓扫PASS被当作门有效的证据.md`（L5 同源）
+- 关联既有记录：`docs/PENDING-DECISIONS.md` 第 10 条（Q-03 同题）、`docs/issues/ISS-2026-10-23-仓扫PASS被当作门有效的证据.md`（L5 同源）

@@ -72,18 +72,18 @@ class RecordStoreTests(unittest.TestCase):
             episodes = root / "episodes"
             issues.mkdir()
             episodes.mkdir()
-            (issues / "ISS-2026-001-alpha.md").write_text(
+            (issues / "ISS-2026-01-02-alpha.md").write_text(
                 "# Alpha issue\nA recall regression signal.\n", encoding="utf-8"
             )
-            (episodes / "EP-20260917-901.json").write_text(
+            (episodes / "EP-2026-09-17-901.json").write_text(
                 '{"objective":"recall regression episode"}', encoding="utf-8"
             )
             db = root / "records.sqlite3"
             self.assertEqual(record_store.index([issues, episodes], db), 2)
             paths = sorted(path for path, _ in record_store.query(db, "recall regression"))
             self.assertEqual(len(paths), 2)
-            self.assertTrue(paths[0].endswith("episodes/EP-20260917-901.json"), paths)
-            self.assertTrue(paths[1].endswith("issues/ISS-2026-001-alpha.md"), paths)
+            self.assertTrue(paths[0].endswith("episodes/EP-2026-09-17-901.json"), paths)
+            self.assertTrue(paths[1].endswith("issues/ISS-2026-01-02-alpha.md"), paths)
 
 
 if __name__ == "__main__":

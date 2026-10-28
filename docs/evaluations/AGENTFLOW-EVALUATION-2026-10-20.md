@@ -112,7 +112,7 @@
 | D1-5 | 五面分类在两份权威文档里互相矛盾 | `README.md:87-102`（schemas 属「契约与门」、docs 属「文档面」）vs `docs/design-decisions.md:21-24`（schemas 属「运行时面」、docs 属「实验室面」） |
 | D1-6 | **`trend.py` 在现行树上崩溃**（受保护的、文档化的工具今天不可用） | `python3 tools/lab/trend.py` → `ValueError: reviews/agentflow-product-chain/review-2026-10-19-003.md: 评审记录缺少「## 发现摘要」小节`，exit 1。`validate.py all` **不含** trend 检查 → 门全绿而工具已死 |
 | D1-7 | 版本标签 0.11.0 同时覆盖「已发布」与「未发布」两套内容 | `CHANGELOG.md:3` 是 `## 0.11.0 — 2026-10-14`；`:40` 是「## 待发布」节，`:49` 记中文化并「重新装出 0.11.0 快照」。已装 0.11.0 快照含 2026-10-20 内容，而 0.11.0 节不含「中文化/ruff/mypy/10×PASS」 |
-| D1-8 | **模板面（20 份 .md）完全没有门** | `grep -rn "templates" tools/lab/gate/*.py tools/lab/*.py` → 零命中。`ISS-2026-042` 已识别过「模板会漂移出契约」这一缺陷类别，修了单例但没装门 |
+| D1-8 | **模板面（20 份 .md）完全没有门** | `grep -rn "templates" tools/lab/gate/*.py tools/lab/*.py` → 零命中。`ISS-2026-10-10-issue模板教非契约形态` 已识别过「模板会漂移出契约」这一缺陷类别，修了单例但没装门 |
 | D1-9 | `packaging/runtime/` 不在保护面内 | 候选改 `packaging/runtime/agents/reviewer.md` → 进 `changed_paths` 不进 `blocked`（`validate.py manifests` 的字节比对作为第二道防线兜住） |
 
 ---
@@ -304,13 +304,13 @@
 2. **三条链的「不可省的一步」成文**（`skills/agentflow/references/roles.md:32-39` 的 6 行工作链表）。
 3. **切换点有定义**：主链→文档链（`SKILL.md:55`）、主链→缺陷链（`system-guide.md:119` 的四个可观察触发）、主链→改进环（`SKILL.md:64` + `improve/SKILL.md:31`）。
 4. **并行分支的汇合点在角色层有定义**（`roles.md:56` 「跨层功能 → Technical Director → 双工程师（可并行）→ **Reviewer**」；`SKILL.md:58`「并行只并行『写』，永远不并行『理解』」）。
-5. **缺陷状态机在文本与记录上双向对齐**：`open → fixed-pending-review → verified/rejected`，且 `fixed-pending-review` **确实被走过**（`ISS-2026-001:87,95,99`、`ISS-2026-003`、`ISS-2026-005`、`ISS-2026-006` 同批）。
+5. **缺陷状态机在文本与记录上双向对齐**：`open → fixed-pending-review → verified/rejected`，且 `fixed-pending-review` **确实被走过**（`ISS-2026-09-14-claude-json-schema-被拒:87,95,99`、`ISS-2026-09-14-print模式计划写入被阻`、`ISS-2026-09-15-真树故障注入checkout还原丢工作`、`ISS-2026-09-15-未验证行为断言反复出现` 同批）。
 
 **硬伤**
 | # | 硬伤 |
 |---|---|
 | D7-1 | **主链的「有界修复环」在状态图上没有出口边**：`system-guide.md:99-101` 中 `K`（修复一轮）的唯一出边是回到 `J`（评审门）；若再次 `changes_requested`，图上是无限自环。散文有出口（`SKILL.md:82`「带证据上报阻塞」）但图没有 |
-| D7-2 | **改进环 13 步的终端产物零实例且无落点**（见 HP3）；历史上**真的晋升过 2 次**（`EP-20260922-001/002` 的 release-governor `approved` + `promote（human-gated）`），但发布记录已随三件套退役 → 这两次晋升目前**不可被机器校验** |
+| D7-2 | **改进环 13 步的终端产物零实例且无落点**（见 HP3）；历史上**真的晋升过 2 次**（`EP-2026-09-22-001/002` 的 release-governor `approved` + `promote（human-gated）`），但发布记录已随三件套退役 → 这两次晋升目前**不可被机器校验** |
 | D7-3 | **缺陷链没有回到主链的出口**；且 `system-guide.md:119` 把「评审发现」列为缺陷链入口，而 `SKILL.md:63` 第 9 步规定评审要求改动时走主链修复轮——**同源不同向，无优先级裁决** |
 | D7-4 | **16 条 `open` 是吸收态**：全部 `provenance: external`、`project: infinite-canvas`、`recorded_at: 2026-09-19T14:21:06Z`、**28 天零推进**、全部缺 `updated_at`；修复对象在**另一个仓**，而「转交外部仓」不是一个状态 |
 | D7-5 | **计划状态机没有终态**：`schemas/plan.schema.json:24-31` 只有 `draft/proposed/approved/superseded`，描述自承「approved = execution may be assigned」——**没有「已完成」态**；实测 4/4 计划全是 `proposed`，而三份已在执行 |
@@ -337,10 +337,10 @@
 - 退役路径散文：独立扫描得 64 处内联代码含退役路径 token，其中 `docs/product/proposal/proposal.md:11` 与 `docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md:98` 指向已删的 `docs/iteration-log.md`（其余为 issue 记录里的历史引文，合规）。
 
 **矛盾清单（同一事实两种说法）**
-1. **单测数量**：说 A `episodes/2026-10-19/EP-20261019-001.json:71,108`「unittest 95 OK」「78→95」；说 B 实跑 `Ran 78 tests`；说 B' `docs/trend.jsonl:3`「unittest_count: 95」；说 C `docs/releases/pending-test.md:16`「unittest 96 OK」。**该数字散布在 24 个文件**（含 18 份 issue 的 `## 审查` 段、CHANGELOG、PENDING-DECISIONS、pending-test、1 份 episode）。`git log --all -S "SchemaSubsetFailClosedTests" -- tests/` **全历史零命中** → **95/96 从未进入被提交的历史树**。
+1. **单测数量**：说 A `episodes/2026-10-19/EP-2026-10-19-001.json:71,108`「unittest 95 OK」「78→95」；说 B 实跑 `Ran 78 tests`；说 B' `docs/trend.jsonl:3`「unittest_count: 95」；说 C `docs/releases/pending-test.md:16`「unittest 96 OK」。**该数字散布在 24 个文件**（含 18 份 issue 的 `## 审查` 段、CHANGELOG、PENDING-DECISIONS、pending-test、1 份 episode）。`git log --all -S "SchemaSubsetFailClosedTests" -- tests/` **全历史零命中** → **95/96 从未进入被提交的历史树**。
 2. **变更行数**：`reviews/review-2026-10-19-002.md:6` frontmatter 已更正为 7758，`:28` 正文仍写「13267 行」——更正只落到 frontmatter。
 3. **门项数**：见 D2-H2。
-4. **回归状态**：`docs/issues/ISS-2026-030:5` frontmatter `regression_status: pass` vs `:45` 正文「regression_status=not-run」——**14 条 issue 同时带两种说法**（ISS-003/007/008/009/030/031/032/033/034/035/036/037/038/039）。
+4. **回归状态**：`docs/issues/ISS-2026-09-20-先写契约后核实平台约定:5` frontmatter `regression_status: pass` vs `:45` 正文「regression_status=not-run」——**14 条 issue 同时带两种说法**（ISS-003/007/008/009/030/031/032/033/034/035/036/037/038/039）。
 5. **Q-01~Q-04 拍板状态**：`docs/PENDING-DECISIONS.md:28` 记「已落」vs 5 份分析文档首行仍写「状态：待用户拍板」。
 6. **重装/安装态**：`PLAN-PRODUCT-001.md:100` T06「◐ 进行中…需用户刷新 marketplace 并重装」vs `PLAN-QUALITY-001.md:32` T08「☑ 已完成…拷贝进缓存（**等价于 marketplace 重装**）」vs 实跑 `validate.py installed` PASS。
 
@@ -400,7 +400,7 @@ $ validate.py recurrence                             → 9 类；recurred 5 / si
 
 - **`write_scope` 是提示词级 + 半机械级**：`check-write-scope.sh` 是路径差异审计（机械），但它是 **Supervisor 手工调用的脚本**，不在 CI、不在 `all`、**不在受保护面**；宿主本身不强制 Write 路径（README:38 自承）。
 - **残余风险**：worker 把产物写进 `.gitignore` 忽略的路径时，`check-write-scope.sh` **不计入**（`:20` 自述 + `:52` 用 `git ls-files --others --exclude-standard`），而 `isolation.py:113` **计入** —— 两个工具口径不一致，脚本覆盖面比候选门小（`.agentflow-records.sqlite3`/`private-evals/`/`.zcode/` 都在 ignore 列表里）。
-- **非 ASCII 路径**：ISS-2026-041 的中文路径误 FAIL **已根治**（5 组用例全对，退出码与匹配语义正确）；`isolation.py` 用 NUL 分帧，中文路径既不被 C-quote 误伤、也不漏拦。
+- **非 ASCII 路径**：ISS-2026-10-10-写范围dot-scope静默不匹配 的中文路径误 FAIL **已根治**（5 组用例全对，退出码与匹配语义正确）；`isolation.py` 用 NUL 分帧，中文路径既不被 C-quote 误伤、也不漏拦。
 - **凭据纪律**：`agents/test-executor.md:52`「`credentials`（注入方式，绝不是值）」与 `test-records.md` 一致；文档与工具口径一致。
 - **候选隔离**：`isolation.py` 要求调用方指定 `--checker-root` 且拒绝与候选重叠/嵌套（实测 exit 1）——「检查器根由调用方指定，不由 check-diff 自行证明可信」（`tools/lab/README.md:88-89`）。
 - **fail-open 面全集**：① schema `required` 内容无人守；② `skills/agentflow/` 不在保护面（执法器可被改写）；③ `packaging/runtime` 缺席即跳过新鲜度检查；④ `validate.py docs` 第 5 组断言不存在；⑤ 布尔子 schema / 未知 `type` / `$ref` 兄弟键三处子集校验器 fail-open；⑥ `mutate.py` 「存活」不导致非零退出；⑦ `mutate.py --check <无变异项>` 报绿；⑧ `docs.py` schema 路径正则漏检大写文件名；⑨ `check-write-scope.sh` 不计 ignore 路径；⑩ `validate.py report` 过滤恒 exit 0 且空结果不提示。
@@ -413,15 +413,15 @@ $ validate.py recurrence                             → 9 类；recurred 5 / si
 
 | 指标 | 数值 | 抽查核对 | 结论 |
 |---|---|---|---|
-| 走完全流程的 issue 数与占比 | 56 中 40 verified = 71.4%；agentflow 侧 40 条 **100% verified** | 抽 `ISS-2026-055`：reviewer / review_decision / closure_criteria 齐备，实跑 `validate.py recurrence` 命中 `unverified-behavior-claims consolidated 0.8.4 2 0 recurred` | ✅ |
+| 走完全流程的 issue 数与占比 | 56 中 40 verified = 71.4%；agentflow 侧 40 条 **100% verified** | 抽 `ISS-2026-10-14-复发台账计数与再犯事实矛盾`：reviewer / review_decision / closure_criteria 齐备，实跑 `validate.py recurrence` 命中 `unverified-behavior-claims consolidated 0.8.4 2 0 recurred` | ✅ |
 | 16 条 `open` 是否停滞 | 全部 external、2026-09-19 同批、28 天无推进 | 抽 `reviews/infinite-canvas-office-agent-plan/review-2026-09-19-001.md:10-26` 逐条点名 ISS-010~025，`:57` 留有实测证伪 | ⚠️ 设计内，但「open→verified」对外部来源**从未被验证过** |
-| episode 实质率 | `review_roundtrips` 非空 19/41 = 46.3%；42 轮（approved 21 / changes_requested 21 = **50% 拒绝率**）；claims 带 `evidence_ref` 126/132 = 95.5%；signals 带 `evidence_ref` 111/179 = 62.0% | 抽 `EP-20260921-001` 第 22 轮 finding 指到任务表「T02/T03 依赖 T02」字面自引用；抽 `EP-20260920-002`：6 条 claim 全 `verified` 而 `evidence_ref` 全 None | ⚠️ 部分成立 |
+| episode 实质率 | `review_roundtrips` 非空 19/41 = 46.3%；42 轮（approved 21 / changes_requested 21 = **50% 拒绝率**）；claims 带 `evidence_ref` 126/132 = 95.5%；signals 带 `evidence_ref` 111/179 = 62.0% | 抽 `EP-2026-09-21-001` 第 22 轮 finding 指到任务表「T02/T03 依赖 T02」字面自引用；抽 `EP-2026-09-20-002`：6 条 claim 全 `verified` 而 `evidence_ref` 全 None | ⚠️ 部分成立 |
 | 计划完成率与回写纪律 | 完成率真实（9☑+1— / 3☑+1— / 6☑2◐1☐3— / 5☑1☐3—）；**回写纪律：plan ✓ / 批次 README ✗ / PENDING-DECISIONS ✗ / index.md ✗** | 抽 `PLAN-QUALITY-001.md:16`「9 项已完成」与逐行计数一致 | ⚠️ 计划内自洽、跨文件断裂 |
 | 再犯台账 | 9 类 / 20 occurrence / recurred 5 · single 4 · escalated 0；`grep -l "^class_id:"` = 20 = 20 | ISS-055 自承矛盾**已真实修复**并留维护注记 | ✅ 一致 |
-| **台账仍漏登的 2 处自承再犯** | `ISS-2026-030:37`（同型复发 ISS-2026-021）与 `ISS-2026-035:29`（spec 轮已抓到、本次原样复发）均**不带 `class_id`** | 档位机制看不见 | ❌ 台账与再犯事实仍不同源（ISS-2026-055 同根因，其修复未覆盖这两处） |
+| **台账仍漏登的 2 处自承再犯** | `ISS-2026-09-20-先写契约后核实平台约定:37`（同型复发 ISS-2026-09-19-office计划未验证SDK假设无spike）与 `ISS-2026-09-21-文档链陈旧前向引用无收口:29`（spec 轮已抓到、本次原样复发）均**不带 `class_id`** | 档位机制看不见 | ❌ 台账与再犯事实仍不同源（ISS-2026-10-14-复发台账计数与再犯事实矛盾 同根因，其修复未覆盖这两处） |
 | 门禁拦截史 | 至少 11 起「门红后被修」（ISS-054/053/041/026/039/038/055 + C6 收紧 + 保护面补齐 + 反证实验 A–C + 外部评审 16 findings） | 逐条读原文 | ✅ |
 | 改进环产出 | **候选 0 条、发布记录 0 条**；`candidates/`/`evaluations/`/`improvements/` 目录全不存在 | `find . -name "candidate*.json"` 只命中 schema；`ls docs/releases/` = 2 个 `.md` | ⚠️ 契约在、**产出为 0**，且记录面**未把「改进环从未产出候选」作为事实登记** |
-| 用户反馈闭环 | 链路 A（ISS-2026-040）完整：反馈→记录→改动→独立复审→归纳台账，且留下「为什么不并入另一类」的判据推理；链路 B（EP-20261019-001）在「验证→回写」段断开；链路 C（反馈分析师 TC-FEEDBACK-ANALYST-01）核实简报声称的 `session-artifact` provenance 根本不存在并拒绝合并 | 逐条读原文 | ✅ |
+| 用户反馈闭环 | 链路 A（ISS-2026-09-22-会话交付物术语范围缺口）完整：反馈→记录→改动→独立复审→归纳台账，且留下「为什么不并入另一类」的判据推理；链路 B（EP-2026-10-19-001）在「验证→回写」段断开；链路 C（反馈分析师 TC-FEEDBACK-ANALYST-01）核实简报声称的 `session-artifact` provenance 根本不存在并拒绝合并 | 逐条读原文 | ✅ |
 
 **旗舰实验 G1**：`run-2026-10-19-003.md:14` `decision: partial`；`:21`「T1 只有一次重复，**结论不得用于「有提升 / 无提升」**」；`:44-45`「**不构成 G1 结论**」——**诚实但无疗效**。
 
@@ -515,7 +515,7 @@ $ validate.py recurrence                             → 9 类；recurred 5 / si
 | G05 | **`validate.py docs` 第 5 组断言是幽灵** | `gate/docs.py:184` docstring / `AGENTS.md:27` / `tools/lab/README.md:47-48` vs 代码无实现；R4 复现差集 3 个且门 PASS | D2 D5 | 实现镜像比对，或删掉三处声称 | 未立案 |
 | G06 | **`check-diff` 对 `__pycache__/*.pyc` 误判越界** | 副本实测 blocked 13–14 条 exit 1；与 `tools/lab/README.md:42-43` 矛盾 | D2 D9 | isolation 排除 `__pycache__`/`*.pyc`，或把 `tools/lab/gate/` 改逐文件保护 | 未立案 |
 | G07 | **`trend.py` 在现行树崩溃** | exit 1 traceback（5 角色独立复现同一文件） | D1 D3 D9 | 把「`## 发现摘要`」纳入评审契约，或让 trend.py 跳过并记 null | 未立案 |
-| G08 | **`mutate.py` 实测 43/51，仓内三处写「51/51 全杀」** | `index.md:32`、`PLAN-QUALITY-001.md:29`、`EP-20261019-001.json:20` vs 实跑 exit 1 | D2 D9 D11 | 撤回三处数字或补上被杀死的回归测试（`MutationKillCorpusTests` 在 git 全历史零命中） | 未立案 |
+| G08 | **`mutate.py` 实测 43/51，仓内三处写「51/51 全杀」** | `index.md:32`、`PLAN-QUALITY-001.md:29`、`EP-2026-10-19-001.json:20` vs 实跑 exit 1 | D2 D9 D11 | 撤回三处数字或补上被杀死的回归测试（`MutationKillCorpusTests` 在 git 全历史零命中） | 未立案 |
 | G09 | **单测 95/96 注水，实测 78**（散布 24 个文件） | 实跑 `Ran 78 tests`；`git log --all -S` 零命中 | D8 D11 | 全仓改写为 78（或补上 17 个测试使其为真） | 未立案 |
 | G10 | **「照指令产出必被自己的门拒」：计划模板 4 处不兼容** | 副本照抄 → 3 条 `body section … is required`；`gate/doc_chain.py:362` 按列名 vs `gate/plan.py:107` 按索引 | D5 D7 | 拆两份模板（本仓形态 + 目标仓形态）；`gate/plan.py` 状态列改按列名读 | 未立案 |
 | G11 | **测试角色授权的 `scratch/`/`evidence/` 落点被记录门全拒** | 副本 → `FAIL artifacts (5 error(s))`；现行仓从未出现过这两个目录 | D5 | `gate/workspace.py` testing 分支放行；或改 `test-records.md:11,12,23` 与 `test-executor.md:17` | 未立案 |
@@ -527,7 +527,7 @@ $ validate.py recurrence                             → 9 类；recurred 5 / si
 | G17 | **设计评审门从未跑过**（0 次），因而「Plan 前置条件」形式上不成立 | `docs/product/README.md:48`「☐ 技术方案评审通过」 | D7 | 跑一次并勾选；或放宽门 4 措辞 | 未立案 |
 | G18 | **plan 状态机无终态**，4/4 计划停在 `proposed` 却已在执行 | `schemas/plan.schema.json:24-31`；4 份 plan frontmatter 全 `proposed` | D7 | 加 `completed` 态或明确「approved + 全 ☑ 即完成」 | 未立案 |
 | G19 | **「escalated」档位 0 次发生**（改进环最强信号从未响） | `validate.py recurrence` 输出全为 single/recurred | D7 D11 | 接受为事实并登记；或补一次真实的归纳 | 未立案 |
-| G20 | **`docs/issues/归档/` 之外的台账仍漏登 2 处自承再犯** | `ISS-2026-030:37`、`ISS-2026-035:29` 均无 `class_id` | D11 | 补 `class_id` 并复算档位 | 未立案 |
+| G20 | **`docs/issues/归档/` 之外的台账仍漏登 2 处自承再犯** | `ISS-2026-09-20-先写契约后核实平台约定:37`、`ISS-2026-09-21-文档链陈旧前向引用无收口:29` 均无 `class_id` | D11 | 补 `class_id` 并复算档位 | 未立案 |
 | G21 | **`record_store.py query` 对连字符词崩溃**（`fail-closed` 中招） | 实跑 `sqlite3.OperationalError: no such column: closed` | D3 | 表达式按字面串转义；补带连字符的测试用例 | 未立案 |
 | G22 | **`mutate.py` 「存活」不导致非零退出；5 个检查名 0 变异却报绿** | `--check schemas` → 「总变异数 0 … EXIT 0」；`:467` 只在「无效」时 return 1 | D2 D3 | 存活 >0 时非零退出；无变异时 exit 2 | 未立案 |
 | G23 | **门元层零覆盖**：`validate_schemas`/`check_schema_keywords`/`validate_installed`/`lint`/`counts`/`mutate` 在 tests/ 引用数全为 0 | R3 逐标识符统计；D3-1/D3-2 恰好落在此区 | D2 D3 | 为元层补负例测试 | 未立案 |

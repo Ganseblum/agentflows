@@ -1,7 +1,7 @@
 # Agentflow 设计决策记录
 
 > 用途：产品边界 / 宿主插件形态 / 自迭代三份早期设计文档于 2026-10-12 合并为本记录——保留决策、
-> 边界原则与现时状态，去掉已实施的过程细节。版本以五份 manifest 与 `CHANGELOG.md` 为准，
+> 边界原则与现时状态，去掉已实施的过程细节。版本以 manifest 与 `CHANGELOG.md` 为准，
 > 本文不重复版本号。原三份文档的完整推理过程见 git 历史。
 >
 > 与产品链的关系：`docs/product/`（proposal → spec → design → plan）是产品语义的现行出处；
@@ -18,7 +18,7 @@
 README、安装方式、版本与发布对象保持歧义。用户安装和使用的产品只有 Plugin；评测脚本、证据存储
 或 MCP 属于维护与治理控制面，不提供第二套聊天 CLI。
 
-**仓库边界**（现状）：运行时面 = `agents/` + `skills/` + `schemas/` + 五份 manifest + 宿主包装 +
+**仓库边界**（现状）：运行时面 = `agents/` + `skills/` + `schemas/` + 各 manifest + 宿主包装 +
 `protected-paths.txt`，由 `packaging/build_runtime.py` 生成瘦快照；实验室面 = `tools/lab/`、`tests/`、
 `examples/`、`docs/`；记录面 = `docs/issues/`、`docs/features/`、`docs/releases/`、
 `episodes/`、`reviews/`（布局见 [`index.md`](../index.md)）。
@@ -184,7 +184,7 @@ adapter 扫描工具结果计数写入 `observed_permission_denials`（**缺失 
 
 ---
 
-## 对外口径（版本号以五份 manifest 为准）
+## 对外口径（版本号以 manifest 为准）
 
 已具备受治理自迭代的工作流契约与数据契约（十条主工作流、<!-- count:agents -->14<!-- /count --> 角色能力库、14 条硬边界、独立评审门、
 确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役，方法级

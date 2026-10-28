@@ -76,7 +76,7 @@ fi
 # plugin.json=0.17.2 而 packaging/runtime/plugin.json=0.17.1；git marketplace 装的正是
 # runtime 那棵树，结果市场显示新版、装进去的仍是旧版。下面三项检查就是拦这一类。
 if [ "$DRY_RUN" != "1" ]; then
-  if [ -n "$(git -C "$REPO_ROOT" status --porcelain -- packaging plugin.json marketplace.json .zcode-plugin .claude-plugin .codex-plugin)" ]; then
+  if [ -n "$(git -C "$REPO_ROOT" status --porcelain -- packaging plugin.json marketplace.json .zcode-plugin .claude-plugin .codex-plugin .qoder-plugin)" ]; then
     fail "发布面有未提交改动——先 rebuild、提交并推送，再运行本脚本（git marketplace 装的是远端那棵树，不是你的工作树）"
   fi
   if ! git -C "$REPO_ROOT" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then

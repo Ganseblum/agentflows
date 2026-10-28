@@ -4,12 +4,12 @@
 
 ## 一、现状
 
-- `docs/issues/` 下有 16 条外部来源记录：ISS-2026-010 至 ISS-2026-025。
+- `docs/issues/` 下有 16 条外部来源记录：ISS-2026-09-19-office计划缺异常矩阵 至 ISS-2026-09-19-office计划事件清理回放缺口。
 - 这些记录来自另一个项目（office 计划相关），不是 agentflows 自身的缺陷。
 - 当前在 `docs/issues/` 下，标注了来源。
 
 **定位更正（2026-10-19 核查）**：这 16 条不是"误放在本仓的外部记录"，而是本仓**对外评审桥**的
-正常产出。以 ISS-2026-010 为例：`provenance: external`、`attribution: product_code`、
+正常产出。以 ISS-2026-09-19-office计划缺异常矩阵 为例：`provenance: external`、`attribution: product_code`、
 `project: infinite-canvas`、`files` 指向 `reviews/infinite-canvas-office-agent-plan/archive/2026-09-19-001/`
 下的评审快照——它们是 `reviews/infinite-canvas-office-agent-plan/review-2026-09-19-001.md` 的
 findings。`reviews/README.md` 的工作流第 3 步写明「发现的问题一条一条写进 issues/」，第 4 步要求
@@ -23,7 +23,7 @@ findings。`reviews/README.md` 的工作流第 3 步写明「发现的问题一�
 
 ### 选项 A：迁出到外部项目
 
-把 ISS-2026-010 至 025 迁移到外部项目的记录系统。
+把 ISS-2026-09-19-office计划缺异常矩阵 至 025 迁移到外部项目的记录系统。
 
 **收益**：agentflows 仓只留自己的记录；记录归位到正确的项目。
 **风险**：不只是"更新引用"这么轻。迁出会同时打断三处在跑的机制——① 每条记录的 `files` 必须在盘

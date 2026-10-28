@@ -24,7 +24,7 @@
   "properties": {
     "test_run_id": {
       "type": "string",
-      "pattern": "^TR-\\d{8}-\\d{3}$"
+      "pattern": "^TR-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"
     },
     "title": { "type": "string", "minLength": 1 },
     "project": {
@@ -34,7 +34,7 @@
     },
     "test_plan_id": {
       "type": "string",
-      "pattern": "^TP-\\d{8}-\\d{3}$"
+      "pattern": "^TP-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"
     },
     "test_plan_version": {
       "description": "The plan's test_version at execution time. Coverage against the current registry is only asserted when this equals the plan's current version.",
@@ -84,13 +84,13 @@
       "description": "bug_ids of the defect records filed from this run; each must exist under docs/issues/.",
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{2}-\\d{2}-[A-Za-z0-9\\u4e00-\\u9fff][A-Za-z0-9\\u4e00-\\u9fff-]*$" }
     },
     "flow_findings": {
       "description": "bug_ids of flow-reasonableness findings filed from this run (missing timeout/duplicate/interrupt handling, inconsistent error semantics, unhandled states); each must exist under docs/issues/.",
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{2}-\\d{2}-[A-Za-z0-9\\u4e00-\\u9fff][A-Za-z0-9\\u4e00-\\u9fff-]*$" }
     },
     "recorded_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" }

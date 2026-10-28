@@ -15,7 +15,7 @@ python3 tools/lab/validate.py all
 `docs/releases/`、`reviews/`）下的记录产物、
 角色/文档面与版本散文守卫、受保护门清单的完整性、文档链 linter 的判别自测、
 文档链 linter 对活文档面（`docs/product/`、`docs/features/`）的扫描、
-五份 manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
+manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
 新鲜度——marketplace 装的就是这棵生成树，漂移即静默装出旧角色）、`tests/` 下仓库自身的回归测试，
 以及 lint（ruff + mypy 静态检查，依赖 `requirements-dev.txt`）、decision_gate（决策可追溯
 与追溯闭环 C15–C18 与 C22–C23，标记启用）。项数与内容以
@@ -94,7 +94,8 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
   [index.md](index.md)。
 - issue 记录与计划是带经过校验的 YAML frontmatter 的 Markdown。计划文件的命名精确为
   `<plan_id>.md`（形态：`docs/features/README.md` 的计划形态节）；issue 记录文件命名为
-  `ISS-<YYYY>-<NNN>-<slug>.md`（slug 用中文短语描述问题，无中文译法的技术词保留原文），
+  `ISS-<YYYY-MM-DD>-<slug>.md`（前缀加中文短语整体就是记录 id：日期取 `recorded_at` 的日期部分，
+  `bug_id` 必须与文件名 stem 完全一致；slug 用中文短语描述问题，无中文译法的技术词保留原文），
   位于 `docs/issues/` 下，被拒记录移入
   `docs/issues/归档/<YYYY-MM-DD>/`。Supervisor 为每条记录显式指派路径。
 - 新增、移动或删除文档时，在同一变更中更新 [`index.md`](index.md)；新的顶层目录或
@@ -143,13 +144,22 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
 
 ## 实验与恢复
 
-这些规则来自 ISS-2026-005（在真实树上做故障注入，随后一次基于 checkout 的“还原”
+这些规则来自 ISS-2026-09-15-真树故障注入checkout还原丢工作（在真实树上做故障注入，随后一次基于 checkout 的“还原”
 丢弃了未提交的工作）；它们是过程控制，不是建议。
 
 - 故障注入与变异测试只在一次性副本上运行（`cp -r` 检出到 `/tmp`），绝不在工作树
   上运行。
 - 绝不用 `git checkout` / `git restore` 撤销真实树上的实验。对受跟踪的文件，它们会
   重置到已提交版本并静默丢弃未提交的工作——与撤销恰恰相反。
+- **工作树里有他人未提交的改动时，任何整文件覆盖式写入都先做保全快照。** 这一类包含
+  `git checkout` / `git restore` / `git show HEAD:<path> > <path>` / 用脚本把文件重写成
+  「以已提交版本为底 + 自己那一行」——它们的效果相同：文件里不属于你的未提交改动被静默
+  还原。要改一个新版本的文件，用增量替换（只动你负责的那几行），不要把整份文件重新生成
+  一遍。确实需要覆盖式写入时，在**写入前立刻** `python3 tools/dirty-guard.py snapshot <快照>`，
+  写完 `python3 tools/dirty-guard.py verify <快照>`；verify 报红时先看消失的行是不是你自己
+  刚改写的（自己改写同一行也会报红，这是已知局限），不是你的才是真丢。
+  2026-10-28 实例：重写 `index.md` 时用 `git show HEAD:index.md` 作底，把同工作树里另一
+  批次未提交的 5 处索引改动还原掉了，靠事后逐条重打才恢复。
 - 恢复或还原只有在相关检查被重新运行并观察到转绿之后才算数。未观察到的恢复不算
   恢复，正如无法复现的检查记为未运行。
 - 对于任何你打算声称成功的命令，不得屏蔽命令输出（`2>/dev/null` 及同类写法）。

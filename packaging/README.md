@@ -13,8 +13,8 @@ python3 packaging/build_runtime.py
 `python3 tools/lab/validate.py --list` 自报为准，文档不手写计数。
 改过 `agents/`、`skills/`、`schemas/` 或任何 manifest 之后重建它，再复跑该检查。
 
-该副本只复制一份白名单：`agents/`、`skills/`、`schemas/`、三个宿主插件目录（`.zcode-plugin/`、
-`.claude-plugin/`、`.codex-plugin/`），以及 `plugin.json`、`marketplace.json`、`protected-paths.txt`；
+该副本只复制一份白名单：`agents/`、`skills/`、`schemas/`、四个宿主插件目录（`.zcode-plugin/`、
+`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`），以及 `plugin.json`、`marketplace.json`、`protected-paths.txt`；
 除此之外的一切都不复制。生成后 `verify` 还会拒绝在顶层出现以下名称（它们是记录、实验或源码树）：
 `issues`、`episodes`、`plans`、`improvements`、`releases`、`reviews`、`tests`、`tools`、`docs`、`evals`、
 `examples`、`.git`、`packaging`。

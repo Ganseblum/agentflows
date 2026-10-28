@@ -719,7 +719,7 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
 DECISION_MARKER = "agentflow 决策记录"
 LEDGER_MARKER = "agentflow 问题台账"
 OWNERSHIP_MARKER = "agentflow 决策归属"
-ISS_RE = re.compile(r"ISS-\d{4}-\d{3}(?:-[^\s|]+)?")
+ISS_RE = re.compile(r"ISS-\d{4}-\d{2}-\d{2}(?:-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*)?")
 
 DECISION_COLUMNS = ["来源", "待决问题", "现状核验", "推荐", "关闭条件", "优先级", "影响范围", "自动决策"]
 LEDGER_STATUS_WORDS = ("仍存在", "已修复", "已关闭", "已失效", "已修", "待修")
@@ -963,7 +963,7 @@ def ownership_findings(label: str, text: str, repo_root: Path) -> list[str]:
         status, disp = _record_status(body)
         if status != "open":
             continue
-        iss_id = rec.stem  # e.g. ISS-2026-010-office计划缺异常矩阵
+        iss_id = rec.stem  # e.g. ISS-2026-09-19-office计划缺异常矩阵
         if iss_id in covered:
             continue
         if disp in ("deferred", "not-doing"):

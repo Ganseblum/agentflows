@@ -27,8 +27,8 @@ python3 tools/lab/validate.py all
 record_store / trend）、记录 schema 与规则书、打包清单（`packaging/build_runtime.py`），以及门工具的
 回归测试。`all` 包含它，因此候选无法悄悄裁剪用来评判它的门范围。
 
-`validate.py manifests` 要求五份手工同步的 manifest（`plugin.json`、`marketplace.json`、
-`.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`）在插件名称与版本上一致；否则一次漏掉的
+`validate.py manifests` 要求六份手工同步的 manifest（`plugin.json`、`marketplace.json`、
+`.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`）在插件名称与版本上一致；否则一次漏掉的
 bump 只会在宿主重装后才暴露。
 
 `validate.py tests` 断言 `tests/` 的已声明内容，并运行 `python3 -m unittest discover -s tests`，

@@ -9,7 +9,7 @@
   "properties": {
     "review_id": {
       "type": "string",
-      "pattern": "^REV-\\d{8}-\\d{3}$"
+      "pattern": "^REV-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"
     },
     "title": { "type": "string", "minLength": 1 },
     "target_project": {
@@ -41,7 +41,7 @@
       "description": "bug_ids of the defect records filed from this review; each must exist under docs/issues/.",
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{3,}$" }
+      "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{2}-\\d{2}-[A-Za-z0-9\\u4e00-\\u9fff][A-Za-z0-9\\u4e00-\\u9fff-]*$" }
     },
     "reviewer": { "type": "string", "minLength": 1 },
     "recorded_at": { "type": "string", "format": "date-time" },
