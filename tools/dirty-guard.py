@@ -27,6 +27,9 @@
 `cleanup` 只有在快照带 `verify` 通过标记时才删除快照文件与归档——核验跑完，原件就该退场，
 不留「以防万一」的散落备份。
 
+快照与归档都是**本地临时件，不得提交**：两者都必须落在仓库外，工具对落在仓库内的目标直接
+报错退出。未提交内容的副本一旦进版本库，临时现场就被固化成历史，还会被下次操作连带。
+
 退出码：0 成功，1 有内容消失或删除前置未满足，2 用法或环境问题。
 """
 
@@ -128,6 +131,14 @@ def sha256_of(path: Path) -> str:
 
 
 def cmd_snapshot(root: Path, target: Path, tar_dir: Path | None) -> int:
+    if str(target.resolve()).startswith(f"{root}{os.sep}"):
+        print(
+            f"错误：快照目标 {target} 在仓库内（{root}）。快照是本地临时件，"
+            "不得进入版本库——它记录的是尚未提交的内容，提交它等于把临时现场固化，"
+            "还会被下次操作连带。请放到仓库外（如 /tmp 或 ~ 下的临时目录）。",
+            file=sys.stderr,
+        )
+        return 2
     files: dict[str, dict[str, object]] = {}
     added_totals: dict[str, int] = {}
     unreadable: list[str] = []

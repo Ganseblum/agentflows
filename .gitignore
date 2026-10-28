@@ -14,3 +14,6 @@ command-code-session-*.html
 .workbuddy/
 # Local dev interpreter for the `lint` gate item (see README). Generated, never shipped.
 .venv/
+# 本地临时备份：宿主全局规则改写前的 `<文件名>.agentflow-backup-<时间戳>`（见 AGENTS.md「实验与恢复」）。
+# 这类文件记录的是改写前的一次性现场，不得进入版本库。
+*.agentflow-backup-*

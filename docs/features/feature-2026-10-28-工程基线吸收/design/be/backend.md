@@ -99,7 +99,7 @@ sequenceDiagram
 | `templates/testing/plan.md`、`agents/test-planner.md` | 测试计划形态 | 删除三行与新增句 |
 | 五份 manifest + `packaging/runtime` | 安装快照 | 恢复旧版本号并重建生成树 |
 
-**回滚点**：本批改动尚未提交；回滚即撤销本批工作树改动，回到分支提交 `153cd2b`（该提交属欠账修复批，不属本批）。
+**回滚点**：本批改动已于 2026-10-28 并入 `main`（`d5b52ce`、`256ea64`），与另一会话的 id 改名同批提交；回滚须按 README「并发环境」节登记的本批文件清单逐个还原，不能用整提交回退。
 
 ## 8. 变更记录
 
