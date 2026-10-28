@@ -1,0 +1,27 @@
+# T10 validate.py all 实跑（2026-10-28 11:42:01 CST · 含 T11/T12 复查）
+
+$ python3.12 tools/lab/validate.py all
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+
+$ python3.12 -m unittest discover -s tests
+Ran 172 tests in 18.444s
+
+OK
+
+$ python3.12 tools/lab/doc_chain.py --self-test
+124/124 self-test cases pass
+
+$ bash -n (三个发布脚本)
+OK skills/agentflow/scripts/publish.sh
+OK skills/agentflow/scripts/upgrade-zcode.sh
+OK skills/agentflow/scripts/upgrade-codex.sh

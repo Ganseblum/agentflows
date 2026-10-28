@@ -49,43 +49,43 @@
 
 > 完整逐条证据在对应维度节；本表是唯一的编号与状态权威。**P0 = 阻断主流程或让错误结论通过门；P1 = 可能导致错误判断或主流程某步无法执行；P2 = 影响一致性/可维护性/结论可信度；P3 = 记录性、可延后。** 本轮无 P0。
 
-| # | 严重度 | 发现 | 位置 | 解锁条件 |
-|---|---|---|---|---|
-| G01 | **P1** | CHANGELOG 的 lint SKIP 声称在 `validate.py` 本身不成立，两个口径并存 | `CHANGELOG.md:7,:42`；`validate.py:250-282` | 选定 (a) 让 validate.py 也 SKIP 或 (b) 改 CHANGELOG 措辞；均需人工评审 |
-| G02 | **P1** | `docchain/checks.py:1142` 对不可读文件 fail-open：`chmod 000` 使 8 findings 变 PASS | `checks.py:1141-1142` | 改为 append finding（与 `doc_chain_live` 同构）+ chmod 000 夹具 |
-| G03 | **P1** | `templates/feature/plan/execution.md` 照抄产出必被本仓门拒 | `execution.md:14` vs `gate/plan.py` 的 `PLAN_REQUIRED_HEADINGS` | 模板改混合形态标题，或 plan 门接受编号族；补「抄模板→跑门→PASS」夹具 |
-| G04 | **P1** | `test-records.md` 与 `test-executor.md` 对「能否编辑已写执行记录」给出矛盾指令 | 两处逐字相反 | 统一为「executor 不编辑自己的记录」；`test-records.md` 改为指针引用角色档案 |
-| G05 | **P1** | C23 对「证据列无载体」判绿 | `PLAN-PRODUCT-001` T07 证据列无四类载体仍 PASS | `evidence_carriers` 加反向判据；T07 行补载体或 `N/A: 理由` |
-| G06 | **P1** | 门 6「链路收口通读」是死条款：文本定义 + 四批次/六计划/43 episode 零命中 + 无机器判据 | `document-chain.md:232-250`、`roles.md:24-26` | 加记录载体 + opt-in C25（打标即承诺）；属门变更需人工评审 |
-| G07 | **P1** | canary/automatic 只进不出，且 `automatic` 在 `measurement: none` 下结构上不可能通过 | `improve/SKILL.md` 步骤 13 + `release-record.schema.json` 的 rollout.mode | 三处载体各加「当前不可达」标注；构造 automatic 记录实证被拒 |
-| G08 | **P1** | 写范围执法器不在任何自动路径上：非注释调用点 = 1 且是「保护它自己」 | `check-write-scope.sh` | 接入 pre-push 或 CI（需评估误报面），或显式登记为已声明未缓释 |
-| G09 | **P1** | `verified` 的 `closure_criteria` 行号会过期且无门看守 | ISS-2026-030 声称 284-286，实为 387-389 | 记录侧改「条款名 + 路径」；门侧加弱校验或登记为 C17 扩展 |
-| G10 | **P1** | 两份改进契约零真实记录被编译；改进环四角色边裁撤后零走通 | 候选/发布记录文件数 = 0 | `examples/` 下为正反例各放一对并登记进 `INVALID_EXAMPLES`；todo.md 含现状行 |
-| G11 | **P1** | `.workbuddy/` 是未登记的活目录：gitignore 但盘上多份 md，活文档零提及 | `.gitignore:14` | 删除 / 冻结并登记 / 标注为非权威，三选一需用户确认 |
-| G12 | **P2** | 自测计数可向上谎报：摘要改 `200/200` 或硬编码 `110/110`+`ok=True` 均 PASS | `gate/checks.py:135-164` | 从输出结构（逐条结果行数）交叉验证 N |
-| G13 | **P2** | 负例钉不住它名义上钉的那条判据 | `gate/examples.py:118-120` | `INVALID_EXAMPLES` 加「必须出现的错误子串」字段 |
-| G14 | **P2** | 单元测试下限过松：清空 4 文件（消失 51.6%）仍 PASS | `gate/common.py:127` `MIN_UNIT_TEST_COUNT = 20` | 下限提到与稳态同量级，或改为逐文件至少 1 个测试 |
-| G15 | **P2** | 安装树 6 条相对链接断链，`manifests` 门不扫 | `packaging/runtime/` 内 6 处跨树引用 | 改仓限定地址或纯文字；manifests 加链接可解析断言 |
-| G16 | **P2** | 质量批门状态双源：README 两道门 `☐` vs 元信息/发布索引「approved」 | 质量批 README 第 3/5 节 vs 其元信息节 vs `docs/releases/todo.md` 第 1 行 | 两道门改 `☑` 并附 reviews 相对链接 |
-| G17 | **P2** | 幽灵类名勘误未追平：两个类名全仓 12 处 / 8 处命中，部分无勘误标注 | `review-2026-10-19-001.md:43,122` 等 | 按 PLAN-REVIEW-001 T16 落成 gate 检查 |
-| G18 | **P2** | 批次完成率换分母：README 7/12 vs 看板 7/14；5/9 vs 10 行 | `PLAN-PRODUCT-001` / `PLAN-LOOP-SMOKE-001` | 两处改为同一组数字 |
-| G19 | **P2** | 凭据值形状无机器检查：`credentials: "sk-xxx"` 通过 schema | `schemas/test-{plan,run}.schema.json` | 加 pattern 或形状扫描（schemas 在保护面，需人工评审） |
-| G20 | **P2** | 13/24 个 C 检查无 mutate 变异项，C17 最薄 | `mutate.py:63-116` | 为 C17 加 1–2 个变异项 |
-| G21 | **P2** | `trend.jsonl` 四版本未更新；`pending-test.md` 安装面行陈旧 | 末行 unittest_count 89 vs 实跑 92；pending-test 写 0.15.0 | 跑一次 `trend.py --append`；pending-test 改指针式写法 |
-| G22 | **P2** | README:63 环境假红注记指向 `tests`，本机可复现的红项是 `lint` | `README.md:63` | 按实况改写，两处都写并各给复现命令 |
-| G23 | **P2** | 安装面带门清单副本但安装校验不覆盖它 | `build_runtime.py:41-44` vs `gate/common.py:153-159` | 纳入 `INSTALLED_FILES`，或从 runtime 移除 |
-| G24 | **P2** | 四个 shell 脚本硬编码十项目标清单，与 `--list` 十一项双源 | `pre-push.sh:38` 等四处 | 改为解析 `--list` 输出 |
-| G25 | **P2** | `tests/` 31 处未用导入 + 1 个孤儿 `.pyc` | `tests/__pycache__/test_lab_contracts.cpython-312.pyc` 源文件已不存在 | 删导入（受保护文件需人工授权）+ 删孤儿 pyc |
-| G26 | **P2** | T09 证据列双基准：仓根路径不在盘，靠 C23 双根解析 PASS | `PLAN-QUALITY-001` T09 证据列 | 改写为批次内完整路径或仓限定写法 |
-| G27 | **P2** | 计划审批边在主工作流无落点：`proposed→approved` 边无对应步骤 | `SKILL.md` 步骤 3 | SKILL 步骤 3 补输入/输出契约 |
-| G28 | **P2** | `rejected` 归档边零触发：目录不存在、记录 0 条、动作未演练 | `docs/issues/README.md:11-13` | `/tmp` 副本跑一次归档演练并把结论写进 README |
-| G29 | **P2** | 「建议值草案」过渡态是死条款：定义在盘，记录零发生 | `document-chain.md:217-221` | 在计划形态节加一句让它有记录入口 |
-| G30 | **P2** | `system-guide.md`/`index.md` 内部词裸用：`台账` ×17 等 | 对照 `AGENTS.md` 表达纪律 | 按 PLAN-REVIEW-001 T23 对照词表清零 |
-| G31 | **P3** | `validate_workspace_artifacts`（331 行 / CC 119）与 `lint`（266 行 / CC 129）是复杂度异常点 | `gate/workspace.py:41`、`docchain/checks.py:277` | 拆分或降复杂度；两者均有充分行内注释，不阻塞 |
-| G32 | **P3** | `TASK_STATUS` glyph→词映射两份拷贝（有注释标注同步义务） | `gate/plan.py:47-50` vs `docchain/constants.py:157-163` | 单源化；当前未漂移 |
-| G33 | **P3** | 9 个返回 bool 的函数不带 `is_/has_` 前缀；`doc_chain.py` 是唯一不用 argparse 的 CLI | D4 抽样 50 | 统一命名惯例；不影响正确性 |
-| G34 | **P3** | 成本收益缺对照组：「不用 agentflow 需要多少成本」未实测（原 D12 子项，该维已删） | 已删维度的遗留项 | 若要恢复存在意义维度，先补一次同题对照 |
-| G35 | **P3** | 三条竞品论断缺可核查来源：BMAD agent 数量、LangGraph 图原语、superpowers hooks 事件类型 | D13，已如实标注「页面未指定」 | 补检索或明确标注为「未核实」并说明影响 |
+| # | 严重度 | 发现 | 位置 | 解锁条件 | 整改状态 | fix_revision |
+|---|---|---|---|---|---|---|
+| G01 | **P1** | CHANGELOG 的 lint SKIP 声称在 `validate.py` 本身不成立，两个口径并存 | `CHANGELOG.md:7,:42`；`validate.py:250-282` | 选定 (a) 让 validate.py 也 SKIP 或 (b) 改 CHANGELOG 措辞；均需人工评审 | 已修 | CHANGELOG.md:86 逐字勘误（方案 b）；validate.py 保持 fail-closed |
+| G02 | **P1** | `docchain/checks.py:1142` 对不可读文件 fail-open：`chmod 000` 使 8 findings 变 PASS | `checks.py:1141-1142` | 改为 append finding（与 `doc_chain_live` 同构）+ chmod 000 夹具 | 已修 | tools/lab/docchain/checks.py:1314 改为 append finding，注释引 G02 |
+| G03 | **P1** | `templates/feature/plan/execution.md` 照抄产出必被本仓门拒 | `execution.md:14` vs `gate/plan.py` 的 `PLAN_REQUIRED_HEADINGS` | 模板改混合形态标题，或 plan 门接受编号族；补「抄模板→跑门→PASS」夹具 | 已修 | ISS-2026-063 verified：改模板标题不放宽检查器 + 新增照抄模板回归 |
+| G04 | **P1** | `test-records.md` 与 `test-executor.md` 对「能否编辑已写执行记录」给出矛盾指令 | 两处逐字相反 | 统一为「executor 不编辑自己的记录」；`test-records.md` 改为指针引用角色档案 | 已修 | test-records.md:36-38 改为指针引用角色档案，与 test-executor 同向 |
+| G05 | **P1** | C23 对「证据列无载体」判绿 | `PLAN-PRODUCT-001` T07 证据列无四类载体仍 PASS | `evidence_carriers` 加反向判据；T07 行补载体或 `N/A: 理由` | 已修 | C23 反向判据证据列空/无载体即红（docchain/checks.py:413,1077） |
+| G06 | **P1** | 门 6「链路收口通读」是死条款：文本定义 + 四批次/六计划/43 episode 零命中 + 无机器判据 | `document-chain.md:232-250`、`roles.md:24-26` | 加记录载体 + opt-in C25（打标即承诺）；属门变更需人工评审 | 已修 | C25 链路收口标记落地（docchain/checks.py:108）+ 定义处 document-chain.md:286 |
+| G07 | **P1** | canary/automatic 只进不出，且 `automatic` 在 `measurement: none` 下结构上不可能通过 | `improve/SKILL.md` 步骤 13 + `release-record.schema.json` 的 rollout.mode | 三处载体各加「当前不可达」标注；构造 automatic 记录实证被拒 | 已修 | improve/SKILL.md 两处标注 canary/automatic 当前不可达 |
+| G08 | **P1** | 写范围执法器不在任何自动路径上：非注释调用点 = 1 且是「保护它自己」 | `check-write-scope.sh` | 接入 pre-push 或 CI（需评估误报面），或显式登记为已声明未缓释 | 已登记待拍板 | PENDING-DECISIONS 第 11 条：登记为已知人工步骤，不自动接入 |
+| G09 | **P1** | `verified` 的 `closure_criteria` 行号会过期且无门看守 | ISS-2026-030 声称 284-286，实为 387-389 | 记录侧改「条款名 + 路径」；门侧加弱校验或登记为 C17 扩展 | 已修 | ISS-2026-030 closure_criteria 改为条款名+路径，不再引行号 |
+| G10 | **P1** | 两份改进契约零真实记录被编译；改进环四角色边裁撤后零走通 | 候选/发布记录文件数 = 0 | `examples/` 下为正反例各放一对并登记进 `INVALID_EXAMPLES`；todo.md 含现状行 | 已修 | 4bb29dc：examples/ 补候选与发布记录正反例，门钉 none⇒not-better |
+| G11 | **P1** | `.workbuddy/` 是未登记的活目录：gitignore 但盘上多份 md，活文档零提及 | `.gitignore:14` | 删除 / 冻结并登记 / 标注为非权威，三选一需用户确认 | 已修 | index.md:35 登记 .workbuddy 为非权威草料区 |
+| G12 | **P2** | 自测计数可向上谎报：摘要改 `200/200` 或硬编码 `110/110`+`ok=True` 均 PASS | `gate/checks.py:135-164` | 从输出结构（逐条结果行数）交叉验证 N | 已修 | gate/checks.py:183-194 逐案 PASS/FAIL 行数交叉验证，注释引 G12 |
+| G13 | **P2** | 负例钉不住它名义上钉的那条判据 | `gate/examples.py:118-120` | `INVALID_EXAMPLES` 加「必须出现的错误子串」字段 | 已修 | gate/examples.py:138-150 钉到 measurement:none⇒not-better 精确路径 |
+| G14 | **P2** | 单元测试下限过松：清空 4 文件（消失 51.6%）仍 PASS | `gate/common.py:127` `MIN_UNIT_TEST_COUNT = 20` | 下限提到与稳态同量级，或改为逐文件至少 1 个测试 | 已修 | gate/checks.py:106-119 逐文件下限（每文件≥1 test），注释引 G14 |
+| G15 | **P2** | 安装树 6 条相对链接断链，`manifests` 门不扫 | `packaging/runtime/` 内 6 处跨树引用 | 改仓限定地址或纯文字；manifests 加链接可解析断言 | 已修 | packaging/runtime 断链扫描 0 条（本批实测） |
+| G16 | **P2** | 质量批门状态双源：README 两道门 `☐` vs 元信息/发布索引「approved」 | 质量批 README 第 3/5 节 vs 其元信息节 vs `docs/releases/todo.md` 第 1 行 | 两道门改 `☑` 并附 reviews 相对链接 | 已修 | 质量批 README 门状态改为 ☑ 并附 reviews 链接 |
+| G17 | **P2** | 幽灵类名勘误未追平：两个类名全仓 12 处 / 8 处命中，部分无勘误标注 | `review-2026-10-19-001.md:43,122` 等 | 按 PLAN-REVIEW-001 T16 落成 gate 检查 | 已修 | 4bb29dc 追平幽灵类名勘误标注（7 处带勘误） |
+| G18 | **P2** | 批次完成率换分母：README 7/12 vs 看板 7/14；5/9 vs 10 行 | `PLAN-PRODUCT-001` / `PLAN-LOOP-SMOKE-001` | 两处改为同一组数字 | 已修 | PLAN-PRODUCT/LOOP-SMOKE 批量改分母与看板同组数字 |
+| G19 | **P2** | 凭据值形状无机器检查：`credentials: "sk-xxx"` 通过 schema | `schemas/test-{plan,run}.schema.json` | 加 pattern 或形状扫描（schemas 在保护面，需人工评审） | 已登记待拍板 | PENDING-DECISIONS 第 12 条（受保护面门变更，待用户选 A/B） |
+| G20 | **P2** | 13/24 个 C 检查无 mutate 变异项，C17 最薄 | `mutate.py:63-116` | 为 C17 加 1–2 个变异项 | 已登记待拍板 | PENDING-DECISIONS 第 13 条（C17 变异项，受保护面） |
+| G21 | **P2** | `trend.jsonl` 四版本未更新；`pending-test.md` 安装面行陈旧 | 末行 unittest_count 89 vs 实跑 92；pending-test 写 0.15.0 | 跑一次 `trend.py --append`；pending-test 改指针式写法 | 已修 | trend.jsonl 已刷新；pending-test 改指针式写法 |
+| G22 | **P2** | README:63 环境假红注记指向 `tests`，本机可复现的红项是 `lint` | `README.md:63` | 按实况改写，两处都写并各给复现命令 | 已修 | README.md:67/:69 拆成两条注记并各给复现命令 |
+| G23 | **P2** | 安装面带门清单副本但安装校验不覆盖它 | `build_runtime.py:41-44` vs `gate/common.py:153-159` | 纳入 `INSTALLED_FILES`，或从 runtime 移除 | 已修 | gate/common.py:159-166 INSTALLED_FILES 已含 protected-paths.txt |
+| G24 | **P2** | 四个 shell 脚本硬编码十项目标清单，与 `--list` 十一项双源 | `pre-push.sh:38` 等四处 | 改为解析 `--list` 输出 | 已修 | pre-push.sh:147 改为解析 --list，且校验待推送提交 |
+| G25 | **P2** | `tests/` 31 处未用导入 + 1 个孤儿 `.pyc` | `tests/__pycache__/test_lab_contracts.cpython-312.pyc` 源文件已不存在 | 删导入（受保护文件需人工授权）+ 删孤儿 pyc | 已修 | 4bb29dc 清未用导入与孤儿 pyc |
+| G26 | **P2** | T09 证据列双基准：仓根路径不在盘，靠 C23 双根解析 PASS | `PLAN-QUALITY-001` T09 证据列 | 改写为批次内完整路径或仓限定写法 | 已修 | PLAN-QUALITY-001 T09 证据列改批次内完整路径 |
+| G27 | **P2** | 计划审批边在主工作流无落点：`proposed→approved` 边无对应步骤 | `SKILL.md` 步骤 3 | SKILL 步骤 3 补输入/输出契约 | 已修 | SKILL.md 步骤 3 已补计划批准为显式一步 |
+| G28 | **P2** | `rejected` 归档边零触发：目录不存在、记录 0 条、动作未演练 | `docs/issues/README.md:11-13` | `/tmp` 副本跑一次归档演练并把结论写进 README | 未修 | docs/issues/归档/ 仍不存在；README:11 保留规则 |
+| G29 | **P2** | 「建议值草案」过渡态是死条款：定义在盘，记录零发生 | `document-chain.md:217-221` | 在计划形态节加一句让它有记录入口 | 已修 | document-chain.md:248 建议值草案已有记录入口 |
+| G30 | **P2** | `system-guide.md`/`index.md` 内部词裸用：`台账` ×17 等 | 对照 `AGENTS.md` 表达纪律 | 按 PLAN-REVIEW-001 T23 对照词表清零 | 已修 | system-guide.md:18 术语对照表；index.md:4 加指针对齐 |
+| G31 | **P3** | `validate_workspace_artifacts`（331 行 / CC 119）与 `lint`（266 行 / CC 129）是复杂度异常点 | `gate/workspace.py:41`、`docchain/checks.py:277` | 拆分或降复杂度；两者均有充分行内注释，不阻塞 | 未修 | workspace.py:41 与 docchain/checks.py:429 复杂度未拆（P3） |
+| G32 | **P3** | `TASK_STATUS` glyph→词映射两份拷贝（有注释标注同步义务） | `gate/plan.py:47-50` vs `docchain/constants.py:157-163` | 单源化；当前未漂移 | 未修 | gate/plan.py:47-50 与 docchain/constants.py:170 仍双拷贝（P3） |
+| G33 | **P3** | 9 个返回 bool 的函数不带 `is_/has_` 前缀；`doc_chain.py` 是唯一不用 argparse 的 CLI | D4 抽样 50 | 统一命名惯例；不影响正确性 | 未修 | bool 命名惯例未统一（P3） |
+| G34 | **P3** | 成本收益缺对照组：「不用 agentflow 需要多少成本」未实测（原 D12 子项，该维已删） | 已删维度的遗留项 | 若要恢复存在意义维度，先补一次同题对照 | 已登记待拍板 | PENDING-DECISIONS 第 14 条：成本对照协议登记，实验待跑 |
+| G35 | **P3** | 三条竞品论断缺可核查来源：BMAD agent 数量、LangGraph 图原语、superpowers hooks 事件类型 | D13，已如实标注「页面未指定」 | 补检索或明确标注为「未核实」并说明影响 | 未修 | 三条竞品论断缺来源仍如实标注「未核实」（P3） |
 
 ---
 

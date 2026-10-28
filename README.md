@@ -66,6 +66,11 @@ examples、记录产物、受保护清单、五份 manifest 一致性（含 `pac
 
 > 注意一（`lint` 缺依赖是环境红，不是回归）：本机未装 `requirements-dev.txt` 里的 ruff/mypy 时，`validate.py all` 会以 `FAIL lint (2 error(s))` 退出 1——这是**有意的 fail-closed**。装好依赖后同一命令应全绿（CI 即如此，见 `.github/workflows/validate.yml` 的安装步）。`skills/agentflow/scripts/pre-push.sh` 对**待推送提交的临时检出**跑同一套门：缺 ruff/mypy 时把 `lint` 记为「未运行」并**默认拦下**推送，只有显式设 `AGENTFLOW_PREPUSH_ALLOW_UNRUN=1` 才放行并保留告警；其余项照常判红。用 `AGENTFLOW_GATE_PYTHON`（兼容 `AGENTFLOW_LINT_PYTHON`）指向装好依赖的解释器即可实跑 lint。
 >
+> **本机一行就绪**：`python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt`。
+> 之后 `validate.py lint` 与 `pre-push.sh` 都自动探测仓内 `.venv`（优先级：显式环境变量 >
+> `.venv` > `python3`），本机 11/11 可绿。探测只扩大「找得到工具」的路径，**不新增放行分支**：
+> `.venv` 里没有 ruff/mypy 时仍然红。`.venv/` 已列入 `.gitignore`。
+>
 > 注意二（`tests` 子项可能环境假红）：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归。
 
 三个 Bug 角色是可选择的能力，而不是每个问题都必须走的固定仪式。对 material、

@@ -33,7 +33,17 @@ cd "$REPO_ROOT"
 # 单一解释器：探测 ruff/mypy 与真正跑 lint 必须是同一个，否则探测结果不代表调用结果
 # （旧脚本用 AGENTFLOW_LINT_PYTHON 探测、用写死的 python3 调用）。门的其余项也用它，
 # gate 内部的子进程一律是 sys.executable，因此解释器在整条链上保持一致。
-GATE_PYTHON="${AGENTFLOW_GATE_PYTHON:-${AGENTFLOW_LINT_PYTHON:-python3}}"
+# 仓内 .venv 作为第三优先级兜底：显式环境变量永远优先，其次才探测 .venv，最后回落到 python3。
+# 探测只扩大「找得到工具」的路径，不新增放行分支——缺 ruff/mypy 仍按未运行处理（2026-10-28 评测 B3）。
+if [ -n "${AGENTFLOW_GATE_PYTHON:-}" ]; then
+  GATE_PYTHON="$AGENTFLOW_GATE_PYTHON"
+elif [ -n "${AGENTFLOW_LINT_PYTHON:-}" ]; then
+  GATE_PYTHON="$AGENTFLOW_LINT_PYTHON"
+elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
+  GATE_PYTHON="$REPO_ROOT/.venv/bin/python"
+else
+  GATE_PYTHON="python3"
+fi
 ALLOW_UNRUN="${AGENTFLOW_PREPUSH_ALLOW_UNRUN:-0}"
 FAILED=""
 UNRUN=""

@@ -1,0 +1,32 @@
+# T07 .venv 探测实证（2026-10-28）
+
+命令与逐字输出，副本实验在 /tmp/venvprobe（cp -r 副本，不在真实树注入）。
+
+## 正例：仓内存在 .venv 且装好 dev 依赖
+```
+$ python3.12 tools/lab/validate.py lint
+PASS lint
+EXIT=0
+```
+
+## 反例 1：.venv/bin/python 指向未装 ruff 的解释器
+```
+$ rm -rf .venv && ln -sf $(command -v python3.12) .venv/bin/python
+$ python3.12 tools/lab/validate.py lint
+FAIL lint (2 error(s))
+  - lint/ruff: ruff is not installed in this interpreter; run `pip install -r requirements-dev.txt`
+  - lint/mypy: mypy is not installed in this interpreter; run `pip install -r requirements-dev.txt`
+EXIT=1
+```
+
+## 反例 2：完全删除 .venv（行为应与本批之前逐字一致）
+```
+$ rm -rf .venv
+$ python3.12 tools/lab/validate.py lint
+FAIL lint (2 error(s))
+  - lint/ruff: ruff is not installed in this interpreter; run `pip install -r requirements-dev.txt`
+  - lint/mypy: mypy is not installed in this interpreter; run `pip install -r requirements-dev.txt`
+EXIT=1
+```
+
+结论：探测只扩大「找得到工具」的路径；缺工具仍红，fail-closed 未被削弱。
