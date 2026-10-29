@@ -393,7 +393,7 @@ def lightweight_findings(feature_dir: Path, repo_root: Path) -> list[str]:
     tasks = _tables_with_columns(sections["实施与证据"], ["任务", "代码落点", "状态", "证据"])
     if not tasks or not any(rows for _, rows in tasks):
         errors.append("C26 轻量档: 实施与证据须有任务、代码落点、状态、证据的实际条目")
-    valid_statuses = {"☐", "◐", "☑", "⚠", "—", "☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻塞", "— 本期不做"}
+    valid_statuses = set(TASK_STATUS_ACCEPTED)
     task_ids: set[str] = set()
     for header, rows in tasks:
         for row in rows:
@@ -410,7 +410,7 @@ def lightweight_findings(feature_dir: Path, repo_root: Path) -> list[str]:
                 task_ids.add(task_match.group(0))
             if status not in valid_statuses:
                 errors.append(f"C26 轻量档: 非法任务状态: {status}")
-            if status.startswith("☑") and not evidence_carriers(evidence, repo_root, feature_dir):
+            if status.startswith(DONE_GLYPH) and not evidence_carriers(evidence, repo_root, feature_dir):
                 errors.append(f"C26 轻量档: 已完成任务「{task}」缺少可复核证据")
             if status not in ("—", "— 本期不做"):
                 candidates = path_candidates(location)
@@ -975,6 +975,112 @@ def ownership_findings(label: str, text: str, repo_root: Path) -> list[str]:
     return errors
 
 
+
+# --- C18 的第二半（2026-10-29 门变更，用户授权）：待决项归口。
+# C18 原本只问「开放缺陷有没有归属批次」，没有问「需用户抉择的待决行有没有进拍板口」。
+# 后者的缺失是可观察的：AGENTS.md 与 docs/PENDING-DECISIONS.md 都自称唯一入口，而 2026-10-29
+# 实测有 8 条待决项只写在提案 §六 与计划末节里（拍板口检索 0 命中），用户因此第三次问
+# 「有什么要拍板」。见 docs/features/feature-2026-10-29-全面修正与瘦身/proposal/proposal.md F1。
+PENDING_LEDGER_REL = "docs/PENDING-DECISIONS.md"
+PENDING_ENTRY_RE = re.compile(r"PENDING-DECISIONS\.md`?\s*第\s*\d+|第\s*\d+\s*[与、]\s*\d+\s*条")
+PENDING_OPEN_WORDS = ("未确认", "未关闭", "尚未关闭", "未决", "待拍板")
+PENDING_CLOSED_WORDS = ("已确认", "已关闭", "已拍板", "无需编号", "事实已闭合")
+# 判据只吃表行：散文里的「用户」与「未确认」同现不构成待决项（判据过宽会让首轮误报被当噪声放行）。
+PENDING_TABLE_MIN_CELLS = 4
+
+
+# 台账形状的表头才吃：一条「问题 / 事项」列 **加** 一条「状态 / 关闭 / 是否」列。只要求前者的话，
+# 发现表与范围表里同样出现「用户」与「未确认」的行会被当成待决项（首轮实跑就误报了 10-25 批
+# 的 A1 发现行与 T06 任务行）；判据过宽的结果不是精度问题，是下一次误报被整体放行的开端。
+PENDING_LEDGER_HEADER_WORDS = ("待决问题", "问题", "事项")
+PENDING_LEDGER_STATUS_WORDS = ("状态", "关闭", "是否")
+
+
+def _pending_rows(text: str):
+    """Yield (row_text, cells) for rows of tables that read as a 待决项 ledger."""
+    for header, rows in md_tables(text):
+        if not any(any(word in col for word in PENDING_LEDGER_HEADER_WORDS) for col in header):
+            continue
+        if not any(any(word in col for word in PENDING_LEDGER_STATUS_WORDS) for col in header):
+            continue
+        for row in rows:
+            cells = [str(c).strip() for c in row]
+            if len(cells) < PENDING_TABLE_MIN_CELLS:
+                continue
+            yield " | ".join(cells), cells
+
+
+def pending_ledger_findings(label: str, batch_dir: Path) -> list[str]:
+    """C18 — a row that needs the user and is not closed must be findable in the 拍板口.
+
+    Scope: tables in `spec/checklist.md`, `proposal/proposal.md` and `plan/*.md` of a batch whose
+    README opted in with 「agentflow 决策归属」. A row fires when it names 用户 as owner, its status
+    reads as open, and it carries no `PENDING-DECISIONS.md 第 N 条` reference. Rows owned by the
+    implementation side, and rows already closed, are left alone — widening past that is how a
+    gate gets disabled on its first false-positive run.
+    """
+    errors: list[str] = []
+    sources: list[tuple[str, str]] = []
+    for rel in ("spec/checklist.md", "proposal/proposal.md"):
+        f = batch_dir / rel
+        if f.is_file():
+            sources.append((rel, read(f)))
+    plan_dir = batch_dir / "plan"
+    if plan_dir.is_dir():
+        for f in sorted(plan_dir.rglob("*.md")):
+            if f.name != ".gitkeep" and f.is_file():
+                sources.append((f.relative_to(batch_dir).as_posix(), read(f)))
+    for rel, text in sources:
+        for row, _cells in _pending_rows(text):
+            if "用户" not in row:
+                continue
+            if not any(word in row for word in PENDING_OPEN_WORDS):
+                continue
+            if any(word in row for word in PENDING_CLOSED_WORDS):
+                continue
+            if PENDING_ENTRY_RE.search(row):
+                continue
+            errors.append(
+                f"C18 pending-attribution {label} 的 {rel} 有一行「需用户抉择且尚未关闭」的待决项"
+                f"没有拍板口条目编号：{row[:80]}（登记进 {PENDING_LEDGER_REL} 后再引用其编号；"
+                f"两个「唯一入口」各写各的，正是这批要消灭的形态）"
+            )
+    return errors
+
+
+def decision_marker_presence_findings(repo_root: Path) -> list[str]:
+    """The 拍板口 must still carry the marker that switches C16/C17 on.
+
+    Removing the marker does not fail the gate — it removes the file from coverage, and the gate
+    goes green for the wrong reason. That is exactly the "靠摘标记转绿" the chain contract forbids,
+    and it happened by accident on 2026-10-29 while moving closed notes out of the ledger
+    (docs/issues/ISS-2026-10-29-拍板口改写中两处自述超出事实.md).
+    """
+    ledger = repo_root / PENDING_LEDGER_REL
+    if not ledger.is_file():
+        return []  # 目标仓没有拍板口这一载体，不凭空要求
+    body = read(ledger)
+    declared = any(
+        line.strip().lstrip("> ").strip("`").strip() == DECISION_MARKER for line in body.splitlines()
+    )
+    if declared:
+        return []
+    # 只在散文里提及同名标记不算声明：本轮反证实测，把独立声明行删掉后，表格里的一句
+    # 「已把 `agentflow 决策记录` 标记单独成行」让子串检查仍为真，门照样绿。指称与使用不分，
+    # 开关就能被藏进正文里——那是 C13 同族的老问题，不许在新断言里复活。
+    hint = (
+        "只在散文中提及该词，没有独立声明行——检查器按声明行认它"
+        if DECISION_MARKER in body
+        else "在场但缺该标记，C16 与 C17 会静默失去对象，绿门不证明合规"
+    )
+    return [
+        (
+            f"C18 decision-marker: {PENDING_LEDGER_REL} {hint}；"
+            "把标记作为独立声明行加回来，而不是让它悄悄消失"
+        )
+    ]
+
+
 # --- Traceability and evidence-presence checks (C22-C23). Marker-gated like C15-C18: a batch
 # opts in by carrying 「agentflow 目标承接」 in its README. What differs from the 2026-10-21
 # batch is adoption: this repo's live batches opt in on the day the check ships, so the gate
@@ -994,9 +1100,10 @@ def trace_task_ids(cell: str) -> set[str]:
     return {tok for tok in re.split(r"[^0-9A-Za-z_-]+", cell) if TASK_ID_RE.fullmatch(tok)}
 MODULE_RE = re.compile(r"\bM-[A-Z]\b")
 AC_ID_RE = re.compile(r"\bG\d+-AC-\d+\b")
-DONE_GLYPH = "☑"
-TODO_GLYPH = "☐"
-BLOCKED_GLYPH = "⚠"
+DONE_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "已完成")
+TODO_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "未开始")
+BLOCKED_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "阻塞")
+IN_PROGRESS_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "进行中")
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
 REPO_REV_RE = re.compile(r"[\w.-]+@[0-9a-f]{7,40}:[^\s|`]+")
 NA_RE = re.compile(r"N/A[:：]\s*\S")
@@ -1261,7 +1368,7 @@ def goal_traceability_findings(feature_dir: Path, repo_root: Path) -> list[str]:
                 errors.append(
                     f"C22 目标承接: {tag} 承接表标已完成，所引任务行的字形是 {'/'.join(sorted(real))}"
                 )
-            if glyph in (TODO_GLYPH, "◐", BLOCKED_GLYPH) and real == {DONE_GLYPH}:
+            if glyph in (TODO_GLYPH, IN_PROGRESS_GLYPH, BLOCKED_GLYPH) and real == {DONE_GLYPH}:
                 errors.append(
                     f"C22 目标承接: {tag} 承接表状态是「{glyph}」，但所引任务行已全部完成（未回写）"
                 )
@@ -1302,6 +1409,7 @@ def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
 def repo_policy_findings(repo_root: Path) -> list[str]:
     """Run C15-C18 over opt-in files. Marker-gated so the whole repo can be scanned safely."""
     errors: list[str] = []
+    errors.extend(decision_marker_presence_findings(repo_root))
     skip_dirs = (repo_root / ".git", repo_root / "packaging" / "runtime")
     md_files: list[Path] = []
     for p in repo_root.rglob("*.md"):
@@ -1329,6 +1437,8 @@ def repo_policy_findings(repo_root: Path) -> list[str]:
         t = read(readme) if readme.is_file() else ""
         if OWNERSHIP_MARKER in t:
             errors.extend(ownership_findings(readme.relative_to(repo_root).as_posix(), t, repo_root))
+            errors.extend(pending_ledger_findings(
+                readme.relative_to(repo_root).as_posix(), batch))
         # The batch set is every directory, not only those that already have a README: two modes
         # sharing one implementation is worthless if they disagree about which batches exist.
         errors.extend(batch_traceability_findings(batch, repo_root))

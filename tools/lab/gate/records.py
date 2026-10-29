@@ -69,6 +69,11 @@ BODY_PATH_PATTERN = re.compile(
 URL_PATTERN = re.compile(r"https?://\S+")
 
 
+# `N/A:` alone is not an exemption; it has to carry the reason, mirroring C23's 证据载体口径
+# (skills/agentflow/references/document-chain.md 的门 8).
+NA_REASON_PATTERN = re.compile(r"N/A[:：]\s*\S")  # 与链侧 C23 同一条：认全角冒号、不锚定行首
+
+
 def prose_without_quotations(body: str) -> str:
     """Plain prose only: fenced blocks and inline code spans are quotations, not claims."""
     segments: list[str] = []
@@ -146,6 +151,92 @@ def validate_episode_document(path: Path) -> list[ValidationError]:
         errors.append(
             ValidationError(str(path), f"filename stem must equal episode_id {expected_id!r}")
         )
+    errors.extend(validate_episode_references(document, path))
+    return errors
+
+
+# Field-level evidence pointers in episodes. The schema only requires these strings to be
+# non-empty, so a pointer to a file that no longer exists compiled happily: plan evidence
+# columns have had a presence check since C23 (2026-10-23) while episodes — the archive the
+# same chain relies on — had none (docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md §二 B1 的同一
+# 形态). Scope is deliberately narrower than the prose check below:叙述字段（claims/signals）
+# 里的退役路径是当年的引文，改了就是篡改证据（AGENTS.md「历史条目按原样保留」）。
+EPISODE_EVIDENCE_FIELDS = ("evidence_ref", "ref", "path", "artifact")
+
+
+def iter_evidence_values(node: Any, fields: tuple[str, ...]) -> list[tuple[str, str]]:
+    """Collect `(field, value)` pairs stored under one of `fields`, at any depth.
+
+    字段名跟着值一起走：只报「某个指针不成立」，读者还得在一条有十几条 claims 的记录里
+    自己再找一遍（评审 P2-3）。
+    """
+    values: list[tuple[str, str]] = []
+    if isinstance(node, dict):
+        for key, child in node.items():
+            if key in fields:
+                if isinstance(child, str):
+                    values.append((key, child))
+                elif isinstance(child, list):
+                    values.extend((key, item) for item in child if isinstance(item, str))
+            values.extend(iter_evidence_values(child, fields))
+    elif isinstance(node, list):
+        for item in node:
+            values.extend(iter_evidence_values(item, fields))
+    return values
+
+
+def validate_episode_references(document: dict[str, Any], path: Path) -> list[ValidationError]:
+    """A pointer field must point at something a later session can still open — or say it cannot.
+
+    Two honest spellings are accepted for an object that is gone: `N/A: <reason>` and a
+    repository-qualified `repo@revision:path`. Anything shaped like an in-repo path that no
+    longer resolves is a finding, so the record cannot quietly claim evidence that evaporated.
+    """
+    errors: list[ValidationError] = []
+    repo_root = ROOT.resolve()
+    for field, value in iter_evidence_values(document, EPISODE_EVIDENCE_FIELDS):
+        token = value.strip()
+        if NA_REASON_PATTERN.search(token):
+            continue
+        bare = token.strip(":： ").upper()
+        if bare in {"N/A", "N/A：", "N/A "}:
+            # 裸 N/A 不是豁免：C23 对计划证据列要求「N/A: 理由」，同一口径不能在这里松掉，
+            # 否则「写个 N/A 就当没有证据这回事」会变成新的绕过路径。
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"{field}: bare 'N/A' is not an exemption — write 'N/A: <reason>' naming "
+                    "what carried the evidence away (same carrier rule as C23's evidence column)",
+                )
+            )
+            continue
+        cleaned = URL_PATTERN.sub(" ", QUALIFIED_REF_PATTERN.sub(" ", token))
+        if re.search(r"(?:^|[\s(（{])/(?:tmp|private|Users|home)/", cleaned):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"{field}: pointer {token[:60]!r} names an ephemeral absolute path — "
+                    "只在 /tmp 存在过的证据不可复核（与 C23 同口径），改写为 'N/A: 理由 + 出处'",
+                )
+            )
+            continue
+        # 一个字段值里可以并列好几条路径（「A；B；C」形态），必须逐条判定；
+        # 原先要求整值成形状才判，这类值整体跳过，于是「失效指针 0 条」与「一条没少」同时为真。
+        for ref in BODY_PATH_PATTERN.findall(cleaned):
+            repo_candidate = (ROOT / ref).resolve()
+            local_candidate = (path.parent / ref).resolve()
+            if repo_candidate.is_file() and repo_candidate.is_relative_to(repo_root):
+                continue
+            if local_candidate.is_file() and local_candidate.is_relative_to(repo_root):
+                continue
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"{field}: evidence pointer {ref!r} resolves neither in this repository nor "
+                    "next to the record — carry it, or write 'N/A: <reason>' / "
+                    "'<repo>@<revision>:<path>' for an object that is gone",
+                )
+            )
     return errors
 
 
@@ -165,6 +256,37 @@ def excerpt_follows_citation(lines: list[str], index: int) -> bool:
         if following.strip():
             return following.lstrip().startswith(("```", ">"))
     return False
+
+
+def review_tier_findings(frontmatter: dict[str, Any], path: Path) -> list[ValidationError]:
+    """A declared L0 must carry the dispatch errors that made it true.
+
+    `skills/agentflow/references/contracts.md` states the rule ("`review_tier: L0` 而
+    `dispatch_errors` 为空，是伪降级，同样无效") but nothing enforced it until 2026-10-29
+    (docs/PENDING-DECISIONS.md 第 17 条 的同一条欠账). The schema's `allOf` keeps the shape;
+    this check exists so the finding names the record. A record without `review_tier` at all is
+    标注为未声明 — neither green nor red — because back-fitting the tier would be inventing
+    evidence for rounds nobody probed.
+    """
+    tier = frontmatter.get("review_tier")
+    if not isinstance(tier, str):
+        return []  # 未声明：不判红也不判绿（历史记录不被追溯打红）
+    if tier not in ("L0", "L1", "L2"):
+        return [ValidationError(str(path), f"review_tier {tier!r} must be one of ('L0', 'L1', 'L2')")]
+    if tier != "L0":
+        return []
+    errors_field = frontmatter.get("dispatch_errors")
+    if isinstance(errors_field, list) and any(str(item).strip() for item in errors_field):
+        return []
+    if isinstance(errors_field, str) and errors_field.strip():
+        return []
+    return [
+        ValidationError(
+            str(path),
+            "伪降级：review_tier 声明 L0 却没有 dispatch_errors——降级要留下失败派发的原始"
+            "返回，否则「主审自审」与「独立评审」在记录上无法区分",
+        )
+    ]
 
 
 def validate_external_excerpts(
@@ -218,6 +340,12 @@ def validate_review_markdown(
     """
     frontmatter, body, errors = load_record_markdown(path)
     if errors or frontmatter is None:
+        return errors
+    # 伪降级判定必须先于 schema 早退（2026-10-29 独立评审 P1-1）：allOf 与这条判据吃同一个
+    # 形态，放在早退之后就是不可达代码——门只会报「$: missing required property 'dispatch_errors'」，
+    # 不说是哪份记录在伪降级；而「finding 指向记录」正是 spec M-D-02 与 design §7.3 的验收口径。
+    errors.extend(review_tier_findings(frontmatter, path))
+    if errors:
         return errors
     try:
         validator = SchemaValidator(REVIEW_SCHEMA)

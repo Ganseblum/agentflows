@@ -1,0 +1,46 @@
+# 全量门实跑（北京时间 2026-10-29 01:54 ）
+
+$ .venv/bin/python tools/lab/validate.py all
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+FAIL manifests (1 error(s))
+  - packaging/runtime/tools/lab/docchain/checks.py: content differs from source — packaging/runtime is stale — run `python3 packaging/build_runtime.py` to regenerate it
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+退出码: 1
+
+$ .venv/bin/python tools/lab/doc_chain.py --self-test
+PASS C26-07 C26 conflicting profile declarations fail
+PASS C26-08 C26 repeated identical declarations are not unique
+PASS C18-01 open user-owned 待决行 without a 拍板口 entry trips
+PASS C18-02 the same row citing a 拍板口 entry passes
+PASS C18-03 a row the implementation side owns does not trip (no widening)
+PASS C18-04 a closed row does not trip
+PASS C18-05 unmarked batch never gets scanned for 待决项归属
+PASS C18-06 拍板口在场而标记被摘走 trips instead of dropping coverage
+PASS C18-07 a findings table (问题 column, no status column) is not a 待决项 ledger
+PASS C18-08 checklist-shaped 未决项 table without an entry trips too
+132/132 self-test cases pass
+
+$ .venv/bin/python -m unittest discover -s tests
+----------------------------------------------------------------------
+Ran 194 tests in 21.110s
+
+OK
+
+$ .venv/bin/python tools/lab/doc_chain.py "docs/features/feature-2026-10-29-全面修正与瘦身"
+PASS doc-chain docs/features/feature-2026-10-29-全面修正与瘦身
+
+$ .venv/bin/python tools/lab/validate.py installed
+FAIL installed (5 error(s))
+  - skills/agentflow/references/carrier-map.md: missing from the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.22.1
+  - skills/agentflow/references/review-checklists.md: missing from the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.22.1
+  - agents/reviewer.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.22.1
+  - skills/agentflow/SKILL.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.22.1
+  - skills/agentflow/references/document-chain.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.22.1

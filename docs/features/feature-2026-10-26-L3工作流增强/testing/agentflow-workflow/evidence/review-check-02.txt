@@ -1,8 +1,0 @@
-COMMAND: /tmp/agentflows-l3-venv-20261026/bin/python3 -m unittest discover -s tests -p test_workflow.py
-...................................................
-----------------------------------------------------------------------
-Ran 51 tests in 10.958s
-
-OK
-
-EXIT_CODE=0

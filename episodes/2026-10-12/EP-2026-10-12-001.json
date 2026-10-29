@@ -44,7 +44,7 @@
   ],
   "evidence": [
     { "evidence_id": "E1", "kind": "books", "ref": "docs/issues/ISS-2026-10-12-简化批mock业务镜像日志.md（回归检查节含全部原始命令输出）" },
-    { "evidence_id": "E2", "kind": "archive_audit", "ref": "原 _archive/records-2026-10/ 三件 L3 冻结（iteration-log.md、PLAN-BUSINESS-EVAL-001.md、PLAN-PY-GUARD-001.md）；该归档桶已随同日瘦身批二期整体裁撤，git 历史可回溯；plans/PENDING-DECISIONS.md 批注" }
+    { "evidence_id": "E2", "kind": "archive_audit", "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：原 _archive/records-2026-10/ 三件 L3 冻结（iteration-log.md、PLAN-BUSINESS-EVAL-001.md、PLAN-PY-GUARD-001.md）；该归档桶已随同日瘦身批二期整体裁撤，git 历史可回溯；plans/PENDING-DECISIONS.md 批注）" }
   ],
   "review_roundtrips": [],
   "feedback_summary": "用户「减少阅读负担 / 大刀阔斧」驱动：mock 面裁撤（-11 件 -1 门）、业务评测机器裁撤（约 -1100 行测试与工具代码、公开路径保留）、角色镜像删除（-418 行 -1 parity 检查）、迭代台账冻结（-603 行双轨）、plans 收敛（2 冻结 + 2 行失对象）；measurement: none",

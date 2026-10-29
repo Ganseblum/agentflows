@@ -8,7 +8,7 @@
     {
       "kind": "external_material",
       "value": "admission standard + YAML case engine conventions",
-      "evidence_ref": "用户提供的《需求文档-Web 自动化测试准入标准》三检查点/P0 分级/定位优先级，与 web-ai-auto 的 docx/YAML-UI-规范.md（对齐链 §2、Review 清单 §5）、新手接入与执行指南 §2-§6（五步接入、执行五步、踩坑）"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：用户提供的《需求文档-Web 自动化测试准入标准》三检查点/P0 分级/定位优先级，与 web-ai-auto 的 docx/YAML-UI-规范.md（对齐链 §2、Review 清单 §5）、新手接入与执行指南 §2-§6（五步接入、执行五步、踩坑））"
     },
     {
       "kind": "design_decision",
@@ -18,12 +18,12 @@
     {
       "kind": "convergence",
       "value": "Planner/Generator/Healer 与 0.7.0 测试链同构",
-      "evidence_ref": "web-ai-auto 的 docx/ui-curious-cascade.md 调研 Playwright Test Agents 的三角色，与 test-planner / test-executor / bug 链路一一对应；Healer 缺口的流程化替代=失败三分流（本批落地）"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：web-ai-auto 的 docx/ui-curious-cascade.md 调研 Playwright Test Agents 的三角色，与 test-planner / test-executor / bug 链路一一对应；Healer 缺口的流程化替代=失败三分流（本批落地））"
     },
     {
       "kind": "change_surface",
       "value": "2 roles + 1 contract + mirror; no gate change",
-      "evidence_ref": "agents/test-planner.md、agents/test-executor.md、_archive/records-2026-10/tests/README.md（目标项目映射节）、docs/agent-roles.md 同步；schemas/、tools/lab/、tests/ 均未改动"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：agents/test-planner.md、agents/test-executor.md、_archive/records-2026-10/tests/README.md（目标项目映射节）、docs/agent-roles.md 同步；schemas/、tools/lab/、tests/ 均未改动）"
     },
     {
       "kind": "measurement",

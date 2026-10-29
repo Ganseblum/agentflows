@@ -38,7 +38,10 @@
 
 ## 十四项落地对照
 
-本表只指向规则与证据，不复制执行方法。逐文件映射见 [实施映射](testing/agentflow-workflow/evidence/adoption-implementation-map.json)。
+本表只指向规则与证据，不复制执行方法。
+
+> 原始证据件（184 个逐字输出）已于 2026-10-29 全面修正与瘦身批移出工作树，原因是它们占本仓记录面体积的三分之一强且不再被任何现行流程读取；**逐字节内容没有消失**，按修订取回（可直接运行的 git 形态，不带仓名）：`git show 6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/<文件名>`；本仓实测 `git show 'agentflows@6229a65:<路径>'` 报「致命错误：无效的对象名」——`仓库@修订:路径` 是**记录侧的跨仓约定**（告诉读者去哪个仓），不是 git 语法；对象就在本仓时须去掉仓名前缀。该缺陷已立 `docs/issues/ISS-2026-10-29-仓限定引用被写成可运行的git命令.md`。本批计划证据列、批次 README 的两处链接、`episodes/2026-10-27/` 两份 episode 的 `evidence_ref` 与四条 `docs/issues/ISS-2026-10-27-*.md` 共 36 处已改写成该形态。**未改写的部分**：`testing/agentflow-workflow/run-*.md` 与 `reviews/review-2026-10-27-*.md` 里以行内代码出现的逐字输出引用——按 `AGENTS.md` 与链契约的引文口径（围栏与行内代码是引文，不是主张），它们是当年观测的原文，不追溯改写；取回方式见下一行。
+逐文件映射见 实施映射 `agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/adoption-implementation-map.json`（原始证据件已于 2026-10-29 瘦身批移出工作树，逐字节内容按修订限定地址取回：`git show <该地址>`）。
 
 | 项 | 已吸收内容 | 使用入口 | 验证 |
 | --- | --- | --- | --- |
@@ -65,7 +68,7 @@
 
 ## 合并后修正
 
-本地main在 `57e45d2` 收录备份历史，保留已验证文件树。四条开发分支已在主线；两个旧工作树的28文件与既有集成来源摘要一致，不用旧候选覆盖后续修复。分支和文件证据见 [整合记录](testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json)。
+本地main在 `57e45d2` 收录备份历史，保留已验证文件树。四条开发分支已在主线；两个旧工作树的28文件与既有集成来源摘要一致，不用旧候选覆盖后续修复。分支和文件证据见 整合记录 `agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/main-integration-2026-10-27/branch-integration.json`（同上，按修订限定地址取回）。
 
 后续四项状态分别以缺陷记录为准：[清单读取失败](../../issues/ISS-2026-10-27-门清单部分输出失败仍被放行.md)、[计划模板标题](../../issues/ISS-2026-10-27-计划模板验证标题不匹配.md)、[测试方法重复](../../issues/ISS-2026-10-27-测试入口重复定义失败范围.md)、[安装摘要矛盾](../../issues/ISS-2026-10-27-L3批次安装摘要前后矛盾.md)。本次不修改既有计划已完成任务的定义，也不回写历史执行结果。
 

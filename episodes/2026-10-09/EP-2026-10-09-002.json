@@ -82,12 +82,12 @@
     {
       "evidence_id": "E1",
       "kind": "cleanup_spec_outputs",
-      "ref": "features/feature-2026-10-09-彻底清理与防漂移/spec/cleanup-spec.md（L/S/C/N/D 逐项）+ plan/cleanup-plan.md（逐任务证据列）+ README.md（变更前后）"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：features/feature-2026-10-09-彻底清理与防漂移/spec/cleanup-spec.md（L/S/C/N/D 逐项）+ plan/cleanup-plan.md（逐任务证据列）+ README.md（变更前后））"
     },
     {
       "evidence_id": "E2",
       "kind": "acceptance_output",
-      "ref": "features/feature-2026-10-09-彻底清理与防漂移/plan/evidence-2026-10-09.md §1（红 9 项逐字）、§2（绿）、§3（故障注入 FAIL→恢复→PASS）、§6（扫描面灵敏度）"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：features/feature-2026-10-09-彻底清理与防漂移/plan/evidence-2026-10-09.md §1（红 9 项逐字）、§2（绿）、§3（故障注入 FAIL→恢复→PASS）、§6（扫描面灵敏度））"
     },
     {
       "evidence_id": "E3",
@@ -97,12 +97,12 @@
     {
       "evidence_id": "E4",
       "kind": "release_record",
-      "ref": "CHANGELOG.md 0.10.0 节 + 五清单（0.10.0）+ docs/iteration-log.md §0.10.0（含 0.9.0 补记）；安装快照 ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.10.0"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：CHANGELOG.md 0.10.0 节 + 五清单（0.10.0）+ docs/iteration-log.md §0.10.0（含 0.9.0 补记）；安装快照 ~/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.10.0）"
     },
     {
       "evidence_id": "E5",
       "kind": "review_record",
-      "ref": "features/feature-2026-10-09-彻底清理与防漂移/reviews/review-2026-10-09-001.md（两轮 findings 与处置）；批次 README 执行记录（并发写者观察）"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：features/feature-2026-10-09-彻底清理与防漂移/reviews/review-2026-10-09-001.md（两轮 findings 与处置）；批次 README 执行记录（并发写者观察））"
     }
   ],
   "review_roundtrips": [

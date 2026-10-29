@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-29-001",
+  "source_type": "user_feedback",
+  "revision": {
+    "source": "agentflows 工作树未提交（2026-10-29，分支 feature-2026-10-29-全面修正与瘦身）",
+    "base": "6229a65"
+  },
+  "objective": "把四条「写了但执行不了」的自家规则变成会判红的判据（拍板口唯一入口 / 记录引用可复核 / 评审档位执法 / 状态字形单源），并把散在三批的收敛议程收成一个批次、退场重复噪声与证据件。",
+  "outcome": "partial",
+  "signals": [
+    {
+      "kind": "measurement",
+      "value": "none"
+    },
+    {
+      "kind": "gate_change",
+      "value": "门项数不变（11 项）；artifacts 新增 episode 字段指针与伪降级两条判据、docs 新增载体归属表核验、decision_gate 新增待决项归口与标记在场两条断言、字形映射收为单源",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/gate-runs/all-2026-10-29-r3.txt"
+    },
+    {
+      "kind": "criteria_added_with_fixtures",
+      "value": "doc_chain --self-test 124 → 132（新增 C18-01…08）；unittest 178 → 200",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/gate-runs/all-2026-10-29-r3.txt"
+    },
+    {
+      "kind": "gate_widening_consequence",
+      "value": "episode 指针判据由「整值成形才判」改为值内逐路径判定后，同一份记录树当场命中 116 条（31 份），逐条改写后才回 0",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/redteam/weakening-2026-10-29.md"
+    },
+    {
+      "kind": "record_deletion",
+      "value": "L3 批 184 件原始证据（1.2M）移出工作树，36 处引用先改写成修订限定形态，引用先改→门先绿→再删→门仍绿",
+      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/README.md"
+    },
+    {
+      "kind": "budget_not_met",
+      "value": "必读面四文件 663 → 606 行 / 42,652 → 39,439 字符，验收值 ≤450 未达成；且该取值未经用户拍板，已登记拍板口第 19 条",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md"
+    },
+    {
+      "kind": "self_inflicted_caught_in_round",
+      "value": "移出历史注记时连带摘掉 `agentflow 决策记录` 标记，门当场转为「不检查所以绿」；同轮把用户未选过的必读面值写成「已关闭」——两处均由自查发现并改成判据/未决",
+      "evidence_ref": "docs/issues/ISS-2026-10-29-拍板口改写中两处自述超出事实.md"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "CLM-FIX-01",
+      "claim": "四条新判据各自有夹具或单测，且削弱其一会转红",
+      "status": "verified",
+      "check": "/tmp 副本逐条削弱实跑；本仓 `--self-test 132/132`、`unittest 200 OK`",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/redteam/weakening-2026-10-29.md"
+    },
+    {
+      "claim_id": "CLM-FIX-02",
+      "claim": "全量门绿且不提交不推送不重装",
+      "status": "verified",
+      "check": "`.venv/bin/python tools/lab/validate.py all` → 11 项 PASS，退出码 0；`validate.py installed` → FAIL（6 处漂移，按未验收记录）",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/gate-runs/all-2026-10-29-r3.txt"
+    },
+    {
+      "claim_id": "CLM-FIX-03",
+      "claim": "两路独立评审已跑完并通过",
+      "status": "unverified",
+      "check": "两路均为 `changes_requested`（档位 L2，两次并行派发成功），P0/P1 已处置但**第二轮评审未跑**，两个入口门仍 ☐",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/reviews/review-2026-10-29-001.md"
+    },
+    {
+      "claim_id": "CLM-FIX-04",
+      "claim": "删除不留悬空指针",
+      "status": "unverified",
+      "check": "字段级与链接级已判 0（`PASS artifacts` + `PASS docs`）；`run-*.md`/`reviews/*.md` 行内代码里的退役路径按引文口径保留，无判据覆盖，故不声称全量归零",
+      "evidence_ref": "docs/features/feature-2026-10-29-全面修正与瘦身/README.md"
+    },
+    {
+      "claim_id": "CLM-FIX-05",
+      "claim": "本批疗效（提效/降本）已验证",
+      "status": "unverified",
+      "check": "无仪器化对照，G34 类缺口仍在；本 episode 全程 `measurement: none`",
+      "evidence_ref": "docs/design-decisions.md §3"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-29T02:37:00+08:00",
+      "reviewer": "独立评审角色 agentflow:reviewer（只读，第一路）",
+      "decision": "changes_requested",
+      "finding": "伪降级判定接在 schema 早退之后 → 门路径上永不可达，接线用例接受 schema 措辞因而删掉调用点仍绿；episode 指针判据整值成形才判，「A；B」式取值整体跳过；归属表核验零用例；两条 C18 夹具无判别力",
+      "resolution": "挪到早退之前 + 用例只认 Python 层措辞 + 值内逐路径判定 + 补 6 条用例（含两条门路径级接线断言）+ 夹具改真实形态；反证复跑：删调用点 `FAILED (failures=1)`、删护栏 `130/132`。记录见 docs/issues/ISS-2026-10-29-新判据不可达与零覆盖四处.md"
+    },
+    {
+      "at": "2026-10-29T02:37:00+08:00",
+      "reviewer": "独立评审角色 agentflow:reviewer（只读，第二路）",
+      "decision": "changes_requested",
+      "finding": "四条「已关闭」授权的出处指向不存在的评审文件；10-25 批任务被宣称并入当时尚不存在的 T17；三条验收判据指向本批决定不创建的脚本；README 给读者的 `git show agentflows@6229a65:<路径>` 实测报「无效的对象名」；看板九项与盘上实施相反",
+      "resolution": "授权出处改 `N/A: 会话侧选项集`；补 T17/T18 并逐行回写看板；判据统一改指 `validate.py docs`；取回命令改 git 形态并立 docs/issues/ISS-2026-10-29-仓限定引用被写成可运行的git命令.md；行号刷新并加「仅对基线有效」时效声明。第二轮评审未跑，两个入口门保持 ☐"
+    }
+  ],
+  "feedback_summary": "用户 2026-10-29 在读完设计核查结论后指示「全面修正+升级瘦身」，并以一次选项集钉死四条边界（单批吸收三批未完成任务 / 删除档取证据件+重复导航 / 门变更四条全接 / 改到全绿+独立评审、不提交不推送）。交付按该边界执行；边界外的取值（必读面 ≤450、归属表核验形态、角色行数上限、剩余删档）一律登记为未决而非自行拍板。",
+  "agentflow_version": "0.22.1",
+  "host": "other",
+  "provenance": {
+    "carrier": "session",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-29T02:37:00+08:00"
+}

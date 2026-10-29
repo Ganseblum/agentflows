@@ -70,22 +70,22 @@
     {
       "evidence_id": "E1",
       "kind": "gate_change_and_files",
-      "ref": "tools/lab/validate.py（两处放行+hunk 注释）、tests/test_lab_contracts.py（4 用例）、releases/todo.md、releases/pending-test.md、plans/PENDING-DECISIONS.md、tools/lab/README.md 同步段"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：tools/lab/validate.py（两处放行+hunk 注释）、tests/test_lab_contracts.py（4 用例）、releases/todo.md、releases/pending-test.md、plans/PENDING-DECISIONS.md、tools/lab/README.md 同步段）"
     },
     {
       "evidence_id": "E2",
       "kind": "clause_files",
-      "ref": "AGENTS.md 新增「表达与沉淀纪律」；skills/agentflow/SKILL.md 新增「首次接入（Init）」；index.md 双轨行；docs/project-structure.md 双轨段与工作文件登记；plans/README.md 非计划文件声明"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：AGENTS.md 新增「表达与沉淀纪律」；skills/agentflow/SKILL.md 新增「首次接入（Init）」；index.md 双轨行；docs/project-structure.md 双轨段与工作文件登记；plans/README.md 非计划文件声明）"
     },
     {
       "evidence_id": "E3",
       "kind": "bug_record",
-      "ref": "issues/ISS-2026-10-10-写范围dot-scope静默不匹配.md（现象/根因/修复/回归检查）"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：issues/ISS-2026-10-10-写范围dot-scope静默不匹配.md（现象/根因/修复/回归检查））"
     },
     {
       "evidence_id": "E4",
       "kind": "trial_run",
-      "ref": "/tmp/agentflow-trial/{run-trial.sh,workspace,holdout,progress.jsonl,result.json}（本地一次性产物，不入仓）；探测原始输出留档本会话"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：/tmp/agentflow-trial/{run-trial.sh,workspace,holdout,progress.jsonl,result.json}（本地一次性产物，不入仓）；探测原始输出留档本会话）"
     }
   ],
   "review_roundtrips": [],

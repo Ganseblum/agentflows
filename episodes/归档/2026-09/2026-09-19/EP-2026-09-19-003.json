@@ -44,17 +44,17 @@
     {
       "evidence_id": "E2",
       "kind": "test",
-      "ref": "tests/test_lab_contracts.py CaseIdSubsetTests"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tests/test_lab_contracts.py CaseIdSubsetTests）"
     },
     {
       "evidence_id": "E3",
       "kind": "plan",
-      "ref": "plans/PLAN-LOOP-SMOKE-001.md"
+      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-LOOP-SMOKE-001.md"
     },
     {
       "evidence_id": "E4",
       "kind": "plan",
-      "ref": "plans/PLAN-PRODUCT-001.md"
+      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
     }
   ],
   "objective": "继续第一次噪声底闭环；端点不可用时推进不依赖 live 的评审与默认路径缩短，不声称闭环已跑通",
@@ -92,7 +92,7 @@
       "decision": "approved",
       "finding": "suite_revision is copied from CLI and not rewritten; CaseIdSubsetTests 6 OK; unknown/duplicate/empty fail closed before adapter. Untested: CLI help, suite_revision independence, business suite + --case-ids, duplicate ids already in the loaded suite.",
       "resolution": "accepted with residual risks recorded; README empty-list clause added after review as documentation of existing fail-closed behavior",
-      "evidence_ref": "tools/lab/eval_runner.py parse_case_ids/select_cases; tests.test_lab_contracts.CaseIdSubsetTests"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tools/lab/eval_runner.py parse_case_ids/select_cases; tests.test_lab_contracts.CaseIdSubsetTests）"
     },
     {
       "at": "2026-09-19T12:54:00Z",

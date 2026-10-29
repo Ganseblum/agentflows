@@ -8,7 +8,7 @@
     {
       "kind": "design_decision",
       "value": "close carried residuals instead of letting them ride into the next batch",
-      "evidence_ref": "_archive/records-2026-10/readmes/records-README.md:12 是 0.7.2 扫描中最后一面仍是旧口径（improvement-loop-only）的文档面；mock/README.md:20 同源；评审 0.7.3 轮把 plan_version 失步列为残余——三处一并收掉后仓库进入「所有已知项都有处置结论」状态"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：_archive/records-2026-10/readmes/records-README.md:12 是 0.7.2 扫描中最后一面仍是旧口径（improvement-loop-only）的文档面；mock/README.md:20 同源；评审 0.7.3 轮把 plan_version 失步列为残余——三处一并收掉后仓库进入「所有已知项都有处置结论」状态）"
     },
     {
       "kind": "change_surface",
@@ -18,7 +18,7 @@
     {
       "kind": "risk",
       "value": "concurrent writer active in the same working tree during this slice",
-      "evidence_ref": "收口检查期间发现 docs/host-platform-facts.md 被另一会话修改（Z5 修正 + 新增 Z7–Z9，mtime 2026-09-18 16:04 本地）且 episodes/2026-09-18/EP-2026-09-18-004.json 已被其占用（内置 agent 对应关系判定，16:05）；supervisor 未触碰外来路径、episode ID 让位 004→005、按 ISS-2026-09-17-同分支并发写入 的「占用则停并上报」处置；评审裁定外来足迹不在保护门内、本切片谓词成立。工作树现含两个会话的三个未提交批次，评审建议各自归属分别打包"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：收口检查期间发现 docs/host-platform-facts.md 被另一会话修改（Z5 修正 + 新增 Z7–Z9，mtime 2026-09-18 16:04 本地）且 episodes/2026-09-18/EP-2026-09-18-004.json 已被其占用（内置 agent 对应关系判定，16:05）；supervisor 未触碰外来路径、episode ID 让位 004→005、按 ISS-2026-09-17-同分支并发写入 的「占用则停并上报」处置；评审裁定外来足迹不在保护门内、本切片谓词成立。工作树现含两个会话的三个未提交批次，评审建议各自归属分别打包）"
     },
     {
       "kind": "measurement",

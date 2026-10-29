@@ -54,7 +54,7 @@
     {
       "kind": "live_file_adoption",
       "value": "3 个批次目录 + 1 个拍板口 + 16 条 open 记录",
-      "evidence_ref": "python3 tools/lab/doc_chain.py --repo . → PASS decision-gate；打标前该命令对同一批数据的 C18 计数为 16（现场记录在 plan/PLAN-TRACE-001.md T07 行证据列）"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：python3 tools/lab/doc_chain.py --repo . → PASS decision-gate；打标前该命令对同一批数据的 C18 计数为 16（现场记录在 plan/PLAN-TRACE-001.md T07 行证据列））"
     },
     {
       "kind": "independent_review_rounds",
@@ -79,14 +79,14 @@
       "claim": "文档链新增 C22 目标承接闭环与 C23 证据在场两条判据，且都真的会红（不是空转）",
       "status": "verified",
       "check": "python3.12 tools/lab/doc_chain.py --self-test（用例 86–106）+ 评审者独立夹具在 /tmp 副本逐条打红 + python3.12 tools/lab/mutate.py --check doc_chain_selftest → 17/17 杀死；第二轮评审自建 harness 复验 8 项真修完、2 项带残留",
-      "evidence_ref": "docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md 第一节；plan/PLAN-TRACE-001.md T02/T04 行证据列"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md 第一节；plan/PLAN-TRACE-001.md T02/T04 行证据列）"
     },
     {
       "claim_id": "C2",
       "claim": "决策门（C15–C18）与本批新门第一次照到活文件",
       "status": "unverified",
       "check": "第二轮评审在冻结提交 861b6ef 上实测 `FAIL decision_gate (1)`：C17 判同日提交为过期，故当时那句「--repo . → PASS」不成立。C17 改日粒度后当前复跑为 PASS——本轮不采信作者自述，标 unverified 待第三轮独立复跑后再升 verified",
-      "evidence_ref": "plan/PLAN-TRACE-001.md T07/T08 行证据列；examples/issues/ISS-2026-10-23-开放记录显式延后归属.md 与 examples/invalid/bug-record-disposition-unknown.md"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：plan/PLAN-TRACE-001.md T07/T08 行证据列；examples/issues/ISS-2026-10-23-开放记录显式延后归属.md 与 examples/invalid/bug-record-disposition-unknown.md）"
     },
     {
       "claim_id": "C3",
@@ -121,7 +121,7 @@
       "claim": "第一轮独立评审的 P0/P1/P2 全部收口",
       "status": "verified",
       "check": "评审者建议的最小修复逐条落地并各配夹具（100–106）与变异项（M57/M58）；复跑 python3.12 tools/lab/doc_chain.py --self-test → 106/106、三个批次目录模式 PASS、--repo PASS",
-      "evidence_ref": "docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md 第二节处置列；plan/PLAN-TRACE-001.md DEV-05/DEV-06"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-001.md 第二节处置列；plan/PLAN-TRACE-001.md DEV-05/DEV-06）"
     },
     {
       "claim_id": "C8",
@@ -135,7 +135,7 @@
       "claim": "第二轮评审的 20 条（2 P0 + 4 P1 + 14 P2）已全部落地，且没有靠摘标记或放宽判据转绿",
       "status": "verified",
       "check": "python3 -m unittest discover -s tests → Ran 92 tests OK（含 ReviewRoundTwoFixTests 三项：C17 同日不误伤且隔日仍抓、C18 装饰表头仍解析、无 git 时文案点名原因）；python3 tools/lab/doc_chain.py --self-test → 106/106；三个批次目录模式 PASS；git diff 复核未删除任何标记",
-      "evidence_ref": "docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-002.md 第二节处置列；plan/PLAN-TRACE-001.md DEV-08"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：docs/features/feature-2026-10-22-追溯闭环与证据在场/reviews/review-2026-10-23-002.md 第二节处置列；plan/PLAN-TRACE-001.md DEV-08）"
     }
   ],
   "evidence": [

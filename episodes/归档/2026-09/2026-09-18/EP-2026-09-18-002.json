@@ -8,12 +8,12 @@
     {
       "kind": "design_decision",
       "value": "two-tier split: rendering convention vs structural carrier",
-      "evidence_ref": "第一档（callout/diff 书写约定，_archive/records-2026-10/readmes/records-README.md + examples）零门变更可立即落；第二档（episode.schema.json 增 review_roundtrips + SKILL 步骤 10 触发放宽）合并为一次人工批准的门变更，避免样式先行、载体缺位"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：第一档（callout/diff 书写约定，_archive/records-2026-10/readmes/records-README.md + examples）零门变更可立即落；第二档（episode.schema.json 增 review_roundtrips + SKILL 步骤 10 触发放宽）合并为一次人工批准的门变更，避免样式先行、载体缺位）"
     },
     {
       "kind": "design_decision",
       "value": "semantic layer stays authoritative; visual annotations decorate and stay greppable",
-      "evidence_ref": "callout 词汇为固定字面量前缀（grep 可捞），frontmatter 枚举与固定章节仍承载状态；内联 HTML 颜色与非标准 alert 类型显式拒绝（_archive/records-2026-10/readmes/records-README.md 视觉标注约定条目）"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：callout 词汇为固定字面量前缀（grep 可捞），frontmatter 枚举与固定章节仍承载状态；内联 HTML 颜色与非标准 alert 类型显式拒绝（_archive/records-2026-10/readmes/records-README.md 视觉标注约定条目））"
     },
     {
       "kind": "gate_change",

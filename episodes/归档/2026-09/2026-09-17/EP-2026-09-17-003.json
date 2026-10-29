@@ -23,12 +23,12 @@
     {
       "kind": "credentials_discipline",
       "value": "injection method declared, values never persisted",
-      "evidence_ref": "plan/run frontmatter 的 credentials 字段只写注入方式；角色定义与 _archive/records-2026-10/tests/README.md 明令禁止密码/token 落盘，trace/截图捕获敏感值须声明"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：plan/run frontmatter 的 credentials 字段只写注入方式；角色定义与 _archive/records-2026-10/tests/README.md 明令禁止密码/token 落盘，trace/截图捕获敏感值须声明）"
     },
     {
       "kind": "gate_change",
       "value": "human-directed",
-      "evidence_ref": "schemas/test-plan.schema.json、schemas/test-run.schema.json（schemas/ 为保护前缀）、tools/lab/validate.py、tests/test_lab_contracts.py 为受保护门文件；用户在会话中明确批准方案（含 features/<批次>/testing/ + schema + validate 接线三项拍板点）后落地，沿 0.6.0 \"gate change, human-directed\" 先例"
+      "evidence_ref": "N/A: 叙述性字段值（当年列举的门文件清单 / 跨仓命令原文），退役对象与结论按引文保留（原引用：schemas/test-plan.schema.json、schemas/test-run.schema.json（schemas/ 为保护前缀）、tools/lab/validate.py、tests/test_lab_contracts.py 为受保护门文件；用户在会话中明确批准方案（含 features/<批次>/testing/ + schema + validate 接线三项拍板点）后落地，沿 0.6.0 \"gate change, human-directed\" 先例）"
     },
     {
       "kind": "measurement",

@@ -28,17 +28,17 @@
     {
       "kind": "attribution",
       "value": "产物级 provenance=session-artifact（无条款可违）；方法面缺陷对象=作用域声明本身（attribution=workflow_policy ⇒ provenance=agentflow）；台账立新类 session-deliverable-jargon-scope 而非升级 expression-discipline-jargon（0.8.4 吸收在其声明作用域内未被证伪）",
-      "evidence_ref": "issues/ISS-2026-09-22-会话交付物术语范围缺口.md 备注；issues/recurrence/session-deliverable-jargon-scope.md"
+      "evidence_ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：issues/ISS-2026-09-22-会话交付物术语范围缺口.md 备注；issues/recurrence/session-deliverable-jargon-scope.md）"
     },
     {
       "kind": "isolation_gate",
       "value": "isolation.py check-diff --candidate <一次性副本> --base HEAD：blocked=[]，0.8.6 delta 未触及受保护路径",
-      "evidence_ref": "isolation.py 输出（/tmp/af-candidate-086，supervisor 执行）"
+      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：isolation.py 输出（/tmp/af-candidate-086，supervisor 执行））"
     },
     {
       "kind": "deterministic_checks",
       "value": "candidate-engineer 声称的全部检查由 supervisor 本机复现：doc_chain --self-test 38/38、unittest 155 OK、validate.py all 9 项 PASS；真实缺陷语料 --file：AIPPT 报告 C14×4（:40/:274/:280/:648，:99 括注豁免属声明容差）、姊妹报告与 Youc『IP 桶』文件零误报",
-      "evidence_ref": "RL-0.8.6-baseline/candidate.json + comparisons/RL-0.8.6.json"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：RL-0.8.6-baseline/candidate.json + comparisons/RL-0.8.6.json）"
     },
     {
       "kind": "deliverable_fix",
@@ -48,7 +48,7 @@
     {
       "kind": "release",
       "value": "0.8.5+0.8.6 单批双发获用户批准（AskUserQuestion「两个都批准并发布」）：两份 release record 落盘、五 manifest（+两处 runtime 补漏）bump 0.8.4→0.8.6、重装快照 cache/0.8.6、validate.py installed 留痕、台账 session-deliverable-jargon-scope 置 consolidated_in 0.8.6、ISS-2026-09-22-会话交付物术语范围缺口 回锚 fix_revision",
-      "evidence_ref": "releases/0.8.5.json + 0.8.6.json"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：releases/0.8.5.json + 0.8.6.json）"
     }
   ],
   "claims": [

@@ -13,6 +13,9 @@ from .common import (
     read_document_text,
 )
 
+# 引文豁免与 records 侧共用同一份实现，不在这里长出第二份 prose_without_quotations。
+from .records import prose_without_quotations
+
 ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.MULTILINE)
 
 
@@ -232,6 +235,148 @@ def validate_live_doc_references(root: Path = ROOT) -> list[ValidationError]:
     return errors
 
 
+CARRIER_MAP_REL = "skills/agentflow/references/carrier-map.md"
+# 受「不得写人工同步义务」约束的规则载体（四件必读面 + 宿主级规则正文）。
+CARRIER_MAP_OWNED_CARRIERS = (
+    "skills/agentflow/SKILL.md",
+    "skills/agentflow/references/roles.md",
+    "skills/agentflow/references/contracts.md",
+    "agents/reviewer.md",
+    "skills/agentflow/templates/host/global-rules.md",
+)
+CARRIER_COLUMNS = ("规则", "权威载体", "锚点", "副本处置")
+MIN_CARRIER_ROWS = 12
+BACKTICK_TOKEN = re.compile(r"`([^`]+)`")
+# 宿主托管块的标记注释也叫 `agentflow:begin`，它不是角色指针——负向后行断言把 "<!-- " 开头的
+# 标记排除掉，否则归属表里合法引用该标记的一行会被当成坏指针。
+ROLE_POINTER = re.compile(r"(?<!<!-- )agentflow:([A-Za-z0-9_-]+)")
+
+
+def _carrier_rows(text: str) -> tuple[list[list[str]], list[str]]:
+    """归属表的逐行单元格，外加「列数不等因而脱离核验」的行清单（评审 P2-6）。"""
+    rows: list[list[str]] = []
+    malformed: list[str] = []
+    for line in text.splitlines():
+        cell = line.strip()
+        if not cell.startswith("|"):
+            continue
+        parts = [c.strip() for c in cell.strip("|").split("|")]
+        if len(parts) != len(CARRIER_COLUMNS):
+            # 表里出现列数不等的行 = 这一行脱离逐行核验（评审 P2-6：给某行末尾补一列即可绕过去），
+            # 所以它是一条 finding，而不是一个被跳过的行。
+            if parts and not set("".join(parts)) <= set("-: ") and parts[0] not in CARRIER_COLUMNS:
+                malformed.append(" | ".join(parts)[:60])
+            continue
+        if parts[0] in CARRIER_COLUMNS or set("".join(parts)) <= set("-: "):
+            continue
+        rows.append(parts)
+    return rows, malformed
+
+
+def validate_carrier_map(root: Path = ROOT) -> list[ValidationError]:
+    """Every rule named in the carrier map must have one real authoritative carrier.
+
+    The map is what retires the "改一处就改另一处" obligation: a rule may live in one file and be
+    pointed at from others. That only holds if the map itself cannot drift, so each row is
+    asserted: the carrier path exists, the anchor is a literal that occurs in that file, and the
+    disposition column is filled. A stale row is red on the day it is written — the alternative,
+    discovered on 2026-10-29, is a table that quietly points at files nobody moved yet.
+    """
+    errors: list[ValidationError] = []
+    path = root / CARRIER_MAP_REL
+    if not path.is_file():
+        return [ValidationError(CARRIER_MAP_REL, "carrier map missing — cross-carrier rules have no declared owner")]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    rows, malformed = _carrier_rows(text)
+    for bad_row in malformed:
+        errors.append(
+            ValidationError(
+                CARRIER_MAP_REL,
+                f"row does not have the 4 required columns and would escape per-row checks: {bad_row}",
+            )
+        )
+    if len(rows) < MIN_CARRIER_ROWS:
+        errors.append(
+            ValidationError(
+                CARRIER_MAP_REL,
+                f"carrier map has {len(rows)} rule rows, fewer than the {MIN_CARRIER_ROWS} "
+                "cross-carrier rules the shipped surface actually contains",
+            )
+        )
+    # 同步义务退场的机器口径（M-E-02）：规则载体里不许再出现「改一处就改另一处」这类
+    # 人工记忆条款。判定前先剥掉围栏与行内引文，否则一段描述该反模式的正文会被当成命中——
+    # 关键词命中不等于缺陷（AGENTS.md 末节）。
+    for rel in CARRIER_MAP_OWNED_CARRIERS:
+        owned = root / rel
+        if not owned.is_file():
+            continue
+        prose = prose_without_quotations(owned.read_text(encoding="utf-8", errors="ignore"))
+        for phrase in ("改一处就改另一处", "必须同步：改一处"):
+            if phrase in prose:
+                errors.append(
+                    ValidationError(
+                        rel,
+                        f"carries the hand-sync obligation {phrase!r} — name the authoritative "
+                        "carrier in the map and use its drift mechanism instead",
+                    )
+                )
+
+    agent_names = {f.stem for f in (root / "agents").glob("*.md")}
+    for rule, carrier, anchor, disposition in rows:
+        if not disposition or disposition in {"—", "-"}:
+            errors.append(
+                ValidationError(CARRIER_MAP_REL, f"rule {rule[:24]!r} has an empty 副本处置 cell")
+            )
+        tokens = BACKTICK_TOKEN.findall(carrier) or [carrier.strip("` ")]
+        for token in tokens:
+            if not token or token.startswith("<"):
+                errors.append(
+                    ValidationError(CARRIER_MAP_REL, f"rule {rule[:24]!r} names no resolvable carrier: {token!r}")
+                )
+                continue
+            target = root / token
+            if not target.exists():
+                errors.append(
+                    ValidationError(CARRIER_MAP_REL, f"carrier {token!r} of rule {rule[:24]!r} does not exist")
+                )
+                continue
+            if not target.is_file():
+                continue  # 目录型载体（模板骨架等）只验存在
+            # 锚点比对先剥围栏与行内引文（评审 P2-6）：标题被降级或被搬进示例代码后，
+            # 字面仍在文件里，原始子串匹配会把它当命中——同步义务那条已经先剥引文，这里不能例外。
+            # 例外是标记型锚点（HTML 注释本身就是引文形态），整段保留供其命中。
+            raw_body = target.read_text(encoding="utf-8", errors="ignore")
+            # 一行允许多个锚点，写成「A 与 B」：拆开逐条验，避免逼作者把两个真实标题塞成一个字面量。
+            raw_anchor_cells = BACKTICK_TOKEN.findall(anchor) or [anchor.strip("` ")]
+            anchors = [part.strip() for cell in raw_anchor_cells for part in cell.split(" 与 ") if part.strip()]
+            for name in anchors:
+                if not name or name in {"—", "-"}:
+                    continue
+                # Markdown 载体先剥围栏与行内引文；Python 载体不剥——源码里的 ``` 多半是夹具字符串，
+                # 成对与否不可靠，一律剥离反而会把被核验的函数定义本身吞掉（2026-10-29 实测）。
+                if name.startswith("<!--") or target.suffix == ".py":
+                    body = raw_body
+                else:
+                    body = prose_without_quotations(raw_body)
+                if name not in body:
+                    errors.append(
+                        ValidationError(
+                            CARRIER_MAP_REL,
+                            f"anchor {name!r} of rule {rule[:24]!r} is not a literal inside {token}",
+                        )
+                    )
+        for pointer in ROLE_POINTER.findall(f"{carrier} {anchor} {disposition}"):
+            if pointer not in agent_names:
+                errors.append(
+                    ValidationError(
+                        CARRIER_MAP_REL,
+                        f"role pointer agentflow:{pointer} of rule {rule[:24]!r} resolves to no agents/*.md",
+                    )
+                )
+    return errors
+
+
+
 def validate_doc_consistency() -> list[ValidationError]:
     """Cross-check the hand-synced role/document surface (the 0.3.3 manifest-drift family).
 
@@ -326,6 +471,7 @@ def validate_doc_consistency() -> list[ValidationError]:
         errors.extend(version_prose_errors(path, text))
 
     errors.extend(validate_live_doc_references(ROOT))
+    errors.extend(validate_carrier_map())
     return errors
 
 

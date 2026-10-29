@@ -7,22 +7,13 @@
 > **从本表移出**（本表只保留未决与未完结项）；实现若偏离被拍板的结论，不得回写成已拍板，
 > 另行登记新条目再向用户确认。
 >
-> 2026-10-10：原十项已全部拍板/执行完毕（证据：提交 `4c767eb`、`6d10b14`、EP-2026-10-10-001/002、
-> `CHANGELOG`「待发布」节），已从本表移出。2026-10-12 精简批：第 5 条已随 mock/ 整体裁撤关闭
-> （证据随本批提交）；业务尺子随本批裁撤，原第 2/3 条失去对象关闭；当前保留 2 条未决。
+> agentflow 决策记录
 >
-> 2026-10-13 核实：两条未决仍成立——产品链需求评审门（`docs/product/README.md` 第 3 节）仍是
-> `☐`，`method-spec.md` 的会话角色词命中仍在；回溯独立评审在 `reviews/` 下无对应记录。
-> 第 1 条的复审命令已更新为现行活面门（旧写法 `doc_chain.py docs/product` 需该目录另有 `plan/`
-> 才可能通过，而产品链计划落在 `docs/features/<批次>/plan/`，故换用 `validate.py doc_chain_live`）。
+> 本行标记是**启用门检查的声明**，不是注释：`tools/lab/docchain/checks.py:719` 的
+> `DECISION_MARKER` 以此字符串为开关，去掉它 C16（八列形态）与 C17（核验过期）就不再照本文件。
+> 2026-10-29 移出表尾历史注记时曾把它一并删掉，`decision_gate` 当场转为「不检查所以绿」，
+> 已按「不得靠摘标记转绿」的既有规则恢复并把它单独成行。
 >
-> 2026-10-18 合并批：`workbuddy/main-b0d8652c` 已并入 `main`（按用户拍板保留 `main` 的裁撤，
-> 评测装置不复活，只并入记录类内容；当时 `validate.py all` 全部子项全绿留证——当时的 `all`
-> 尚为九项，`lint` 子项于 2026-10-19 加入）。该次合并带出三条新事项，
-> 登记为下表第 5–7 条。
->
-> 2026-10-19 过期货清理批：第 7 条并入 G14（同属 gate/ 门健全）；新增第 8 条（质量提升批收尾拍板）。
-> 2026-10-19 产品链修复轮与分支处置：第 1 条 F1–F12 修复已落并完成独立复审（approved，见文末）；第 6 条已执行并移出（见文末）。门健全批次（第 5、7 条）已拍板落地并移出（见文末）。受保护面回溯评审（第 4 条）已执行并移出（见文末）。
 
 | # | 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -35,39 +26,20 @@
 | 16 | 2026-10-28 评测报告 G34（`docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md` §五 第 1 条） | 成本收益缺对照组：「不用 agentflow 需要多少成本」从未实测，存在意义维度只有推理支撑：A 补一次同题对照实验（选一个小型真实任务，with/without 各跑一遍，记录人时、门次数、返工轮次）；B 不做对照，对外叙事明确不押「成本更低」 | 2026-10-28 全仓检索无对照实验载体（`docs/evaluations/` 十份档案均为单向评测）；本报告 §五 已如实列入无证据推测清单 | A 补一次同题对照实验（存在意义是该方法的核心理由，唯一缺的证据就是它） | 实验协议与结果落盘后关闭；选 B 则须在 README 对外叙事处写明不主张成本优势 | P3 | 多模块(docs/evaluations/、README.md 对外叙事) | N | 未决 |
 | 17 | 2026-10-28 评审欠账清偿批 T04（`docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md`） | 是否为 `review_tier` 伪降级判据授权改动受保护面：A 授权（改 `schemas/review.schema.json` 增 `review_tier`/`dispatch_errors` 两字段与一条 `allOf`、改 `tools/lab/gate/records.py` 判伪降级、新增 `tests/` 用例、跑 `packaging/build_runtime.py` 重建生成树；代价是门变更一次、需独立评审）；B 不授权（G2 只能停在「清单可清点」，`review_tier: L0` 而无 `dispatch_errors` 的伪降级继续无人校验） | 2026-10-28 实测 `grep -rn "review_tier" tools/ schemas/ tests/ skills/agentflow/scripts/` → 零命中（无任何校验器读它）；`schemas/review.schema.json` 的 `additionalProperties: false` 且属性表无该字段；改源 schema 不重建生成树时 `validate.py manifests` 实测报 `packaging/runtime/schemas/review.schema.json: content differs from source` | A 授权（判据没有不受保护面的落点；B 等于让已写入契约的三条不变式继续空转） | 用户在 A/B 中拍定并记日期；选 A 时同一变更内须含 schema、校验器、单测与生成树重建四件，且 `EXPECTED_TEST_FILES` 与 `protected-paths.txt` 同步登记 | P2 | 多模块(schemas/review.schema.json、tools/lab/gate/records.py、tests/test_gate_records.py、packaging/runtime/schemas/review.schema.json、tools/lab/validate.py 的 EXPECTED_TEST_FILES、protected-paths.txt) | N | 未决 |
 | 18 | 2026-10-28 评审欠账清偿批（`skills/agentflow/references/contracts.md:42-43` 的载体与实际声明位置不一致） | `review_tier` 的权威载体选谁：A 补进契约点名的两处（`skills/improve/references/episode.schema.json` 增字段、决策记录契约加该字段；代价是两份受保护面 schema 一起改，门变更面扩大）；B 改契约措辞指向实际载体（把「决策记录或 episode」改写为「评审记录或批次 README/计划」，代价是改 `contracts.md` 受保护面正文）；C 维持现状（本批的真实欠账在批次 README/计划层，由派生清单覆盖；代价是契约点名处仍无该字段，读契约的人仍会去找不存在的载体） | 2026-10-28 实测：`skills/improve/references/episode.schema.json` 为 `additionalProperties: false` 且无 `review_tier`；决策记录无 schema，`docs/PENDING-DECISIONS.md` 八列无该字段；两批真实 L0 声明均在批次 README/计划正文，不受任何记录契约校验 | C 维持现状（本批已用派生清单覆盖真实载体；A/B 都是受保护面门变更，收益不足以单独开一次） | 用户在 A/B/C 中书面选定；选 A 或 B 均属受保护面门变更，需逐项授权 | P3 | 多模块(skills/improve/references/episode.schema.json、skills/agentflow/references/contracts.md、docs/PENDING-DECISIONS.md 的决策记录契约) | N | 未决 |
+| 19 | 2026-10-29 全面修正与瘦身批 Q-05（`docs/features/feature-2026-10-29-全面修正与瘦身/proposal/proposal.md` §4），承接 2026-10-25 批 T24 的必读面目标 | 必读面四文件的总量上限取哪个值：A ≤450 行（去掉版本史散文、重复声明与宿主带日期细节后的可达预算，判据细则拆到 `document-chain-checks.md` 不计入四件）；B ≤350 行（10-25 批 T24 原目标；代价是要把判据细则从必读面整体移出甚至压缩，M-E-04「收敛不等于删判据」会被逼出反例）；C 不设上限、只消副本（代价：正是 F5 记录的形态——各削一角后总量从 587 涨到 663） | 2026-10-29 实跑 `wc -l skills/agentflow/SKILL.md skills/agentflow/references/roles.md skills/agentflow/references/contracts.md agents/reviewer.md` → 实施前 `663 total`（148 + 119 + 195 + 201）；**同日 T12 落地后复跑同一命令 → `606 total`（148 + 119 + 195 + 144，`agents/reviewer.md` 的两份深度清单移入 `skills/agentflow/references/review-checklists.md`）**；字符口径同期 42,652 → 39,439。C17 按日粒度比较，同日的这条自我作废它抓不到，故在此手工刷新；`docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md` T24 行写基线 587 行与 ≤350 目标，四个文件里三个反而变厚 | A ≤450 行：既压掉副本与版本史散文，又不逼着删判据细则 | 用户在 A/B/C 中选定并记日期；未选定前本批 T12 按 A 推进，验收点 G5-AC-01 记「按建议值执行」而不记为已拍板 | P2 | 多模块(skills/agentflow/SKILL.md、skills/agentflow/references/roles.md、skills/agentflow/references/contracts.md、agents/reviewer.md、skills/agentflow/references/document-chain.md 的拆分落点) | N | 未决 |
+| 20 | 2026-10-29 全面修正与瘦身批 Q-10（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 第 Q-10 行），承接 2026-10-25 批 `docs/features/feature-2026-10-25-总体评审吸收与修复/proposal/proposal.md` §六 的 Q-02 | 文档链默认档是否改轻：A 保持现状（完整链为默认，轻量档按六条适用性判据启用且由 C26 机器核验）；B 改默认（一页提案 + 验收判据 + 计划看板，完整链降为按需加强档；代价：轻量判据目前六条全为「是」才可轻，改默认等于把「先问再假设」的产品风险门槛前移到实施侧） | 2026-10-29 实跑 `wc -l skills/agentflow/references/document-chain.md` → `500 skills/agentflow/references/document-chain.md`；该文件「文档档位」节含六条轻量判据表与「降档速查」表，C26 已在 `tools/lab/docchain/checks.py` 落地（`doc_chain.py --self-test` 的 C26-01…08 夹具实跑通过） | A 保持现状：本批 T12 会把 500 行的判据细则拆到独立文件，必读面变小而默认档不变；B 属产品语义变更，需另批走链 | 用户在 A/B 中选定并记日期；选 B 时须同时给出「哪些情形仍强制完整档」的可判定清单 | P2 | 多模块(skills/agentflow/references/document-chain.md、tools/lab/docchain/checks.py 的 C26 判据、skills/agentflow/templates/feature/lightweight.md) | N | 未决 |
+| 21 | 2026-10-29 全面修正与瘦身批 Q-07（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 第 Q-07 行），承接 2026-10-25 批 `docs/features/feature-2026-10-25-总体评审吸收与修复/proposal/proposal.md` §六 的 Q-04 剩余部分 | 剩余删档授权（本批已授权档为「证据件 + 重复导航，批次正文保留」）：A 维持该档，批次正文目录与评测档案保留在盘；B 下一批执行「完成批次正文目录删除 + `docs/evaluations/` 留三删五 + 16 条外部记录迁出 infinite-canvas 仓 + CHANGELOG 压缩」；C 现在就打包执行（代价：本批的引用改写判据（第 3 组门变更）尚未落地，先删会留下无人校验的悬空指针，且 `docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md` T02 的落点在 `feature-2026-10-28-评测整改批/reviews/` 内） | 2026-10-29 实跑：`git log --oneline --diff-filter=D --name-only -- docs/features/feature-*` 对 `^docs/features/feature` 命中 0 行（自 2026-10-12 写的删档条款零执行）；2026-10-29 计数（Python 逐条求值，不用管道，避免单元格竖线歧义）：`find docs/features -type f` 的文件数 → 306；`docs/evaluations/` 下 `.md` 文件数 → 13（含 README）；`docs/issues/` 下 `ISS-2026-09-19-office` 前缀记录数 → 16；`wc -l CHANGELOG.md` → 1737 | A 维持：先让「删档时引用怎么写」成为判据（本批门①），再按判据执行删档；B 作为下一批范围登记，不打包进本批 | 用户逐组或打包授权并记日期；执行时引用改写须先通过本批新立的字段级存在性判据 | P2 | 多模块(docs/features/ 六个已完成批次的正文目录、docs/evaluations/ 的 12 份报告、docs/issues/ 的 16 条 infinite-canvas 外部记录、CHANGELOG.md) | N | 未决 |
+| 22 | 2026-10-29 全面修正与瘦身批 Q-06（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 第 Q-06 行），承接 2026-10-19 拍板的「FE/BE 是否合并由 28 例边界测试决定」悬案（载体 `skills/agentflow/references/roles.md` 的裁决段） | 前端/后端角色文件是否合并：A 分立（现状，两个角色各 34 / 48 行）；B 合并为单一 implementer；C 分立但补齐实现角色深度（≤120 行上限内）。裁决依据必须是复跑 28 例边界语料后的三个数字：不一致例数、所有权分歧项数、合并稿行数 | 2026-10-29 实跑 `wc -l agents/backend-engineer.md agents/frontend-engineer.md agents/technical-director.md` → 34 / 48 / 22（合计 104）；语料在 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/plan-2026-10-13-001.md`（`wc -l` → 1357 行）；`skills/agentflow/references/roles.md` 的裁决段至今没有写明「通过率多少算该合并」的阈值 | C：先由本批 T16 复跑三条件出数字，再按数字裁决；语料不足时给保守结论并写明重审触发条件，不伪造阈值 | T16 产出三条件数字并回写 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` T16 行证据列，用户在 A/B/C 中选定 | P3 | 多模块(agents/backend-engineer.md、agents/frontend-engineer.md、skills/agentflow/references/roles.md) | Y | 未决 |
+| 23 | 2026-10-29 全面修正与瘦身批 Q-11（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 第 Q-11 行），与 2026-10-28 治理批 `docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md` T01 行的原设计不同 | 载体归属表的核验形态：A 表落 `skills/agentflow/references/carrier-map.md`、核验断言并入既有 `validate.py docs` 项（不增加门项数）；B 按原治理批设计新建 `tools/lab/gov_carrier.py` 并登记为第 12 个门项（代价：违抗 2026-10-28 评测报告 §三「不加新门项，11 项 + 24 条 C 判据已到边际收益递减区」，且 `EXPECTED_TEST_FILES` 与 `protected-paths.txt` 两处清单要跟着改）；C 只写表不加校验（代价：归属表写完即过期，正是本批要消灭的「存在但不在场」） | 2026-10-29 实跑 `grep -n "^def " tools/lab/gate/docs.py` → 该模块含 `validate_doc_consistency` 等六个断言函数（行号随改动漂移，定位按函数名），归属表核验可并入而不新增门项；`ls packaging/runtime/tools/lab/` → 仅 `doc_chain.py` 与 `docchain/`，新建独立脚本还需同时改 `packaging/build_runtime.py:37-40` 的 `RUNTIME_SUBTREES` | A：并入既有 `docs` 项，表本身作内容文件随插件交付 | 用户确认形态；本批 T07 已按 A 先行，选 B 时须同批处理白名单、保护清单与测试登记三处 | P2 | 多模块(tools/lab/gate/docs.py、skills/agentflow/references/carrier-map.md、packaging/build_runtime.py、protected-paths.txt) | N | 未决 |
+| 24 | 2026-10-29 全面修正与瘦身批 Q-12（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 第 Q-12 行），承接 2026-10-28 治理批 `docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md` 未决项第 2 行 | 实现角色文件的行数上限：A ≤120 行（治理批原提法：加深度与防膨胀一对约束，上限防止把 SKILL 的重复搬进角色文件）；B 不设上限（代价：`agents/reviewer.md` 已到 201 行，无上限会让必读面在本批 G5 收敛后重新长回来）；C 按角色分档设上限（代价：需要一个可判定的分档依据，目前没有） | 2026-10-29 实跑 `wc -l agents/*.md` 逐文件求值，最短 20 行（`agents/evaluator.md`），`agents/backend-engineer.md` 34 行、`agents/frontend-engineer.md` 48 行、`agents/technical-director.md` 22 行、`agents/reviewer.md` 原 201 行、2026-10-29 清单移出后 144 行；2026-10-28 评测报告 §二 B5 记录该倒挂（实现角色是产出主体却着墨最少） | A ≤120 行：T15 的对齐动作在 120 行内补职责覆盖，超限时改为「写明由哪条契约承担」而不是加行 | 用户选定上限形态并记日期；未选前 T15 按 A 执行 | P3 | 多模块(agents/backend-engineer.md、agents/frontend-engineer.md、agents/technical-director.md、skills/agentflow/references/roles.md) | N | 未决 |
+| 25 | 2026-10-29 全面修正与瘦身批 T03 的连带后果（`docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` Q-13 行），承接 2026-10-25 批 `docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md` 的 T27 行 | 拍板口到底是「移出」还是「只追加永不移出」：A 维持现规则（拍板后连证据一起移出本表，历史归 CHANGELOG 与 episode；代价是条目与核验散落三处，T27 正是为此而提）；B 改为只追加、永不移出，条目加 `closed_at` 与 `outcome` 两列（代价：本表会长成第二份 CHANGELOG，而刚被移出的 27 行注记正是这种生长的产物）；C 只追加但闭合后转入 `docs/PENDING-DECISIONS-ARCHIVE/`（代价：新增顶层目录，须先经用户确认） | 2026-10-29 实跑取证：`git show 6229a65:docs/PENDING-DECISIONS.md` 行数 → 73；按现行规则移出后同文件行数 → 44；被移出内容的逐行原文可在 `agentflows@6229a65:docs/PENDING-DECISIONS.md` 取回；现行文件第 9 至 15 行已把 `agentflow 决策记录` 标记单独成行并注明它是 C16 与 C17 的开关，见 `docs/issues/ISS-2026-10-29-拍板口改写中两处自述超出事实.md` | A 维持现行「拍板后移出」，并把「每次移出必须留一行可解析出处」固化为纪律（本批已如此执行）；选 B 或 C 时本批的移出动作需回退，T27 另批实施 | 用户在 A/B/C 中选定并记日期；选 B 时须同时给出「未决条目在不删除的前提下如何一眼筛出」的可判定形态 | P2 | 多模块(docs/PENDING-DECISIONS.md 的表结构与规则正文、docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md 的 T27 行、tools/lab/docchain/checks.py 的 C16 判据) | N | 未决 |
 
-> 2026-10-23 按八列契约重建本表并打上 `agentflow 决策记录` 标记，使 C16 与 C17 第一次照到活文件
-> （此前该标记只出现在规则载体与 `examples/decisions/` 夹具里，门绿在夹具上）。同批把原第 9 条
-> 按「拍板后移出本表」的既有规则移出：第 9 条（批次内 `reviews/` 是否受评审契约校验）已于
-> 2026-10-19 由用户选 (b) 落地——`reviews/README.md` 新增「校验范围」条，明写批次内 reviews 仅为
-> 文档链材料、不受评审契约约束；选项 (a)（纳入 `validate_review_markdown`）仍是待授权的门变更，
-> 如后续要启用，按新条目重新登记。
+> 分工口径（2026-10-29 全面修正与瘦身批 T03 加入，同见 `AGENTS.md` 决策记录节与
+> `skills/agentflow/references/document-chain.md` 的 spec 节）：本文件是**唯一需要用户逐条回复的清单**；
+> 批次链内的 `spec/checklist.md` 承载需求侧待决行的运行时台账（哪条阻塞什么、由谁关闭），
+> 其中「需用户抉择且尚未关闭」的行必须携带本文件的条目编号——两个「单点」由此不再互相覆盖。
 
-> 2026-10-22：第 8 条已执行并按规则移出——② M-D/T08 闭合：ZCode 缓存已有 `0.12.0` 快照，`validate.py installed` PASS（2026-10-22 复核）；①③④⑤ 已于 2026-10-19 落地（证据见下方同日记录与 `PLAN-QUALITY-001` T04/T05/T07/T08/T09）。
-
-> 2026-10-12：原第 5 条（examples/mock 计划样板逐字节重复的单源化）已关闭——本批直接删除整个
-> `mock/`（用户授权的精简批），examples/ 侧自然成为唯一样例；`MOCK_RECORD_ROOTS` 与 mock 检查
-> 一并摘除。
->
-> 2026-10-12：业务尺子随精简批裁撤（用户授权「保公开、裁业务」），原第 2 条（完整切片闭环与业务
-> 尺子授权）、第 3 条（`host_adapter` 隔离路径认证）失去对象关闭；原计划 `plans/PLAN-BUSINESS-EVAL-001.md`
-> 随瘦身批删除（git 历史可回溯）。
->
-> 2026-10-19：第 8 条 ① 的四问不是并列选项，而是一条依赖链——**Q-01（是否实现 M-F）→ Q-03（预算与宿主
-> 可用性）→ G1（结论可为「无定论」）→ Q-02（角色取向；prd「先测后改」要求等 G1 结论）**。Q-02 已按方案 D
-> 落地，但它只覆盖「入口收敛」，不覆盖「是否合并角色文件」，后者仍等 G1。按并列题逐条作答，容易得出与
-> 批次规则冲突的结论（例如在 G1 之前合并角色）。
->
-> 2026-10-19：第 6 条已执行并按规则移出——`git tag workbuddy-merge-2026-10-18 9e30460`（合并点
-> 留底）、本地分支 `workbuddy/main-b0d8652c` 已删、对应 worktree 已移除（该分支无 upstream、
-> 从未推送；内容已在 `main` 且经 tag 可回溯）。
->
-> 2026-10-19：第 5、7 条已拍板并执行完毕，按规则移出——
-> 第 5 条（gate/ 入保护清单）：已拍板（2026-10-19 · 用户「全部处理优化」授权）。`tools/lab/gate/` 全部 13 模块入 `protected-paths.txt`（leniency=checked），`gate/common.py` `REQUIRED_PROTECTED_PATHS` 增 `gate/` 与 `mutate.py` 条目；`validate.py protected` 门自证清单完整，`isolation.py check-diff` 实测拦截 gate 修改。证据：PLAN-QUALITY-001 T07 行。T09 独立评审 2026-10-19 approved（见 `PLAN-QUALITY-001` T09 行）。
-> 第 7 条（G1/G14 门健全）：已拍板（2026-10-19 · 同一门健全改动）。G1/G14 已落：`gate/schema.py` 新增 `SUPPORTED_SCHEMA_KEYWORDS` 与 `check_schema_keywords`（未实现关键字、format 值、数组式 items 一律拒载），（注：当时所述 `SchemaSubsetFailClosedTests` 测试类经 2026-10-20 复核从未进入被提交的历史树，函数实现本身属实，负例覆盖由既有测试承担。）G2 查证闭环：`artifact_digest.py` 不经过 git diff（直接扫描文件树），原改进描述的对象机制不存在，不实施。证据：门（当时九项）PASS + 单测 78 项 OK（**2026-10-20 勘误**：原记「95 = 78 + 9 SchemaSubsetFailClosedTests + 8 MutationKillCorpusTests」——两个测试类从未进入被提交的历史树，95 为当时工作树未提交增补的计数，实跑为 78）。T09 独立评审 2026-10-19 approved（见 `PLAN-QUALITY-001` T09 行）。
->
-> 2026-10-19：第 4 条已执行并按规则移出——
-> 第 4 条（受保护面回溯独立评审）：已执行（2026-10-19 · 用户「全部修复处理」授权）。评审覆盖 4c767eb（本地化）、6d10b14（youc 吸收）、8996016（结构瘦身）三个提交的受保护面 diff（13267 行）。结论：**approved**（status: complete）。8 项发现均为 P2/信息性，无阻塞。评审记录：`docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-002.md`。
->
-> 2026-10-19：第 1 条已执行并按规则移出——
-> 第 1 条（产品链修复轮复审）：已执行（2026-10-19 · 用户「全部开始处理 执行」授权下的收尾）。首轮独立复审确认 F1–F12 中 10 项修复成立；聚焦复检确认剩余三项：F4（台账 OQ-2 行补 owner 单元格，5 列对齐、关闭条件可判定）、F8（proposal 新增 §1.4 范围决策表，12 行全覆盖且每行带引用出处）、N3（live 证据措辞精确化为端点健康类，与 C12/X1 事实相符）。机器复核：三条 `doc_chain.py --file` 退出 0 + `validate.py doc_chain_live` PASS。总体结论 **approved**，F1–F12 全关闭。复审记录：`reviews/agentflow-product-chain/review-2026-10-19-003.md`（快照 `archive/2026-10-19-003/`）；`docs/product/README.md` 第 3 节需求评审门已勾选。残留 P3 观察（不阻塞）：§六首项「组织图产品化」未在决策表行内逐一枚举，该行已引用 §六。
+> 已闭合条目的历史注记（2026-10-10 至 2026-10-19 共 8 段 + 表后 27 行）已于 2026-10-29 按「拍板后移出本表」
+> 的既有规则移出，不再以注记形式留在本文件。移出前的原文可在
+> `agentflows@6229a65:docs/PENDING-DECISIONS.md` 逐行取回；各条的结论与证据载体分别在
+> `CHANGELOG.md` 对应节与 `episodes/2026-10-18/`、`episodes/2026-10-19/` 下的 episode。

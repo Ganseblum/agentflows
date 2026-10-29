@@ -71,7 +71,7 @@
     {
       "evidence_id": "E4",
       "kind": "incident_disclosure",
-      "ref": "issues/ISS-2026-09-20-合并冲突解决质量门缺口.md 的 updated_at 由兄弟会话写为 2026-09-20T12:40:00Z（未来 8h），阻断 validate all；本会话 supervisor 修正为实测 2026-09-20T04:31:51Z，内容零改动，已向用户与评审员披露"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：issues/ISS-2026-09-20-合并冲突解决质量门缺口.md 的 updated_at 由兄弟会话写为 2026-09-20T12:40:00Z（未来 8h），阻断 validate all；本会话 supervisor 修正为实测 2026-09-20T04:31:51Z，内容零改动，已向用户与评审员披露）"
     },
     {
       "evidence_id": "E5",

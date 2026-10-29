@@ -16,7 +16,7 @@
     {
       "kind": "regression_count",
       "value": 58,
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/review-002-requested-target.txt"
+      "evidence_ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/review-002-requested-target.txt"
     },
     {
       "kind": "worker_interruption",
@@ -34,7 +34,7 @@
     {
       "kind": "host_activation",
       "value": "未安装；ZCode已安装最高0.18.2，当前源码及生成树为0.19.0本地候选",
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/final-installed-boundary.txt"
+      "evidence_ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/final-installed-boundary.txt"
     }
   ],
   "claims": [
@@ -50,14 +50,14 @@
       "claim": "新工具目标回归、原生Node Red→Green及生成树通过",
       "status": "verified",
       "check": "python3 -m unittest discover -s tests -p test_workflow.py；cli-e2e.py；validate.py installed --path packaging/runtime",
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md"
+      "evidence_ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md"
     },
     {
       "claim_id": "C3",
       "claim": "真实宿主已加载新规则",
       "status": "unverified",
       "check": "python3 tools/lab/validate.py installed显示旧安装；未重装或新会话验证",
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/final-installed-boundary.txt"
+      "evidence_ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/final-installed-boundary.txt"
     },
     {
       "claim_id": "C4",
@@ -70,18 +70,18 @@
     {
       "evidence_id": "EV1",
       "kind": "review_delta",
-      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/review-delta-002.diff",
+      "ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/review-delta-002.diff",
       "digest": "sha256:21483892e01d1d9237f496de5a2595211eb4808e0c9d6a0618b1120eb08326fe"
     },
     {
       "evidence_id": "EV2",
       "kind": "test_run",
-      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md"
+      "ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md"
     },
     {
       "evidence_id": "EV3",
       "kind": "tool_manifest",
-      "ref": "docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/tool-manifest-final.json"
+      "ref": "agentflows@6229a65:docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/evidence/tool-manifest-final.json"
     }
   ],
   "review_roundtrips": [

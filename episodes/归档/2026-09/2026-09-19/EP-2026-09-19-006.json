@@ -75,7 +75,7 @@
     {
       "evidence_id": "E4",
       "kind": "command",
-      "ref": "diff -q /tmp/af-pre-20260919/{SKILL.md,contracts.md,system-guide.md} vs repo files -> IDENTICAL x3 after HEAD moved ceb639f->a6fd485->2643ba9 (concurrent session committed the loop-smoke/packaging/py-guard batches mid-flight; none touched the three target files)"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：diff -q /tmp/af-pre-20260919/{SKILL.md,contracts.md,system-guide.md} vs repo files -> IDENTICAL x3 after HEAD moved ceb639f->a6fd485->2643ba9 (concurrent session committed the loop-smoke/packaging/py-guard batches mid-flight; none touched the three target files)）"
     }
   ],
   "objective": "把失败处理模型对照分析确认的两处缺口落地：SKILL.md 换道枚举补『换工具』；contracts.md 成文『编排层不做保底执行路径』及其理由（制造看起来完成的未验证工作正是 claims 台账要拦的缺陷）+ system-guide.md 中文镜像；空隙三（编排重试的幂等前提）判定已被现有机制满足（只读检查重跑、带因重派、worktree 隔离），不补",

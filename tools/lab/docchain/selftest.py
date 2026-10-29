@@ -978,6 +978,63 @@ def self_test() -> int:
     run_case("C26-08 C26 repeated identical declarations are not unique", 1, ["C26 轻量档"],
              lambda f: compact_fixture(compact + "\n完整文档要求：否\n"), results)
 
+    # --- C18 的第二半（2026-10-29 门变更，用户授权）：待决项归口与标记在场。
+    # 这组夹具钉三件事：未关闭且需用户抉择的行没有拍板口编号必须判红（C18-01）、补上编号即转绿
+    # （C18-02）、判据不吃「属主不是用户」「已确认」与「发现表形状」这三种行（C18-03…05、07）；
+    # 外加摘掉标记必须判红而不是失去对象（C18-06）。
+    PEND_README = "# b1\n\n本批启用 agentflow 决策归属 标记。\n\n## 需求评审门\n## 技术方案评审门\n"
+    PEND_LEDGER = "# 待用户拍板的事项\n\nagentflow 决策记录\n"
+    PEND_LEDGER_UNMARKED = "# 待用户拍板的事项\n\n（标记被摘掉了）\n"
+
+    def pend_prop(row: str, header: str = "| 编号 | 问题 | 阻塞性 | 关闭条件 | Owner | 状态 |") -> str:
+        return ("# proposal\n\n## 六、待冻结问题台账\n\n" + header + "\n"
+                "| --- | --- | --- | --- | --- | --- |\n" + row)
+
+    PEND_ROW_OPEN = "| Q-01 | 默认档改不改 | 是 | 用户选定 | 用户 | 未确认 |\n"
+    PEND_ROW_REF = ("| Q-01 | 默认档改不改 | 是 | 用户选定 | 用户 | 未确认；"
+                    "登记为 `docs/PENDING-DECISIONS.md` 第 19 条 |\n")
+    PEND_ROW_IMPL_OWNER = "| Q-01 | 默认档改不改 | 是 | 实施侧自定 | 实现 | 未确认 |\n"
+    PEND_ROW_CLOSED = "| Q-01 | 默认档改不改 | 是 | 用户选定 | 用户 | 未确认；已确认（2026-10-29） |\n"
+    PEND_ROW_FINDINGS = "| A1 | 用户主旅程第一步至今未关闭 | 实测 | T01 |\n"
+
+    run_repo_case("C18-01 open user-owned 待决行 without a 拍板口 entry trips", 1,
+                  ["C18 pending-attribution"],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_OPEN),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-02 the same row citing a 拍板口 entry passes", 0, [],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_REF),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-03 a row the implementation side owns does not trip (no widening)", 0, [],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_IMPL_OWNER),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-04 a closed row does not trip", 0, [],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_CLOSED),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-05 unmarked batch never gets scanned for 待决项归属", 0, [],
+                  {"docs/features/b1/README.md": PEND_README.replace("agentflow 决策归属", "决策归属"),
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_OPEN),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-06 拍板口在场而标记被摘走 trips instead of dropping coverage", 1,
+                  ["C18 decision-marker", "标记"],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER_UNMARKED})
+    run_repo_case("C18-07 a findings table (问题 column, no status column) is not a 待决项 ledger", 0, [],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/proposal/proposal.md": pend_prop(PEND_ROW_FINDINGS,
+                       header="| # | 问题 | 证据 | 任务 |"),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+    run_repo_case("C18-08 checklist-shaped 未决项 table without an entry trips too", 1,
+                  ["C18 pending-attribution"],
+                  {"docs/features/b1/README.md": PEND_README,
+                   "docs/features/b1/spec/checklist.md": (
+                       "# checklist\n\n| # | 事项 | 属主 | 状态 |\n| --- | --- | --- | --- |\n"
+                       "| 1 | 目标值取哪个 | 用户 | 未确认 |\n"),
+                   "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+
     ok = all(passed for _, passed in results)
     for name, passed in results:
         print(("PASS " if passed else "FAIL ") + name)

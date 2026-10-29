@@ -13,7 +13,7 @@
     {
       "kind": "runtime_flips",
       "value": 4,
-      "evidence_ref": "①target_docs 恶意路径（/etc/passwd、../../outside.md）dry-run 被拒、正常相对路径通过；②repeat_count 不一致 raise、一致通过；③tripwire 一次性副本翻转：validate.py docs FAIL(2 errors) exit 1；④real-run 词法拒绝先于快照/seed-patch 门槛（ValueError 消息逐字命中预期）"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：①target_docs 恶意路径（/etc/passwd、../../outside.md）dry-run 被拒、正常相对路径通过；②repeat_count 不一致 raise、一致通过；③tripwire 一次性副本翻转：validate.py docs FAIL(2 errors) exit 1；④real-run 词法拒绝先于快照/seed-patch 门槛（ValueError 消息逐字命中预期））"
     },
     {
       "kind": "review",
@@ -23,12 +23,12 @@
     {
       "kind": "write_scope",
       "value": "13 files in scope, 0 out-of-scope",
-      "evidence_ref": "git diff --name-only 对照基线 3862083：三个委派写范围（records×3；AGENTS.md+tools/lab×3+tests；）+ supervisor 直改 4 文件（SKILL、_archive/records-2026-10/readmes/records-README.md、两个角色）；_archive/handoff-2026-10/next-session-handoff.md 为委派前他人既有改动，未混入"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：git diff --name-only 对照基线 3862083：三个委派写范围（records×3；AGENTS.md+tools/lab×3+tests；）+ supervisor 直改 4 文件（SKILL、_archive/records-2026-10/readmes/records-README.md、两个角色）；_archive/handoff-2026-10/next-session-handoff.md 为委派前他人既有改动，未混入）"
     },
     {
       "kind": "gate_change",
       "value": "human-directed",
-      "evidence_ref": "tools/lab/host_adapter.py、tools/lab/eval_runner.py、tools/lab/validate.py、tests/test_lab_contracts.py 为受保护门文件；本批经用户在本会话明确点名授权（P0 清单含两个校验补丁），符合 0.6.0 既有 \"gate change, human-directed\" 先例"
+      "evidence_ref": "N/A: 叙述性字段值（当年列举的门文件清单 / 跨仓命令原文），退役对象与结论按引文保留（原引用：tools/lab/host_adapter.py、tools/lab/eval_runner.py、tools/lab/validate.py、tests/test_lab_contracts.py 为受保护门文件；本批经用户在本会话明确点名授权（P0 清单含两个校验补丁），符合 0.6.0 既有 \"gate change, human-directed\" 先例）"
     },
     {
       "kind": "process_incident",

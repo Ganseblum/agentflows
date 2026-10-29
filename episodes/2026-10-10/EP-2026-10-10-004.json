@@ -52,7 +52,7 @@
   ],
   "evidence": [
     { "evidence_id": "E1", "kind": "books", "ref": "skills/agentflow/SKILL.md、skills/agentflow/references/document-chain.md（本批工作树）" },
-    { "evidence_id": "E2", "kind": "books", "ref": "skills/agentflow/templates/（角色目录重组 + hub/）、skills/agentflow/templates/README.md、docs/project-structure.md" },
+    { "evidence_id": "E2", "kind": "books", "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：skills/agentflow/templates/（角色目录重组 + hub/）、skills/agentflow/templates/README.md、docs/project-structure.md）" },
     { "evidence_id": "E3", "kind": "chain_output", "ref": "test-login/test-login-workflow-ai/features/feature-2026-10-10-登录功能/（14 件：案例链 9 + 枢纽 5；并含 archive/prior-run-2026-10-10/ 逐字副本）；doc_chain.py PASS 原始输出；/tmp 负向对照已删" }
   ],
   "review_roundtrips": [

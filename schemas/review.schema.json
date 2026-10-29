@@ -44,7 +44,24 @@
       "items": { "type": "string", "pattern": "^ISS-\\d{4}-\\d{2}-\\d{2}-[A-Za-z0-9\\u4e00-\\u9fff][A-Za-z0-9\\u4e00-\\u9fff-]*$" }
     },
     "reviewer": { "type": "string", "minLength": 1 },
+    "review_tier": {
+      "description": "Review capability actually observed before this gate opened, per skills/agentflow/references/contracts.md 的「评审能力分级」: L2 = 至少两个只读角色派出成功, L1 = 只派出一个, L0 = 委派不可用（主审自审 + 全套确定性门）. Absent means 未声明 — neither a pass nor a fail, so records written before the field existed are not retroactively red.",
+      "enum": ["L0", "L1", "L2"]
+    },
+    "dispatch_errors": {
+      "description": "Verbatim errors from the failed dispatch attempts that made L0 true. Strings only: tools/lab/gate/common.py's frontmatter parser supports flat scalars and list-of-scalar forms, not nested maps, so an object array would fail to parse and the constraint would silently never be read.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
     "recorded_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" }
-  }
+  },
+  "allOf": [
+    {
+      "description": "伪降级护栏（contracts.md 不变式：`review_tier: L0` 而 `dispatch_errors` 为空，是伪降级，同样无效）：声明 L0 就必须带失败派发的原始留痕。语义判定同时落在 tools/lab/gate/records.py 的 review_tier_findings，因为要报出「哪条记录伪降级」需要指向记录的错误文本，schema 只保证形态。",
+      "if": { "properties": { "review_tier": { "const": "L0" } }, "required": ["review_tier"] },
+      "then": { "required": ["dispatch_errors"], "properties": { "dispatch_errors": { "minItems": 1 } } }
+    }
+  ]
 }

@@ -18,7 +18,7 @@
       "claim": "产品完善路线已落盘为 PLAN-PRODUCT-001，含架构结论、已拍板事项、已做/没做与后续顺序",
       "status": "verified",
       "check": "test -f plans/PLAN-PRODUCT-001.md && python3.12 tools/lab/validate.py artifacts",
-      "evidence_ref": "plans/PLAN-PRODUCT-001.md"
+      "evidence_ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
     },
     {
       "claim_id": "C2",
@@ -32,17 +32,17 @@
     {
       "evidence_id": "E1",
       "kind": "plan",
-      "ref": "plans/PLAN-PRODUCT-001.md"
+      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
     },
     {
       "evidence_id": "E2",
       "kind": "plan",
-      "ref": "plans/PLAN-LOOP-SMOKE-001.md"
+      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-LOOP-SMOKE-001.md"
     },
     {
       "evidence_id": "E3",
       "kind": "episode",
-      "ref": "episodes/2026-09-19/EP-2026-09-19-001.json"
+      "ref": "episodes/归档/2026-09/2026-09-19/EP-2026-09-19-001.json"
     }
   ],
   "objective": "盘点已做与未做，把架构评审结论与产品完善顺序写成可回写计划，不声称闭环已跑通",

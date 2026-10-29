@@ -1,4 +1,0 @@
-["/tmp/agentflows-l3-venv-20261026/bin/python3", "tools/lab/validate.py", "installed", "--path", "packaging/runtime"]
-PASS installed
-
-EXIT_CODE=0

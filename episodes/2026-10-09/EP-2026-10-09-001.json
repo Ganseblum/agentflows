@@ -75,7 +75,7 @@
     {
       "evidence_id": "E1",
       "kind": "migration_mapping",
-      "ref": "features/feature-2026-10-09-结构改造/plan/migration-mapping.md（表 1 40 行 / 表 2 107 行 / 表 3 85 行 / 表 4 删除清单）；规格 migration-spec.md"
+      "ref": "N/A: 2026-10-12 结构改造批前的旧落点（顶层 plans/features 已并入 docs/ 下现行记录根）（原引用：features/feature-2026-10-09-结构改造/plan/migration-mapping.md（表 1 40 行 / 表 2 107 行 / 表 3 85 行 / 表 4 删除清单）；规格 migration-spec.md）"
     },
     {
       "evidence_id": "E2",

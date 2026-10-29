@@ -8,7 +8,7 @@
     {
       "kind": "design_decision",
       "value": "no generic recon/general role added to agentflow; host built-in Explore carries read-heavy fan-out investigations, supervisor relays conclusions into the next role prompt or record",
-      "evidence_ref": "本会话对比（14 角色无 general-purpose/Explore 等价物）+ docs/agent-roles.md 先例（不新增通用任务记录 Agent，宿主已覆盖的通用能力不重复造）"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：本会话对比（14 角色无 general-purpose/Explore 等价物）+ docs/agent-roles.md 先例（不新增通用任务记录 Agent，宿主已覆盖的通用能力不重复造））"
     },
     {
       "kind": "host_fact",

@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from docchain.constants import TASK_STATUS_GLYPHS, TASK_STATUS_WORDS
+
 from .common import (
     ROOT,
     ValidationError,
@@ -44,10 +46,10 @@ def _task_status_column(body: str) -> dict[str, int] | None:
     return None
 
 
-PLAN_TASK_STATUSES = ("未开始", "进行中", "已完成", "阻塞", "本期不做")
-
-
-PLAN_TASK_STATUS_MARKS = {"☐": "未开始", "◐": "进行中", "☑": "已完成", "⚠": "阻塞", "—": "本期不做"}
+# 2026-10-29：这两个常量原样抄了 docchain/constants.py 的一份映射（两份拷贝靠注释维持同步，
+# 见 2026-10-26 整体审核那条双拷贝记录）。现在导入同一份，改动只可能发生在一处。
+PLAN_TASK_STATUSES = TASK_STATUS_WORDS
+PLAN_TASK_STATUS_MARKS = TASK_STATUS_GLYPHS
 
 
 def validate_plan_markdown(path: Path) -> list[ValidationError]:

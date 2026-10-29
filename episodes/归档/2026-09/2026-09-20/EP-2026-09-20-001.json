@@ -81,7 +81,7 @@
     {
       "evidence_id": "E1",
       "kind": "verbatim_output",
-      "ref": "/tmp/af-merge-gate-review/candidate.diff — 5 hunks: SKILL.md description, SKILL.md step 6, roles.md routing row, contracts.md boundary-3 sentence, docs/agent-roles.md zh mirror row",
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：/tmp/af-merge-gate-review/candidate.diff — 5 hunks: SKILL.md description, SKILL.md step 6, roles.md routing row, contracts.md boundary-3 sentence, docs/agent-roles.md zh mirror row）",
       "digest": "sha256:e40d281cb2a8f6186405148a318ca9372c0fb9910f26d747a94be340e93e85e0"
     },
     {
@@ -92,12 +92,12 @@
     {
       "evidence_id": "E3",
       "kind": "command",
-      "ref": "freeze anchor 2026-09-20T04:18:55Z on /tmp/af-merge-gate-frozen: validate.py all -> PASS schemas/examples/evals/artifacts/mock/protected/manifests/docs/tests, ALL-EXIT=0; re-run after recorder edits identical; S3 enumeration unchanged vs evaluator-approved state"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：freeze anchor 2026-09-20T04:18:55Z on /tmp/af-merge-gate-frozen: validate.py all -> PASS schemas/examples/evals/artifacts/mock/protected/manifests/docs/tests, ALL-EXIT=0; re-run after recorder edits identical; S3 enumeration unchanged vs evaluator-approved state）"
     },
     {
       "evidence_id": "E4",
       "kind": "command",
-      "ref": "isolation.py check-diff --candidate /tmp/af-merge-gate-frozen --base 5da90f2ec08111386045c3b26c5e8badce053f7b -> blocked: [] EXIT=0 (changed paths enumerated incl. candidate four files, new records, coexistence set)"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：isolation.py check-diff --candidate /tmp/af-merge-gate-frozen --base 5da90f2ec08111386045c3b26c5e8badce053f7b -> blocked: [] EXIT=0 (changed paths enumerated incl. candidate four files, new records, coexistence set)）"
     },
     {
       "evidence_id": "E5",
@@ -117,17 +117,17 @@
     {
       "evidence_id": "E8",
       "kind": "command",
-      "ref": "git show 7af6cf5:server/internal/config/config.go | grep -c 'func (c \\*Config) validate() error {' -> 2; git show 619ae69:... -> 1; git worktree list + empty status --porcelain for infinite-canvas-base @619ae69"
+      "ref": "N/A: 叙述性字段值（当年列举的门文件清单 / 跨仓命令原文），退役对象与结论按引文保留（原引用：git show 7af6cf5:server/internal/config/config.go | grep -c 'func (c \\*Config) validate() error {' -> 2; git show 619ae69:... -> 1; git worktree list + empty status --porcelain for infinite-canvas-base @619ae69）"
     },
     {
       "evidence_id": "E9",
       "kind": "command",
-      "ref": "governor execution-list step 1: artifact_digest.py --root /tmp/af-merge-gate-frozen (excludes .zcode symlink, .agentflow-records.sqlite3, .DS_Store, command-code-session-*.html) -> sha256:e40d281c... equals the pinned value; the frozen copy's embedded candidate record still carries the pre-backfill value 7babb3c6 — explained: the pinned digest covers the tree as frozen at the anchor (a digest cannot contain its own backfilled value); the one-field backfill happened after the anchor and is the only difference between the frozen copy and the working tree record"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：governor execution-list step 1: artifact_digest.py --root /tmp/af-merge-gate-frozen (excludes .zcode symlink, .agentflow-records.sqlite3, .DS_Store, command-code-session-*.html) -> sha256:e40d281c... equals the pinned value; the frozen copy's embedded candidate record still carries the pre-backfill value 7babb3c6 — explained: the pinned digest covers the tree as frozen at the anchor (a digest cannot contain its own backfilled value); the one-field backfill happened after the anchor and is the only difference between the frozen copy and the working tree record）"
     },
     {
       "evidence_id": "E10",
       "kind": "command",
-      "ref": "promotion execution (user-approved): post-bump validate.py all -> 9x PASS ALL-EXIT=0; validate.py installed -> 'FAIL installed (1 error(s)): ... no snapshot for source version 0.8.2; installed versions: 0.8.1. Refresh the marketplace and reinstall...' (expected pre-reinstall drift, verbatim); packaging/build_runtime.py WROTE packaging/runtime (agents, skills, schemas, manifests, protected-paths.txt); five source manifests + runtime copies all 'version': '0.8.2'; runtime snapshot clause greps 1/1/1/1/1; readlink .zcode/skills/agentflow -> ../../skills/agentflow with three empty diffs vs source; promotion-time coexistence enumeration: tracked AGENTS.md + _archive/handoff-2026-10/next-session-handoff.md (concurrent session) + candidate files, untracked declared foreign set + this loop's records"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：promotion execution (user-approved): post-bump validate.py all -> 9x PASS ALL-EXIT=0; validate.py installed -> 'FAIL installed (1 error(s)): ... no snapshot for source version 0.8.2; installed versions: 0.8.1. Refresh the marketplace and reinstall...' (expected pre-reinstall drift, verbatim); packaging/build_runtime.py WROTE packaging/runtime (agents, skills, schemas, manifests, protected-paths.txt); five source manifests + runtime copies all 'version': '0.8.2'; runtime snapshot clause greps 1/1/1/1/1; readlink .zcode/skills/agentflow -> ../../skills/agentflow with three empty diffs vs source; promotion-time coexistence enumeration: tracked AGENTS.md + _archive/handoff-2026-10/next-session-handoff.md (concurrent session) + candidate files, untracked declared foreign set + this loop's records）"
     }
   ],
   "objective": "处理用户提交的《agentflow-合并解冲突质量门缺口分析与优化建议》：把复盘确认的缺口（触发判据不含合并/集成形态、merge 只有授权维度、评审门无激活外兜底的 agentflow 侧、与宿主不构建规则未调和的 agentflow 侧张力）落地为 0.8.2 候选，走完整角色分离改进环（feedback-analyst 归一化→bug-recorder 建档+台账→candidate-engineer 实现→evaluator 独立评审→release-governor 裁决），并同步落地其 4.2 宿主侧建议（用户级 AGENTS.md 启用清单条目 + infinite-canvas AGENTS.md 不构建例外）。",

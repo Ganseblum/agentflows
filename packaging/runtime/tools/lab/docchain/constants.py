@@ -167,13 +167,20 @@ ROLE_WORD_EXEMPT_PHRASES = ("Execution Coordinator", "execution-coordinator")
 STAGE_DIRS = ("proposal", "spec", "design", "plan")
 
 # C9 plan task rows: the fixed status enum and ID shape (docs/features/README.md 计划形态).
-TASK_STATUS_ENUM = ("☐ 未开始", "◐ 进行中", "☑ 已完成", "⚠ 阻塞", "— 本期不做")
+# 单一定义处（2026-10-29，收口 2026-10-26 审核记录的字形映射双拷贝）：字形→词映射在这里定义一次，
+# gate/plan.py 导入同一份，不再各写一份再靠注释维持同步。docchain 是随插件单独交付的那一侧
+# （RUNTIME_SUBTREES 只发 doc_chain.py 与 docchain/），所以真源放这里而不是 gate/。
+TASK_STATUS_GLYPHS = {"☐": "未开始", "◐": "进行中", "☑": "已完成", "⚠": "阻塞", "—": "本期不做"}
+TASK_STATUS_WORDS = tuple(TASK_STATUS_GLYPHS.values())
+TASK_STATUS_ENUM = tuple(f"{glyph} {word}" for glyph, word in TASK_STATUS_GLYPHS.items())
 # Bare-glyph dialect (2026-10-21 gate change, user-authorized): the labelled form and the bare
 # glyph are both legal — gate/plan.py already reads the status cell by its first character and
 # maps the bare marks, so C9 was the stricter of the two gates and the mismatch turned every
 # bare-glyph plan table into noise (160 findings on one cross-repo corpus). A bare 「—」 counts
-# as 本期不做, consistent with PLAN_TASK_STATUS_MARKS.
-TASK_STATUS_BARE = frozenset({"☐", "◐", "☑", "⚠", "—"})
+# as 本期不做, consistent with TASK_STATUS_GLYPHS（同一份定义）.
+TASK_STATUS_BARE = frozenset(TASK_STATUS_GLYPHS)
+# 两种写法都合法的合集：带词形与裸字形（C26 轻量档与 C9 共用，不再各自枚举一遍）。
+TASK_STATUS_ACCEPTED = frozenset(TASK_STATUS_ENUM) | TASK_STATUS_BARE
 
 # README 落点基准 declaration: the directory C9 code-location paths resolve against. Values:
 # 「.」/「主实施仓根」/「仓根」/「目标仓根」 → repo root (default when undeclared);

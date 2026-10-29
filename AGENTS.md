@@ -102,6 +102,7 @@ governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）�
   新的文档类型需要先经用户确认——不得自行创建。
 - 「等用户拍板」的事项统一登记到 [`docs/PENDING-DECISIONS.md`](docs/PENDING-DECISIONS.md)；
   已决定的事写进各自载体，不留悬空承诺。
+- **两个「单点」的分工**（2026-10-29 落地）：`docs/PENDING-DECISIONS.md` 是**唯一需要用户逐条回复的清单**；批次链内的 `spec/checklist.md` 只是需求侧待决行的运行时台账（哪条阻塞什么、由谁关闭）。凡「需用户抉择且尚未关闭」的台账行必须携带拍板口的条目编号；打 `agentflow 决策归属` 标记的批次由 C18 家族机器核验这一条，缺编号即红。两个单点各写各的，会让用户第三次问「还有什么要拍板」——这是 2026-10-29 实测到的事实，不是假设。
 - 除非用户要求，不得提交、推送或发布。不得声称走查过自己未观察到的宿主行为——
   应改为把它连同证据、范围与再验证方法记录进
   [docs/host-platform-facts.md](docs/host-platform-facts.md)。

@@ -53,7 +53,7 @@
     {
       "evidence_id": "E1",
       "kind": "test",
-      "ref": "tests/test_lab_contracts.py CaseIdSubsetTests"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tests/test_lab_contracts.py CaseIdSubsetTests）"
     },
     {
       "evidence_id": "E2",
@@ -77,7 +77,7 @@
     {
       "kind": "gate_change",
       "value": "eval_runner --case-ids, human-authorized as the optimal path",
-      "evidence_ref": "tools/lab/eval_runner.py select_cases/parse_case_ids; tests/test_lab_contracts.py CaseIdSubsetTests"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tools/lab/eval_runner.py select_cases/parse_case_ids; tests/test_lab_contracts.py CaseIdSubsetTests）"
     },
     {
       "kind": "no_independent_review_gate",

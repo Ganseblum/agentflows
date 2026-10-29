@@ -39,6 +39,7 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
+- 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除）——见 [批次入口](docs/features/feature-2026-10-29-全面修正与瘦身/README.md)、[计划](docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md)
 - 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门待跑；已并入 `main`，随 0.22.0 发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-关闭证据门/README.md)、[计划](docs/features/feature-2026-10-28-关闭证据门/plan/PLAN-CLOSE-001.md)
 - 2026-10-28 工程基线吸收批（工程基线模板与 Init 六项 / 后端数据与配置核对 / 原型可点性 / 测试设计三维 / 前端实现纪律；原四项已评审，FE 增量独立评审未运行；0.22.0 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-工程基线吸收/README.md)、[计划](docs/features/feature-2026-10-28-工程基线吸收/plan/PLAN-BASE-001.md)
 - 2026-10-28 评审欠账清偿批（立项：两批 L0 欠账清偿 / `review_tier` 伪降级记录侧校验 / 五条待评审缺陷逐条清偿；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-评审欠账清偿/README.md)、[计划](docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md)
@@ -62,9 +63,3 @@
 ## 执行证据
 
 工作流方法见 [执行与验证](skills/agentflow/references/execution.md)，工具接口见 [证据工具用法](skills/agentflow/references/workflow-tool.md)，轻量交付见 [单文件模板](skills/agentflow/templates/feature/lightweight.md)。
-
-## L3 合并后修正
-
-[分支整合及证据](docs/features/feature-2026-10-26-L3工作流增强/README.md#合并后修正) · [门清单失败](docs/issues/ISS-2026-10-27-门清单部分输出失败仍被放行.md) · [计划模板标题](docs/issues/ISS-2026-10-27-计划模板验证标题不匹配.md) · [测试方法重复](docs/issues/ISS-2026-10-27-测试入口重复定义失败范围.md) · [安装摘要](docs/issues/ISS-2026-10-27-L3批次安装摘要前后矛盾.md)。状态以各记录frontmatter为准。
-
-[合并后修正评审](docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md) · [整合与修正任务记录](episodes/2026-10-27/EP-2026-10-27-002.json)。

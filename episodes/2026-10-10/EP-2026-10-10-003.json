@@ -63,7 +63,7 @@
     {
       "evidence_id": "E1",
       "kind": "books",
-      "ref": "plans/PENDING-DECISIONS.md（收敛后）、releases/todo.md、releases/pending-test.md、plans/PLAN-BUSINESS-EVAL-001.md（修订 v0.2.6）、plans/PLAN-LOOP-SMOKE-001.md 与 docs/host-platform-facts.md 的引用对齐"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：plans/PENDING-DECISIONS.md（收敛后）、releases/todo.md、releases/pending-test.md、plans/PLAN-BUSINESS-EVAL-001.md（修订 v0.2.6）、plans/PLAN-LOOP-SMOKE-001.md 与 docs/host-platform-facts.md 的引用对齐）"
     },
     {
       "evidence_id": "E2",
@@ -73,7 +73,7 @@
     {
       "evidence_id": "E3",
       "kind": "cleanup_output",
-      "ref": "会话内删除命令输出；保留 /tmp/agentflow-trial（{run-trial.sh,workspace,holdout,progress.jsonl,result.json}）"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：会话内删除命令输出；保留 /tmp/agentflow-trial（{run-trial.sh,workspace,holdout,progress.jsonl,result.json}））"
     }
   ],
   "review_roundtrips": [],

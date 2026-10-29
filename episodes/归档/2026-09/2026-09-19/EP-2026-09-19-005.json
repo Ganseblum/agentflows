@@ -63,12 +63,12 @@
     {
       "evidence_id": "E3",
       "kind": "command",
-      "ref": "/tmp/ab-guard A/B: exit_after=0, exit_before=0, 'diff /tmp/before_all.txt /tmp/after_all.txt' -> IDENTICAL"
+      "ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：/tmp/ab-guard A/B: exit_after=0, exit_before=0, 'diff /tmp/before_all.txt /tmp/after_all.txt' -> IDENTICAL）"
     },
     {
       "evidence_id": "E4",
       "kind": "verbatim_output",
-      "ref": "git diff --stat observed 2026-09-19 ~13:35Z BEFORE the guard edit (raw, unpiped): '.gitignore | 1 +; README.md | 10 ++++---; docs/host-platform-facts.md | 4 +--; docs/next-session-handoff.md | 2 +-; marketplace.json | 2 +-; skills/agentflow/SKILL.md | 3 +-; tests/test_lab_contracts.py | 56 +++; tools/lab/README.md | 6 +++; tools/lab/eval_runner.py | 70 +++; 9 files changed, 144 insertions(+), 10 deletions(-)' — tools/lab/validate.py absent"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：git diff --stat observed 2026-09-19 ~13:35Z BEFORE the guard edit (raw, unpiped): '.gitignore | 1 +; README.md | 10 ++++---; docs/host-platform-facts.md | 4 +--; docs/next-session-handoff.md | 2 +-; marketplace.json | 2 +-; skills/agentflow/SKILL.md | 3 +-; tests/test_lab_contracts.py | 56 +++; tools/lab/README.md | 6 +++; tools/lab/eval_runner.py | 70 +++; 9 files changed, 144 insertions(+), 10 deletions(-)' — tools/lab/validate.py absent）"
     }
   ],
   "objective": "把默认 python3(3.9) 下 validate.py all 的 8 绿 1 红误导输出改为解释器下限 fail-closed（单行 stderr 报错、exit 2、零检查）；顺带复测 U-01 端点现状",
@@ -77,7 +77,7 @@
     {
       "kind": "gate_tool",
       "value": "interpreter-floor guard at validate.py main() entry: < (3,10) -> stderr single line + exit 2 before any parsing/checks; >= 3.10 behavior byte-identical (A/B verified); no automated regression test by design — the guard only fires on interpreters that cannot import the test suite",
-      "evidence_ref": "tools/lab/validate.py:2879-2889; plans/PLAN-PY-GUARD-001.md"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：tools/lab/validate.py:2879-2889; plans/PLAN-PY-GUARD-001.md）"
     },
     {
       "kind": "review_isolation",

@@ -8,17 +8,17 @@
     {
       "kind": "design_decision",
       "value": "fix priority 换 > 释 > 删 encodes the no-over-explanation constraint",
-      "evidence_ref": "替换成具体对象（commit/版本/环境/数值）通常更短、零阅读负担，是首选；一行就地定义只是行话必须保留时的保底；evals/business/README.md 优先级段"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：替换成具体对象（commit/版本/环境/数值）通常更短、零阅读负担，是首选；一行就地定义只是行话必须保留时的保底；evals/business/README.md 优先级段）"
     },
     {
       "kind": "design_decision",
       "value": "variant-② seeds anchor on existing unique fragments, no planting",
-      "evidence_ref": "压缩词缺陷在既有文字里，打种引入反而破坏锚点唯一性自查；evals/business/README.md 打种约定术语歧义条"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：压缩词缺陷在既有文字里，打种引入反而破坏锚点唯一性自查；evals/business/README.md 打种约定术语歧义条）"
     },
     {
       "kind": "measurement",
       "value": "brief-counting-rule sync registered as S-phase gate work (deferred)",
-      "evidence_ref": "inputs/BT-001/002/003.md 计数句仍为旧口径（「只有作者知道含义的，算问题」），若不同步，压缩词变体种子入测后召回被简报结构性抑制；登记于 PLAN-BUSINESS-EVAL-001 修订 v0.2.5 行，届时按门变更人工评审"
+      "evidence_ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：inputs/BT-001/002/003.md 计数句仍为旧口径（「只有作者知道含义的，算问题」），若不同步，压缩词变体种子入测后召回被简报结构性抑制；登记于 PLAN-BUSINESS-EVAL-001 修订 v0.2.5 行，届时按门变更人工评审）"
     },
     {
       "kind": "change_surface",

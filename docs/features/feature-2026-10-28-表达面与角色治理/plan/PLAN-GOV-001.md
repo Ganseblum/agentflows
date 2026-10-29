@@ -1,7 +1,8 @@
 ---
 plan_id: PLAN-GOV-001
 plan_version: 1.0.0
-status: proposed
+status: superseded
+superseded_by: PLAN-FIX-001
 objective: 给每条跨载体规则指定唯一权威载体，让同步义务退场；实测裁决 FE/BE 合并悬案；对齐实现角色深度
 recorded_at: 2026-10-28T12:10:00+08:00
 ---

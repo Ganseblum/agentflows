@@ -111,7 +111,7 @@ index.md                  the single document index
   业务事实；发现新业务事实时须经需求方确认并回写 proposal 与 spec。design 只能新增实现决策与代码勘察事实，不得新增业务语义。**所有待确认 / 待冻结问题统一登记到
   `spec/checklist.md`**（编号 `Q-01`、`Q-02`…；存量批次的 `OQ-` 旧编号仍被 linter 接受），不在
   各 spec 文件里另开一套问题表；`spec/checklist.md` 里带「阻塞」且仍「未确认」的行未关闭前，不得生成
-  design（对应 C3 反审门）。模板见 `skills/agentflow/templates/feature/spec/checklist.md`。
+  design（对应 C3 反审门）。**拍板口的标记是开关，不是注释**（2026-10-29）：目标仓创建 `docs/PENDING-DECISIONS.md` 时必须把 `agentflow 决策记录` 独立成行（可照抄 `templates/decision/decision-record.md` 的开头），摘掉它不会判红，只会让 C16/C17 失去对象。**与拍板口的分工**（2026-10-29）：本文件的问题表是运行时台账，`docs/PENDING-DECISIONS.md` 才是唯一需要用户逐条回复的清单——凡属主为用户且未关闭的行，该行必须写明拍板口的条目编号；打 `agentflow 决策归属` 标记的批次由 C18 家族核验这一点，缺编号即判红。模板见 `skills/agentflow/templates/feature/spec/checklist.md`。
 - **design**: 0. 先说结论（问题→结论速览表）· 关键决策速览（编号 D1..Dn：结论 + 一句话
   理由 + 详见交叉引用）· 技术挑战（优先级 + 应对）· 架构图（每张图只回答一个问题）·
   **主链路 S 步骤表**（每步：调用方→承接方 / 动作输入输出 / 状态数据变化 / 失败处理 /

@@ -68,7 +68,7 @@ examples、记录产物、受保护清单、manifest 一致性（含 `packaging/
 >
 > **本机一行就绪**：`python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt`。
 > 之后 `validate.py lint` 与 `pre-push.sh` 都自动探测仓内 `.venv`（优先级：显式环境变量 >
-> `.venv` > `python3`），本机 11/11 可绿。探测只扩大「找得到工具」的路径，**不新增放行分支**：
+> `.venv` > `python3`），本机全部门项可绿（项数以 `python3 tools/lab/validate.py --list` 自报为准，本文件不手写它）。探测只扩大「找得到工具」的路径，**不新增放行分支**：
 > `.venv` 里没有 ruff/mypy 时仍然红。`.venv/` 已列入 `.gitignore`。
 >
 > 注意二（`tests` 子项可能环境假红）：门工具依赖宿主的 git 与文件系统语义。个别宿主会在 Python 解释器注入路径拦截（例如拦截 `mkdir(exist_ok=True)`），导致 `tests` 子项出现环境相关的 error 而非仓库缺陷。若在本机观察到 `validate.py all` 的 `tests` 子项报 2 个 error，请先在无此类注入的干净宿主复跑确认，再判定是否真有回归。

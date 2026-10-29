@@ -18,7 +18,7 @@
     {
       "kind": "doc_chain_linter",
       "value": "Youc 试点 feature 目录 linter PASS（修复 C5 一处：A9 接口号未在 design/fe 显式出现）；linter 自测 26/26 PASS 不回归",
-      "evidence_ref": "python3 tools/lab/doc_chain.py /Users/lihanghang1/Desktop/TestProject/Youc/docs/features/feature-2026-09-19-office-agent（exit 0）；tools/lab/doc_chain.py --self-test 26/26"
+      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：python3 tools/lab/doc_chain.py /Users/lihanghang1/Desktop/TestProject/Youc/docs/features/feature-2026-09-19-office-agent（exit 0）；tools/lab/doc_chain.py --self-test 26/26）"
     },
     {
       "kind": "validate_all",
@@ -28,7 +28,7 @@
     {
       "kind": "isolation_gate",
       "value": "isolation.py check-diff --candidate <tmp 副本> --base HEAD：blocked=[]，候选改动未触及受保护路径",
-      "evidence_ref": "isolation.py 输出（/tmp/af-candidate-ui 一次性副本）"
+      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：isolation.py 输出（/tmp/af-candidate-ui 一次性副本））"
     },
     {
       "kind": "independent_evaluator",
@@ -107,7 +107,7 @@
     {
       "evidence_id": "E-5",
       "kind": "scope_note",
-      "ref": "docs/planning/README.md 追溯索引表「执行时核」标注"
+      "ref": "N/A: 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：docs/planning/README.md 追溯索引表「执行时核」标注）"
     }
   ],
   "review_roundtrips": [

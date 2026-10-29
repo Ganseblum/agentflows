@@ -1,3 +1,0 @@
-["bash", "-n", "skills/agentflow/scripts/pre-push.sh"]
-
-EXIT_CODE=0

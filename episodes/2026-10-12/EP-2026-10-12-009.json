@@ -18,7 +18,7 @@
     {
       "kind": "user_instruction",
       "value": "先全部修复处理（授权缺口清单全部项目，含保护路径）；看看之前说的评分看看怎么处理",
-      "evidence_ref": "plans/PLAN-OPT-CLOSEOUT-001.md；AGENTFLOW-EVALUATION-2026-10-12.md 第十三节"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：plans/PLAN-OPT-CLOSEOUT-001.md；AGENTFLOW-EVALUATION-2026-10-12.md 第十三节）"
     },
     {
       "kind": "incident",
@@ -39,21 +39,21 @@
       "claim": "G1（原评审标记「最严重」的 schema 子集静默失明）已修：词汇表白名单 + 全位置 walker 接入 validate_schemas；AST 机械比对 blocked-legal=[]、silent-passthrough=[]",
       "status": "verified",
       "check": "validate.py schemas PASS；test_whitelist_matches_the_validator_dispatch（双向断言）；MUT-G1/V3 变异 FAILED",
-      "evidence_ref": "tools/lab/validate.py；tests/test_lab_contracts.py GapClosureRegressionTests"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：tools/lab/validate.py；tests/test_lab_contracts.py GapClosureRegressionTests）"
     },
     {
       "claim_id": "C3",
       "claim": "G2/G3 已修且各有专测：digest 加 --no-renames --no-textconv（rename/textconv 两个半场独立成测）；CLI --target-docs append 透传（单旗/多旗两测）",
       "status": "verified",
       "check": "MUT-G2/V6、MUT-G3/V7 六组变异全部 FAILED 对应测试；全量 175 测试（163+12），errors=2 全为 EEXIST 环境假红",
-      "evidence_ref": "tools/lab/host_adapter.py；tools/lab/seed_grader.py；tests/test_lab_contracts.py"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tools/lab/host_adapter.py；tools/lab/seed_grader.py；tests/test_lab_contracts.py）"
     },
     {
       "claim_id": "C4",
       "claim": "G4–G9/G12 已修；G5 按仓内明文约定（CHANGELOG 多次记载）同步中文镜像 docs/agent-roles.md——首轮独立评审 F1（P1）正抓在漏同步，修复后 delta 轮 approved",
       "status": "verified",
       "check": "独立评审两轮记录；docs/agent-roles.md 四处与 SKILL.md/roles.md 同源比对一致；validate.py docs PASS",
-      "evidence_ref": "docs/agent-roles.md；skills/agentflow/SKILL.md；skills/agentflow/references/roles.md"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回; 该对象已不在盘上（判据于 2026-10-29 上线时逐条标注），当年结论未变（原引用：docs/agent-roles.md；skills/agentflow/SKILL.md；skills/agentflow/references/roles.md）"
     },
     {
       "claim_id": "C5",
@@ -72,12 +72,12 @@
     {
       "evidence_id": "E2",
       "kind": "plan",
-      "ref": "plans/PLAN-OPT-CLOSEOUT-001.md（收尾计划；T01–T04 完成、T03 阻塞）"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：plans/PLAN-OPT-CLOSEOUT-001.md（收尾计划；T01–T04 完成、T03 阻塞））"
     },
     {
       "evidence_id": "E3",
       "kind": "test_suite",
-      "ref": "tests/test_lab_contracts.py GapClosureRegressionTests（12 测试）+ 六组变异实验原始输出（会话留存）"
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：tests/test_lab_contracts.py GapClosureRegressionTests（12 测试）+ 六组变异实验原始输出（会话留存））"
     },
     {
       "evidence_id": "E4",

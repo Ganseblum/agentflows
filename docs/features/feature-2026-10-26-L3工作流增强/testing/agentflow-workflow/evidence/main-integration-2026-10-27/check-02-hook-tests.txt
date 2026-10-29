@@ -1,8 +1,0 @@
-["/tmp/agentflows-l3-venv-20261026/bin/python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_pre_push.py"]
-..................
-----------------------------------------------------------------------
-Ran 18 tests in 5.228s
-
-OK
-
-EXIT_CODE=0

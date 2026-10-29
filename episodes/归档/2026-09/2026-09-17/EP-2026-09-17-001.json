@@ -8,7 +8,7 @@
     {
       "kind": "user_visible_claims",
       "value": 2,
-      "evidence_ref": "会话最终决策记录：①两个 description 本身不需要改（触发判据句 220/136 字符，均在宿主约 250 字符窗口内完整结束，余量 30/114；0.3.2 前置化后至 0.6.0 零触发事故记录）；②缺口是预算无确定性检查保护，两项待办录入 _archive/handoff-2026-10/next-session-handoff.md P1"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：会话最终决策记录：①两个 description 本身不需要改（触发判据句 220/136 字符，均在宿主约 250 字符窗口内完整结束，余量 30/114；0.3.2 前置化后至 0.6.0 零触发事故记录）；②缺口是预算无确定性检查保护，两项待办录入 _archive/handoff-2026-10/next-session-handoff.md P1）"
     },
     {
       "kind": "observed_host_facts",

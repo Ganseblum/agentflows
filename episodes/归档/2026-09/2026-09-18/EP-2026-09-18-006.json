@@ -47,35 +47,35 @@
       "claim": "B1: 被测 workspace 内任何 *.seeds.json 使业务请求 fail-closed（dry-run 亦查）",
       "status": "verified",
       "check": "unittest SeedExposureIsolationTests 4 例 + validate.py all",
-      "evidence_ref": "tests/test_lab_contracts.py"
+      "evidence_ref": "N/A: 该文件随 2026-10-25 门与测试拆分批按检查面拆为 tests/test_gate_*.py 与 tests/test_doc_chain.py 等多份，原单文件不再存在（见 CHANGELOG 0.15.0 节）"
     },
     {
       "claim_id": "C2",
       "claim": "B3: claude 通道产出 adapter 写入的 observed_permission_denials，覆盖模型自报",
       "status": "verified",
       "check": "unittest ClaudeStreamObservationTests 5 例（stub argv/env/计数）",
-      "evidence_ref": "tests/test_lab_contracts.py"
+      "evidence_ref": "N/A: 该文件随 2026-10-25 门与测试拆分批按检查面拆为 tests/test_gate_*.py 与 tests/test_doc_chain.py 等多份，原单文件不再存在（见 CHANGELOG 0.15.0 节）"
     },
     {
       "claim_id": "C3",
       "claim": "E8: mock 合并编译门对失同步 fixture FAIL、恢复后 PASS",
       "status": "verified",
       "check": "/tmp 副本注入 bogus_field → FAIL mock；恢复 → PASS（已观察）",
-      "evidence_ref": "_archive/audit-2026-09/followups.md §四.6"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：_archive/audit-2026-09/followups.md §四.6）"
     },
     {
       "claim_id": "C4",
       "claim": "E2: 四份成熟度散文版本字面量清零且守卫拦截回插",
       "status": "verified",
       "check": "/tmp 副本回插 9.9.9 → FAIL docs；恢复 → PASS（已观察）",
-      "evidence_ref": "_archive/audit-2026-09/followups.md §四.5"
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：_archive/audit-2026-09/followups.md §四.5）"
     },
     {
       "claim_id": "C5",
       "claim": "B8/B5: 审计②§6 残余九项修复 + rollback 结构化；两个不修项（B16/B18）有理由记录",
       "status": "verified",
       "check": "unittest PolicyRollbackAndToleranceTests / ValidateResidualTests / ArtifactDigestDeterminismTests",
-      "evidence_ref": "tests/test_lab_contracts.py"
+      "evidence_ref": "N/A: 该文件随 2026-10-25 门与测试拆分批按检查面拆为 tests/test_gate_*.py 与 tests/test_doc_chain.py 等多份，原单文件不再存在（见 CHANGELOG 0.15.0 节）"
     },
     {
       "claim_id": "C6",
@@ -94,7 +94,7 @@
     {
       "evidence_id": "EV-LEDGER",
       "kind": "ledger",
-      "ref": "_archive/audit-2026-09/followups.md"
+      "ref": "N/A: 归档桶随 2026-10-12 瘦身批二期整体裁撤，本仓不保留归档桶；当时的逐字原文可自 git 历史取回"
     },
     {
       "evidence_id": "EV-VALIDATE",
