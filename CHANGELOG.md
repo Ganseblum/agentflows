@@ -1,5 +1,24 @@
 # 变更日志
 
+## 0.23.0 — 2026-10-29
+
+并入「2026-10-29 全面修正与瘦身」批的已落内容。`measurement: none`。
+
+**该批仍在进行中**（计划 19 个任务，14 ☑ / 7 ☐），本次升版只为让三端与源面一致——
+这批改了 `agents/` 与 `skills/`，若不升版，同版本号下的内容与其他机器上的缓存会不一致。
+
+- **判据与工具**：`tools/lab/gate/records.py`（+128）与 `tools/lab/validate.py`（+6）新增判据，
+  另 7 处 gate / docchain 调整。
+- **方法面**：`agents/reviewer.md` 精简约 68 行，检查清单外移为
+  `skills/agentflow/references/review-checklists.md`；新增 `references/carrier-map.md`
+  （载体归属表），`SKILL.md` 与 `document-chain.md` 同步引用。
+- **记录面**：3 条 `ISS-2026-10-29-*`（均 `fixed-pending-review`）、`episodes/2026-10-29/`，
+  以及 episodes 归档与 docs 的同步修改。
+- **瘦身**：删除 `feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/` 下 184 个证据文件
+  （−14045 行），同步改该批 README 与计划摘掉引用；删除后 `doc_chain_live` 与 C23 证据在场仍绿。
+- **发布方式**：`publish.sh`（门 → 推送 → Codex → ZCode）；Qoder 无 CLI，按
+  `docs/host-platform-facts.md` Q6 手工同步缓存目录与登记表。
+
 ## 未发布 — 2026-10-29（工作树改动，经授权不提交、不推送、不重装）
 
 全面修正 + 升级瘦身：四条「写了但执行不了」的规则变成会判红的判据，议程收成一个批次，
