@@ -55,7 +55,7 @@ decision_deps: [DEC-2026-001#r2]
 
 ### 3. 需求评审 [门禁]
 
-☐ 待独立评审勾选（评审记录落 `reviews/`）
+☑ 独立 L2 `approved`（`reviews/review-2026-10-30-001.md`）
 
 ### 4. Design（随计划，段落映射豁免形态）
 
@@ -63,7 +63,7 @@ decision_deps: [DEC-2026-001#r2]
 
 ### 5. 技术方案评审 [门禁]
 
-☐ 待独立评审勾选；前置为需求评审门。受保护路径上的任务（门变更）在实施前还需用户显式授权
+☑ 独立 L2 `approved`（`reviews/review-2026-10-30-001.md`；前置需求门已闭）
 
 ### 6. Plan [执行契约]
 
@@ -71,7 +71,7 @@ decision_deps: [DEC-2026-001#r2]
 
 ### 7. 实施与验证 / 8. 收口
 
-☐ 未开始
+☑ 已完成（25 ☑ / 5 本期不做；`validate.py all` 11/11、unittest 254 OK、self-test 151/151；证据 `testing/agentflow-review/evidence/gate-2026-10-30.txt`）
 
 ## 目标承接表
 

@@ -42,14 +42,14 @@
 ☑ spec/qa 已成文（`spec/qa/acceptance.md`），验收点与判据预先写定
 
 ### 3. 需求评审 [门禁]
-◐ 第 1 轮 `changes_requested`，12 条 findings 已按证据修正；待第二轮独立评审关闭（记录落 `reviews/`）
+☑ 第 1 轮 `changes_requested` 的 12 条已修，第二轮独立 L2 `approved`（`reviews/review-2026-10-30-002.md`）
 
 ### 4. Design [按角色]
 ☑ design/be 已成文（`design/be/backend.md`）
 ☑ design/qa 已成文（`design/qa/testing.md`）
 
 ### 5. 技术方案评审 [门禁]
-☐ 待独立评审（前置＝需求评审门）
+☑ 独立 L2 `approved`（`reviews/review-2026-10-30-002.md`；前置需求门已闭）
 
 ### 6. Plan [执行契约]
 ☑ 已成文（`plan/PLAN-DEBT-001.md`）；T01–T09 全部完成
@@ -71,5 +71,4 @@
 清点命令与派生集合已实现，五条缺陷均取得独立复核结论）。最终门 11/11 PASS、unittest 251 OK、
 self-test 151/151；工作树未提交、未发布。
 
-两个入口门：需求评审第 1 轮 `changes_requested`（12 条已按证据修正），第 2 轮 delta 复审中；
-技术方案评审门待前置满足。第一轮记录见 `reviews/review-2026-10-28-001.md`。
+两个入口门均已关闭：需求评审第 1 轮 12 条已修，第二轮独立 L2 `approved`；技术方案评审门同记录关闭（`reviews/review-2026-10-30-002.md`）。
