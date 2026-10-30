@@ -7,7 +7,7 @@
 ## 在途批次（指针）
 
 - 2026-10-29 全面修正与瘦身批（`feature-2026-10-29-全面修正与瘦身`）——0.23.0 之后新增的
-  第二段工作已提交本地 main（`6f47b06`，未推送/未发布）：看板见 `plan/PLAN-FIX-001.md`（24 项：23 ☑、T18 本期不做）；两轮评审的 11 条 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整。
+  第二段工作已推送 origin/main（`bfd93ea`，未发布/未重装）：看板见 `plan/PLAN-FIX-001.md`（24 项：23 ☑、T18 本期不做）；两轮评审的 11 条 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整。
 - 其余在途批次的逐批状态：见 `../features/README.md` 在途表与各批次 `plan/` 看板。
 - **评审欠账清偿（人读镜像；状态以 `PLAN-DEBT-001` 看板为准）**：两批 L0 欠账的独立复核（`feature-2026-10-28-评测整改批/reviews/`、`feature-2026-10-28-表达面与角色治理/reviews/`）；`review_tier` 伪降级校验（FIX T09）；五条待评审缺陷（DEBT T05–T07，记录在 `docs/issues/ISS-2026-10-23-*` 与 `ISS-2026-10-28-整改批自述与实现面不同步.md`）。
 
