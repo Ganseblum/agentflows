@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -165,6 +166,19 @@ def self_test() -> int:
              results)
     run_case("14 C9 missing branch strategy trips C9", 1, ["未声明分支策略"],
              lambda f: rep(f, "plan/be/p.md", "## 0. 分支策略 feature-x", "## 0. 执行顺序"), results)
+
+    def m_no_leading_plan_table(f):
+        f["plan/be/p.md"] = f["plan/be/p.md"].replace(
+            "| ID | 任务 | 代码落点 | 依赖 | 状态 | 证据 |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+            "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 | `migrations/x.sql` |",
+            "ID | 任务 | 代码落点 | 依赖 | 状态 | 证据\n"
+            "--- | --- | --- | --- | --- | ---\n"
+            "T01 | 迁移 | `migrations/x.sql` | — | 乱写 | `migrations/x.sql`",
+        )
+        return f
+    run_case("14b a no-leading-pipe task table is still read by C9", 1, ["乱写"],
+             m_no_leading_plan_table, results)
     run_case("15 C9 design V-item unreferenced by plan trips C9", 1, ["C9 待核实闭合"],
              lambda f: rep(f, "plan/be/p.md", "V-9 由 T02 承接\n", ""), results)
     run_case("16 C9 open blocking plan row trips C9", 1, ["未回写证据的阻塞任务行"],
@@ -191,6 +205,19 @@ def self_test() -> int:
              "a status-cell claim, not a whole-line keyword)", 1, ["C3 反审门"],
              lambda f: rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
                            "| B-2 | y | 阻塞（非阻塞项已另行列示） | ☐ 待评审确认 |\n"),
+             results)
+    OFFICIAL_OPEN = (
+        "\n| 编号 | 问题 | 来源 | 阻塞阶段 | 答案原文 | 回答人 | 状态 | 关闭条件 |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "| Q-01 | 问题 | proposal | Design | 待确认 | 未答 | 未确认 | 条件 |\n"
+    )
+    run_case("59a official checklist 未确认 + 阻塞阶段 trips C3", 1, ["C3 反审门"],
+             lambda f: f.update({"spec/s.md": f["spec/s.md"] + OFFICIAL_OPEN}) or f, results)
+    run_case("59b official checklist 未确认 + 阻塞阶段=无 passes C3", 0, ["PASS doc-chain"],
+             lambda f: f.update({"spec/s.md": f["spec/s.md"] + OFFICIAL_OPEN.replace("| Design |", "| 无 |")}) or f,
+             results)
+    run_case("59c official checklist 已确认 + 阻塞阶段 Design passes C3", 0, ["PASS doc-chain"],
+             lambda f: f.update({"spec/s.md": f["spec/s.md"] + OFFICIAL_OPEN.replace("未确认", "已确认")}) or f,
              results)
 
     def add_marker(f):
@@ -335,18 +362,28 @@ def self_test() -> int:
              "not implemented (closed-set heuristic flooded a real chain's legend rows)", 0,
              ["PASS doc-chain"], add_schema_word, results)
 
-    def run_file_case(name: str, expect_rc: int, want: list[str], text: str,
-                      argv: list[str] | None = None, sub: str = "deliverable.md") -> None:
+    def run_file_case(name: str, expect_rc: int, want: list[str] | None, text: str,
+                      argv: list[str] | None = None, sub: str = "deliverable.md",
+                      extra_files: dict[str, str] | None = None,
+                      forbid: list[str] | None = None) -> None:
         d = Path(tempfile.mkdtemp()) / sub
         d.parent.mkdir(parents=True, exist_ok=True)
         d.write_text(text, encoding="utf-8")
+        # Sibling fixtures for C12/C25 resolution: `exists.md` next to the deliverable is
+        # what makes a 待产出 claim stale rather than merely forward-looking.
+        for rel, content in (extra_files or {}).items():
+            (d.parent / rel).write_text(content, encoding="utf-8")
         cmd = [sys.executable, str(linter)] + (argv if argv is not None else ["--file", str(d)])
         r = subprocess.run(cmd, capture_output=True, text=True, check=False)
         out = r.stdout + r.stderr
-        ok = r.returncode == expect_rc and all(w in out for w in want)
+        ok = r.returncode == expect_rc and all(w in out for w in (want or []))
+        for w in forbid or []:
+            if w in out:
+                ok = False
+                print(f"  forbidden finding present: {w}")
         results.append((name, ok))
         if not ok:
-            print(f"  wanted {want}, exit={r.returncode}, got:\n{out}")
+            print(f"  wanted {want}, forbid={forbid}, exit={r.returncode}, got:\n{out}")
 
     run_file_case("35 --file mode: session deliverable hitting C13+C14 exits 1", 1,
                   ["C14 代号裸用", "C13 会话角色词", "D 桶"],
@@ -359,6 +396,20 @@ def self_test() -> int:
                   argv=[str(Path(tempfile.mkdtemp())), "--file", "deliverable.md"])
     run_file_case("38 --file without a path is a usage error", 2, ["Usage"], "# 报告\n",
                   argv=["--file"])
+    # C25 in --file mode is opt-in by the file's own marker, not hard-coded: a stale "pending"
+    # claim in a marker-less deliverable is C12's business only, while the same claim in a file
+    # that declares 「agentflow 链路收口」 additionally trips C25. The negative half asserts the
+    # C12 finding without a C25 one — pinning that the marker, not the --file entry point,
+    # decides opt-in (the old hard-coded marked=True fired C25 on every deliverable).
+    run_file_case("38a --file without the closure marker: stale claim trips C12 only, "
+                  "no forced C25", 1, ["C12 时效性引用"],
+                  "# 状态汇报\n\n`exists.md` 尚未产出，等下一批。\n",
+                  sub="plain.md", extra_files={"exists.md": "# here\n"},
+                  forbid=["C25 链路收口"])
+    run_file_case("38b --file carrying the closure marker: the same claim also trips C25", 1,
+                  ["C25 链路收口"],
+                  "# 收口报告\n\nagentflow 链路收口\n\n`exists.md` 尚未产出。\n",
+                  sub="closed.md", extra_files={"exists.md": "# here\n"})
 
     # --- C13 scope + the planned-role exemption (cases 39–43). C13 is a defect in a deliverable;
     # it is skipped only on the files listed in C13_EXEMPT_FILES, one by one. The same sentence
@@ -549,9 +600,31 @@ def self_test() -> int:
                   ["C16 decision-record", "现状核验缺"],
                   {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
                       "2026-10-21 `grep x`", "`grep x`"))})
+    run_repo_case("68a C16 in-repo ISS source missing on disk trips C16", 1,
+                  ["C16 decision-record", "来源引用在盘上不存在"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", "`ISS-2026-01-02-ghost`"))})
+    run_repo_case("68b C16 in-repo ISS source present passes", 0, [],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", "`ISS-2026-01-02-x`"))},
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: fixed\n---\n"})
+    run_repo_case("68c C16 a full docs/issues path missing on disk trips", 1,
+                  ["C16 decision-record", "来源引用在盘上不存在"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", "`docs/issues/ISS-2026-01-02-ghost.md`"))},
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: fixed\n---\n"})
+    run_repo_case("68d C16 an ISS line-ref missing on disk trips", 1,
+                  ["C16 decision-record", "来源引用在盘上不存在"],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", "`ISS-2026-01-02-ghost.md:3`"))})
+    run_repo_case("68e C16 an ISS line-ref present passes (line suffix stripped)", 0, [],
+                  {"examples/d.md": dec_file(DEC_HEAD + DEC_GOOD_ROW.replace(
+                      "`docs/features/x/README.md:10`", "`ISS-2026-01-02-x.md:3`"))},
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: fixed\n---\n"})
 
     def ledger_file(body: str) -> str:
-        return ("# 台账\n\n本文件由 agentflow 问题台账方法生成\n\n" + body)
+        # 2026-10-29 起防摘除断言要求独立声明行；散文式提及不再算启用（与本仓活文档口径一致）。
+        return ("# 台账\n\nagentflow 问题台账\n\n本文件由问题台账方法生成\n\n" + body)
 
     LED_HEAD = ("| 编号 | 一句话 | 记录链接 | 归属 |\n| --- | --- | --- | --- |\n")
     run_repo_case("69 C15 ledger row with status word and no ISS trips C15", 1,
@@ -566,13 +639,49 @@ def self_test() -> int:
     run_repo_case("71 C18 open issue not attached to a batch 承接表 trips C18", 1,
                   ["C18 ownership", "ISS-2026-01-02-x"],
                   {"docs/features/batch-a/README.md":
-                   "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD + "| — | T01 | 收尾 |\n"},
+                   "# 批次\n\nagentflow 决策归属\n\n本文件由决策归属方法生成\n\n" + OWN_HEAD + "| — | T01 | 收尾 |\n"},
                   with_issues={"ISS-2026-01-02-x.md": "---\nstatus: open\n---\n"})
     run_repo_case("72 C18 open issue covered by 承接表 passes", 0, [],
                   {"docs/features/batch-a/README.md":
-                   "# 批次\n\n本文件由 agentflow 决策归属方法生成\n\n" + OWN_HEAD
+                   "# 批次\n\nagentflow 决策归属\n\n本文件由决策归属方法生成\n\n" + OWN_HEAD
                    + "| ISS-2026-01-02-x | T01 | 收尾 |\n"},
-                   with_issues={"ISS-2026-01-02-x.md": "---\nstatus: open\n---\n"})
+                  with_issues={"ISS-2026-01-02-x.md": "---\nstatus: open\n---\n"})
+
+    # --- C17 staleness (2026-10-29 gate change): the referenced file's last commit is newer
+    # than the row's 核验 date. These cases need real git history, so they build a temp repo
+    # and commit the referenced file with a pinned date.
+    def _c17_findings(verify_date: str) -> list[str]:
+        repo = Path(tempfile.mkdtemp()) / "repo"
+        ref = repo / "docs" / "features" / "x" / "README.md"
+        ref.parent.mkdir(parents=True)
+        ref.write_text("# x\n", encoding="utf-8")
+        env = dict(
+            os.environ,
+            GIT_AUTHOR_DATE="2026-10-22T00:00:00+00:00",
+            GIT_COMMITTER_DATE="2026-10-22T00:00:00+00:00",
+        )
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True, env=env)
+        subprocess.run(["git", "add", "."], cwd=repo, check=True, env=env)
+        subprocess.run(
+            ["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"],
+            cwd=repo,
+            check=True,
+            env=env,
+        )
+        row = (
+            "| `docs/features/x/README.md:10` | A 改一 B 改二 C 改三 | " + verify_date
+            + " `grep x` | 选 A | 批次 T01 | P2 | 多模块(youc-admin 订单筛选 + youc-canvas 支付) | N |\n"
+        )
+        record = repo / "examples" / "d.md"
+        record.parent.mkdir(parents=True)
+        record.write_text(dec_file(DEC_HEAD + row), encoding="utf-8")
+        return repo_policy_findings(repo)
+
+    stale = _c17_findings("2026-10-21")
+    results.append(("112 C17 referenced file committed after 核验 date trips", 1 == len(stale)
+                    and any("C17 staleness" in error for error in stale)))
+    fresh = _c17_findings("2026-10-23")
+    results.append(("113 C17 referenced file committed before 核验 date passes", fresh == []))
 
     # --- Unreadable marker file must not pass silently (2026-10-26 audit G02). The old
     # `except OSError: continue` turned a violating-but-unreadable decision record into a
@@ -721,6 +830,7 @@ def self_test() -> int:
             "spec/s.md": TRACE_SPEC,
             "plan/be/p.md": trace_plan(evidence, status),
             "@root/migrations/x.sql": "-- x\n",
+            "@root/tests/real_check.py": "class RealEvidenceTests:\n    pass\n\n\ndef real_check():\n    return True\n",
         }
 
     def m_trace_ok(f):
@@ -786,6 +896,42 @@ def self_test() -> int:
         return f
     run_case("95 C23 an empty evidence cell on a ☑ row trips", 1,
              ["C23 证据在场", "证据列为空"], m_trace_empty_evidence, results)
+
+    def m_trace_ghost_class(f):
+        f.update(trace_files(evidence="`migrations/x.sql` 与 `MutationKillCorpusTests` 全绿"))
+        return f
+    run_case("95a C23 a ghost test class beside a real path trips the assertion layer", 1,
+             ["C23 断言可解析", "MutationKillCorpusTests"], m_trace_ghost_class, results)
+
+    def m_trace_ghost_function(f):
+        f.update(trace_files(evidence="`migrations/x.sql` 与 `run_ghost_check()` 全绿"))
+        return f
+    run_case("95b C23 a ghost function assertion beside a real path trips", 1,
+             ["C23 断言可解析", "run_ghost_check()"], m_trace_ghost_function, results)
+
+    def m_trace_ghost_file(f):
+        f.update(trace_files(evidence="`migrations/x.sql` 与 `ghost_evidence.py` 全绿"))
+        return f
+    run_case("95c C23 a ghost filename assertion beside a real path trips", 1,
+             ["C23 断言可解析", "ghost_evidence.py"], m_trace_ghost_file, results)
+
+    def m_trace_real_assertions(f):
+        f.update(trace_files(evidence="`migrations/x.sql` 与 `RealEvidenceTests`、`real_check()` 全绿"))
+        return f
+    run_case("95d C23 real class/function assertions pass (no false positive)", 0,
+             ["PASS doc-chain"], m_trace_real_assertions, results)
+
+    def m_trace_historical_ghost(f):
+        f.update(trace_files(evidence="`migrations/x.sql`；`MutationKillCorpusTests` 已随装置裁撤删除（N/A: 历史）"))
+        return f
+    run_case("95e C23 explicit N/A/historical removal is not re-red by the assertion layer", 0,
+             ["PASS doc-chain"], m_trace_historical_ghost, results)
+
+    def m_trace_bare_history_word(f):
+        f.update(trace_files(evidence="`migrations/x.sql` 与 `MutationKillCorpusTests` 历史全绿"))
+        return f
+    run_case("95f C23 a bare 「历史」 word does not exempt a ghost class (no N/A)", 1,
+             ["C23 断言可解析", "MutationKillCorpusTests"], m_trace_bare_history_word, results)
 
     # Repo-scan side: C23 applies to every batch (the evidence duty belongs to the plan
     # contract, not to the opt-in marker), while C22 only bites opted-in batches.
@@ -982,7 +1128,8 @@ def self_test() -> int:
     # 这组夹具钉三件事：未关闭且需用户抉择的行没有拍板口编号必须判红（C18-01）、补上编号即转绿
     # （C18-02）、判据不吃「属主不是用户」「已确认」与「发现表形状」这三种行（C18-03…05、07）；
     # 外加摘掉标记必须判红而不是失去对象（C18-06）。
-    PEND_README = "# b1\n\n本批启用 agentflow 决策归属 标记。\n\n## 需求评审门\n## 技术方案评审门\n"
+    PEND_README = ("# b1\n\n本批启用决策归属标记，声明行如下。\n\nagentflow 决策归属\n\n"
+                   "## 需求评审门\n## 技术方案评审门\n")
     PEND_LEDGER = "# 待用户拍板的事项\n\nagentflow 决策记录\n"
     PEND_LEDGER_UNMARKED = "# 待用户拍板的事项\n\n（标记被摘掉了）\n"
 

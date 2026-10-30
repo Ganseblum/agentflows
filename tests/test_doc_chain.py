@@ -1,29 +1,18 @@
-import argparse
-import contextlib
 import datetime as _dt
-import io
-import json
 import os
-import shutil
-import sys
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
-from unittest import mock
-
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "tools" / "lab"
 if str(LAB) not in sys.path:
     sys.path.insert(0, str(LAB))
 
-import artifact_digest  # noqa: E402
-import doc_chain  # noqa: E402
-import isolation  # noqa: E402
-import validate  # noqa: E402
-
+import doc_chain
+import validate
 
 
 class GoalTraceabilityEvidenceTests(unittest.TestCase):
@@ -111,7 +100,7 @@ class GoalTraceabilityEvidenceTests(unittest.TestCase):
             sha = git(root, "rev-parse", "--short", "HEAD")
             self.assertIn("提交号", doc_chain.evidence_carriers(f"{sha} 落盘", root))
             self.assertEqual(doc_chain.evidence_carriers("deadbe 落盘", batch), [])
-            plan = self._plan(f"`{sha}` 提交在历史里")
+            self._plan(f"`{sha}` 提交在历史里")
             self.assertEqual(
                 [e for e in doc_chain.batch_traceability_findings(batch, root) if "C23" in e], [])
 

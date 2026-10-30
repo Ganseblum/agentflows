@@ -9,9 +9,14 @@ updated_at: 2026-09-17T03:30:00Z
 
 # 对话分享 — 实施计划（示例）
 
-> 本文件是 Markdown 计划的正例。frontmatter 是机器信封；正文三节是执行与回写面。
+> 本文件是 Markdown 计划的正例。frontmatter 是机器信封；正文四节是执行与回写面。
 > 状态图例：`☐ 未开始` / `◐ 进行中` / `☑ 已完成` / `⚠ 阻塞` / `— 本期不做`。
 > 回写纪律：完成后只改**状态**与**证据**两列（最小 diff），不改写已完成的任务行。
+
+## 分支策略
+
+分支 `feature/conversation-share`，单点写入；合入前 rebase 到目标分支最新。migration 与
+开关配置随服务分支同走，不单独开分支。
 
 ## 进展概览
 
@@ -44,7 +49,7 @@ updated_at: 2026-09-17T03:30:00Z
 | `T02` | 创建 handler：登录 + 本会话未 deleted；Idempotency-Key 必填；读回逐 ID 对账（缺失/跨会话 → 400 不落库） | P0 | `controller/share.go` | `T01` | ☑ 已完成 | `TestShareCreateFlowWithDB`：重放三字段全等总行数=1；同 key 换指纹 409 |
 | `T03` | 公开 GET/下载：忽略 Authorization；文件按现状表 ready 签发；响应无 object_key/qid | P0 | `controller/share.go`、`server/router/share_public.go` | `T02` | ☑ 已完成 | `TestSharePublicHandlersIgnoreAuthorization`（4 种登录头变体逐字段一致） |
 | `T04` | 回归：创建幂等 + 公开三接口安全用例 + 现网 WPS 可写不被改坏 | P0 | `controller/share_test.go`、`wps_test.go` | `T02`、`T03` | ☑ 已完成 | 58 包 `go test` 全绿；WPS 双 aud 分支锁定 |
-| `T05` | gRPC 管理面：`PatchConversationShare`（revoked/expires_at wire 规则、重复作废保首次时间） | P0 | `safe-agent-nexus-idl`（proto）+ `rpc/nexus/admin_share.go` | `T01` | ⚠ 阻塞 | idl MR 待评审合入（见未决项 U-01） |
+| `T05` | gRPC 管理面：`PatchConversationShare`（revoked/expires_at wire 规则、重复作废保首次时间） | P0 | `safe-agent-nexus-idl`（proto）+ `rpc/nexus/admin_share.go` | `T01` | ⚠ 阻塞 | 评审已通过（U-01 已关闭）；等 idl MR 合入后 rpc 侧开工（见未决项 U-01） |
 | `T06` | 发版顺序：migration → Nexus(`enabled=false`) → 回归现网下载/WPS → Web(入口关) → 开 Nexus 开关 → 验证公开三接口 → 开前端入口 | P0 | 环境配置 + 发布单 | `T04` | ◐ 进行中 | 迁移已在测试库落地并复验（19 列 6 索引逐项核对）；部署待流水线 |
 | `T07` | 运营后台分享管理页（列表/搜索/作废） | P2 | `fe/safe-chat-admin` | `T05` | — 本期不做 | — |
 
@@ -56,7 +61,7 @@ updated_at: 2026-09-17T03:30:00Z
 
 | 编号 | 问题 | 是否阻塞 | 状态 |
 | --- | --- | --- | --- |
-| U-01 | idl MR 评审意见（字段命名 `revoke_reason` 可选性）何时关闭 | 阻塞 T05 | 已关闭（2026-09-17 评审通过，命名维持原案） |
+| U-01 | idl MR 评审意见（字段命名 `revoke_reason` 可选性）何时关闭 | 阻塞 T05 | 评审已关闭（2026-09-17 评审通过，命名维持原案）；剩余阻塞是等 MR 合入，T05 随合入解除 |
 | U-02 | 撤销接口是否需要审计日志独立表 | 不阻塞 | 未关闭（二期再议，写入 backlog） |
 
 ## 接口与共享机制

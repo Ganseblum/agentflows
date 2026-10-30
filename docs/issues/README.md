@@ -100,8 +100,9 @@ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 1. **归因铁律（schema 强制）**：`attribution` 为 `workflow_policy` 或 `role_prompt` 时，
    `provenance` 必须是 `agentflow`——不能把责任归给 Agentflow 的规则，同时又承认问题产物
    不来自 Agentflow。
-2. **改进环只看 `agentflow`**（`skills/improve/SKILL.md`）：`session-artifact` / `user-input` /
-   `external` 是上下文而非证据；`undetermined` 必须先解决归属才能进入聚类。
+2. **方法改进只看 `agentflow`**（改进环已于 2026-10-29 裁撤，设计知识见 `docs/design-decisions.md` §3）：
+   `session-artifact` / `user-input` / `external` 是上下文而非方法证据；`undetermined` 必须先解决
+   归属才能进入方法改进批次。
 
 判定要有依据（`agents/bug-investigator.md`）：归 `agentflow` 时引用覆盖它的条款
 `path:line`；归 `session-artifact` 时写明"无条款覆盖"以及为什么这不属于方法应管的范围。
@@ -110,7 +111,7 @@ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 
 归档规则：`rejected` 记录必须移入 `docs/issues/归档/<same-date-dir>/`；`verified` 记录原地保留
 作为参考。`rejected` 记录若仍留在 `docs/issues/` 根目录，`validate.py artifacts` 会 FAIL（目录结构约束：
-`docs/issues/README.md:100` 的规则由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，已在 2026-10-26
+「归档规则」节的规则由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，已在 2026-10-26
 `/tmp` 副本演练确认：根目录留 `rejected` → FAIL、移入 `归档/<date>/` → PASS）；`归档/` 目录当前 0 条记录，
 故尚不存在，首个 `rejected` 记录创建时随其日期目录生成。
 

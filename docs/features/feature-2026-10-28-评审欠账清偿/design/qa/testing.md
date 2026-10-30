@@ -4,12 +4,12 @@
 
 | 目标 | 验收点 | 验证方式 | 真实前置 |
 | --- | --- | --- | --- |
-| G1 | G1-AC-01 | 逐文件读两批 `reviews/*.md` frontmatter，断言 `review_tier`/`reviewed_revision`/`decision` 三字段且在 {L1,L2} | 委派能力可用（T01 探测通过） |
+| G1 | G1-AC-01 | 逐文件读两批 `reviews/*.md` frontmatter，断言 `review_tier`/`source_revision`/`review_decision`（批次记录口径）/`date` 且 `review_tier ∈ {L1,L2}、source_revision 可解` | 委派能力可用（T01 探测通过） |
 | G1 | G1-AC-02 | findings 集合 × `docs/issues/` 文件名交集断言 | 评审记录已产出 |
-| G2 | G2-AC-01 | 清点命令输出行数 × 清单表「未清偿」行数，逐值相等 | 清单节已写入 `docs/releases/todo.md` |
-| G2 | G2-AC-02 | 两份反向夹具：伪降级必红、带 `dispatch_errors` 的 L0 必绿 | 校验器改动已落地（需授权） |
-| G3 | G3-AC-01 | 五条 ISS 逐条读 frontmatter + 正文「复核结论」节存在性 | 五条已被独立评审 |
-| G3 | G3-AC-02 | 四条 `fix_revision` 存在且 `git cat-file -e` 可解或形如 `N/A: …` | 同上 |
+| G2 | G2-AC-01 | `validate.py review_debt` 输出行数 == 仓内派生集合大小（①L0 且 reviews 空；②fixed-pending-review 无 reviewer），清单「未清偿」行 ⊆ 派生集合 | 清单节已写入 `docs/releases/todo.md` |
+| G2 | G2-AC-02 | 记录侧伪降级必红/带 dispatch_errors 的 L0 必绿；批次侧在 `/tmp` 造「L0 + reviews 空」夹具，断言派生集合包含它 | 校验器改动已落地（需授权） |
+| G3 | G3-AC-01 | 五条 ISS（名单见 spec G3-AC-01）逐条读 frontmatter（reviewer/review_decision/regression_status/closure_criteria/fix_revision）+ 正文 `## 审查` 存在性 | 五条已被独立评审 |
+| G3 | G3-AC-02 | 每条 `fix_revision` 可被 `git cat-file -e <值>^{commit}` 解析，或状态为 open 且值以 `N/A: ` 开头 | 同上 |
 
 ## 2. 反例（必须让它红）
 
@@ -43,8 +43,8 @@
 
 | 证据 | 落点 |
 | --- | --- |
-| 委派探测的原始返回 | 批次 `testing/delegation-probe.txt` |
+| 委派探测的原始返回 | `docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/dispatch-probe/` |
 | 两批独立评审记录 | 各批次 `reviews/`（批次内材料，不受评审契约四项校验） |
-| 清点命令的原始输出 | 批次 `testing/review-debt-count.txt` |
-| 两份反向夹具的红绿输出 | 批次 `testing/pseudo-downgrade-red.txt` / `-green.txt` |
-| 五条 ISS 的复核结论 | 各 ISS 记录的 `## 修复` 节 |
+| 清点命令的原始输出 | 批次 `testing/agentflow-debt/evidence/review-debt-count.txt` |
+| 伪降级红/绿与接线 | `tests/test_gate_records.py` 的用例（不再另存一次性输出） |
+| 五条 ISS 的复核结论 | 各 ISS 记录的 `## 审查` 节 |

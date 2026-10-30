@@ -94,7 +94,7 @@
 | L4 | **schema 类型检查 fail-open**：`gate/common.py:326` `is_type` 对未知 `type` 返回 True；`check_schema_keywords` 又不校验 `type` 取值——schema 把 `string` 拼错即静默关闭该字段校验 | `is_type({}, "objct")` 实测返回 True | T08 |
 | L5 | **顶层门输出不带扫描对象计数**：`validate.py:207` 的 `report()` 只打印 PASS/FAIL——`PASS artifacts` 无法区分「128 条记录都合规」与「一条都没读到」。`ISS-2026-10-23-仓扫PASS被当作门有效的证据` 的教训只修在 `doc_chain` 内部 | `tools/lab/validate.py` 源码 | T03 |
 | L6 | **`record_store` 索引只增不删**：删除源文件并重建索引后，查询仍返回已删记录 | `/tmp` 副本实测：索引 1 条 → 删文件 → 重建（0 条）→ 查询仍命中 | T04 |
-| L7 | **CLI 与环境体验**：`doc_chain.py --help` 把 `--help` 当目录（FAIL 退出 1）；干净环境 `validate.py all` 因缺 ruff/mypy 整体红（未运行 ≠ 失败，违反仓内自己的口径） | 实测 | T03 |
+| L7 | **CLI 与环境体验**：`doc_chain.py --help` 把 `--help` 当目录（FAIL 退出 1）；干净环境 `validate.py all` 因缺 ruff/mypy 整体红（未运行 ≠ 失败，违反仓内自己的口径；2026-10-26 审计复核后保留 fail-closed，见 G2-AC-06） | 实测 | T03 |
 | L8 | **两条判据形态盲区**：`C3` 只抓「阻塞 + ☐」同行，官方 `spec/checklist.md` 模板用「未确认 + 阻塞阶段」列，开放阻塞项完全不被抓；`C16` 的来源回溯把不存在的仓内 `ISS-*` 当外部来源放行 | `docchain/checks.py:332-352`、`:591-595`；构造假 `ISS` 实测零 findings | T09 |
 | L9 | **声明了却没执行（0.15.0 测试契约）**：CHANGELOG 与 `test-records.md` 声称「来源列不许留空、`## 数据来源` 节必需、结果表带实际结果列、findings 的 `ISS` 必须存在」；`gate/testing.py` 只读 `cells[0..3]`、必需标题三个不含数据来源、run 只读 `cells[0..2]`、`ISS` 存在性在 `gate/workspace.py:366-370` 明确 deferred——且 `tests/test_gate_records.py` 的夹具表头就是弱契约版本并断言 PASS | 逐条对照源码与夹具 | T10 |
 
@@ -197,7 +197,7 @@
 | --- | --- | --- | --- |
 | Tier 0 | `docs/PENDING-DECISIONS.md` 改为**只追加、永不移出**；决策编号加 `DEC-<YYYY>-<NNN>` 前缀；「未决视图」由脚本过滤生成，不再手工搬行。现状第 7 行「拍板后移出本表」正是销毁决策身份的源头 | T27 | 否 |
 | Tier 1 | 决策记录带**修订链** r1…rN，终态三分：`superseded`（被新版涵盖）/ `withdrawn`（能力下线，须写代码与数据影响）/ `deferred`（决定不做）。允许 `equivalent_to: rK` 表达「回到旧状态」 | T27 | schema（受保护） |
-| Tier 2 | 下游文档在 **frontmatter** 声明依赖（不放文档底部——门要读它）：`decision_deps: [{id, rev}]`，或只钉不变式 `{id, invariant: 登录须二次验证}` 使无关文档不随修订失效 | T28 | 是 |
+| Tier 2 | 下游文档在 **frontmatter** 声明依赖（不放文档底部——门要读它）：`decision_deps: [DEC-YYYY-NNN#rN]`，或只钉不变式 `[DEC-YYYY-NNN#invariant=登录须二次验证]` 使无关文档不随修订失效 | T28 | 是 |
 | Tier 3 | 门自动计算**反向索引**并点名受影响文档：`decisions.py check` 只报真正受影响的（钉 r2 的报红，钉 r1 且 r4 等价 r1 的保持绿）；每条只能二选一——改文本并升版本，或显式登记 `stale_reason` + 复核日期 | T29 | 是 |
 | Tier 4 | 决策索引由脚本 `--write` 生成，禁止手改 | T30 | 否 |
 
@@ -244,10 +244,10 @@
 | 编号 | 问题 | 阻塞性 | 关闭条件 | Owner | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | Q-01 | 门工具交付路线二选一：A 随插件打包（改 `packaging/build_runtime.py` 白名单纳入运行期所需检查器，跨仓调用以 `--root` 表达；代价：包体变大、属受保护路径门变更）；B 撤回命令（安装面文本不再含 `python3 tools/lab/` 命令，改为「需源码检出」前置声明；代价：装后无门可跑，方法只剩文本）。推荐 A | 是（阻塞 T01） | 用户在 A / B 中书面选定并记日期 | 用户 | 已闭合（2026-10-29 实测：`packaging/build_runtime.py` 的 `RUNTIME_SUBTREES` 已含 `tools/lab/doc_chain.py` 与 `tools/lab/docchain`，即当初推荐的 A 方案在 2026-10-26 的安装面修复里落地；事实闭合，无需拍板口条目） |
-| Q-02 | 文档链默认档是否改轻（默认一页提案 + 验收判据 + 计划看板；全链为按需启用的加强档） | 是（阻塞 T25 实施；T25 仅出提案不阻塞） | 用户对提案拍板 | 用户 | 尚未关闭；登记为 `docs/PENDING-DECISIONS.md` 第 20 条（2026-10-29 全面修正与瘦身批 T03） |
-| Q-03 | 改进环处置（冻结 / 裁撤 / 保留）——与 `docs/PENDING-DECISIONS.md` 第 10 条同题 | 是（阻塞 T26） | 以该条拍板为准，本表不另设选项 | 用户 | 尚未关闭 |
-| Q-04 | 记录面删减授权：`docs/product/` 并入后删除、`docs/evaluations/` 留三删五、16 条外部记录迁出、CHANGELOG 压缩、关闭批次执行删档——五项删除类动作 | 是（阻塞 T18 至 T22） | 用户逐项或打包授权并记日期 | 用户 | 尚未关闭；登记为 `docs/PENDING-DECISIONS.md` 第 21 条（2026-10-29，其中「证据件 + 重复导航」一档已授权执行） |
-| Q-05 | 最小必读面瘦身幅度与改法（587 行 → 目标 ≤350 行；「分派前必读」改「按链必读」） | 否（T24 可先出方案） | 用户对瘦身方案拍板 | 用户 | 尚未关闭；登记为 `docs/PENDING-DECISIONS.md` 第 19 条（2026-10-29，实施侧按推荐值 ≤450 行先行） |
+| Q-02 | 文档链默认档是否改轻（默认一页提案 + 验收判据 + 计划看板；全链为按需启用的加强档） | 是（阻塞 T25 实施；T25 仅出提案不阻塞） | 用户对提案拍板 | 用户 | 已关闭（2026-10-29 拍板 A：完整链维持默认，轻量档仍按六条判据启用；第 20 条） |
+| Q-03 | 改进环处置（冻结 / 裁撤 / 保留）——与 `docs/PENDING-DECISIONS.md` 第 10 条同题 | 是（阻塞 T26） | 以该条拍板为准，本表不另设选项 | 用户 | 已关闭（2026-10-29 拍板 B：整体裁撤） |
+| Q-04 | 记录面删减授权：`docs/product/` 并入后删除、`docs/evaluations/` 留三删五、16 条外部记录迁出、CHANGELOG 压缩、关闭批次执行删档——五项删除类动作 | 是（阻塞 T18 至 T22） | 用户逐项或打包授权并记日期 | 用户 | 已关闭（2026-10-29 拍板 A+B：本批维持现档、下一批执行删档；第 21 条） |
+| Q-05 | 最小必读面瘦身幅度与改法（「分派前必读」改「按链必读」） | 否（T24 可先出方案） | 用户对瘦身方案拍板 | 用户 | 已关闭（2026-10-29 拍板 C：只消副本、不设总量上限；原 ≤350/≤450 均不再作为上限） |
 
 ## 七、验收判据（spec 承接载体；每条形态为「破坏例转红 / 修复转绿」或可数检索）
 
@@ -268,7 +268,7 @@
 | G2-AC-03 | 破坏例：「`test_plan_version` 写旧值 + 零结果行 + `decision: pass`」转红；结果表至少一行且四项摘要合计大于零成为硬性要求 |
 | G2-AC-04 | 破坏例：「结果表无尾随竖线 + fail 行」在 `artifacts` 与 `doc_chain` 两门同判（解析器统一后口径一致） |
 | G2-AC-05 | 破坏例：schema 写 `"type": "objct"` 时 `validate.py schemas` 红（未知类型与非法取值都拒绝加载） |
-| G2-AC-06 | `validate.py all` 每项 PASS 附扫描对象计数；`doc_chain.py --help` 打印用法且退出码 0；缺 ruff/mypy 时 lint 输出「未运行」而非失败 |
+| G2-AC-06 | `validate.py all` 每项 PASS 附扫描对象计数；`doc_chain.py --help` 打印用法且退出码 0；lint 缺依赖仍红（2026-10-26 审计的 lint fail-closed 项），解释器优先级 `AGENTFLOW_LINT_PYTHON` → `.venv` → 当前解释器（B3） |
 | G2-AC-07 | `record_store` 在 `/tmp` 副本实测：删除源文件并重建索引后查询不再返回已删记录，原始输出留档 |
 
 ### 契约对齐（G3）
@@ -301,18 +301,18 @@
 | 判据 | 内容 |
 | --- | --- |
 | G6-AC-01 | `docs/system-guide.md` 首节含术语表（不少于 10 词：台账 / 拍板口 / 门 / 档位 / 收口 / 承接 / 落点 / 载体 / 批次 / 链）；`README.md`、`index.md`、`docs/quickstart.md` 对照词表检索内部词裸用为 0 |
-| G6-AC-02 | 最小必读面（skill + roles + contracts + reviewer 四文件）行数不超过 350（Q-05 拍板后实施） |
+| G6-AC-02 | 最小必读面（skill + roles + contracts + reviewer 四文件）只消副本、不设总量上限（Q-05 2026-10-29 拍板 C；行数仅作观测，实测 622） |
 | G6-AC-03 | Q-02 与 Q-03 的拍板结果分别落进文档链契约载体与 `docs/PENDING-DECISIONS.md` 第 10 条的关闭记录 |
 
 ### 决策统一（G7）
 
 | 判据 | 内容 |
 | --- | --- |
-| G7-AC-01 | 拍板口条目关闭后不移出，编号持续可引用；`decisions.py view` 生成的未决视图与全量台账一致，手工搬行数为 0 |
-| G7-AC-02 | 破坏例：某批次文档声明 `decision_deps: [{id: DEC-X, rev: 2}]`，该决策升至 r4 并撤回 r2 → `decisions.py check` 判定该文档过期并点名（现行无任何门会红） |
+| G7-AC-01 | 自 2026-10-30 起拍板口条目关闭后不移出，编号持续可引用（此前 15 条按旧规则移出，保留表后注记与 git 历史）；`decisions.py view` 生成的未决视图与全量台账一致，手工搬行数为 0 |
+| G7-AC-02 | 破坏例：某批次文档声明 `decision_deps: [DEC-2026-901#r2]`，该决策升至 r4 并撤回 r2 → `decisions.py check` 判定该文档过期并点名（现行无任何门会红） |
 | G7-AC-03 | 不误伤例：另一批次钉 r1，而 r4 声明 `equivalent_to: r1` → 检查保持绿，不产生假红 |
 | G7-AC-04 | 豁免例：受影响文档登记 `stale_reason` + 复核日期后转绿；只写豁免不写理由的仍红 |
-| G7-AC-05 | 钉不变式 `{id, invariant}` 的文档，在只改具体能力（撤回手机号）而不改不变式（登录须二次验证）时保持绿 |
+| G7-AC-05 | 钉不变式 `DEC-YYYY-NNN#invariant=原文` 的文档，在只改具体能力（撤回手机号）而不改不变式（登录须二次验证）时保持绿 |
 
 ## 八、成功指标与可观测性
 

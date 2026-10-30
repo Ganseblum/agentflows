@@ -3,8 +3,13 @@
 > 段落映射：逐段声明落点（下表）。落点非空且非「—」的段落可缺目录；其余段落齐全。
 > 轻量降档：未启用。
 > 落点形态：普通业务仓（`docs/features/`），本仓即为该形态。
-> 本批次启用两项标记：`agentflow 目标承接`（目标承接表进入 C22 检查）、`agentflow 决策归属`
-> （开放记录归属进入 C18 检查）。结构模板标记未启用：本批无前端轨，C11 的 design/fe 固定章节不适用。
+> 本批次启用两项标记（声明行形态，2026-10-29 起由防摘除断言核验）：
+>
+> agentflow 目标承接
+>
+> agentflow 决策归属
+>
+> 目标承接表进入 C22 检查；开放记录归属进入 C18 检查。结构模板标记未启用：本批无前端轨，C11 的 design/fe 固定章节不适用。
 
 ## 元信息
 
@@ -65,7 +70,7 @@
 | G2 任务证据可在盘 | `proposal/proposal.md` §1.2 | M-B（`spec/be/backend.md` §5）与 G2-AC-01 至 G2-AC-04（`spec/qa/acceptance.md` §4） | T01、T04、T05、T10 | ☑ 已完成 |
 | G3 决策门照到活文件 | `proposal/proposal.md` §1.2 | M-C（`spec/be/backend.md` §5）与 G3-AC-01 至 G3-AC-04（`spec/qa/acceptance.md` §4） | T06、T07、T08 | ☑ 已完成 |
 | G4 规范文本自洽 | `proposal/proposal.md` §1.2 | M-D（`spec/be/backend.md` §5）与 G4-AC-01 至 G4-AC-03（`spec/qa/acceptance.md` §4） | T09 | ☑ 已完成 |
-| G5 发布可核 | `proposal/proposal.md` §1.2 | M-E 证据落盘与 M-F 发布（`spec/be/backend.md` §5）与 G5-AC-01 至 G5-AC-03（`spec/qa/acceptance.md` §4） | T10、T11、T12 | ◐ 进行中 |
+| G5 发布可核 | `proposal/proposal.md` §1.2 | M-E 证据落盘与 M-F 发布（`spec/be/backend.md` §5）与 G5-AC-01 至 G5-AC-03（`spec/qa/acceptance.md` §4） | T10、T11、T12 | ☑ 已完成 |
 
 ## 开放记录承接（C18）
 

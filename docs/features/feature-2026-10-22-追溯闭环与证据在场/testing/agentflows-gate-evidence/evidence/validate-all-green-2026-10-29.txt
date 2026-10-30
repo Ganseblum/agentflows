@@ -1,0 +1,21 @@
+=== validate.py all (2026-10-29, post 09-19 retired-path fix) ===
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+EXIT_ALL=0
+
+=== doc_chain --self-test ===
+PASS C18-07 a findings table (问题 column, no status column) is not a 待决项 ledger
+PASS C18-08 checklist-shaped 未决项 table without an entry trips too
+136/136 self-test cases pass
+EXIT_SELF=0
+
+=== unittest ===

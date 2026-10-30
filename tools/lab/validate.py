@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import types
@@ -151,7 +152,6 @@ from gate.reports import (
     recurrence_report,
 )
 from gate.schema import (
-    IMPROVEMENT_SCHEMA_NAMES,
     SCHEMA_PATHS,
     SchemaValidator,
     check_schema_refs,
@@ -211,14 +211,71 @@ class _RootAwareModule(types.ModuleType):
 sys.modules[__name__].__class__ = _RootAwareModule
 
 
-def report(label: str, errors: list[ValidationError]) -> bool:
+def report(label: str, errors: list[ValidationError], scanned: int | None = None) -> bool:
     if errors:
         print(f"FAIL {label} ({len(errors)} error(s))")
         for error in errors:
             print(f"  - {error}")
         return False
-    print(f"PASS {label}")
+    suffix = f" ({scanned} objects)" if scanned is not None else ""
+    print(f"PASS {label}{suffix}")
     return True
+
+
+def _count_files(base: Path, suffix: str) -> int:
+    if not base.is_dir():
+        return 0
+    return sum(
+        1
+        for path in base.rglob(f"*{suffix}")
+        if path.is_file() and "packaging/runtime" not in path.as_posix()
+    )
+
+
+def _scan_count(label: str) -> int | None:
+    """Objects the check actually walks, printed next to PASS (T03)."""
+    if label == "schemas":
+        return _count_files(ROOT / "schemas", ".schema.json")
+    if label == "examples":
+        return _count_files(ROOT / "examples", "")
+    if label == "artifacts":
+        return sum(
+            _count_files(ROOT / name, ".md") + _count_files(ROOT / name, ".json")
+            for name in LIVE_RECORD_ROOTS
+        )
+    if label == "protected":
+        path = Path(PROTECTED_PATHS_FILE)
+        if not path.is_file():
+            return 0
+        return sum(
+            1 for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+    if label == "docs":
+        return len(gate.docs.live_doc_paths(ROOT))
+    if label == "tests":
+        return len(list((ROOT / "tests").glob("test_*.py")))
+    if label == "doc_chain":
+        return gate.checks.LAST_DOC_CHAIN_CASES or None
+    if label == "doc_chain_live":
+        return sum(_count_files(ROOT / surface, ".md") for surface in DOC_CHAIN_LIVE_ROOTS)
+    if label == "decision_gate":
+        return _count_files(ROOT, ".md")
+    if label == "manifests":
+        runtime = ROOT / "packaging" / "runtime"
+        links = 0
+        if runtime.is_dir():
+            for md in runtime.rglob("*.md"):
+                links += len(re.findall(r"\]\(([^)]+)\)", md.read_text(encoding="utf-8", errors="ignore")))
+        return len(INSTALLED_FILES) + links
+    if label == "lint":
+        return (
+            _count_files(ROOT / "tools", ".py")
+            + _count_files(ROOT / "tests", ".py")
+            + _count_files(ROOT / "packaging", ".py")
+            + _count_files(ROOT / "skills" / "agentflow" / "scripts", ".py")
+        )
+    return None
 
 
 def _lint_interpreter(root: Path = ROOT) -> str:
@@ -265,8 +322,13 @@ def validate_static_checks(root: Path = ROOT) -> list[ValidationError]:
             "ruff",
             [
                 lint_python, "-m", "ruff", "check",
+                # The gate's own floor is 3.10 (see main()'s version probe). Without this flag
+                # ruff applies its default target and can demand 3.11+ aliases such as
+                # `datetime.UTC` — a "fix" that would break the oldest interpreter the gate
+                # promises to support. The static check must judge code against the same floor.
+                "--target-version", "py310",
                 "--exclude", *exclude,
-                "tools", "packaging", "skills/agentflow/scripts/workflow.py",
+                "tools", "packaging", "tests", "skills/agentflow/scripts/workflow.py",
                 "skills/agentflow/scripts/workflow_lib",
             ],
         ),
@@ -274,8 +336,9 @@ def validate_static_checks(root: Path = ROOT) -> list[ValidationError]:
             "mypy",
             [
                 lint_python, "-m", "mypy",
+                "--python-version", "3.10",
                 "--exclude", r"(^|/)packaging/runtime/",
-                "tools", "packaging", "skills/agentflow/scripts/workflow.py",
+                "tools", "packaging", "tests", "skills/agentflow/scripts/workflow.py",
                 "skills/agentflow/scripts/workflow_lib",
             ],
         ),
@@ -367,6 +430,7 @@ def main(argv: list[str] | None = None) -> int:
             "all",
             "report",
             "recurrence",
+            "review_debt",
         ],
         help="contract set to validate, or 'report'/'recurrence' for retrospective tables",
     )
@@ -386,6 +450,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--provenance", dest="report_provenance", help="for 'report', only records with this provenance"
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="for 'review_debt': fail if the human mirror marks a derived debt as settled",
+    )
     args = parser.parse_args(argv)
 
     if args.list_checks:
@@ -403,6 +472,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1 if errors else 0
 
+    if args.target == "review_debt":
+        lines = gate.reports.review_debt_report()
+        print(f"review_debt {len(lines)} 项")
+        for line in lines:
+            print(f"- {line}")
+        if args.check:
+            mirror_errors = gate.reports.review_debt_mirror_findings(lines)
+            for error in mirror_errors:
+                print(f"FAIL {error}")
+            return 1 if mirror_errors else 0
+        return 0
     if args.target == "recurrence":
         errors = recurrence_report()
         return 1 if errors else 0
@@ -434,7 +514,8 @@ def main(argv: list[str] | None = None) -> int:
 
     success = True
     for label, check in checks:
-        success = report(label, check()) and success
+        errors = check()
+        success = report(label, errors, _scan_count(label)) and success
     return 0 if success else 1
 
 

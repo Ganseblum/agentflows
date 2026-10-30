@@ -45,7 +45,7 @@ updated_at: 2026-10-10T15:35:00+08:00
 | `T06` | 基线实跑：`--case-ids AF-001,AF-004,AF-011`，`--source-kind baseline`，`--agentflow-version 0.8.1` | P0 | 已失对象：`tools/lab/eval_runner.py`、`tools/lab/host_adapter.py` 已随 ISS-2026-10-12-评测装置裁撤 删除（见 `docs/design-decisions.md` §3）；原落点 `improvements/evaluations/`（记录根已停用） | `T04`、`T05` | — 本期不做 | 已失对象（2026-10-13）：无替代，本期不做。历史证据：2026-10-10 试水：AF-001 × 冻结重复数 3 基线实跑完成（3 轮 21.7 分钟；`accepted=false`×3、`tool_failures` 8/0/6、denials 0；成本未落盘；本地产物 `/tmp/agentflow-trial/`，不产生仓内记录）；完整三例（AF-001/004/011）待用户授权（`docs/PENDING-DECISIONS.md`「试水后授权」条） |
 | `T07` | 候选实跑：同切片同宿主同模型，`--source-kind candidate`，`--agentflow-version 0.8.1+smokeloop` | P0 | 已失对象：`tools/lab/eval_runner.py` 随 ISS-2026-10-12-评测装置裁撤 删除（见 `docs/design-decisions.md` §3）；原落点 `improvements/evaluations/` | `T03`、`T06` | — 本期不做 | 已失对象（2026-10-13）：候选实跑依赖已删除的评测跑器，无替代，本期不做。 |
 | `T08` | `eval_runner.py compare` + `policy.py`；期望 `neutral`/`revise`（主指标不改善）；显著偏离先修仪器 | P0 | 已失对象：`eval_runner.py compare` 与 `policy.py` 随 ISS-2026-10-12-评测装置裁撤 删除（见 `docs/design-decisions.md` §3）；原落点 `improvements/comparisons/` | `T07` | — 本期不做 | 已失对象（2026-10-13）：无替代，本期不做；不得据此写 neutral/revise 结论。 |
-| `T09` | 人批门：不自动 promote；发布记录等用户 `approved` | P0 | `docs/releases/` | `T08` | ☐ 未开始 | |
+| `T09` | 人批门：不自动 promote；发布记录等用户 `approved` | P0 | `docs/releases/` | `T08` | — 本期不做（改进环已整体裁撤，人批门无对象；见 `docs/design-decisions.md` §3） | |
 | `T10` | 业务切片 18 次调用（BT-001/002/003） | P2 | `evals/business/` | `T09` | — 本期不做（2026-10-12 裁撤：业务尺子随精简批退役，原计划随瘦身批删除） | 已失对象 |
 
 ### 未决项

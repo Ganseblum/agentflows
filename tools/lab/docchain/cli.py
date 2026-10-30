@@ -28,7 +28,7 @@ from .checks import (
     repo_policy_findings,
     text_form_findings,
 )
-from .constants import REPO_ROOT
+from .constants import CLOSURE_MARKER, REPO_ROOT
 from .selftest import self_test
 
 
@@ -50,14 +50,20 @@ def plugin_version() -> str:
 
 
 def lint_file(path: Path) -> int:
-    """--file mode: text-form checks (C12/C13/C14) and the opt-in closure claim (C25)."""
+    """--file mode: text-form checks (C12/C13/C14) and the opt-in closure claim (C25).
+
+    C25 stays opt-in here too: the single file is judged `marked` by whether it itself carries
+    the 「agentflow 链路收口」 marker, mirroring the feature-chain pass where the README's
+    marker switches the check on. Hard-coding marked=True held every --file deliverable to the
+    stricter marked criterion — including files that never promised a closure read.
+    """
     if not path.is_file():
         print("FAIL doc-chain --file (1 findings)")
         print(f"  - 文件不存在: {path}")
         return 1
     text = read(path)
     errors = text_form_findings(str(path), text, [path.parent])
-    errors.extend(closure_claim_findings(str(path), text, [path.parent], marked=True))
+    errors.extend(closure_claim_findings(str(path), text, [path.parent], marked=CLOSURE_MARKER in text))
     if errors:
         print(f"FAIL doc-chain --file {path} ({len(errors)} findings)")
         for e in errors:

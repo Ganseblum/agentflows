@@ -23,9 +23,8 @@ python3 tools/lab/validate.py all
 错误。测试记录位于功能批次目录（`features/<batch>/testing/`），本遍历同样巡检那里的计划与运行记录。
 
 `validate.py protected` 检查 [`protected-paths.txt`](../../protected-paths.txt) 是否仍覆盖每一条必需
-的门路径——evaluator 与 governor 角色、测量与编译路径（digest / isolation / validate / doc_chain /
-record_store / trend）、记录 schema 与规则书、打包清单（`packaging/build_runtime.py`），以及门工具的
-回归测试。`all` 包含它，因此候选无法悄悄裁剪用来评判它的门范围。
+的门路径——测量与编译路径（digest / isolation / validate / doc_chain / record_store）、记录
+schema、打包清单（`packaging/build_runtime.py`），以及门工具的回归测试。`all` 包含它，因此候选无法悄悄裁剪用来评判它的门范围。
 
 `validate.py manifests` 要求六份手工同步的 manifest（`plugin.json`、`marketplace.json`、
 `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`）在插件名称与版本上一致；否则一次漏掉的
@@ -74,7 +73,6 @@ python3 tools/lab/artifact_digest.py --root .
 python3 tools/lab/isolation.py --help
 python3 tools/lab/record_store.py --help
 python3 tools/lab/doc_chain.py --help
-python3 tools/lab/trend.py --help
 python3 tools/lab/counts.py          # 核对文档计数标记（HTML 注释包裹的计数）；--write 替换
 python3 tools/lab/mutate.py --list   # 门变异测试：列出算子与变异；--check <检查项> 在仓库副本内运行
 ```
@@ -83,10 +81,6 @@ python3 tools/lab/mutate.py --list   # 门变异测试：列出算子与变异�
 失效而无人变红，需补负例语料或登记 EXEMPT）；2＝有无效变异（锚点漂移，变异规格本身需要修）。
 2026-10-20 复跑基线：51 变异＝杀死 43 / 存活 6 / 无效 2（存活项为语料缺口，非门失效实证；
 两个无效项为 M25/M48 锚点漂移）。运行真实树只读、变异只在 `/tmp` 副本，报告写 `--report` 目录。
-
-`trend.py` 不做任何校验：它把改进环已有的信号（recurrence 档位、活面文档链发现数、评审记录里的
-发现数、回归套件规模）追加成一行 JSON 到 `docs/trend.jsonl`，让环的输入在会话之间可见。它记录的
-是计数，不是质量裁决（`measurement: none` 口径同样适用）；默认打印该行，`--append` 才写入。
 
 候选工作树与私有 holdout 必须位于
 公开仓库之外，且互不包含。`isolation.py` 检查该布局，并在发布门

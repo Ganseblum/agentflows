@@ -9,6 +9,7 @@ from typing import Any
 
 from .common import (
     ROOT,
+    SUPPORTED_JSON_TYPES,
     ValidationError,
     is_type,
     json_equal_key,
@@ -19,15 +20,7 @@ from .common import (
 
 SCHEMA_PATHS = [
     ROOT / "schemas",
-    ROOT / "skills" / "improve" / "references",
 ]
-
-
-IMPROVEMENT_SCHEMA_NAMES = {
-    "candidate.schema.json",
-    "episode.schema.json",
-    "release-record.schema.json",
-}
 
 
 class SchemaValidator:
@@ -105,7 +98,11 @@ class SchemaValidator:
         expected_type = schema.get("type")
         if expected_type is not None:
             types = expected_type if isinstance(expected_type, list) else [expected_type]
-            if not any(is_type(instance, type_name) for type_name in types):
+            try:
+                type_matches = any(is_type(instance, type_name) for type_name in types)
+            except ValueError as exc:
+                return errors + [ValidationError(path, str(exc))]
+            if not type_matches:
                 return errors + [ValidationError(path, f"must be of type {expected_type!r}")]
 
         if isinstance(instance, str):
@@ -193,10 +190,7 @@ def iter_schema_paths() -> Iterable[Path]:
     for directory in SCHEMA_PATHS:
         if not directory.exists():
             continue
-        for path in sorted(directory.glob("*.schema.json")):
-            if directory.name == "references" and path.name not in IMPROVEMENT_SCHEMA_NAMES:
-                continue
-            yield path
+        yield from sorted(directory.glob("*.schema.json"))
 
 
 def validate_schemas() -> list[ValidationError]:
@@ -389,6 +383,17 @@ def check_schema_keywords(value: Any, schema_path: Path, location: str = "$") ->
                     "validator implements only 'date-time'",
                 )
             )
+        elif key == "type":
+            declared = sub_value if isinstance(sub_value, list) else [sub_value]
+            for type_name in declared:
+                if type_name not in SUPPORTED_JSON_TYPES:
+                    errors.append(
+                        ValidationError(
+                            str(schema_path),
+                            f"{location}.type: unsupported type value {type_name!r}; "
+                            f"supported: {', '.join(SUPPORTED_JSON_TYPES)}",
+                        )
+                    )
     for key in _SCHEMA_VALUE_KEYWORDS:
         if key in value:
             errors.extend(check_schema_keywords(value[key], schema_path, f"{location}.{key}"))

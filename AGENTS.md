@@ -24,6 +24,10 @@ manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场�
 D1 与 D2 两节）。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
+委派产物的写范围按硬边界 14 对照 `write_scope`；本仓提供 `skills/agentflow/scripts/check-write-scope.sh`
+作**人工步骤**，由接受产物的人手动运行，**不接入** pre-push 或 CI（2026-10-29 拍板 A：误报面未评估，
+dirty 树上的无关变更会阻断合法推送）。
+
 其中的角色/文档面检查（`validate.py docs`）扫描的对象是：`agents/*.md`、两个 `SKILL.md`、
 `skills/agentflow/references/roles.md`、现行记录根下的各类 `README.md`，以及根 `AGENTS.md`。
 它断言四组事实——每个 agent 文件的 frontmatter `name` 等于其文件名；SKILL 里引用的每个
@@ -70,15 +74,18 @@ linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`�
   以及改动角色之后运行它。
 - 当不存在本地安装（克隆、CI 任务、candidate worktree）时，同一检查以 `SKIP` 退出 0，
   因此在任何地方运行都安全。
-- frontmatter 字段是宿主特性：`tools` 与 `disallowedTools` 由宿主强制执行，
-  `maxTurns` 只声明、未验证。不得在没有证据的情况下添加字段并期待其被强制执行。
+- frontmatter 字段是宿主特性：只有 `tools` 在 ZCode 实测被宿主强制执行；`disallowedTools`
+  在 Qoder 等宿主未验证，`maxTurns` 只声明、未验证。不得在没有证据的情况下添加字段并期待其
+  被强制执行（逐宿主边界见 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) 的
+  Z4 / Q4 / C7 行）。
 
 ## 绝不编辑门
 
-[`protected-paths.txt`](protected-paths.txt) 声明候选不得编辑的路径：evaluator 与
-governor 角色文件、`tools/lab/` 下的测量路径（digest / isolation）、发布规则、`schemas/` 下的
-记录 schema、钉住的回归测试，以及清单本身。`tools/lab/isolation.py check-diff`
-针对候选 diff 强制执行它，而 `validate.py protected` 在清单不再覆盖某个必需条目时失败。
+[`protected-paths.txt`](protected-paths.txt) 声明候选不得编辑的路径：`tools/lab/` 下的测量
+路径（digest / isolation）、发布规则、`schemas/` 下的记录 schema、钉住的回归测试，以及清单
+本身。`tools/lab/isolation.py check-diff` 针对候选 diff 强制执行它，而 `validate.py protected`
+在清单不再覆盖某个必需条目时失败。改进环已于 2026-10-29 整体裁撤（设计知识与恢复清单见
+[`docs/design-decisions.md`](docs/design-decisions.md) §3），其角色文件不再位于保护面。
 
 修改受保护路径、`tools/lab/validate.py` 中的必需条目集合或发布策略属于门变更，
 需要显式人工评审。不得绕过该检查。由于 `schemas/` 与钉住的测试在门内，合理的契约

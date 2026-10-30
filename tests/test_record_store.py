@@ -1,11 +1,11 @@
 import contextlib
 import io
 import sqlite3
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "lab"))
@@ -60,10 +60,41 @@ class RecordStoreTests(unittest.TestCase):
         self.assertNotIn("improvements", doc)
         self.assertNotIn("plans/", doc)
         out = io.StringIO()
-        with mock.patch.object(sys, "argv", ["record_store.py", "--help"]), contextlib.redirect_stdout(out):
-            with self.assertRaises(SystemExit):
-                record_store.main()
+        with (
+            mock.patch.object(sys, "argv", ["record_store.py", "--help"]),
+            contextlib.redirect_stdout(out),
+            self.assertRaises(SystemExit),
+        ):
+            record_store.main()
         self.assertIn("五个现行记录根", out.getvalue())
+
+    def test_reindex_removes_rows_for_deleted_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            records = root / "records"
+            records.mkdir()
+            source = records / "gone.md"
+            source.write_text("# Retired record\nA stale index row must not survive.\n", encoding="utf-8")
+            db = root / "records.sqlite3"
+            self.assertEqual(record_store.index(records, db), 1)
+            self.assertTrue(record_store.query(db, "stale index row"))
+            source.unlink()
+            self.assertEqual(record_store.index(records, db), 0)
+            self.assertEqual(record_store.query(db, "stale index row"), [])
+            with sqlite3.connect(db) as connection:
+                self.assertEqual(connection.execute("select count(*) from records").fetchone()[0], 0)
+                self.assertEqual(connection.execute("select count(*) from records_fts").fetchone()[0], 0)
+
+    def test_query_raises_ordinary_exception_not_system_exit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            records = root / "records"
+            records.mkdir()
+            (records / "one.md").write_text("# One\nbody\n", encoding="utf-8")
+            db = root / "records.sqlite3"
+            record_store.index(records, db)
+            with self.assertRaises(record_store.RecordQueryError):
+                record_store.query(db, '"unterminated')
 
     def test_multiple_live_roots_index_into_one_store(self):
         with tempfile.TemporaryDirectory() as temp:

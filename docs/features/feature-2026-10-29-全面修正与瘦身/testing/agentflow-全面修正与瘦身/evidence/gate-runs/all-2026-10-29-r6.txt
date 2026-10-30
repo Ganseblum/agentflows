@@ -1,0 +1,33 @@
+=== validate.py all ===
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+EXIT_ALL=0
+
+=== doc_chain <this batch> ===
+PASS doc-chain docs/features/feature-2026-10-29-全面修正与瘦身
+EXIT_DOC=0
+
+=== doc_chain --self-test ===
+PASS C18-05 unmarked batch never gets scanned for 待决项归属
+PASS C18-06 拍板口在场而标记被摘走 trips instead of dropping coverage
+PASS C18-07 a findings table (问题 column, no status column) is not a 待决项 ledger
+PASS C18-08 checklist-shaped 未决项 table without an entry trips too
+136/136 self-test cases pass
+EXIT_SELF=0
+
+=== unittest ===
+.............................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 205 tests in 52.359s
+
+OK
+EXIT_UNIT=0

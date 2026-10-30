@@ -67,6 +67,6 @@
 | G2 后端数据与配置设计可核对 | `proposal/proposal.md` §1.2 | M02，G2-AC-01、G2-AC-02 | T03、T07 | ☑ 已完成 |
 | G3 原型可点性与 Mock 约定可判定 | `proposal/proposal.md` §1.2 | M03，G3-AC-01、G3-AC-02 | T04、T07 | ☑ 已完成 |
 | G4 测试设计的三类易漏维度进入计划 | `proposal/proposal.md` §1.2 | M04，G4-AC-01、G4-AC-02 | T05、T07 | ☑ 已完成 |
-| G5 前端实现纪律与设计核对可执行 | `proposal/proposal.md` §1.2 | M05，G5-AC-01 至 G5-AC-04 | T10、T11、T12 | ⚠ 阻塞（实现与门完成；独立评审 T12 未运行） |
+| G5 前端实现纪律与设计核对可执行 | `proposal/proposal.md` §1.2 | M05，G5-AC-01 至 G5-AC-04 | T10、T11、T12 | ☑ 已完成（T12 经独立委派 L2 approved，review-2026-10-28-002.md） |
 
 > T09（独立评审）覆盖 G1–G4 四个目标；承接表只在 G1 行列出一次，避免重复。T12 覆盖 G5 的增量评审。

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -10,16 +11,125 @@ from .common import (
     QUALIFIED_REF_PATTERN,
     ROOT,
     ValidationError,
+    load_json,
     read_document_text,
 )
 
 # 引文豁免与 records 侧共用同一份实现，不在这里长出第二份 prose_without_quotations。
 from .records import prose_without_quotations
+from .testing import TEST_PLAN_REQUIRED_HEADINGS, TEST_RUN_REQUIRED_HEADINGS
 
 ROLE_NAME_PATTERN = re.compile(r"^name:\s*([a-z0-9-]+)\s*$", re.MULTILINE)
 
 
+# T16: a correction statement in a changelog/issue record must be propagated to every other
+# reference, otherwise a reader can still follow the retracted claim. The scan is deliberately
+# narrow: only code-shaped identifiers (test classes, filenames) are traced, so ordinary prose
+# corrections do not turn into a repo-wide false-positive machine.
+CORRECTION_WORDS = ("从未进入", "不实", "勘误", "证伪")
+CORRECTION_MARKERS = CORRECTION_WORDS + ("更正", "已删除", "幽灵", "不存在", "retracted", "erratum")
+# Trace test-class names only. File names in a long changelog entry would flood every
+# still-in-use script; file/function assertions are covered by C23's resolvability layer.
+CORRECTION_IDENTIFIER_RE = re.compile(r"`([A-Z][A-Za-z0-9_]*(?:Tests?|Cases?))`")
+
+
+def _correction_sources(root: Path) -> list[Path]:
+    sources = [root / "CHANGELOG.md", root / "docs" / "changelog-archive.md"]
+    for base in (root / "docs" / "issues", root / "reviews", root / "docs" / "evaluations"):
+        if base.is_dir():
+            sources.extend(sorted(base.rglob("*.md")))
+    features = root / "docs" / "features"
+    if features.is_dir():
+        sources.extend(sorted(path for path in features.rglob("*.md") if path.parent.name == "reviews"))
+    return [path for path in sources if path.is_file()]
+
+
+def _reference_surface(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for base in (root / "docs", root / "reviews", root / "agents", root / "skills", root / "episodes"):
+        if base.is_dir():
+            files.extend(sorted(base.rglob("*.md")))
+    for name in ("README.md", "AGENTS.md", "CHANGELOG.md", "docs/changelog-archive.md", "index.md"):
+        path = root / name
+        if path.is_file():
+            files.append(path)
+    return [
+        path for path in files
+        if "packaging/runtime" not in path.as_posix() and ".git" not in path.parts
+    ]
+
+
+def correction_propagation_findings(root: Path) -> list[ValidationError]:
+    errors: list[ValidationError] = []
+    corrections: dict[str, Path] = {}
+    for source in _correction_sources(root):
+        text, read_errors = read_document_text(source)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
+        for line in text.splitlines():
+            if not any(word in line for word in CORRECTION_WORDS):
+                continue
+            for identifier in CORRECTION_IDENTIFIER_RE.findall(line):
+                corrections.setdefault(identifier, source)
+    if not corrections:
+        return errors
+    reported: set[tuple[str, str]] = set()
+    for path in _reference_surface(root):
+        text, read_errors = read_document_text(path)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
+        for line in text.splitlines():
+            for identifier, source in corrections.items():
+                if identifier not in line or path == source:
+                    continue
+                if any(marker in line for marker in CORRECTION_MARKERS) or re.search(r"N/A\s*[:：]", line):
+                    continue
+                key = (identifier, str(path))
+                if key in reported:
+                    continue
+                reported.add(key)
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"更正追平: {identifier!r} 已在 {source.name} 被标注为更正/勘误，"
+                        "此处引用未带勘误标注",
+                    )
+                )
+    return errors
+
+
 SKILL_ROLE_PATTERN = re.compile(r"agentflow:([a-z0-9-]+)")
+
+
+# T12: a role file that tells the worker to produce schema-required fields or fixed sections
+# must name the same contract the gate enforces. Otherwise the role can be followed literally
+# and still be rejected ("按角色文件字面产出被门拒").
+ROLE_SCHEMA_CONTRACTS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "test-planner": ("test-plan.schema.json", TEST_PLAN_REQUIRED_HEADINGS),
+    "test-executor": ("test-run.schema.json", TEST_RUN_REQUIRED_HEADINGS),
+}
+
+
+def role_contract_findings(
+    path: Path,
+    text: str,
+    required_fields: list[str],
+    required_headings: tuple[str, ...],
+) -> list[ValidationError]:
+    errors: list[ValidationError] = []
+    for field in required_fields:
+        if field not in text:
+            errors.append(
+                ValidationError(str(path), f"schema-required field {field!r} is not named by the role file")
+            )
+    for heading in required_headings:
+        if heading not in text:
+            errors.append(
+                ValidationError(str(path), f"gate-required heading {heading!r} is not named by the role file")
+            )
+    return errors
 
 
 # 0.5.0 switched plans from JSON to Markdown hybrids (plans/README.md); either
@@ -148,7 +258,12 @@ MIGRATED_PATH_TOKENS = ("docs/plans",)
 PATH_RESIDUE_TOKENS = RETIRED_PATH_TOKENS + MIGRATED_PATH_TOKENS
 
 
-HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md",)
+# `docs/changelog-archive.md` joined CHANGELOG.md here when the 2026-10-29 batch split the
+# historical entries out of the root file: it is the same kind of carrier — entries describe
+# the layout of their own time, so retired-path tokens stay verbatim. Links in it are NOT
+# exempt: they were re-pointed to the archive's own location when it moved, and the link scan
+# keeps holding them to that.
+HISTORICAL_DOC_CARRIERS = ("CHANGELOG.md", "docs/changelog-archive.md")
 
 
 FENCED_BLOCK_PATTERN = re.compile(r"```(?P<info>[^\n`]*)\n.*?```", re.DOTALL)
@@ -286,7 +401,12 @@ def validate_carrier_map(root: Path = ROOT) -> list[ValidationError]:
     path = root / CARRIER_MAP_REL
     if not path.is_file():
         return [ValidationError(CARRIER_MAP_REL, "carrier map missing — cross-carrier rules have no declared owner")]
-    text = path.read_text(encoding="utf-8", errors="ignore")
+    # Fail-closed like every other reader in this gate (read_document_text): a decode failure
+    # surfaced as an error instead of being masked into an empty scan by errors="ignore" —
+    # the same hole G02 closed for the decision-gate readers.
+    map_text, read_errors = read_document_text(path)
+    errors.extend(read_errors)
+    text = map_text
     rows, malformed = _carrier_rows(text)
     for bad_row in malformed:
         errors.append(
@@ -310,7 +430,9 @@ def validate_carrier_map(root: Path = ROOT) -> list[ValidationError]:
         owned = root / rel
         if not owned.is_file():
             continue
-        prose = prose_without_quotations(owned.read_text(encoding="utf-8", errors="ignore"))
+        owned_text, owned_errors = read_document_text(owned)
+        errors.extend(owned_errors)
+        prose = prose_without_quotations(owned_text)
         for phrase in ("改一处就改另一处", "必须同步：改一处"):
             if phrase in prose:
                 errors.append(
@@ -345,7 +467,8 @@ def validate_carrier_map(root: Path = ROOT) -> list[ValidationError]:
             # 锚点比对先剥围栏与行内引文（评审 P2-6）：标题被降级或被搬进示例代码后，
             # 字面仍在文件里，原始子串匹配会把它当命中——同步义务那条已经先剥引文，这里不能例外。
             # 例外是标记型锚点（HTML 注释本身就是引文形态），整段保留供其命中。
-            raw_body = target.read_text(encoding="utf-8", errors="ignore")
+            raw_body, target_errors = read_document_text(target)
+            errors.extend(target_errors)
             # 一行允许多个锚点，写成「A 与 B」：拆开逐条验，避免逼作者把两个真实标题塞成一个字面量。
             raw_anchor_cells = BACKTICK_TOKEN.findall(anchor) or [anchor.strip("` ")]
             anchors = [part.strip() for cell in raw_anchor_cells for part in cell.split(" 与 ") if part.strip()]
@@ -400,7 +523,8 @@ def validate_doc_consistency() -> list[ValidationError]:
     if not agents_dir.is_dir():
         errors.append(ValidationError(str(agents_dir), "agents/ directory is missing; the role surface is required"))
     agent_files = {p.stem: p for p in sorted(agents_dir.glob("*.md"))}
-    if agents_dir.is_dir() and not agent_files:
+    role_files = {name: path for name, path in agent_files.items() if name != "README"}
+    if agents_dir.is_dir() and not role_files:
         errors.append(ValidationError(str(agents_dir), "agents/ holds no role files; the role surface is required"))
     for name, path in agent_files.items():
         # The directory entry-point document (agents/README.md) carries no role frontmatter —
@@ -419,10 +543,29 @@ def validate_doc_consistency() -> list[ValidationError]:
                 ValidationError(str(path), f"frontmatter name {m.group(1)!r} does not match filename {name!r}")
             )
 
+    for role_name, (schema_name, headings) in ROLE_SCHEMA_CONTRACTS.items():
+        role_path = agent_files.get(role_name)
+        if role_path is None:
+            continue  # the missing-role case is already covered by the frontmatter walk
+        schema_path = ROOT / "schemas" / schema_name
+        schema, schema_errors = load_json(schema_path)
+        if schema_errors or not isinstance(schema, dict):
+            errors.extend(schema_errors or [ValidationError(str(schema_path), "schema is not an object")])
+            continue
+        required = [name for name in schema.get("required") or [] if isinstance(name, str)]
+        text, read_errors = read_document_text(role_path)
+        if read_errors:
+            errors.extend(read_errors)
+            continue
+        errors.extend(role_contract_findings(role_path, text, required, headings))
+
     skills_dir = ROOT / "skills"
     if not skills_dir.is_dir():
         errors.append(ValidationError(str(skills_dir), "skills/ directory is missing; the skill surface is required"))
-    for skill in sorted(skills_dir.glob("*/SKILL.md")):
+    skill_files = sorted(skills_dir.glob("*/SKILL.md"))
+    if skills_dir.is_dir() and not skill_files:
+        errors.append(ValidationError(str(skills_dir), "skills/ holds no SKILL.md; the skill surface is required"))
+    for skill in skill_files:
         text, read_errors = read_document_text(skill)
         if read_errors:
             errors.extend(read_errors)
@@ -458,6 +601,8 @@ def validate_doc_consistency() -> list[ValidationError]:
 
     errors.extend(validate_agents_md_plan_contract(ROOT / "AGENTS.md"))
     errors.extend(validate_init_section_template())
+    errors.extend(validate_count_markers(ROOT))
+    errors.extend(correction_propagation_findings(ROOT))
 
     # Version-in-prose guard: the current-version claims in these files were hand-synced
     # at every bump and drifted more than once (0.6.0 was still being declared after
@@ -472,6 +617,46 @@ def validate_doc_consistency() -> list[ValidationError]:
 
     errors.extend(validate_live_doc_references(ROOT))
     errors.extend(validate_carrier_map())
+    return errors
+
+
+def validate_count_markers(root: Path = ROOT) -> list[ValidationError]:
+    """Wire the `<!-- count:… -->` markers into the gate (counts.py was outside every gate).
+
+    counts.py (the marker reader/writer) was the only checker in the repository not reachable
+    from `validate.py all`, CI, or any hook: adding a role file without remembering to run it
+    left README's「14 个角色档案」wrong with nothing turning red — the exact drift this tool
+    was built to kill. The counting logic itself stays in counts.py (single source); this
+    wrapper only imports it and translates a nonzero exit into gate errors. The import is
+    local because counts.py is a top-level module next to tools/lab, not a gate subpackage.
+    """
+    import subprocess as _subprocess
+    import sys as _sys
+
+    errors: list[ValidationError] = []
+    completed = _subprocess.run(
+        [_sys.executable, str(root / "tools" / "lab" / "counts.py")],
+        cwd=str(root),
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
+    if completed.returncode == 0:
+        return errors
+    for line in (completed.stdout + completed.stderr).splitlines():
+        line = line.strip()
+        if line.startswith(("ERROR", "DIFF")):
+            errors.append(ValidationError("counts", line))
+    if not errors:
+        errors.append(
+            ValidationError(
+                "counts",
+                f"counts.py exited {completed.returncode} with no parseable findings: "
+                f"{(completed.stdout + completed.stderr).strip()[:200]}",
+            )
+        )
     return errors
 
 

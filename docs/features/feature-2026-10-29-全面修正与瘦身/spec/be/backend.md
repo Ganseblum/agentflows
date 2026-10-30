@@ -26,7 +26,7 @@ M-E 必读面收敛 · M-F 噪声退场与引用改写。
 
 | # | 陈述 | 验收口径 | 标尺 |
 | --- | --- | --- | --- |
-| M-A-01 | 三批未完成任务在本批计划里各有唯一任务号 | 10-25 批 T11–T25、GOV 批 T01–T08、DEBT 批 T04 的每一条未完成项，在本批计划任务表中出现且仅出现一次；重复出现即为缺陷 | `python3.12 tools/lab/validate.py doc_chain` 绿 + 人工按 `design/qa/testing.md` §2 的映射表逐行核 |
+| M-A-01 | 本批实际吸收的项在本批计划里各有唯一任务号 | 以 `design/qa/testing.md` §2.1 的吸收映射表为准：表内每一条在本批计划任务表中出现且仅出现一次；表外的旧批任务留在原批，不要求进本表，也不得声称已吸收 | `python3.12 tools/lab/validate.py doc_chain` 绿 + 人工按 §2.1 映射表逐行核 |
 | M-A-02 | 旧批次不保留第二套「谁还没做」的说法 | 三批各自 README 的推进进度节末尾指向本批计划；`docs/features/README.md` 在途表、`index.md` 批次索引节、`docs/releases/todo.md` 批次索引三处对该批的状态与本批 README 一致 | `python3.12 tools/lab/validate.py all` 绿；`grep -c "已并入本批\|未完成任务并入" 三批 README` 各 ≥1 |
 | M-A-03 | 归并后不产生新的顶层记录类型 | 只新增一个批次目录，位于既有 `docs/features/feature-<date>-<topic>/` 形态下 | `python3.12 tools/lab/doc_chain.py <本批目录>` PASS 即证 |
 
@@ -59,7 +59,7 @@ M-E 必读面收敛 · M-F 噪声退场与引用改写。
 
 | # | 陈述 | 验收口径 | 标尺 |
 | --- | --- | --- | --- |
-| M-E-01 | 四文件总量 ≤450 行 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md` 行数之和 ≤450 | `wc -l` 四文件求和 ≤450 |
+| M-E-01 | 四文件的同一规则不再有第二份副本（2026-10-29 拍板 C：不设总量上限） | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md` 中，同一规则只在一个权威载体出现，其余位置只留指针；`wc -l` 只作观测值记录，不作判据 | `carrier-map.md` 的副本处置列逐行核对；`wc -l` 输出落证据列 |
 | M-E-02 | 同步义务退场 | 上述文件与 `skills/agentflow/templates/host/global-rules.md` 中不再出现「改一处就改另一处」及其等价表述；改为指向唯一权威载体 | 可计数检索：命中数 0（判据先打印命中原文再判） |
 | M-E-03 | 每条跨载体规则有唯一权威载体 | 载体归属表落在 `skills/agentflow/references/carrier-map.md`，由并入既有 `validate.py docs` 项的 `validate_carrier_map` （`tools/lab/gate/docs.py`）逐行断言：权威路径存在、锚点在该文件内命中、`agentflow:<role>` 指针可解析、副本处置列非空 | `python3.12 tools/lab/validate.py docs` 绿，且 `tools/lab/gate/docs.py` 的 `validate_carrier_map` 逐行打印命中 |
 | M-E-04 | 收敛不等于删判据 | 链契约的判据细则可拆到独立文件，但 `AGENTS.md` 引用的每个 `schemas/*.schema.json` 路径仍真实存在、每个 `agentflow:<role>` 仍可解析（既有 `validate.py docs` 断言） | `validate.py docs` 与 `decision_gate` 绿；文档链门对本批全绿 |
@@ -82,3 +82,13 @@ M-E 必读面收敛 · M-F 噪声退场与引用改写。
 | `docs/issues/**` 与批次 `reviews/` 内的当时输出 | 保留原样 | 是记录当时状态的引文，改了就是篡改证据 |
 | `index.md`、`docs/features/README.md`、`docs/releases/*`、`docs/host-platform-facts.md` | 改写为实跑口径 | 这些面陈述的是「现在」，数字一过期就误导下一次会话 |
 | 本批计划证据列 | 写实测数字 + 日期 | 证据列要求可复核，当日数字必须可复跑 |
+
+### M-G 已拍板存量决策落地（2026-10-29 并入）
+
+| # | 陈述 | 验收口径 | 标尺 |
+| --- | --- | --- | --- |
+| M-G-01 | 改进环整体裁撤（#10 B） | `skills/improve/` 与四个治理角色（feedback-analyst / candidate-engineer / evaluator / release-governor）不再存在；candidate / release-record 两份 schema 删除；episode 契约迁至 `schemas/episode.schema.json`；manifest、保护清单、gate 必需条目、测试、活文档与产品链同步 | `python3.12 tools/lab/validate.py all` 绿；`test ! -e skills/improve`；活文档检索退役路径命中 0 |
+| M-G-02 | `credentials` 字段加凭据形态 pattern（#12 C） | `schemas/test-plan.schema.json` 与 `schemas/test-run.schema.json` 的 `credentials` 字段拒绝 `sk-` / `ghp_` / `Bearer ` / `token=` 等明显凭据形状，正常注入方式仍通过；仅覆盖该字段，不做全正文扫描 | `tests/test_gate_schema.py` 的正反例实跑通过；`validate.py schemas` 绿 |
+| M-G-03 | C17 补 1–2 个变异项（#13 A） | `tools/lab/mutate.py` 的 `ITEMS` / `MUTATIONS` 纳入 `doc_chain.C17`，正反夹具覆盖「核验后修改」与「核验前修改」两态；变异实跑全部被杀死 | `python3.12 tools/lab/mutate.py --check doc_chain_selftest` 输出 0 存活 0 无效；`doc_chain.py --self-test` 全过 |
+| M-G-04 | 委派契约补「定位即预算」（#14 A） | `skills/agentflow/references/contracts.md` 的 `read_scope` 一节写明定位质量与读取上限口径：`path:line` 或可复核 Grep 模式、大文件片段交付、定位不足先索取；`packaging/runtime` 与源面逐字节一致 | `grep -n "定位即预算"` 命中；`validate.py manifests` 绿 |
+| M-G-05 | 同题对照实验（#16 A） | 选一个小型真实任务，with / without Agentflow 各跑一遍，记录执行方式、墙钟时间、门次数、返工轮次与正确性；报告写明代理指标与人时口径的差别，不把代理指标写成已验证的人效收益 | 报告落 `docs/evaluations/`，含协议、原始数字与限制；独立评审复核 |

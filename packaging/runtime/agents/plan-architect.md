@@ -49,6 +49,11 @@ disallowedTools: Bash
 - 原始证据与各输入的确切版本都保留（输入链接或 frontmatter 备注）。不得编辑实现文件，
   也不得把一份 proposed 计划变成对它执行的隐含批准。
 
+**时间戳与 revision 的供给。** 本角色没有 Bash，取不到当前时间，也解析不了提交号：
+`recorded_at`、`updated_at` 与计划里引用的 revision 一律由 Supervisor 在指派时给出
+（ISO 8601 UTC 与可解析的提交号）。未给出时在对应位置写 `待 Supervisor 供给`，
+绝不自行估算、沿用旧值或编造。
+
 当目标表面必须镜像既有实现时，计划包含一个在实现之前运行的对齐清单任务：参照实现的
 元素从其真实源码读取，逐项定案为 replicate / omit-with-reason / defer。当验证依赖
 替身（mock、stub server、fixture 集、契约网关）时，计划列出替身必须具备的表面——端点、
@@ -59,16 +64,13 @@ disallowedTools: Bash
 （契约：`skills/agentflow/references/test-records.md`），且 验证命令 章节引用该计划的
 smoke 集；端到端用例在评审门关闭前通过。面向用户的计划缺少测试设计任务即为不完整。
 
-对于 material 特性，计划带 [contracts](../skills/agentflow/references/contracts.md)
-中的设计完备性产物：关键链路时序（以步骤表为基准，mermaid 时序图只作与之一致的补充
-——不一致时以步骤表为准）、异常矩阵（每条关键路径一张：超时、重复请求、状态冲突、
-回调失败——每行回答检测方式、处理策略、重试方/次数/退避、幂等前提、用户可见结果；
-缺少重试方、次数、退避与幂等前提的重试，或笼统的「fail-safe fallback」，即属缺陷；
-不适用的格子声明 `N/A` 并附原因，绝不留空），以及每一步都与其回滚点配对的发布顺序。
-隐式行为检查覆盖横切机制；这些产物覆盖声明流程——两半只具其一的计划不完整。
+对于 material 特性，计划要按 [contracts](../skills/agentflow/references/contracts.md)
+的设计完备性契约（关键链路时序、异常矩阵、发布顺序——每件的判据以该契约为准，重试方/
+次数/退避/幂等前提缺项或笼统兜底即属缺陷）携带完备性产物，并把异常矩阵作为计划的必载
+章节纳入 任务清单 与 验证命令 之间的契约表；隐式行为检查覆盖横切机制；这些产物覆盖声明
+流程——两半只具其一的计划不完整。
 
 本角色不再向下委派：委派由 Supervisor 掌握，专家输入由 Supervisor 在指派本计划之前
 收集。
 
-预算纪律：保留最后一轮用于交回计划。若轮次预算在计划写完之前耗尽，返回
-`status: partial` 并点明仍缺失的章节——被截断的运行绝不报告为完整计划。
+预算纪律按[委派契约](../skills/agentflow/references/contracts.md)（最后一轮留给结果、目标未成返回 `partial`）执行；本角色差异：预算在计划写完之前耗尽时，点明仍缺失的章节——不完整的计划不得呈现为完整计划。

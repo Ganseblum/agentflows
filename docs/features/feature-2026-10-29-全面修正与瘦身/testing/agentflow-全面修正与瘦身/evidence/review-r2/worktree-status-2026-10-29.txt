@@ -1,0 +1,221 @@
+ M .qoder-plugin/plugin.json
+ M AGENTS.md
+ M CHANGELOG.md
+ M README.md
+ M agents/README.md
+ M agents/backend-engineer.md
+ M agents/bug-fixer.md
+ M agents/bug-investigator.md
+ M agents/bug-recorder.md
+ D agents/candidate-engineer.md
+ D agents/evaluator.md
+ D agents/feedback-analyst.md
+ M agents/frontend-engineer.md
+ M agents/plan-architect.md
+ D agents/release-governor.md
+ M agents/reviewer.md
+ M agents/technical-director.md
+ M agents/test-executor.md
+ M agents/test-planner.md
+ M docs/PENDING-DECISIONS.md
+ M docs/design-decisions.md
+ M docs/evaluations/README.md
+ M docs/features/README.md
+ M "docs/features/feature-2026-10-22-\350\277\275\346\272\257\351\227\255\347\216\257\344\270\216\350\257\201\346\215\256\345\234\250\345\234\272/README.md"
+ M "docs/features/feature-2026-10-25-\346\200\273\344\275\223\350\257\204\345\256\241\345\220\270\346\224\266\344\270\216\344\277\256\345\244\215/README.md"
+ M "docs/features/feature-2026-10-25-\346\200\273\344\275\223\350\257\204\345\256\241\345\220\270\346\224\266\344\270\216\344\277\256\345\244\215/plan/PLAN-REVIEW-001.md"
+ M "docs/features/feature-2026-10-26-L3\345\267\245\344\275\234\346\265\201\345\242\236\345\274\272/README.md"
+ M "docs/features/feature-2026-10-28-\350\257\204\345\256\241\346\254\240\350\264\246\346\270\205\345\201\277/plan/PLAN-DEBT-001.md"
+ M "docs/features/feature-2026-10-28-\350\257\204\346\265\213\346\225\264\346\224\271\346\211\271/plan/PLAN-EVAL-001.md"
+ M "docs/features/feature-2026-10-28-\350\257\204\346\265\213\346\225\264\346\224\271\346\211\271/reviews/README.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/README.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/design/be/backend.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/design/qa/testing.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/plan/PLAN-FIX-001.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/proposal/proposal.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/reviews/README.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/spec/be/backend.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/spec/checklist.md"
+ M "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/spec/qa/acceptance.md"
+ M "docs/issues/ISS-2026-10-12-\347\256\200\345\214\226\346\211\271mock\344\270\232\345\212\241\351\225\234\345\203\217\346\227\245\345\277\227.md"
+ M "docs/issues/ISS-2026-10-12-\350\256\260\345\275\225\350\277\201\345\205\245docs\346\224\271\350\277\233\345\201\234\347\224\250.md"
+ M "docs/issues/ISS-2026-10-12-\350\257\204\346\265\213\350\243\205\347\275\256\350\243\201\346\222\244.md"
+ M docs/issues/README.md
+ M docs/product/README.md
+ M docs/product/design/product-design.md
+ M docs/product/proposal/proposal.md
+ M docs/product/spec/acceptance-matrix.md
+ M docs/product/spec/method-spec.md
+ M docs/releases/pending-test.md
+ M docs/releases/todo.md
+ M docs/system-guide.md
+ D docs/trend.jsonl
+ D episodes/2026-10-08/EP-2026-10-08-001.json
+ D episodes/2026-10-09/EP-2026-10-09-001.json
+ D episodes/2026-10-09/EP-2026-10-09-002.json
+ D episodes/2026-10-10/EP-2026-10-10-001.json
+ D episodes/2026-10-10/EP-2026-10-10-002.json
+ D episodes/2026-10-10/EP-2026-10-10-003.json
+ D episodes/2026-10-10/EP-2026-10-10-004.json
+ D episodes/2026-10-12/EP-2026-10-12-001.json
+ D episodes/2026-10-12/EP-2026-10-12-002.json
+ D episodes/2026-10-12/EP-2026-10-12-003.json
+ D episodes/2026-10-12/EP-2026-10-12-004.json
+ D episodes/2026-10-12/EP-2026-10-12-005.json
+ D episodes/2026-10-12/EP-2026-10-12-006.json
+ D episodes/2026-10-12/EP-2026-10-12-007.json
+ D episodes/2026-10-12/EP-2026-10-12-008.json
+ D episodes/2026-10-12/EP-2026-10-12-009.json
+ D episodes/2026-10-14/EP-2026-10-14-001.json
+ D episodes/2026-10-18/EP-2026-10-18-001.json
+ D episodes/2026-10-19/EP-2026-10-19-001.json
+ D episodes/2026-10-23/EP-2026-10-23-001.json
+ D episodes/2026-10-24/EP-2026-10-24-001.json
+ D episodes/2026-10-27/EP-2026-10-27-001.json
+ D episodes/2026-10-27/EP-2026-10-27-002.json
+ D episodes/2026-10-28/EP-2026-10-28-001.json
+ M episodes/README.md
+ M "episodes/\345\275\222\346\241\243/2026-09/2026-09-18/EP-2026-09-18-002.json"
+ M examples/README.md
+ M examples/decisions/ledger-example.md
+ D examples/improve/candidate-valid.json
+ D examples/improve/release-record-none-better.json
+ D examples/improve/release-record-valid.json
+ M "examples/issues/ISS-2026-09-13-\350\257\204\345\256\241\346\274\217\346\212\245\351\224\231\350\257\257\345\245\221\347\272\246.md"
+ M examples/plans/PLAN-DEMO-PROPOSE-001.md
+ M examples/plans/PLAN-DEMO-SHARE-001.md
+ M index.md
+ M packaging/runtime/.qoder-plugin/plugin.json
+ M packaging/runtime/agents/README.md
+ M packaging/runtime/agents/backend-engineer.md
+ M packaging/runtime/agents/bug-fixer.md
+ M packaging/runtime/agents/bug-investigator.md
+ M packaging/runtime/agents/bug-recorder.md
+ D packaging/runtime/agents/candidate-engineer.md
+ D packaging/runtime/agents/evaluator.md
+ D packaging/runtime/agents/feedback-analyst.md
+ M packaging/runtime/agents/frontend-engineer.md
+ M packaging/runtime/agents/plan-architect.md
+ D packaging/runtime/agents/release-governor.md
+ M packaging/runtime/agents/reviewer.md
+ M packaging/runtime/agents/technical-director.md
+ M packaging/runtime/agents/test-executor.md
+ M packaging/runtime/agents/test-planner.md
+ M packaging/runtime/protected-paths.txt
+ M packaging/runtime/schemas/README.md
+ M packaging/runtime/schemas/bug-record.schema.json
+ M packaging/runtime/schemas/test-plan.schema.json
+ M packaging/runtime/schemas/test-run.schema.json
+ M packaging/runtime/skills/agentflow/SKILL.md
+ M packaging/runtime/skills/agentflow/references/carrier-map.md
+ M packaging/runtime/skills/agentflow/references/contracts.md
+ M packaging/runtime/skills/agentflow/references/document-chain.md
+ M packaging/runtime/skills/agentflow/references/execution.md
+ M packaging/runtime/skills/agentflow/references/repo-audit.md
+ M packaging/runtime/skills/agentflow/references/review-checklists.md
+ M packaging/runtime/skills/agentflow/references/roles.md
+ M packaging/runtime/skills/agentflow/references/test-records.md
+ M packaging/runtime/skills/agentflow/templates/README.md
+ M packaging/runtime/skills/agentflow/templates/decision/decision-brief.md
+ M packaging/runtime/skills/agentflow/templates/decision/decision-record.md
+ M packaging/runtime/skills/agentflow/templates/feature/README.md
+ M packaging/runtime/skills/agentflow/templates/feature/design/be/backend.md
+ M packaging/runtime/skills/agentflow/templates/feature/design/fe/frontend.md
+ M packaging/runtime/skills/agentflow/templates/feature/design/qa/testing.md
+ M packaging/runtime/skills/agentflow/templates/feature/design/ui/visual.md
+ M packaging/runtime/skills/agentflow/templates/feature/plan/execution.md
+ M packaging/runtime/skills/agentflow/templates/feature/proposal/proposal.md
+ M packaging/runtime/skills/agentflow/templates/feature/prototype/README.md
+ M packaging/runtime/skills/agentflow/templates/feature/spec/fe/frontend.md
+ M packaging/runtime/skills/agentflow/templates/host/README.md
+ M packaging/runtime/skills/agentflow/templates/host/global-rules.md
+ M packaging/runtime/skills/agentflow/templates/hub/repo-rules.md
+ D packaging/runtime/skills/improve/SKILL.md
+ D packaging/runtime/skills/improve/agents/openai.yaml
+ D packaging/runtime/skills/improve/references/candidate.schema.json
+ D packaging/runtime/skills/improve/references/episode.schema.json
+ D packaging/runtime/skills/improve/references/evidence-and-release.md
+ D packaging/runtime/skills/improve/references/release-record.schema.json
+ M packaging/runtime/tools/lab/docchain/checks.py
+ M packaging/runtime/tools/lab/docchain/cli.py
+ M packaging/runtime/tools/lab/docchain/constants.py
+ M packaging/runtime/tools/lab/docchain/selftest.py
+ M protected-paths.txt
+ M schemas/README.md
+ M schemas/bug-record.schema.json
+ M schemas/test-plan.schema.json
+ M schemas/test-run.schema.json
+ M skills/agentflow/SKILL.md
+ M skills/agentflow/references/carrier-map.md
+ M skills/agentflow/references/contracts.md
+ M skills/agentflow/references/document-chain.md
+ M skills/agentflow/references/execution.md
+ M skills/agentflow/references/repo-audit.md
+ M skills/agentflow/references/review-checklists.md
+ M skills/agentflow/references/roles.md
+ M skills/agentflow/references/test-records.md
+ M skills/agentflow/templates/README.md
+ M skills/agentflow/templates/decision/decision-brief.md
+ M skills/agentflow/templates/decision/decision-record.md
+ M skills/agentflow/templates/feature/README.md
+ M skills/agentflow/templates/feature/design/be/backend.md
+ M skills/agentflow/templates/feature/design/fe/frontend.md
+ M skills/agentflow/templates/feature/design/qa/testing.md
+ M skills/agentflow/templates/feature/design/ui/visual.md
+ M skills/agentflow/templates/feature/plan/execution.md
+ M skills/agentflow/templates/feature/proposal/proposal.md
+ M skills/agentflow/templates/feature/prototype/README.md
+ M skills/agentflow/templates/feature/spec/fe/frontend.md
+ M skills/agentflow/templates/host/README.md
+ M skills/agentflow/templates/host/global-rules.md
+ M skills/agentflow/templates/hub/repo-rules.md
+ D skills/improve/SKILL.md
+ D skills/improve/agents/openai.yaml
+ D skills/improve/references/candidate.schema.json
+ D skills/improve/references/episode.schema.json
+ D skills/improve/references/evidence-and-release.md
+ D skills/improve/references/release-record.schema.json
+ M tests/test_doc_chain.py
+ M tests/test_gate_integrity.py
+ M tests/test_gate_records.py
+ M tests/test_gate_schema.py
+ M tests/test_pre_push.py
+ M tests/test_record_store.py
+ M tools/lab/README.md
+ M tools/lab/docchain/checks.py
+ M tools/lab/docchain/cli.py
+ M tools/lab/docchain/constants.py
+ M tools/lab/docchain/selftest.py
+ M tools/lab/gate/checks.py
+ M tools/lab/gate/common.py
+ M tools/lab/gate/docs.py
+ M tools/lab/gate/examples.py
+ M tools/lab/gate/plan.py
+ M tools/lab/gate/records.py
+ M tools/lab/gate/schema.py
+ M tools/lab/gate/workspace.py
+ M tools/lab/mutate.py
+ D tools/lab/trend.py
+ M tools/lab/validate.py
+ D tools/review-cost-baseline.py
+?? .workbuddy-ai/
+?? 0v_zlx1v
+?? 7ilnevu1
+?? 7zy4zsud
+?? docs/changelog-archive.md
+?? docs/evaluations/AGENTFLOW-CONTROL-EXPERIMENT-2026-10-29.md
+?? "docs/features/feature-2026-10-13-\350\264\250\351\207\217\346\217\220\345\215\207/testing/agentflows-role-boundary/evidence/"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/reviews/review-2026-10-29-003.md"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/reviews/review-2026-10-29-004.md"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/reviews/review-2026-10-29-005.md"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/control-experiment-2026-10-29/"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/dispatch-probe/tier-2026-10-29-r2.md"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/gate-runs/all-2026-10-29-r4.txt"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/gate-runs/all-2026-10-29-r5.txt"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/retirement-scan-2026-10-29.txt"
+?? "docs/features/feature-2026-10-29-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/testing/agentflow-\345\205\250\351\235\242\344\277\256\346\255\243\344\270\216\347\230\246\350\272\253/evidence/review-r2/"
+?? "episodes/\345\275\222\346\241\243/2026-10/"
+?? packaging/runtime/schemas/episode.schema.json
+?? packaging/runtime/skills/agentflow/references/document-chain-checks.md
+?? schemas/episode.schema.json
+?? skills/agentflow/references/document-chain-checks.md

@@ -2,7 +2,7 @@
 
 Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Claude Code、ZCode，
 以及兼容的 Agent Skills 宿主。宿主掌管模型、认证、工具、权限、会话历史与 agent
-执行。Agentflow 提供角色契约、测试先行执行、独立评审，以及一套受治理的改进方法。
+执行。Agentflow 提供角色契约、测试先行执行、独立评审，以及一套受治理的方法演进流程。
 
 它不调用也不要求独立的 `agentflow` CLI。
 
@@ -12,7 +12,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 | 问题 | 去哪 | 一句话 |
 | --- | --- | --- |
-| **这是什么** | [`docs/quickstart.md`](docs/quickstart.md) · [`docs/system-guide.md`](docs/system-guide.md) | 宿主原生的多 agent 开发工作流：角色契约 + 委派 + 独立评审 + 受治理改进环，不是独立 CLI。 |
+| **这是什么** | [`docs/quickstart.md`](docs/quickstart.md) · [`docs/system-guide.md`](docs/system-guide.md) | 宿主原生的多 agent 开发工作流：角色契约 + 委派 + 独立评审 + 受治理的方法演进，不是独立 CLI。 |
 | **谁该看** | [`index.md`](index.md) 的「从这里开始」 | 想用这套方法交付功能的开发者、要改角色/契约/流程维护仓库的人、以及独立评审与发布授权的把关人。 |
 | **怎么装** | 本节「使用」 + [`skills/agentflow/references/hosts.md`](skills/agentflow/references/hosts.md) | Codex/Claude Code 装插件；ZCode 跑 `packaging/build_runtime.py` 再从本地 marketplace 装（指向 `packaging/runtime`，不是本目录）。 |
 | **怎么参与** | [`AGENTS.md`](AGENTS.md) · [`index.md`](index.md) · [`docs/issues/README.md`](docs/issues/README.md) | 小修走 `docs/issues/` 立 ISS；跨层/成批走 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md`；改动前先 `python3 tools/lab/validate.py all`。 |
@@ -21,10 +21,8 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 ## 使用
 
-- Codex：安装插件并调用 `$agentflow`。仅在改进 Agentflow 自身时选择 **Agentflow Improve** 或
-  调用 `$improve`。
-- Claude Code：用 `claude --plugin-dir .` 启动开发，然后调用
-  `/agentflow:agentflow` 或 `/agentflow:improve`。
+- Codex：安装插件并调用 `$agentflow`。
+- Claude Code：用 `claude --plugin-dir .` 启动开发，然后调用 `/agentflow:agentflow`。
 - ZCode：运行 `python3 packaging/build_runtime.py`，再从
   [`marketplace.json`](marketplace.json) 中的本地 marketplace 安装（它指向 `packaging/runtime`，不是本目录）。
   Skill 通过 `.zcode/skills/` 符号链接解析，但 **agent 从安装快照加载**——改动 `agents/*.md` 之后，
@@ -38,15 +36,15 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 ## 当前成熟度
 
-版本只在 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->14<!-- /count -->个角色档案、六份记录契约 schema、Codex / Claude Code / ZCode / Qoder 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
+版本只在 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->10<!-- /count -->个角色档案、七份记录契约 schema、Codex / Claude Code / ZCode / Qoder 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
 
 两条别处没有的边界说明：
 
 - 实现型角色声明显式的工具白名单（`Read, Glob, Grep, Write, Edit, Bash`），宿主据此约束 worker 的工具面；Bash 仍遵循宿主的沙箱，且可能具备工具名未暗示的能力，网络隔离必须从宿主处核实，不得从这份清单推断。
 - 独立的 Execution Coordinator 预留给未来的持久控制面——该角色当前不存在，不是可委派能力，不得写进委派简报。
 
-候选门面——evaluator 与 governor 角色文件、测量路径（digest / isolation）、发布规则、
-`schemas/` 下的记录 schema、钉住的回归测试，以及清单本身——在
+候选门面——测量路径（digest / isolation）、发布规则、`schemas/` 下的记录 schema、钉住的
+回归测试，以及清单本身——在
 [`protected-paths.txt`](protected-paths.txt) 中声明一次。`isolation.py check-diff` 拒绝
 触碰它的候选 diff。从受信源码检出出发，以冻结的 parent revision 运行它：
 
@@ -79,13 +77,12 @@ Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现�
 主审可以合并诊断或记录环节，同时保持同样的证据门。Plan Architect 写计划；
 主审授权并协调执行。
 
-改进工作流是一个受治理的骨架：会话收口（一项工作收尾并落档）先落 episode，Feedback Analyst 归一化证据，
-Candidate Engineer 在 candidate worktree 里实现单个候选，`isolation.py check-diff` 对照冻结
-parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审，最终由人批准。跨会话
-遥测、持久检索、私有 holdout 服务、canary 灰度上线与自动回滚尚未实现；人工批准是默认的
-发布边界。检索是一次性的 SQLite FTS5 词法索引（`record_store.py`），源记录保持权威，
-不使用向量数据库。完整流程与两条诚实规则见
-[`docs/system-guide.md`](docs/system-guide.md) §5。
+改进环已于 2026-10-29 整体裁撤：方法改动改走「明确反馈 + 有界候选 + 独立评审 + 人工授权」的
+成批流程，会话收尾仍落 episode（`episodes/` 是现行记录根），`isolation.py check-diff` 仍对
+插件仓候选 diff 拒绝触碰禁区。跨会话遥测、持久检索、私有 holdout 服务、canary 灰度上线与
+自动回滚未实现；人工批准是默认的发布边界。检索是一次性的 SQLite FTS5 词法索引
+（`record_store.py`），源记录保持权威，不使用向量数据库。裁撤的设计知识与恢复清单见
+[`docs/design-decisions.md`](docs/design-decisions.md) §3。
 
 工作区包含一组确定性的门与工具（`tools/lab/`）：契约与记录校验器 `validate.py`
 （全套检查，项数与内容以 `python3 tools/lab/validate.py --list` 为准；另加安装快照漂移检查
@@ -105,14 +102,14 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
 
 粗线条，按面记：
 
-- **交付给宿主的面**：`agents/`（角色档案）、`skills/`（`agentflow` 开发工作流与
-  `improve` 自迭代环），以及各 manifest（`plugin.json`、`marketplace.json`、
+- **交付给宿主的面**：`agents/`（角色档案）、`skills/`（`agentflow` 开发工作流），以及各
+  manifest（`plugin.json`、`marketplace.json`、
   `.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`）。
 - **契约与门**：`schemas/` 是记录契约；`tools/lab/` 是确定性的检查与工具——
   `validate.py` 薄入口 + `gate/` 检查模块包（全套检查）、`doc_chain.py`（文档链 linter）、
   `isolation.py`（候选禁区检查）、`artifact_digest.py`（产物摘要）、`counts.py`（文档计数
-  标记核对）、`mutate.py`（门变异测试）、`record_store.py`（记录的一次性 FTS5 检索）、
-  `trend.py`（改进环信号趋势）；`tests/` 是这些门工具的回归测试；`examples/` 是校验器与
+  标记核对）、`mutate.py`（门变异测试）、`record_store.py`（记录的一次性 FTS5 检索）；
+  `tests/` 是这些门工具的回归测试；`examples/` 是校验器与
   文档链 linter 的正反例。
   这一面的多数在 [`protected-paths.txt`](protected-paths.txt) 内，改动即门变更。
 - **记录**：`docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/`。
@@ -122,7 +119,7 @@ parent revision 拒绝触碰禁区，Evaluator 与 Release Governor 只读评审
 
 第一次用这套方法，先读 [`docs/quickstart.md`](docs/quickstart.md)——先判断要不要走流程、走哪条
 路、哪些规矩不能省，五分钟内可以开始。日常走查从 [`docs/system-guide.md`](docs/system-guide.md) 开始——工作流怎么流转、
-改进环怎么运行、什么记录到哪里、失败如何处理（含图示与完整示例）；角色路由见
+什么记录到哪里、失败如何处理（含图示与完整示例）；角色路由见
 [`skills/agentflow/references/roles.md`](skills/agentflow/references/roles.md)。然后参见
 [`docs/design-decisions.md`](docs/design-decisions.md) 了解产品边界、宿主形态与自迭代的设计决策，
 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) 了解已观察到的宿主约束；

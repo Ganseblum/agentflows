@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-12-008",
+  "source_type": "review",
+  "revision": {
+    "source": "agentflows working tree（2026-10-12 全仓评审优化批收尾：16 处改动落盘 + T2.12 回归修复 + 计划/报告/本再审计记录）",
+    "base": "cc03012de15f1569d0dd1318d572ed0abb3d94b6"
+  },
+  "run": {
+    "run_id": "session-20261012-086-reaudit",
+    "started_at": "2026-10-12T14:30:00+08:00",
+    "ended_at": "2026-10-12T14:52:00+08:00",
+    "status": "complete"
+  },
+  "objective": "再审计 0.8.6 发布记录：复现 policy.py 对该候选的确定性裁决，固定『release 记录自证 promote 与机器裁决矛盾』这一事实，按只增不改纪律补记（不翻案历史记录），并登记/闭合 corrective actions。",
+  "outcome": "accepted",
+  "signals": [
+    {
+      "kind": "review_finding",
+      "value": "releases/0.8.6.json:110-111 记 evaluation_result=better、decision=promote；同一输入实跑 tools/lab/policy.py 判 evaluation_result=invalid、decision=reject（exit=1）",
+      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：releases/0.8.6.json；复跑输出 /tmp/RL-0.8.6-policy.json（会话原始输出））"
+    },
+    {
+      "kind": "digest_equality",
+      "value": "RL-0.8.6-baseline 与 RL-0.8.6-candidate 的 artifact_digest 逐字相同（sha256:4713e1a2050805d1aae9322c2ad04b30a9c6bef73fcd2cb9aaa8f80d55148121），是 policy.py 判 invalid 的首条理由",
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：improvements/evaluations/RL-0.8.6-baseline.json、improvements/evaluations/RL-0.8.6-candidate.json）"
+    },
+    {
+      "kind": "user_instruction",
+      "value": "用户 2026-10-12 指示『先全部修复处理』，授权执行 plans/PLAN-OPT-CLOSEOUT-001.md 的 T01/T02/T04",
+      "evidence_ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-OPT-CLOSEOUT-001.md"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim": "0.8.6 发布记录自证 promote，与 policy.py 的确定性裁决直接矛盾（invalid/reject vs better/promote）",
+      "status": "verified",
+      "check": "python3 tools/lab/policy.py --candidate-record improvements/candidates/0.8.6.json --baseline-result improvements/evaluations/RL-0.8.6-baseline.json --candidate-result improvements/evaluations/RL-0.8.6-candidate.json --output /tmp/RL-0.8.6-policy.json → exit=1，输出 evaluation_result=invalid、decision=reject",
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：releases/0.8.6.json:110-111；本会话复跑原始输出）"
+    },
+    {
+      "claim_id": "C2",
+      "claim": "矛盾主因是 baseline 与 candidate 的 artifact_digest 相同（同树自比），policy.py 另有版本不匹配、suite_revision 不符、未知指标名、受保护切片缺失等理由",
+      "status": "verified",
+      "check": "两个结果文件 artifact_digest 字段逐字比对一致；policy.py 输出 reasons 共 8 条",
+      "evidence_ref": "improvements/evaluations/RL-0.8.6-{baseline,candidate}.json"
+    },
+    {
+      "claim_id": "C3",
+      "claim": "历史发布记录按只增不改纪律未翻案；corrective action 已落地：policy.py 接入改进环（SKILL 第 10 步强制先跑机器裁决、release 记录须与之一致，否则阻塞）",
+      "status": "verified",
+      "check": "skills/improve/SKILL.md 第 10 步与 skills/improve/references/evidence-and-release.md 发布门一致性硬要求在位；validate.py docs PASS",
+      "evidence_ref": "agentflows@f73a4e9:skills/improve/SKILL.md；agentflows@f73a4e9:skills/improve/references/evidence-and-release.md（2026-10-29 改进环裁撤，对象已移出）"
+    },
+    {
+      "claim_id": "C4",
+      "claim": "本批顺手修复的 T2.12 钉住测试回归已经独立评审 approved，且四组变异实验证明新断言全部承重",
+      "status": "verified",
+      "check": "unittest 全量 errors 3→2 且剩余全为 PermissionError EEXIST 环境假红；MUT1（$ref 回退）/MUT2（metricSummary 删指标）/MUT3（comparison 接线回退）/MUT4（metricDeltas 删指标）均 FAILED(failures=1)，未变异对照 OK",
+      "evidence_ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：AGENTFLOW-OPTIMIZATION-2026-10-12.md §8.3；plans/PLAN-OPT-CLOSEOUT-001.md T02）"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "kind": "release_record",
+      "ref": "N/A: 逐版本发布记录已随 2026-10-12 瘦身批退役（docs/releases/ 现仅 todo.md 与 pending-test.md），版本史见 CHANGELOG.md，原文可自 git 历史取回"
+    },
+    {
+      "evidence_id": "E2",
+      "kind": "evaluation_results",
+      "ref": "N/A: 判据于 2026-10-29 上线时该对象已不在盘上（评测装置与改进三件套随 2026-10-12 批次退役，原文可自 git 历史取回）（原引用：improvements/evaluations/RL-0.8.6-baseline.json、improvements/evaluations/RL-0.8.6-candidate.json）"
+    },
+    {
+      "evidence_id": "E3",
+      "kind": "review_report",
+      "ref": "AGENTFLOW-EVALUATION-2026-10-12.md（全仓深度评审报告，含 policy.py 孤儿门发现）"
+    },
+    {
+      "evidence_id": "E4",
+      "kind": "optimization_record",
+      "ref": "AGENTFLOW-OPTIMIZATION-2026-10-12.md（16 项优化实施记录与勘误）"
+    },
+    {
+      "evidence_id": "E5",
+      "kind": "plan",
+      "ref": "N/A: 对象随 2026-10-12 评测装置裁撤或结构改造批退役，原文可自 git 历史取回（原引用：plans/PLAN-OPT-CLOSEOUT-001.md（收尾执行计划））"
+    }
+  ],
+  "review_roundtrips": [
+    {
+      "at": "2026-10-12T14:45:00+08:00",
+      "reviewer": "agentflow:reviewer（独立子代理，只读）",
+      "decision": "approved",
+      "finding": "T02 测试修复无 P0/P1 finding；两条 P2：P2-1 优化报告 §8.3 仍记『暂不修』与已实施修复矛盾、P2-2 validate.py all PASS 缺原始输出",
+      "resolution": "approved/complete；P2-1 由 §8.3 第二轮更新闭环，P2-2 由 validate.py schemas/artifacts 原始输出（均 PASS）闭环",
+      "evidence_ref": "AGENTFLOW-OPTIMIZATION-2026-10-12.md §8.3"
+    }
+  ],
+  "feedback_summary": "2026-10-12 全仓深度评审发现 0.8.6 发布记录自证 promote（better/promote）而 policy.py 实跑判 invalid/reject——受治理发布链的确定性裁决曾被绕开（policy.py 当时是孤儿门）。本记录复现裁决、固定事实、登记 corrective actions（policy.py 入环，T1.4），历史记录按只增改成不翻案。",
+  "agentflow_version": "0.10.0",
+  "host": "other",
+  "provenance": {
+    "carrier": "WorkBuddy 会话（主对话）",
+    "sanitized": true
+  },
+  "redactions": [],
+  "occurred_at": "2026-10-12T14:52:00+08:00"
+}

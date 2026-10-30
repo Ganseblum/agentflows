@@ -1,0 +1,9 @@
+Intake FTS5 再犯类检索实跑（2026-10-30）
+
+$ record_store.py --records docs/issues --db /tmp/agentflow-fts.db index
+已将 79 条记录索引到 /tmp/agentflow-fts.db
+
+$ record_store.py --db /tmp/agentflow-fts.db query "记录" --limit 3
+docs/issues/recurrence/expression-discipline-jargon.md	 … 12 评测装置整线裁撤删除…
+docs/issues/recurrence/merge-integration-quality-gate.md	 … ## 再犯历史…
+docs/issues/ISS-2026-10-10-目标会话读插件仓记录.md	 … 插件仓记录…

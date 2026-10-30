@@ -37,30 +37,30 @@
 2. **并非「没有任何文件记录这两笔欠账」**。`docs/releases/todo.md` 第 8 条已写「评审档位 L0，
    恢复委派能力后须补独立复核」，`plan/PLAN-EVAL-001.md` 与 `plan/PLAN-GOV-001.md` 也各有记录。
    真实缺陷是：这些记录**都是散文**，没有任何机器可读的欠账清单——要回答「还欠几次、欠哪个
-   revision」只能人工通读。两批 `reviews/` 目录当前均为 0 个文件。
+   revision」只能人工通读。立项基线（2026-10-28）两批 `reviews/` 均为 0 个文件；当前两份 L2 记录已在盘。
 
 **第二类：分级协议本身零机器校验。** `contracts.md` 第 26–47 行定义了三档与三条不变式，其中
 第 1 条明确伪降级的判定。实测：
 
 ```
 $ grep -rn "review_tier" tools/ schemas/ tests/ skills/agentflow/scripts/
-（零命中）
+（立项基线 2026-10-28；当前 `gate/records.py` 已在读 `review_tier`）
 ```
 
 `review_tier` 只出现在散文（契约、SKILL 第 8 步）与批次文档里，没有任何 schema 字段或门判据。
 这与本仓已两次记录的反模式同形——ISS-2026-10-23-新判据声明了却不被校验的六处 的标题就是「新判据『契约里声明、实现里不校验』六处」。
 
-**第三类：五条缺陷停在 `fixed-pending-review`，其中四条缺 `fix_revision`。**
+**第三类：九条缺陷停在 `fixed-pending-review`，其中本批承接五条、四条缺 `fix_revision`。**
 
 ```
 $ ls docs/issues/ISS-*.md | wc -l                    → 66
 $ grep -h "^status:" docs/issues/ISS-*.md | sort | uniq -c
      44 status: verified
      17 status: open
-      5 status: fixed-pending-review
+      9 status: fixed-pending-review
 ```
 
-五条待评审记录为 ISS-2026-10-23-元信息同行声明默认落点基准被误判 / 058 / 060 / 061 / 066。逐条查 `fix_revision`：只有 ISS-2026-10-28-整改批自述与实现面不同步 有
+本批承接的五条为 ISS-2026-10-23-元信息同行声明默认落点基准被误判、ISS-2026-10-23-变异语料锚点漂移致判据不可观察、ISS-2026-10-23-仓扫PASS被当作门有效的证据、ISS-2026-10-23-新判据声明了却不被校验的六处、ISS-2026-10-28-整改批自述与实现面不同步；其余四条（2026-10-28/29 新增）不在本批范围，另行登记承接批次。逐条查 `fix_revision`：只有 ISS-2026-10-28-整改批自述与实现面不同步 有
 （值为「0.20.0（分支 feature-2026-10-28-评测整改批，未发布）」——该分支已并入 `main`，这句已过期），
 其余四条**完全没有该字段**。按 `skills/agentflow/templates/issue/issue-template.md:35`，
 「修复已落地需 `fix_revision`」，四条记录处在「声称修好了、却指不出修在哪个版本」的状态。
@@ -71,9 +71,9 @@ $ grep -h "^status:" docs/issues/ISS-*.md | sort | uniq -c
 
 | 编号 | 目标 | 成功标志 |
 | --- | --- | --- |
-| G1 | 两个批次的 L0 欠账被清偿 | 两批各有独立评审记录落在 `reviews/`，结论含 `review_tier: L1` 与被评审 revision；`changes_requested` 的 findings 全部转成 ISS 或已关闭 |
+| G1 | 两个批次的 L0 欠账被清偿 | 两批各有独立评审记录落在 `reviews/`，结论含 `review_tier ∈ {L1,L2}` 与被评审 revision；`changes_requested` 的 findings 全部转成 ISS 或已关闭 |
 | G2 | 评审欠账可机器清点 | 「当前欠几次独立评审」由一条命令给出，不靠读散文；`review_tier: L0` 且 `dispatch_errors` 为空被判红（伪降级） |
-| G3 | 五条待评审缺陷逐条清偿 | 五条各自要么转为 `verified`（带 `reviewer` 与 `review_decision`），要么退回 `open` 并写明缺什么；四条补上 `fix_revision` 或显式写 `N/A: 理由` |
+| G3 | 本批承接的五条待评审缺陷逐条清偿 | 五条各自要么转为 `verified`（带 `reviewer` 与 `review_decision`），要么退回 `open` 并写明缺什么；四条补上 `fix_revision` 或显式写 `N/A: 理由` |
 
 ### 1.3 关键约束（决定了本批不能一刀切）
 

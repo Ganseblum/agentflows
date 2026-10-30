@@ -100,6 +100,7 @@ class PrePushHookTests(unittest.TestCase):
             env=full_env,
             capture_output=True,
             text=True,
+            check=False,
             **kwargs,
         )
 
@@ -296,6 +297,7 @@ class PrePushHookTests(unittest.TestCase):
             capture_output=True,
             text=True,
             timeout=600,
+            check=False,
         )
 
     def test_repo_venv_is_picked_up_when_no_explicit_interpreter(self):

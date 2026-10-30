@@ -9,31 +9,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .common import ROOT, ValidationError, load_json, load_record_markdown
+from .common import ROOT, ValidationError, load_record_markdown
 from .plan import validate_plan_markdown
 from .records import validate_bug_markdown
-from .schema import SchemaValidator
 from .testing import (
     parse_test_case_registry,
     validate_test_plan_markdown,
     validate_test_run_markdown,
 )
-
-IMPROVE_EXAMPLE_DIR = ROOT / "examples" / "improve"
-IMPROVE_VALID_CANDIDATE = "candidate-valid.json"
-IMPROVE_VALID_RELEASE = "release-record-valid.json"
-IMPROVE_NEGATIVE_RELEASE = "release-record-none-better.json"
-# G10: under measurement.status "none", evaluation_result "better" is structurally impossible
-# (no instrumented baseline exists since the 2026-10-12 apparatus removal). The negative example
-# must be rejected for that reason, not for an unrelated defect.
-# The negative example exists to pin the "measurement:none ⇒ evaluation_result must not be
-# `better`" guardrail. The SchemaValidator emits that `not`-rule as a `must not match the
-# forbidden schema` error on `$.evaluation_result`; tying the pin to both the path and the
-# message keeps it specific to this judgement (the only `not` keyword in the contract) rather
-# than to a passing-fancy substring that the rule's wording could change without the gate
-# catching it — G13 taught that a pin surviving the rule it names is the dangerous case.
-IMPROVE_NEGATIVE_EXPECTS_PATH = "$.evaluation_result"
-IMPROVE_NEGATIVE_EXPECTS_MSG = "must not match the forbidden schema"
 
 
 def validate_invalid_plan_example(path: Path) -> list[ValidationError]:
@@ -42,17 +25,25 @@ def validate_invalid_plan_example(path: Path) -> list[ValidationError]:
 
 
 def example_test_plans() -> dict[str, dict[str, Any]]:
-    """Test plan entries parsed from examples/testing for standalone run-example validation."""
+    """Test plan entries parsed from examples/testing for standalone run-example validation.
+
+    Registry parse errors are returned, not swallowed: a duplicate or illegal case id in a
+    plan fixture previously dropped that plan from this view while the run examples kept
+    resolving against the remaining entries — a run example citing a broken case id could then
+    pair with no complaint from this path (the full plan check does report it, but the two
+    views disagreeing is exactly how misjudgements slip through).
+    """
     plans: dict[str, dict[str, Any]] = {}
     for plan_path in sorted((ROOT / "examples" / "testing").glob("plan-*.md")):
         frontmatter, body, load_errors = load_record_markdown(plan_path)
         if load_errors or frontmatter is None or not isinstance(frontmatter.get("test_plan_id"), str):
             continue
-        cases, _ = parse_test_case_registry(body, plan_path)
+        cases, parse_errors = parse_test_case_registry(body, plan_path)
         plans[frontmatter["test_plan_id"]] = {
             "path": plan_path,
             "frontmatter": frontmatter,
             "cases": [case["case_id"] for case in cases],
+            "parse_errors": parse_errors,
         }
     return plans
 
@@ -95,64 +86,6 @@ INVALID_EXAMPLE_EXPECTS: dict[str, str] = {
 }
 
 
-def validate_improve_examples() -> list[ValidationError]:
-    """G10 — the improvement contracts (candidate / release-record) had zero compiled instances.
-
-    Both schemas carry their allOf guardrails mechanically (the "none ⇒ not better" rule, the
-    "promote under none needs human review + approved evidence" rule, the prohibited-slices
-    check), but nothing in the repo ever exercised them. This check pins two positive instances
-    (a candidate and its release record must validate) and one negative instance (a release
-    record claiming "better" under measurement "none" must be rejected for that reason). The
-    contracts stop being dead the moment they have consumers that the gate actually compiles.
-    """
-    errors: list[ValidationError] = []
-    if not IMPROVE_EXAMPLE_DIR.is_dir():
-        return [ValidationError("examples/improve", "improvement contract examples directory is missing")]
-    candidate_schema = SchemaValidator(ROOT / "skills" / "improve" / "references" / "candidate.schema.json")
-    release_schema = SchemaValidator(ROOT / "skills" / "improve" / "references" / "release-record.schema.json")
-
-    for name in (IMPROVE_VALID_CANDIDATE, IMPROVE_VALID_RELEASE):
-        path = IMPROVE_EXAMPLE_DIR / name
-        if not path.is_file():
-            errors.append(ValidationError(str(path), "declared positive improvement example is missing"))
-            continue
-        instance, load_errors = load_json(path)
-        if load_errors or not isinstance(instance, dict):
-            errors.append(ValidationError(str(path), f"invalid JSON: {load_errors[0] if load_errors else 'not an object'}"))
-            continue
-        schema = candidate_schema if name == IMPROVE_VALID_CANDIDATE else release_schema
-        if schema.validate(instance):
-            errors.append(ValidationError(str(path), "expected valid improvement example, but it failed validation"))
-
-    negative_path = IMPROVE_EXAMPLE_DIR / IMPROVE_NEGATIVE_RELEASE
-    if not negative_path.is_file():
-        errors.append(ValidationError(str(negative_path), "declared negative improvement example is missing"))
-    else:
-        instance, load_errors = load_json(negative_path)
-        if load_errors or not isinstance(instance, dict):
-            errors.append(ValidationError(str(negative_path), f"invalid JSON: {load_errors[0] if load_errors else 'not an object'}"))
-        else:
-            doc_errors = release_schema.validate(instance)
-            if not doc_errors:
-                errors.append(
-                    ValidationError(str(negative_path), "expected negative improvement example to be rejected")
-                )
-            elif not any(
-                e.path == IMPROVE_NEGATIVE_EXPECTS_PATH and IMPROVE_NEGATIVE_EXPECTS_MSG in e.message
-                for e in doc_errors
-            ):
-                errors.append(
-                    ValidationError(
-                        str(negative_path),
-                        f"negative example was rejected, but not by the rule it pins: expected an "
-                        f"error at {IMPROVE_NEGATIVE_EXPECTS_PATH!r} reading {IMPROVE_NEGATIVE_EXPECTS_MSG!r} "
-                        "(the measurement:none ⇒ not-better guardrail). The rejection must come from that "
-                        "guardrail, not an unrelated defect.",
-                    )
-                )
-    return errors
-
-
 def validate_examples() -> list[ValidationError]:
     errors: list[ValidationError] = []
     bug_paths = sorted((ROOT / "examples" / "issues").glob("*.md"))
@@ -162,6 +95,11 @@ def validate_examples() -> list[ValidationError]:
     test_run_paths = [path for path in test_paths if re.fullmatch(r"run-\d{4}-\d{2}-\d{2}-\d{3}\.md", path.name)]
     valid_paths = plan_paths
     invalid_dir = ROOT / "examples" / "invalid"
+    # Plan fixtures with registry parse errors are reported here (they were silently dropped
+    # by the run-example view before; see example_test_plans).
+    for plan_id, entry in sorted(example_test_plans().items()):
+        for parse_error in entry["parse_errors"]:
+            errors.append(ValidationError(str(entry["path"]), f"case registry: {parse_error}"))
     present = sorted(invalid_dir.iterdir()) if invalid_dir.is_dir() else []
     declared: set[str] = set()
     for path in present:
@@ -235,7 +173,6 @@ def validate_examples() -> list[ValidationError]:
         if document_errors:
             errors.extend(ValidationError(str(path), f"expected valid example: {error.message}") for error in document_errors)
     errors.extend(validate_doc_chain_examples())
-    errors.extend(validate_improve_examples())
     return errors
 
 

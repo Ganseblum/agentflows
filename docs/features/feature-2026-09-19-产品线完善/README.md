@@ -22,7 +22,7 @@
 
 - 批次性质：方法自身演进（无目标业务仓）；版本史见 [`CHANGELOG.md`](../../../CHANGELOG.md)
 - 待拍板事项：跨批次单点清单 [`docs/PENDING-DECISIONS.md`](../../PENDING-DECISIONS.md)（产品链评审已闭合；其余见清单）
-- 最后更新：2026-10-22（本批次由顶层 `docs/plans/` 归位而来；2026-10-22 回写需求评审与安装快照状态）
+- 最后更新：2026-10-30（技术方案评审 L2 `approved` 与两份计划的开放项处置同日回写）
 
 ## 推进进度
 
@@ -31,5 +31,5 @@
 
 - ☑ 产品提案（`docs/product/proposal/proposal.md`）
 - ☑ 方法规格与验收矩阵（`docs/product/spec/`；需求评审已于 2026-10-19 通过——REV-2026-10-19-003，F1–F12 全关闭）
-- ◐ 产品设计（`docs/product/design/product-design.md` 成稿；技术方案评审门未跑）
-- ◐ 执行计划（`plan/`：PLAN-PRODUCT-001 与 PLAN-LOOP-SMOKE-001 在册；PLAN-LOOP-SMOKE 5/9 任务完成，T06–T08 与 T10 已失对象（评测装置随 ISS-2026-10-12-评测装置裁撤 删除，本期不做）；PLAN-PRODUCT 7/12 完成）
+- ☑ 产品设计（`docs/product/design/product-design.md` 成稿；技术方案评审 2026-10-29 经独立委派 L2 `approved`：`reviews/review-2026-09-19-001.md`）
+- ☑ 执行计划（`plan/`：PLAN-PRODUCT-001 8 项完成 / 6 项本期不做，PLAN-LOOP-SMOKE-001 5 项完成 / 5 项本期不做——T02 与 LOOP T09 的对象已随评测装置/改进环裁撤注销，PRODUCT T09 的 Intake FTS5 再犯类检索已落；状态以各自看板为准）

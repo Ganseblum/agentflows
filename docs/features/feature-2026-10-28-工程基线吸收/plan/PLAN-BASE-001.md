@@ -10,7 +10,7 @@ recorded_at: 2026-10-28T15:30:00+08:00
 
 ## 进展概览
 
-- 总任务 12 项：☑ 11 项已完成；T12（FE 增量独立评审）⚠ 阻塞——用户 2026-10-28 明确拒绝派发子代理，评审未运行，不计为通过。
+- 总任务 12 项：☑ 12 项已完成；T12（FE 增量独立评审）于 2026-10-29 经独立委派 L2 `approved` 闭环（用户此前拒绝委派，本次已授权）。
 - 阻塞：无。
 - 权威状态：本表即唯一任务状态源；批次 README 只作索引。
 
@@ -29,7 +29,7 @@ recorded_at: 2026-10-28T15:30:00+08:00
 | T09 | 需求评审门与技术方案评审门（L1 档独立 reviewer） | P0 | `docs/features/feature-2026-10-28-工程基线吸收/reviews/` | T06 | ☑ 已完成 | `docs/features/feature-2026-10-28-工程基线吸收/reviews/review-2026-10-28-001.md`（四轮收敛，最终 approved） |
 | T10 | FE 实现纪律：`frontend-engineer` 五组纪律；`design/fe` 表与自检；`spec/fe` 行为口径；工程基线请求层与 UI 基线 | P0 | `agents/frontend-engineer.md`、`skills/agentflow/templates/feature/design/fe/frontend.md`、`skills/agentflow/templates/feature/spec/fe/frontend.md`、`skills/agentflow/templates/engineering/baseline.md` | — | ☑ 已完成 | `docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/evidence/T10-frontend-discipline.txt`（由 `scratch/verify.py` 生成：角色 14/14、design/fe 7/7 + 自检 4/4、spec/fe 7/7、工程基线 6/6） |
 | T11 | FE 证据扩展（`verify.py` 增 FE 检查）、重建生成树、干净副本与共享树全量门 | P0 | `docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/scratch/verify.py`、`packaging/runtime/` | T10 | ☑ 已完成 | `docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/evidence/T07-validate-all-clean-base.txt`（干净副本 11/11 PASS）与 `docs/features/feature-2026-10-28-工程基线吸收/testing/agentflow-baseline/evidence/T07-validate-all-shared-tree.txt`（共享树 16:24 11/11 PASS）；`verify.py` 6/6 PASS |
-| T12 | FE 增量独立评审（G5），记录落 `reviews/` | P0 | `docs/features/feature-2026-10-28-工程基线吸收/reviews/` | T11 | ⚠ 阻塞 | `N/A: 用户 2026-10-28 明确拒绝派发子代理；独立评审未运行，不写成已批准。恢复条件：用户改口派发评审，或用户本人书面接受自审结论` |
+| T12 | FE 增量独立评审（G5），记录落 `reviews/` | P0 | `docs/features/feature-2026-10-28-工程基线吸收/reviews/` | T11 | ☑ 已完成 | `docs/features/feature-2026-10-28-工程基线吸收/reviews/review-2026-10-28-002.md`（L2 `approved`：FE 增量 T10/T11 在 source_revision `256ea64` 干净副本 verify.py 6/6 PASS、批次 doc_chain PASS、无摘标记转绿；P1 注记 10-29 批在途瘦身改 `frontend-engineer.md` 使 main 上 verify.py 暂为 3/6，FE 纪律已迁至 `execution.md` 前端执行清单，待 10-29 批落定后复跑） |
 
 > 2026-10-28 范围追加：用户指出第一轮只补后端与测试、FE 不对称；追加 M05/G5 与 T10–T12，`plan_version` 升到 1.1.0。原 T01–T09 的状态与证据不变。
 

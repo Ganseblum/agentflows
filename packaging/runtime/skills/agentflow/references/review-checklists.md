@@ -60,7 +60,7 @@ finding。
   未决项在批准前关闭；不需要外部模式。
 
 每种模式下还要检查阅读负担与表达纪律。判据的单点定义在
-[`references/document-chain.md`](document-chain.md) 的质量标准节
+[`references/document-chain-checks.md`](document-chain-checks.md) 的质量标准节
 （换 > 释 > 删、代号裸用、模式词分域、流程角色词与时效性引用），本档案不重复列举——重复定义正是
 那一节自己判为缺陷的「同一结论双源并存，不声明取舍」。这里只写评审者怎么用它，以及只有这里才有的两条：
 

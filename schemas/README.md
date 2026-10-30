@@ -4,10 +4,10 @@
 （或 JSON episode）的 frontmatter 字段与跨字段不变量。校验器（`tools/lab/validate.py schemas`
 与 `validate.py artifacts`）按这些契约编译记录，非法记录本目录之外无处可落地。
 
-改进环专用契约在 [`skills/improve/references/`](../skills/improve/references/) 下，因为 Improve
-Skill 直接链接到它们；校验器加载两处位置，并检查单份 JSON Schema 无法表达的跨文档不变量。
-本目录与那两处都在 [`protected-paths.txt`](../protected-paths.txt) 内——放宽一份记录被据以度量
-的 schema，就是编辑自己的门，因此契约变更属人工评审的门变更。
+episode 记录契约随改进环裁撤（2026-10-29）从 `skills/improve/references/` 迁入本目录；
+episode 仍是现行记录根（`episodes/`），所以契约保留。校验器还检查单份 JSON Schema 无法表达的
+跨文档不变量。本目录在 [`protected-paths.txt`](../protected-paths.txt) 内——放宽一份记录被据以
+度量的 schema，就是编辑自己的门，因此契约变更属人工评审的门变更。
 
 ## 本目录的契约
 
@@ -19,6 +19,8 @@ Skill 直接链接到它们；校验器加载两处位置，并检查单份 JSON
 | [`review.schema.json`](review.schema.json) | 评审记录 frontmatter：`review_id` / 目标项目与 feature / `source_revision` / `reviewed_docs`（归档快照路径） / `decision` / `findings`（指向现存 `docs/issues/` 记录）。 | `reviews/<project>-<feature-slug>/review-<YYYY-MM-DD>-<NNN>.md` |
 | [`test-plan.schema.json`](test-plan.schema.json) | 测试计划 frontmatter：用例目录（`case_count` 与用例注册表对账）、`test_version`（原地修订即递增）、凭据按注入方式声明而非取值。 | `docs/features/<批次>/testing/<project>-<feature-slug>/plan-<YYYY-MM-DD>-<NNN>.md` |
 | [`test-run.schema.json`](test-run.schema.json) | 测试执行记录 frontmatter：一轮执行对某钉定的计划版本，`summary_*` 计数与结果表对账，`decision` 与计数一致，`findings` / `flow_findings` 指向现存记录。 | `docs/features/<批次>/testing/<project>-<feature-slug>/run-<YYYY-MM-DD>-<NNN>.md` |
+| [`episode.schema.json`](episode.schema.json) | episode 记录 frontmatter：方法任务的最终决定、断言证据、每轮评审与脱敏来源。 | `episodes/<YYYY-MM-DD>/<EP-id>.json` |
+| [`decision-ledger.schema.json`](decision-ledger.schema.json) | 跨批次决策台账记录形态：`DEC-YYYY-NNN` 只追加永不移出、修订链 `r1…rN`、`withdrawn` / `equivalent_to` / `terminal` 终态三分；下游文档以 `decision_deps` frontmatter 钉定。机器强制在 `tools/lab/decisions.py`。 | `docs/PENDING-DECISIONS.md` + 下游文档 frontmatter |
 
 ## 已裁撤：不再有评测夹具契约
 
@@ -26,6 +28,7 @@ Skill 直接链接到它们；校验器加载两处位置，并检查单份 JSON
 评测装置整线裁撤删除：`evals/`、`eval_runner.py` / `host_adapter.py` / `policy.py`、
 `adapter-protocol.md`，以及 `eval-case.schema.json` 等三个 schema。留存的可复用设计知识与恢复
 清单见 `docs/design-decisions.md` §3——恢复仪器化时按该清单重建，
-包括重新引入的用例/对照契约。在此之前的改进环方法级改动一律 `measurement: none` 口径。
+包括重新引入的用例/对照契约。改进环已于 2026-10-29 整体裁撤，设计知识与恢复清单同样在
+`docs/design-decisions.md` §3。
 
 这些契约描述证据与执行计划。计划本身不构成修改代码或发布插件的授权。

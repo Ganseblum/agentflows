@@ -245,7 +245,13 @@ def validate_runtime_freshness(root: Path = ROOT) -> list[ValidationError]:
             tail = target.split("#", 1)[0].strip()
             if not tail or tail.startswith(("http://", "https://", "mailto:", "/")):
                 continue
-            if not (base / tail).exists():
+            resolved = (base / tail).resolve()
+            try:
+                resolved.relative_to(runtime.resolve())
+                inside_runtime = True
+            except ValueError:
+                inside_runtime = False
+            if not inside_runtime or not resolved.exists():
                 errors.append(
                     _drift(
                         f"packaging/runtime/{md.relative_to(runtime).as_posix()}",

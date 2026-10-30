@@ -48,7 +48,7 @@
 flowchart TB
     User(["用户"]) --> Host["编码宿主<br/>(ZCode / Claude Code / Codex)"]
     Host -->|"装载瘦快照"| Skill["agentflow Skill<br/>十步流程 + 触发面"]
-    Skill --> Roles["14 角色文件<br/>按需路由"]
+    Skill --> Roles["10 角色文件<br/>按需路由"]
     Skill --> Sup["Supervisor = 主会话"]
     Sup -->|"委派 write/read_scope"| Roles
     Roles --> Out["工件 + worker 结果契约"]
@@ -57,7 +57,7 @@ flowchart TB
     Decide --> Ep["记录根: docs/issues/ · docs/features/ · docs/releases/ · episodes/ · reviews/"]
     Ep --> Inst["实验室工具层（不入快照）<br/>validate / doc_chain / isolation / record_store / artifact_digest"]
     Inst -->|"方法级证据：measurement: none"| Human["人工独立评审与晋级决定"]
-    Inst -."仪器化恢复后".-> Loop["隔离对照与评测流程（当前暂停）"]
+    Inst -."已裁撤（2026-10-29）".-> Loop["改进环与仪器化评测"]
     Loop -->|"候选树 + check-diff"| Gate2["保护门 protected-paths"]
     Inst --> Docs["产品文档链 docs/product/<br/>proposal→spec→design→plan"]
 ```
@@ -70,7 +70,7 @@ flowchart TB
 | `docs/issues/` 等记录根 | 证据落盘与检索 | 承载产品叙事（在 `docs/`） |
 | 实验室（tools/lab/） | 编译门、隔离检查、检索与摘要；仪器化评测暂停 | 进入宿主瘦快照 |
 | docs/product/ | 产品四层文档链 | 取代原记录树中的产品叙事（执行契约在各批次 `docs/features/<批次>/plan/`） |
-| 保护门（protected-paths.txt） | 候选禁区单点声明 | 保护"怎么干活"的角色提示词（那是改进环的对象） |
+| 保护门（protected-paths.txt） | 候选禁区单点声明 | 保护"怎么干活"的角色提示词（改进环已裁撤，角色提示词不在保护面） |
 
 ### 1.3 文档链与角色/记录的接线
 

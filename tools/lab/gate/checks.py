@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ast
+import importlib
 import os
 import re
 import subprocess
@@ -15,6 +17,10 @@ from .common import (
     ROOT,
     ValidationError,
 )
+
+# Set by validate_doc_chain after it parses the self-test summary; validate.py reports it as
+# the check's scanned-object count (T03).
+LAST_DOC_CHAIN_CASES = 0
 
 
 def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
@@ -106,17 +112,35 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
     # Per-file floor, not just a suite-wide one. MIN_UNIT_TEST_COUNT alone let 4 of the 5
     # declared files be gutted (32 of 62 tests deleted) with the gate still green, because
     # the remaining 30 still cleared the floor of 20 (2026-10-26 audit G14). Each declared
-    # file must contribute at least one test method, parsed statically so a file that was
-    # emptied cannot hide behind the others.
+    # file must contribute at least one test method, parsed from the AST so a file that was
+    # emptied cannot hide behind the others. The count only accepts methods on unittest
+    # TestCase subclasses (transitively, within the module) — the same dialect as
+    # counts.count_tests(); a regex over `def test_` also matched helpers in plain classes
+    # that unittest discover never collects, so a gutted-into-a-plain-class file stayed green.
+    # counts.py is a top-level module (imported as `counts`, not `tools.lab.counts`), so the
+    # import below goes through the same sys.path entry this package is loaded from.
+    from counts import _is_testcase_class
+
     for name in EXPECTED_TEST_FILES:
-        source = (tests_dir / name).read_text(encoding="utf-8")
-        per_file = len(re.findall(r"^\s+def test_", source, re.MULTILINE))
+        path = tests_dir / name
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        known: set[str] = set()
+        per_file = 0
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and _is_testcase_class(node, known):
+                known.add(node.name)
+                per_file += sum(
+                    1
+                    for f in node.body
+                    if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and f.name.startswith("test_")
+                )
         if per_file == 0:
             errors.append(
                 ValidationError(
                     f"tests/{name}",
-                    "declared test file contributes no test methods; every EXPECTED_TEST_FILES "
-                    "entry must hold at least one",
+                    "declared test file contributes no collected test methods (none on a "
+                    "TestCase subclass); every EXPECTED_TEST_FILES entry must hold at least one",
                 )
             )
     if errors:
@@ -126,6 +150,8 @@ def validate_unit_tests(root: Path = ROOT) -> list[ValidationError]:
 
 def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
     """Run the doc-chain linter's discrimination self-test as part of the compile gate.
+
+    ``LAST_DOC_CHAIN_CASES`` records the parsed case count for the caller's audit line.
 
     The linter gates every document chain a worker delivers, but until now it only ever ran
     when someone remembered to invoke it by hand, so a regression in one of its checks
@@ -169,6 +195,8 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
             )
         ]
     passed, total = int(ran.group(1)), int(ran.group(2))
+    global LAST_DOC_CHAIN_CASES
+    LAST_DOC_CHAIN_CASES = total
     if passed != total or total == 0:
         return [ValidationError("doc_chain", f"doc-chain self-test passed {passed}/{total} cases")]
     if total < MIN_DOC_CHAIN_SELF_TEST_CASES:
@@ -238,16 +266,29 @@ def validate_decision_gate(root: Path = ROOT) -> list[ValidationError]:
         check=False,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
-    if completed.returncode == 0:
-        return []
-    findings = [
-        line.strip()[2:].strip()
-        for line in completed.stdout.splitlines()
-        if line.strip().startswith("- ")
-    ]
-    if not findings:
-        findings = [f"decision-gate linter exited {completed.returncode} with no findings"]
-    return [ValidationError("decision_gate", finding) for finding in findings]
+    errors: list[ValidationError] = []
+    if completed.returncode != 0:
+        findings = [
+            line.strip()[2:].strip()
+            for line in completed.stdout.splitlines()
+            if line.strip().startswith("- ")
+        ]
+        if not findings:
+            findings = [f"decision-gate linter exited {completed.returncode} with no findings"]
+        errors.extend(ValidationError("decision_gate", finding) for finding in findings)
+    # T29/T30 run unconditionally: an early return on a green doc-chain linter silently
+    # skipped both the decision_deps reverse index and the generated-index digest assertion.
+    lab = str(Path(__file__).resolve().parents[1])
+    if lab not in sys.path:
+        sys.path.insert(0, lab)
+    try:
+        decisions = importlib.import_module("decisions")
+    except ImportError:  # pragma: no cover - the gate tool is always present in a real tree
+        errors.append(ValidationError("decision_gate", "tools/lab/decisions.py is missing"))
+        return errors
+    errors.extend(ValidationError("decision_gate", finding) for finding in decisions.check(root))
+    errors.extend(ValidationError("decision_gate", finding) for finding in decisions.verify_index(root))
+    return errors
 
 
 def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:

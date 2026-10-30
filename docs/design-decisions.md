@@ -114,11 +114,19 @@ Supervisor 与技术决策与独立复核职责分离、重试有边界（连续
 6. **全链路留痕**：记录任务证据、归因、假设、候选、Baseline、评测、发布决策、人工批准、灰度结果
    与回滚——记录决策与证据，不是模型隐藏思考过程。
 
-### 现时状态（2026-10-12）
+### 现时状态（2026-10-29 更新）
 
-- `skills/improve` 与四个治理角色（feedback-analyst / candidate-engineer / evaluator /
-  release-governor）保留为方法面；只读角色已移除 `Bash`、`Write`、`Edit`；`isolation.py check-diff`
-  与 `artifact_digest.py` 保留为通用工具；确定性 Policy Engine 已随评测装置裁撤。
+- **改进环已整体裁撤**（2026-10-29 用户拍板 B）：`skills/improve`（Skill、证据与发布规则、
+  candidate / release-record 两份 schema）与四个治理角色（feedback-analyst /
+  candidate-engineer / evaluator / release-governor）一并删除；episode 契约迁至
+  `schemas/episode.schema.json`，`episodes/` 仍是现行记录根。方法改动改走
+  「明确反馈 + 有界候选 + 独立评审 + 人工授权」的批次流程。`isolation.py check-diff` 与
+  `artifact_digest.py` 保留为通用工具；确定性 Policy Engine 已随评测装置裁撤。
+  **恢复清单**：按本节 §3 的六个边界与下图重建 `skills/improve/`（SKILL + evidence-and-release +
+  candidate / release-record schema）、四个角色文件、`examples/improve/` 三份夹具、各 manifest
+  的 agents 条目、`protected-paths.txt` 与 `gate/common.py` 的必需条目、`gate/schema.py` 的
+  第二 schema 根、`gate/examples.py` 的 G10 校验，以及 `agents/README.md`、`roles.md`、README
+  与产品链的角色计数。
 - **业务任务度量切片已裁撤**（用户拍板「保公开、裁业务」）；**改进三件套记录根与逐版本发布记录
   同批退役**——方法级改动一律 `measurement: none` 口径：证据是推理加触发它的事故或评审发现，
   不表述为已验证的改进。评测装置（`evals/`、runner、adapter、policy 与三个 schema）已整线删除，
@@ -186,7 +194,8 @@ adapter 扫描工具结果计数写入 `observed_permission_denials`（**缺失 
 
 ## 对外口径（版本号以 manifest 为准）
 
-已具备受治理自迭代的工作流契约与数据契约（十条主工作流、<!-- count:agents -->14<!-- /count --> 角色能力库、14 条硬边界、独立评审门、
-确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役，方法级
-改动一律 `measurement: none` 口径——当前的改进闭环是**受治理的人工闭环**，不表述为已验证的自动
-学习系统。评测装置已整线裁撤（设计知识与恢复清单见 §3）；持久反馈检索与自动发布控制面仍待实现。
+已具备受治理的方法演进流程与数据契约（十条主工作流、<!-- count:agents -->10<!-- /count --> 角色能力库、14 条硬边界、独立评审门、
+确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役；
+改进环本身于 2026-10-29 整体裁撤，方法改动走批次流程，方法级改动一律 `measurement: none`
+口径，不表述为已验证的自动学习系统。评测装置已整线裁撤（设计知识与恢复清单见 §3）；
+持久反馈检索与自动发布控制面未实现。

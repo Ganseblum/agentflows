@@ -1,29 +1,18 @@
-import argparse
-import contextlib
-import datetime as _dt
-import io
 import json
-import os
-import shutil
 import sys
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
 from unittest import mock
 
-
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "tools" / "lab"
 if str(LAB) not in sys.path:
     sys.path.insert(0, str(LAB))
 
-import artifact_digest  # noqa: E402
-import doc_chain  # noqa: E402
-import isolation  # noqa: E402
-import validate  # noqa: E402
-
+import artifact_digest
+import validate
 
 
 class TestRecordContractTests(unittest.TestCase):
@@ -73,7 +62,7 @@ test_run_id: TR-2026-09-17-001
 title: 首轮执行
 project: demo-webapp
 test_plan_id: TP-2026-09-17-001
-test_plan_version: "1"
+test_plan_version: "{v}"
 target_revision: 9f2c1a7
 environment: staging
 credentials: session-injected env
@@ -89,7 +78,7 @@ recorded_at: "2026-09-17T16:00:00Z"
 
 | 用例 ID | 状态 | 证据 | 说明 |
 | --- | --- | --- | --- |
-| TC-LOGIN-001 | pass | — | ok |
+{row1}
 {row2}
 
 ## 证据
@@ -123,9 +112,11 @@ recorded_at: "2026-09-17T16:00:00Z"
 
     def _run_errors(self, root: str, plans: dict[str, Any], **overrides: str) -> list[Any]:
         fields = {
+            "row1": "| TC-LOGIN-001 | pass | — | ok |",
             "row2": "| TC-LOGIN-002 | pass | — | ok |",
             "p": "2",
             "f": "0",
+            "v": "1",
             "decision": "pass",
             **overrides,
         }
@@ -163,11 +154,78 @@ recorded_at: "2026-09-17T16:00:00Z"
             self.assertTrue(any("case_count" in message for message in self._messages(errors)))
             self.assertIsNone(entry)
 
+    def test_plan_case_source_column_must_not_be_empty(self) -> None:
+        # T10 / G3-AC-01: the 来源 column was declared required but never read. A case with no
+        # source (or a bare 无 without a reason) is now a compile error; the positive shape is
+        # covered by the template and the valid example.
+        text = (
+            self.PLAN_MD.format(case_count="2")
+            .replace("| 用例 ID | 级别 | 优先级 | 标题 |", "| 用例 ID | 级别 | 优先级 | 标题 | 来源 |")
+            .replace("| --- | --- | --- | --- |", "| --- | --- | --- | --- | --- |")
+            .replace("| TC-LOGIN-001 | smoke | P0 | 登录成功 |", "| TC-LOGIN-001 | smoke | P0 | 登录成功 |  |")
+            .replace("| TC-LOGIN-002 | e2e | P0 | 空密码拦截 |", "| TC-LOGIN-002 | e2e | P0 | 空密码拦截 | G2-AC-01 |")
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = self._write(Path(temporary) / "plan.md", text)
+            errors, _ = validate.validate_test_plan_markdown(path, path.relative_to(temporary), {})
+        messages = self._messages(errors)
+        self.assertTrue(any("来源 must name its acceptance origin" in m for m in messages), messages)
+
+    def test_run_actual_result_column_must_record_the_observation(self) -> None:
+        # T10 / G3-AC-01: the 实际结果 column was declared required but never read.
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
+            text = (
+                self.RUN_MD.format(
+                    row1="| TC-LOGIN-001 | pass | — |  |",
+                    row2="| TC-LOGIN-002 | pass | — | 登录页正常跳转 |",
+                    p="2",
+                    f="0",
+                    v="1",
+                    decision="pass",
+                )
+                .replace("| 用例 ID | 状态 | 证据 | 说明 |", "| 用例 ID | 状态 | 证据 | 实际结果 | 说明 |")
+                .replace("| --- | --- | --- | --- |", "| --- | --- | --- | --- | --- |")
+            )
+            path = self._write(
+                Path(temporary) / "features/feature-2026-09-17-demo/testing/demo-webapp-feature-login/run-2026-09-17-001.md",
+                text,
+            )
+            errors, _, _ = validate.validate_test_run_markdown(path, path.relative_to(temporary), {}, plans)
+        messages = self._messages(errors)
+        self.assertTrue(any("实际结果 must record the observed behaviour" in m for m in messages), messages)
+
     def test_run_with_summary_mismatch_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
             errors = self._run_errors(temporary, plans, p="3")
             self.assertTrue(any("summary_pass" in message for message in self._messages(errors)))
+
+    def test_zero_case_pass_run_is_rejected(self) -> None:
+        # T06: an empty 结果 table used to be exempt whenever the run pinned a non-current plan
+        # version, so a run that observed nothing could declare `pass`. The floor is now
+        # unconditional: at least one case row and a non-zero summary total.
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
+            errors = self._run_errors(
+                temporary,
+                plans,
+                row1="",
+                row2="",
+                p="0",
+                f="0",
+                v="0",
+            )
+        messages = self._messages(errors)
+        self.assertTrue(any("at least one case row" in m for m in messages), messages)
+
+    def test_run_pinning_a_plan_version_that_never_existed_is_rejected(self) -> None:
+        # T06: `test_plan_version` must match a version the plan actually had.
+        with tempfile.TemporaryDirectory() as temporary:
+            plans = {"TP-2026-09-17-001": self._plan_entry(temporary)}
+            errors = self._run_errors(temporary, plans, v="9")
+        messages = self._messages(errors)
+        self.assertTrue(any("never had" in m for m in messages), messages)
 
     def test_run_referencing_unknown_plan_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -229,7 +287,12 @@ recorded_at: "2026-09-17T16:00:00Z"
             drifted_run = self._write(
                 plan_dir / "run-2026-09-17-001.md",
                 self.RUN_MD.format(
-                    row2="| TC-LOGIN-002 | pass | — | ok |", p="2", f="0", decision="pass"
+                    row1="| TC-LOGIN-001 | pass | — | ok |",
+                    row2="| TC-LOGIN-002 | pass | — | ok |",
+                    p="2",
+                    f="0",
+                    v="1",
+                    decision="pass",
                 ).replace('recorded_at: "2026-09-17T16:00:00Z"', 'recorded_at: "2026-09-18T16:00:00Z"'),
             )
             errors, _, _ = validate.validate_test_run_markdown(
@@ -358,7 +421,7 @@ class CarrierMapVerificationTests(unittest.TestCase):
         return root
 
     def _rows(self, extra: list[str]) -> str:
-        base = ["| 规则%d | `skill.md` | # x | 只此一份 |\n" % i for i in range(12)]
+        base = [f"| 规则{i} | `skill.md` | # x | 只此一份 |\n" for i in range(12)]
         return "".join(base + extra)
 
     def test_missing_carrier_path_is_reported_with_the_rule_name(self) -> None:
@@ -472,7 +535,16 @@ class EpisodeEvidencePointerTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "EP-2026-01-01-009.json"
-            record = {
+            claims: list[dict[str, str]] = [
+                {
+                    "claim_id": "C-1",
+                    "claim": "门全绿",
+                    "status": "verified",
+                    "check": "python3 tools/lab/validate.py all",
+                    "evidence_ref": "docs/this-file-was-cleaned-up.md",
+                }
+            ]
+            record: dict[str, object] = {
                 "schema_version": 1,
                 "episode_id": "EP-2026-01-01-009",
                 "source_type": "acceptance",
@@ -485,15 +557,7 @@ class EpisodeEvidencePointerTests(unittest.TestCase):
                 "provenance": {"carrier": "session", "sanitized": True},
                 "redactions": [],
                 "review_roundtrips": [],
-                "claims": [
-                    {
-                        "claim_id": "C-1",
-                        "claim": "门全绿",
-                        "status": "verified",
-                        "check": "python3 tools/lab/validate.py all",
-                        "evidence_ref": "docs/this-file-was-cleaned-up.md",
-                    }
-                ],
+                "claims": claims,
             }
             path.write_text(json.dumps(record), encoding="utf-8")
             errors = validate.validate_episode_document(path)
@@ -501,7 +565,7 @@ class EpisodeEvidencePointerTests(unittest.TestCase):
                 any("evidence pointer" in error.message for error in errors),
                 [error.message for error in errors],
             )
-            record["claims"][0]["evidence_ref"] = "index.md"
+            claims[0]["evidence_ref"] = "index.md"
             path.write_text(json.dumps(record), encoding="utf-8")
             self.assertEqual([], validate.validate_episode_document(path))
 

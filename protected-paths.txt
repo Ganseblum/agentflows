@@ -7,21 +7,19 @@
 # the candidate tree contains these paths.
 #
 # Inclusion rule: a path belongs here when it decides whether a candidate is measured or judged —
-# the evaluator and governor role instructions, the measurement path that survives (digest,
-# isolation), the compile step, the boundary check, the record contracts that compile step
-# enforces, and the regression tests that pin the gate tools. The evaluation suite, runner,
-# adapter, and release policy were retired with the 2026-10-12 evaluation-apparatus removal
-# (design knowledge kept in docs/design-decisions.md §3); restore their protection together
-# with the apparatus. Role prompts that only describe how work is done are NOT protected;
-# improving them is the point of the loop.
+# the measurement path that survives (digest, isolation), the compile step, the boundary check,
+# the record contracts that compile step enforces, and the regression tests that pin the gate
+# tools. The evaluation suite, runner, adapter, release policy, and improvement loop were retired
+# (2026-10-12 apparatus removal; 2026-10-29 loop removal — design knowledge kept in
+# docs/design-decisions.md §3); restore their protection together with the apparatus. Role
+# prompts that only describe how work is done are NOT protected; improving them is the point.
 #
-# Three prefixes below are deliberately broad. `schemas/` covers the record contracts that
-# `validate.py` compiles candidate artifacts against: a candidate that loosens the schema it is
-# measured by has edited its own gate. `skills/improve/references/` is the improvement loop's
-# rulebook — the evidence-and-release rules plus the governance schemas that survive the
-# 2026-10-12 apparatus removal (episode, candidate, release-record; the eval-case schema was
-# retired with the apparatus itself). Both mean a legitimate contract or rule change is a
-# human-reviewed change rather than a candidate edit — that is the intended trade.
+# `schemas/` covers the record contracts that `validate.py` compiles candidate artifacts
+# against: a candidate that loosens the schema it is measured by has edited its own gate. A
+# legitimate contract change is a human-reviewed change rather than a candidate edit — that is
+# the intended trade. The improvement loop itself (its skill, roles, and candidate/release
+# schemas) was retired in the 2026-10-29 slimming batch; the episode contract stays under
+# `schemas/` because episodes remain a live record root.
 #
 # The regression tests are protected by file, not by directory, and `validate.py tests` asserts
 # the directory holds exactly its declared entries. Protecting the whole directory instead would
@@ -39,11 +37,7 @@
 # Format: one path relative to the repository root per line. A path protects itself and
 # everything under it. Blank lines and lines starting with '#' are ignored.
 
-agents/evaluator.md
-agents/release-governor.md
 .github/
-
-skills/improve/references/
 
 schemas/
 tests/test_gate_schema.py
@@ -53,19 +47,21 @@ tests/test_doc_chain.py
 tests/test_record_store.py
 tests/test_workflow.py
 tests/test_pre_push.py
+tests/test_decisions.py
 # The lab tools decide whether a candidate is measured or judged. tools/lab/gate/,
 # counts.py, and mutate.py were added 2026-10-19 (gate change, human-directed): the
 # 2026-10-13 split moved the check bodies into gate/ while this list still named only
 # validate.py, leaving the guard logic itself outside the protection.
 tools/lab/artifact_digest.py
 tools/lab/counts.py
+tools/lab/decisions.py
 tools/lab/doc_chain.py
 tools/lab/docchain/
 tools/lab/gate/
 tools/lab/isolation.py
+docs/decisions/index.md
 tools/lab/mutate.py
 tools/lab/record_store.py
-tools/lab/trend.py
 tools/lab/validate.py
 
 # The build script decides what the installed surface contains: a candidate that edits how
@@ -81,3 +77,4 @@ skills/agentflow/scripts/
 skills/agentflow/references/contracts.md
 
 protected-paths.txt
+docs/decisions/issued.txt

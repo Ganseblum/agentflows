@@ -18,7 +18,7 @@
 - 主实施仓：本仓库（方法、角色、仪器、记录契约同仓）
 - 分发形态：ZCode / Claude Code / Codex 宿主插件，[`marketplace.json`](../../marketplace.json) 的
   `source` 指向 `./packaging/runtime`（由 `packaging/build_runtime.py` 生成的瘦快照）
-- 最后更新时间：`2026-10-22`
+- 最后更新时间：`2026-10-30`
 
 ## 推进进度
 
@@ -45,11 +45,11 @@
 ### 4. Design [技术方案]
 
 - ☑ [总体] `design/product-design.md`（决策表 + 技术挑战 + 架构 + 负责不负责 + 影响面评估） [→](./design/product-design.md)
-- ☐ 技术方案评审通过（独立评审，文档模式 review design；通过后 Design 阶段冻结）
+- ☑ 技术方案评审通过（2026-10-29 经独立委派 L2 `approved`：`reviews/review-2026-09-19-001.md`；Design 阶段冻结）
 
 ### 5. Plan [执行契约]
 
-- ☑ 方法改进线：批次内 `plan/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环；改进环已停用，计划留存备查）
+- ☑ 方法改进线：批次内 `plan/PLAN-LOOP-SMOKE-001.md`（第一次 improve 闭环；改进环已裁撤，计划留存备查）
 - ~~业务评测线~~：业务尺子随 2026-10-12 精简批退役（原计划随瘦身批删除，git 历史可回溯）；方法级改动一律 `measurement: none` 口径
 - ☑ 打包线：批次内 `plan/PLAN-PRODUCT-001.md`（产品线四步总账）
 - ☑ 工具守卫线：解释器下限 fail-closed（已完成，原计划随瘦身批删除，git 历史可回溯）

@@ -1,0 +1,82 @@
+# 主审自审（L0）：003/004 两轮 findings 的逐条复核 2026-10-29T19:23:11+0800
+档位：L0（派发失败，见 ../../dispatch-probe/tier-2026-10-29-r2.md）；以下均为确定性命令实跑，不替代独立评审。
+
+## 看板聚合（计划任务表实际字形计数）
+任务行数 24；字形计数 {'☑': 22, '◐': 1, '—': 1}
+字形→状态：☑ 已完成 / ◐ 进行中 / ☐ 未开始 / ⚠ 阻塞 / — 本期不做
+
+## R1 四处导航面的进度句（先打印原文）
+docs/features/feature-2026-10-29-全面修正与瘦身/README.md:69:◐ 进行中（实施任务状态与证据以 `plan/PLAN-FIX-001.md` 看板为唯一权威：当日实测 22 ☑ / 1 ◐（T14 第二轮评审）/ 0 ☐ / 1 本期不做，共 24 项；0.23.0 发版与全量门原始输出见 `CHANGELOG.md` 0.23.0 节及批次 `testing/` 证据）
+docs/features/README.md:37:| [`feature-2026-10-29-全面修正与瘦身`](feature-2026-10-29-全面修正与瘦身/README.md) | 全面修正与瘦身（议程归并 / 拍板口归口 / 四组门判据 / 必读面收敛 / 证据件与重复导航删除） | 进行中，已随 0.23.0 发布（提交 `f73a4e9`，2026-10-29）：看板实测 22 ☑ / 1 ◐（T14）/ 0 ☐ / 1 本期不做（T18），共 24 项（当日时点值）；第二轮独立评审待跑，结论上限 `partial`；状态以 `plan/PLAN-FIX-001.md` 为准 |
+index.md:42:- 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务仍部分在途——22 ☑ / 1 ◐ / 0 ☐ / 1 本期不做（当日时点值，现行值以看板为准），第二轮独立评审待跑）——见 [批次入口](docs/features/feature-2026-10-29-全面修正与瘦身/README.md)、[计划](docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md)；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)
+docs/releases/todo.md:10:  第二段工作仍在工作树（未提交、未发布）：看板实测见 `plan/PLAN-FIX-001.md`（24 项，T14
+
+## R2 吸收映射表（原文命中）
+docs/features/feature-2026-10-29-全面修正与瘦身/design/qa/testing.md:40:### 2.1 吸收映射（实际并入项，2026-10-29 补）
+docs/features/feature-2026-10-29-全面修正与瘦身/spec/qa/acceptance.md:15:| G1-AC-01 | M-A-01 | §2.1 吸收映射表内的项在本批计划出现 0 次或 ≥2 次；表外旧批任务被误报为已吸收 | 逐条核 §2.1 映射表；表外任务留在原批 | ☑ design/qa/testing.md §2.1 吸收映射表 + T02 回写 |
+
+## R3 验收点状态分布
+29
+仍为 ☐ 待覆盖的行：
+（无）
+非 ☑ 的行：
+43:| G7-AC-05 | M-G-05 | 对照实验只有协议没有数字，或把代理指标写成已验证人效 | 报告含协议、两组原始数字与限制；独立评审复核 | ◐ 待第三轮独立评审复核实验报告 |
+
+## R4 退役面扫描与变异证据
+
+未带退役说明的命中数: 0
+EXIT=0
+    1635 docs/features/feature-2026-10-29-???????/testing/agentflow-???????/evidence/review-r2/mutation-c17-2026-10-29.txt
+总变异数 19  已杀死 19  存活 0（其中超时 0）  无效 0
+EXIT=0
+
+## R5 README 范围声明与观测值
+97:行内代码按引文保留，不当作悬空指针。
+63:| T12 | 必读面收敛：四文件只消副本（2026-10-29 拍板 C，不设总量上限）；`SKILL.md` 去版本史散文与重复声明、宿主易变细节压成一句结论；`document-chain.md` 拆出判据细则文件并同步 4 处引用；同步义务条款退场（以 T07 的归属表为据） | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/document-chain.md`、`skills/agentflow/references/document-chain-checks.md`、`skills/agentflow/references/roles.md`、`agents/reviewer.md`、`skills/agentflow/references/contracts.md` | T07 | ☑ 已完成 | `agents/reviewer.md` 的两份深度清单移出（201 行/7,774 字符 → 144 行/5,336 字符），落点 `skills/agentflow/references/review-checklists.md`；`skills/agentflow/SKILL.md` 的审核节与文档交付链节改为指向各自权威；「改一处就改另一处」同步义务从五个规则载体退场并由 `validate.py docs` 断言钉住。判据细则已拆到 `skills/agentflow/references/document-chain-checks.md`（157 行；主契约 317 行），4 处引用同批更新（`SKILL.md`、`carrier-map.md` 两行、`review-checklists.md`）；`validate.py docs` PASS。实施后实测四文件 621 行 / 86,280 字符（SKILL 151、roles 124、contracts 197、reviewer 149）；行数只作观测值，不作判据 |
+
+## R6 PENDING 的 episode 出处路径是否在盘
+30:> `CHANGELOG.md` 对应节与 `episodes/归档/2026-10/2026-10-18/`、`episodes/归档/2026-10/2026-10-19/` 下的 episode（月度归档后的现行路径）。
+episodes/归档/2026-10/2026-10-18
+episodes/归档/2026-10/2026-10-19
+
+## T1 活方法面残留指针（应 0 命中）
+命中数: 0
+
+## T3 凭据 pattern 单测
+----------------------------------------------------------------------
+Ran 1 test in 0.007s
+
+OK
+
+## T4 design 更新点
+22:| D6 必读面上限 | A 追原 T24 的 ≤350 / B ≤450 / C 只消副本、不设总量上限 | **C（2026-10-29 用户拍板）** | A/B 都要靠删判据或压缩判据细则才能达标，违反 M-E-04「收敛不等于删判据」；C 把判据细则拆到 `document-chain-checks.md`、重复规则收成指针，行数只作观测值 |
+156:`schemas/episode.schema.json` 对该字段只声明 `minLength`。
+238:**受保护面逐项清单（本批授权范围，门变更）**：`schemas/review.schema.json`、`schemas/test-plan.schema.json`、`schemas/test-run.schema.json`、`schemas/episode.schema.json`、`protected-paths.txt`、
+239-`packaging/runtime/`（生成树，由 `packaging/build_runtime.py` 重建）、`tools/lab/gate/`、
+240-`tools/lab/docchain/`、`tests/test_gate_records.py`、`skills/agentflow/references/contracts.md`（
+34:| `G7-01` | 改进环文件/角色仍在盘，或活方法面仍指向 `skills/improve` | 判红；删除后判绿 | 负例 + 正例 |
+35:| `G7-02` | `credentials` 写入 `sk-…` / `PASSWORD=…` / `AKIA…` | schema 判红；`token: injected via env` 判绿 | 负例 + 正例（防误伤） |
+36:| `G7-03` | C17 变异 M53/M54 任一存活 | `mutate.py` 报告存活 > 0 即失败 | 反证 |
+37:| `G7-04` | 契约「定位即预算」缺失或生成树未重建 | 检索/`manifests` 判红 | 负例 |
+38:| `G7-05` | 对照实验报告缺原始数字，或把 n=1 写成普遍结论 | 评审判红（不阻塞门，按阅读向复核） | 阅读向 |
+
+## T5 契约指针与归属表
+148:**定位即预算。** 简报必须给 `path:line` 或可复核的 Grep 模式；worker 因定位不足需要扩大读取时先索取，不自行通读整仓。详细口径（大文件片段交付、先跑命令再交原始输出、评审简报的定位义务）以 `skills/agentflow/SKILL.md` 的「评审简报的定位义务」为唯一正文，本契约只留这条判据。优先级：隐式行为检查要求追到机制注册点时，追到注册点优先于读取上限——上限约束的是无目标通读，不是有目标的追踪。
+18:| 定位即预算（读取定位与上限） | `skills/agentflow/SKILL.md` | ## 评审简报的定位义务 | `contracts.md` 只留一条判据与指针，详细口径不复制第二份 |
+
+## T6 单测计数时效标注
+56:| T05 | 门①的回归用例落点：优先并入既有被钉住的 `tests/test_gate_records.py`，避免同时改 `EXPECTED_TEST_FILES`（`gate/common.py:97-105`）与 `protected-paths.txt` 两处清单；确需新建文件时同批登记两处并跑 `validate.py protected` | P0 | `tests/test_gate_records.py`、`tools/lab/gate/common.py`、`protected-paths.txt` | T04 | ☑ 已完成 | 新用例并入既有被钉住的 `tests/test_gate_records.py`（新增 `ReviewTierEnforcementTests` 与 `EpisodeEvidencePointerTests`），未新建测试文件，故 `EXPECTED_TEST_FILES` 与 `protected-paths.txt` 无需增补；实跑 `-m unittest discover -s tests` → Ran 194 tests OK（当时；本轮复跑已增至 201，现行数以实跑为准），见 `docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/gate-runs/all-2026-10-29.txt` |
+
+## 全量门复跑
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+EXIT=0

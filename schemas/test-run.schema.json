@@ -52,9 +52,10 @@
       "minLength": 1
     },
     "credentials": {
-      "description": "How credentials reached the executor (e.g. 'session-injected env, never persisted'). Values are forbidden here and anywhere in the body.",
+      "description": "How credentials reached the executor (e.g. 'session-injected env, never persisted'). Obvious secret shapes (sk-/ghp_/AKIA/Bearer/token=/password=) are rejected by pattern in this field; colon-separated descriptions such as `token: injected via env` are allowed; whole-body scanning is not implemented (2026-10-29 拍板 C).",
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "^(?!.*(?i:(?:sk-[a-z0-9]{8,}|gh[pousr]_[a-z0-9]{8,}|AKIA[0-9A-Z]{16}|Bearer\\s+[A-Za-z0-9._~+/-]{8,}|(?:api[_-]?key|token|password|secret)\\s*=\\s*[^\\s]{6,}))).*$"
     },
     "summary_pass": {
       "description": "Case count with result pass; the checker asserts equality with the 结果 table. Frontmatter values are strings by contract.",

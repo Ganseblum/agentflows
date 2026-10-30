@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow.dev/schemas/decision-ledger.schema.json",
+  "title": "Agentflow decision-ledger record",
+  "description": "Contract for one decision in the cross-batch ledger (docs/PENDING-DECISIONS.md). A decision is recorded once as DEC-YYYY-NNN and never removed (只追加、永不移出). It advances by revision (r1, r2 …); a revision may be withdrawn; the current revision may declare equivalent_to an earlier one so downstream pins do not go stale on a text-only change. Downstream documents declare their dependence via decision_deps frontmatter (flat tokens: DEC-YYYY-NNN#rN, DEC-YYYY-NNN#invariant=<text>, optionally #stale_reason=<…>#review_date=YYYY-MM-DD). This schema documents the ledger record shape; the machine enforcement lives in tools/lab/decisions.py (view / check / index).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "rev"],
+  "properties": {
+    "id": {
+      "description": "Decision identifier, DEC-<YYYY>-<NNN>. Assigned once, never reused or removed.",
+      "type": "string",
+      "pattern": "^DEC-\\d{4}-\\d{3}$"
+    },
+    "rev": {
+      "description": "Current revision number (1-based). Bumping it is the only text-changing operation allowed without a stale_reason.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "withdrawn": {
+      "description": "Revisions that were retracted (no longer authoritative). A downstream pin to a withdrawn revision is red.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "equivalent_to": {
+      "description": "Revisions the current revision is textually equivalent to. A downstream pin to one of these stays green.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "terminal": {
+      "description": "Terminal state of the whole decision. Empty means still active. The triad: superseded / withdrawn / deferred.",
+      "enum": ["", "superseded", "withdrawn", "deferred"]
+    },
+    "invariant": {
+      "description": "A statement that must remain true across revisions; downstream docs may pin this instead of a revision.",
+      "type": "string",
+      "minLength": 1
+    },
+    "stale_reason": {
+      "description": "Why a downstream document is allowed to lag behind the current revision. Must accompany review_date.",
+      "type": "string",
+      "minLength": 1
+    },
+    "review_date": {
+      "description": "Date (YYYY-MM-DD) by which the stale pin must be re-reviewed; must be today or later to count as a valid exemption.",
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 10,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    }
+  }
+}

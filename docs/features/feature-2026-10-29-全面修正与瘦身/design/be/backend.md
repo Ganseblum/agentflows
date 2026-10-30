@@ -7,7 +7,7 @@
 | 三批未完成任务怎么收 | 单批吸收：本批计划给每条未完成项一个唯一任务号，旧三批只留「未完成任务并入本批」一行指针 |
 | 散落的待决项怎么归口 | 扩既有 C18 归属判据的射程，不新增判据号；链内台账保留但必须带拍板口编号 |
 | 记录引用怎么可复核 | 对字段级路径值做存在性校验，两种豁免写法（`仓库@修订:路径` / `N/A: 理由`）；正文散文不判 |
-| 必读面削到哪 | ≤450 行（不追原 ≤350），削的是副本与版本史散文，判据细则拆分而非删除 |
+| 必读面削到哪 | 只消副本、不设总量上限（2026-10-29 用户拍板 C）；削的是副本与版本史散文，判据细则拆到独立分册而不是删除 |
 | 删除怎么不留悬空 | 引用先改 → 门确认绿 → 再删对象 → 门再确认绿；删除前跑保全快照 |
 
 ## 1. 决策表
@@ -19,7 +19,7 @@
 | D3 链内台账与拍板口的关系 | A 废掉 `spec/checklist.md` 全部去拍板口 / B 保留两级、链内行必须带拍板口编号 / C 二者各写各的 | **B** | A 会让需求侧「阻塞什么、由谁关闭」的运行时信息挤进给 owner 看的清单，拍板口变成第二份 spec；C 就是 F1 的成因。B 的代价是每批立项多一步登记 |
 | D4 引用存在性判据的对象范围 | A 全仓所有反引号路径 / B 仅字段级路径值（白名单）/ C 仅 episode | **B** | A 必然误伤历史引文与退役路径叙述（`AGENTS.md` 明文：围栏与行内代码在退役路径扫描里算引文；CHANGELOG 历史条目按原样保留），首轮误报会被当发现或被整体放行——两者都是本仓记录过的失败形态。C 漏掉评审记录与 issue frontmatter |
 | D5 存量失效引用的处置 | A 批量删除含失效引用的记录 / B 逐条改写为两种豁免形态之一 / C 判据只对未来生效 | **B** | A 销毁证据；C 会让「已消失对象仍被当作现行事实」继续存在，且本批 G3-AC-04 无法达成。B 的成本是要逐条判断该引用当年指的是什么，这正是判据该问的问题 |
-| D6 必读面上限 | A 追原 T24 的 ≤350 / B ≤450 并把判据细则拆出 / C 只去重不设上限 | **B（按建议值推进，取值待拍板口第 19 条）** | A 需要删掉判据细则才能达标，违反 M-E-04「收敛不等于删判据」；C 与 F5 的观察（各削一角、总量反增 76 行）正相反。450 = 四文件去掉版本史散文、重复声明与宿主带日期细节后的可达预算，细则移入 `document-chain-checks.md` 不计入必读四件。**如实记录**：用户 2026-10-29 选定的四条授权不含该数值，因此本决策是实现侧的建议值，不是已拍板结论 |
+| D6 必读面上限 | A 追原 T24 的 ≤350 / B ≤450 / C 只消副本、不设总量上限 | **C（2026-10-29 用户拍板）** | A/B 都要靠删判据或压缩判据细则才能达标，违反 M-E-04「收敛不等于删判据」；C 把判据细则拆到 `document-chain-checks.md`、重复规则收成指针，行数只作观测值 |
 | D7 载体归属表与核验脚本 | A 新增 `tools/lab/gov_carrier.py` 作为第 12 个门项 / B 表落 `skills/agentflow/references/carrier-map.md`，核验断言并入既有 `validate.py docs` 项 / C 表只作散文 | **B** | A 增加门项数，与约束二冲突且 `validate.py protected` 与 `EXPECTED_*` 清单都要跟着改；B 复用已经在扫描角色面与文档面的检查器，新增的只是断言。C 会重演「表写完即过期」 |
 | D8 删除的执行顺序 | A 先删再补引用 / B 引用先改 → 门绿 → 删对象 → 门再绿 / C 只删无人引用的 | **B** | 中间态悬空正是 F4 描述的静默腐烂；A 会让「先删后补」在两次门跑之间被提交。C 等于什么都不删 |
 | D9 字形映射单源收口点 | A 两份映射各自加注释互指 / B 单一定义 + 另一处导入 / C 合并两份判据 | **B** | A 是 2026-10-26 审核 G32 的现状（注释标注同步义务），正是本批要消灭的「用纪律对冲重复」；C 会改变两处消费方的语义 |
@@ -102,7 +102,7 @@ stateDiagram-v2
 | S3 引用改写 | 记录面 → 字段值 | 输入：S2 的扫描输出；输出：改写后的记录 + 豁免标注 | 悬空计数从 N 降到 0 | 某条无法判断当年所指 → 写 `N/A: 未能核实，出处见…`，不猜 | 改写前后计数各一次 |
 | S4 噪声删除 | 删除脚本 → 文件系统 | 输入：S3 的绿状态；输出：证据件、重复导航、内部重复快照消失 | 记录面文件数下降 | 保全快照 `verify` 报红且非本次改写 → 停止删除并回查 | `find \| wc -l`、`du -sh` 前后 |
 | S5 生成树重建 | `packaging/build_runtime.py` → `packaging/runtime/` | schema 与 references 源改动同步进快照 | 快照逐字节跟随源 | `manifests` 红 → 未重建，禁止进入 S6 | `validate.py manifests` 原文 |
-| S6 表达面收敛 | 必读四件 → 权威载体表 | 按归属表削副本、留指针；版本史散文退场 | 行数 ≤450 | 任一判据被削 → G5-AC-04 红；归属表核验不过 → 回退该处改写 | `wc -l` 逐文件 + `validate.py docs` |
+| S6 表达面收敛 | 必读四件 → 权威载体表 | 按归属表削副本、留指针；版本史散文退场 | 副本处置逐行；行数仅观测 | 任一判据被削 → G5-AC-04 红；归属表核验不过 → 回退该处改写 | `wc -l` 逐文件 + `validate.py docs` |
 | S7 全量复核 | 门 → 原始输出 | `validate.py all`、`doc_chain.py <本批>`、`--self-test`、`unittest` | 四项全绿并留档 | 任一项红 → 当轮修复，不在红门上继续 | 逐字输出 |
 | S8 独立评审 | 实测档位 → `reviews/` | 先派两个只读探测定档，再派评审；记录含 `review_tier` 与派发原始返回 | 评审门关闭或转 `changes_requested` | 派发失败 → 如实登记 `dispatch_errors`（不冒充 L2），结论上限 `partial` | 评审记录 + 派发原始返回 |
 | S9 记录落盘 | 本批 → 计划/验收/episode | 状态与证据两列最小 diff 回写；episode 落 `episodes/<日期>/` | 看板与承接表聚合一致 | 证据只存在于 `/tmp` → 按 C23 判红，改写为四种载体之一 | C22/C23 对本批实跑 PASS |
@@ -153,7 +153,7 @@ sequenceDiagram
 
 实测前提（2026-10-29 对门代码的取证）：**episode JSON 的路径字段当前完全没有存在性校验**——
 `evidence_ref` 在记录面命中 12 个文件 37 次、`tools/lab/` 内 0 次消费，
-`skills/improve/references/episode.schema.json` 对该字段只声明 `minLength`。
+`schemas/episode.schema.json` 对该字段只声明 `minLength`。
 Markdown 侧却早有等价机制：`tools/lab/gate/records.py:86` 的 `validate_body_references`
 （被 records.py:56 与 :230、`gate/workspace.py:151`、`gate/testing.py:114` 与 :203 五处调用），
 它要求命中路径 `is_file()` 且 `is_relative_to(ROOT)`（`:114-120`，堵 `../` 逃逸），
@@ -235,10 +235,10 @@ Markdown + JSON 文件，判据只读文件树。
 | 证据件与重复快照删除 | L2 | 删除不可逆（git 历史可回溯，但工作树对象消失） | `episodes/**` 的 `evidence_ref`（L3 批 10 处）、批次 `testing/` 计划与运行记录的证据列、`docs/issues/**` 的引用；结论：先改写后删除，删除后全量门与 `doc_chain_live` 必须仍绿 |
 | `skills/agentflow/**` 与 `agents/reviewer.md` 收敛 | L2 | 表达面收敛，不改变流程语义 | 宿主加载的安装快照、`references/roles.md` 与 `SKILL.md` 的交叉引用、`validate.py docs` 的 `agentflow:<role>` 解析；结论：引用全部保持可解析 |
 
-**受保护面逐项清单（本批授权范围，门变更）**：`schemas/review.schema.json`、
+**受保护面逐项清单（本批授权范围，门变更）**：`schemas/review.schema.json`、`schemas/test-plan.schema.json`、`schemas/test-run.schema.json`、`schemas/episode.schema.json`、`protected-paths.txt`、
 `packaging/runtime/`（生成树，由 `packaging/build_runtime.py` 重建）、`tools/lab/gate/`、
 `tools/lab/docchain/`、`tests/test_gate_records.py`、`skills/agentflow/references/contracts.md`（
-仅当收敛必须触及；本批默认不改其正文，见 D7 与 10-25 批 T12 的取舍）。
+本批已按 #14 A 补「定位即预算」条，见 D7 与 T23）。
 不新增 `tests/` 文件——新用例并入既有被钉住的测试文件，避免同时改 `EXPECTED_TEST_FILES` 与
 `protected-paths.txt` 两处清单。
 

@@ -11,6 +11,7 @@ from .common import (
     TEST_RUN_SCHEMA,
     ValidationError,
     dated_id_errors,
+    header_columns,
     heading_present,
     is_separator_row,
     load_record_markdown,
@@ -19,6 +20,17 @@ from .common import (
 )
 from .records import validate_body_references
 from .schema import SchemaValidator
+
+
+def _cell(cells: list[str], columns: dict[str, int] | None, name: str, fallback: int) -> str:
+    """Read a cell by column name; fall back to a position only when the table has no header.
+
+    T05: positional reads (`cells[1]`) silently moved meaning whenever a table gained a column.
+    """
+    position = columns.get(name) if columns else None
+    if position is None:
+        position = fallback
+    return cells[position].strip() if len(cells) > position else ""
 
 TEST_CASE_ID_PATTERN = re.compile(r"^TC-[A-Z0-9][A-Z0-9-]*$")
 
@@ -42,6 +54,19 @@ TEST_RUN_REQUIRED_HEADINGS = ("## 结果", "## 证据", "## 结论")
 NO_EVIDENCE_CELLS = ("", "—", "-", "无")
 
 
+def _int_version(value: Any) -> int | None:
+    """A record version as an int; YAML hands back `2`, `"2"`, or a non-numeric string."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        text = value.strip().strip("\"'")
+        if text.isdigit():
+            return int(text)
+    return None
+
+
 def parse_test_case_registry(
     body: str, path: Path
 ) -> tuple[list[dict[str, str]], list[ValidationError]]:
@@ -50,17 +75,24 @@ def parse_test_case_registry(
     errors: list[ValidationError] = []
     lines = body.splitlines()
     seen: dict[str, int] = {}
+    columns: dict[str, int] | None = None
     for index, line in enumerate(lines):
         lineno = index + 1
         row = parse_plan_task_row(line)
         if row is None:
+            # A separator row belongs to the table; only a real break clears the column map.
+            if not is_separator_row(line):
+                columns = None
             continue
         if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            columns = header_columns(line)
             continue  # header row
         cells = row["cells"]
         if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
             continue
-        case_id, level, priority = cells[0], cells[1], cells[2]
+        case_id = cells[0]
+        level = _cell(cells, columns, "级别", 1)
+        priority = _cell(cells, columns, "优先级", 2)
         if case_id in seen:
             errors.append(
                 ValidationError(
@@ -84,7 +116,23 @@ def parse_test_case_registry(
                     f"line {lineno}: case {case_id} priority {priority!r} must be one of {TEST_CASE_PRIORITIES}",
                 )
             )
-        cases.append({"case_id": case_id, "level": level, "priority": priority, "title": cells[3]})
+        source = _cell(cells, columns, "来源", -1)
+        if columns is not None and "来源" in columns and (not source or source in ("无", "—", "-")):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} 来源 must name its acceptance origin "
+                    "(proposal G/AC id or ISS id), or write '无 — <reason>'",
+                )
+            )
+        cases.append(
+            {
+                "case_id": case_id,
+                "level": level,
+                "priority": priority,
+                "title": _cell(cells, columns, "标题", 3),
+            }
+        )
     return cases, errors
 
 
@@ -248,23 +296,30 @@ def validate_test_run_markdown(
     results: dict[str, tuple[int, str]] = {}
     counts = {"pass": 0, "fail": 0, "blocked": 0, "not-run": 0}
     in_results = False
+    columns: dict[str, int] | None = None
     lines = body.splitlines()
     for index, line in enumerate(lines):
         lineno = index + 1
         if line.startswith("## "):
             in_results = line.strip() == "## 结果"
+            columns = None
             continue
         if not in_results:
             continue
         row = parse_plan_task_row(line)
         if row is None:
+            if not is_separator_row(line):
+                columns = None
             continue
         if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
+            columns = header_columns(line)
             continue  # header row
         cells = row["cells"]
         if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
             continue
-        case_id, status_cell, evidence = cells[0], cells[1].strip(), cells[2].strip()
+        case_id = cells[0]
+        status_cell = _cell(cells, columns, "状态", 1)
+        evidence = _cell(cells, columns, "证据", 2)
         if case_id in results:
             errors.append(
                 ValidationError(
@@ -292,6 +347,19 @@ def validate_test_run_markdown(
                     "(a path next to this record, or the recorded observation)",
                 )
             )
+        actual = _cell(cells, columns, "实际结果", -1)
+        if (
+            columns is not None
+            and "实际结果" in columns
+            and status_cell in ("pass", "fail", "blocked")
+            and (not actual or actual in NO_EVIDENCE_CELLS)
+        ):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} 实际结果 must record the observed behaviour",
+                )
+            )
     for key, observed in (
         ("pass", counts["pass"]),
         ("fail", counts["fail"]),
@@ -310,6 +378,16 @@ def validate_test_run_markdown(
         errors.append(
             ValidationError(str(path), "decision 'pass' requires zero fail and zero blocked rows")
         )
+    # T06: a run whose 结果 table is empty used to be exempt — the case-accounting check only ran
+    # when the run pinned the plan's *current* version, so a zero-case run declaring `pass` was
+    # accepted. Both conditions are now unconditional: a run must observe at least one case.
+    if not results or sum(counts.values()) <= 0:
+        errors.append(
+            ValidationError(
+                str(path),
+                "the 结果 table must carry at least one case row and a non-zero summary total",
+            )
+        )
     if plan is not None:
         for case_id in results:
             if case_id not in plan["cases"]:
@@ -320,10 +398,26 @@ def validate_test_run_markdown(
                     )
                 )
         version = frontmatter.get("test_plan_version")
-        if (
-            version is not None
-            and version == (plan["frontmatter"] or {}).get("test_version")
-        ):
+        current = (plan["frontmatter"] or {}).get("test_version")
+        pinned = _int_version(version)
+        current_version = _int_version(current)
+        if pinned is None:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"test_plan_version {version!r} must be an integer so it can be matched "
+                    f"against plan {plan_id!r}'s test_version",
+                )
+            )
+        elif current_version is not None and pinned > current_version:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"test_plan_version {pinned} pins a version that plan {plan_id!r} never had "
+                    f"(current test_version {current_version})",
+                )
+            )
+        elif current_version is not None and pinned == current_version:
             missing = [case_id for case_id in plan["cases"] if case_id not in results]
             if missing:
                 errors.append(

@@ -1,32 +1,84 @@
-import argparse
-import contextlib
-import datetime as _dt
-import io
 import json
-import os
 import shutil
-import sys
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
-from unittest import mock
-
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "tools" / "lab"
 if str(LAB) not in sys.path:
     sys.path.insert(0, str(LAB))
 
-import artifact_digest  # noqa: E402
-import doc_chain  # noqa: E402
-import isolation  # noqa: E402
-import validate  # noqa: E402
-
+import isolation
+import validate
 
 
 class ValidatorRegressionTests(unittest.TestCase):
+    def test_contains_allows_more_than_minimum_matches(self) -> None:
+        # Kills the `matched_count < minimum` → `!=` mutation: more than the minimum must pass.
+        import gate.schema as schema_module
+
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://example.test/contains-min.json",
+            "type": "array",
+            "contains": {"type": "string", "pattern": "^a"},
+            "minContains": 1,
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "contains.schema.json"
+            path.write_text(json.dumps(schema), encoding="utf-8")
+            errors = schema_module.SchemaValidator(path).validate(["a", "ab"])
+        self.assertEqual([], [error.message for error in errors])
+
+    def test_plan_schema_accepts_decision_deps_as_a_token_list(self) -> None:
+        # P1-5: plan.schema.json had additionalProperties:false, so a plan could not carry the
+        # dependency field the document-chain contract tells authors to write.
+        import gate.schema as schema_module
+
+        instance = {
+            "plan_id": "PLAN-DECISION-DEPS",
+            "plan_version": "0.1.0",
+            "status": "proposed",
+            "objective": "o",
+            "recorded_at": "2026-10-30T00:00:00Z",
+            "decision_deps": ["DEC-2026-001#r1"],
+        }
+        path = ROOT / "schemas" / "plan.schema.json"
+        validator = schema_module.SchemaValidator(path)
+        self.assertEqual([], [error.message for error in validator.validate(instance)])
+        bad = dict(instance, decision_deps="DEC-2026-001#r1")
+        self.assertTrue(any("must be of type 'array'" in error.message for error in validator.validate(bad)))
+
+    def test_unknown_schema_type_fails_closed(self) -> None:
+        # T08 / G2-AC-05: a misspelled type used to return True from is_type and silently
+        # disable the field; both the schema walker and the instance validator must reject it.
+        import gate.schema as schema_module
+
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://example.test/unknown-type.json",
+            "type": "object",
+            "properties": {"value": {"type": "objct"}},
+            "required": ["value"],
+            "additionalProperties": False,
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "unknown.schema.json"
+            path.write_text(json.dumps(schema), encoding="utf-8")
+            loader_errors = schema_module.check_schema_keywords(schema, path)
+            instance_errors = schema_module.SchemaValidator(path).validate({"value": "x"})
+        self.assertTrue(
+            any("unsupported type value 'objct'" in error.message for error in loader_errors),
+            [error.message for error in loader_errors],
+        )
+        self.assertTrue(
+            any("unsupported schema type 'objct'" in error.message for error in instance_errors),
+            [error.message for error in instance_errors],
+        )
+
     def test_json_schema_boolean_is_not_integer_const(self) -> None:
         self.assertFalse(validate.json_values_equal(True, 1))
         self.assertTrue(validate.json_values_equal(1, 1.0))
@@ -462,11 +514,68 @@ class ValidatorRegressionTests(unittest.TestCase):
             errors = validate.validate_episode_document(path)
             self.assertTrue(any("must equal episode_id" in error.message for error in errors))
 
-    def test_examples_contract_includes_the_invalid_plan(self) -> None:
+    def test_examples_contract_declares_the_invalid_plan_family(self) -> None:
         # Regression for a silent gap: a case-sensitive glob once excluded the uppercase-named
-        # invalid plan example, so the negative example never exercised the plan gate.
-        errors = validate.validate_examples()
-        self.assertEqual([error.message for error in errors], [])
+        # invalid plan example, so the negative example never exercised the plan gate. The
+        # historical fix is now structural — INVALID_EXAMPLES declares every negative example
+        # and validate_examples requires each declared entry to exist and be rejected — so this
+        # pin asserts the *declaration* (the discriminating fact), not a full re-run of the
+        # examples gate, which `validate.py all` already executes (one full-gate re-run inside
+        # the suite made `all` pay for the same linter subprocesses twice).
+        from gate.examples import INVALID_EXAMPLES
+
+        self.assertIn("PLAN-INVALID-002.md", INVALID_EXAMPLES)
+        plan_negatives = [n for n, (kind, _) in INVALID_EXAMPLES.items() if kind == "plan"]
+        self.assertTrue(plan_negatives, "the invalid-plan family must stay declared")
+
+    def test_role_files_name_every_schema_required_field_and_heading(self) -> None:
+        # T12: the role files' declared field lists and fixed sections must match what the
+        # schemas/gate actually require; following the role literally cannot be gate-red.
+        import gate.docs as docs_module
+
+        for role, (schema_name, headings) in docs_module.ROLE_SCHEMA_CONTRACTS.items():
+            schema = json.loads((ROOT / "schemas" / schema_name).read_text(encoding="utf-8"))
+            text = (ROOT / "agents" / f"{role}.md").read_text(encoding="utf-8")
+            errors = docs_module.role_contract_findings(
+                ROOT / "agents" / f"{role}.md", text, schema["required"], headings
+            )
+            self.assertEqual([], [error.message for error in errors])
+
+    def test_role_contract_cross_check_catches_missing_field_and_heading(self) -> None:
+        import gate.docs as docs_module
+
+        errors = docs_module.role_contract_findings(
+            Path("agents/example.md"),
+            "`test_plan_id` 与 `title`；## 用例",
+            ["test_plan_id", "title", "recorded_at"],
+            ("## 用例", "## 流程疑点"),
+        )
+        messages = [error.message for error in errors]
+        self.assertTrue(any("recorded_at" in message for message in messages), messages)
+        self.assertTrue(any("## 流程疑点" in message for message in messages), messages)
+
+    def test_correction_propagation_flags_unannotated_references(self) -> None:
+        # T16: once CHANGELOG/issues retract an identifier, every other reference must carry
+        # an erratum marker; the correction source itself is exempt.
+        import gate.docs as docs_module
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs" / "features").mkdir(parents=True)
+            (root / "CHANGELOG.md").write_text(
+                "## 0.1.0\n\n- `GhostTests` 从未进入门禁，勘误。\n", encoding="utf-8"
+            )
+            (root / "docs" / "features" / "a.md").write_text(
+                "`GhostTests` 覆盖了全部路径。\n", encoding="utf-8"
+            )
+            (root / "docs" / "features" / "b.md").write_text(
+                "`GhostTests`（已勘误）不再作为证据。\n", encoding="utf-8"
+            )
+            errors = docs_module.correction_propagation_findings(root)
+        messages = [error.message for error in errors]
+        self.assertEqual(1, len(messages), messages)
+        self.assertIn("a.md", errors[0].path)
+        self.assertIn("GhostTests", messages[0])
 
     def test_doc_consistency_passes_on_the_current_tree(self) -> None:
         errors = validate.validate_doc_consistency()
@@ -683,6 +792,87 @@ class ValidatorRegressionTests(unittest.TestCase):
         # The real header row ("编号") must still be skipped, not reported as a decision.
         self.assertFalse(any("'编号'" in m for m in messages), messages)
 
+    def test_task_table_without_trailing_pipes_is_still_read(self) -> None:
+        # T05: the gate carried its own row parser that demanded a trailing `|`, so a table
+        # written without outer pipes (legal CommonMark) was invisible — a row with a free-text
+        # status sailed through. The parser is now shared with docchain, and 依赖 is read by
+        # column name, so an extra column before it must not be mistaken for the dependency.
+        body = (
+            "## 进展概览\n\n概述\n\n## 任务清单\n\n"
+            "ID | 任务 | 优先级 | 负责人 | 代码落点 | 依赖 | 状态 | 证据回写\n"
+            "--- | --- | --- | --- | --- | --- | --- | ---\n"
+            "`T01` | 甲 | P0 | BE | a.ts | — | 乱写 | \n"
+            "`T02` | 乙 | P0 | QA | b.ts | `T01` | ☐ 未开始 | \n"
+            "\n## 验证命令\n\n```sh\necho x\n```\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "PLAN-TEST-005.md"
+            path.write_text(
+                "---\nplan_id: PLAN-TEST-005\nplan_version: 0.1.0\n"
+                "status: proposed\nobjective: o\nrecorded_at: 2026-09-17T00:00:00Z\n---\n\n"
+                + body,
+                encoding="utf-8",
+            )
+            errors = validate.validate_plan_markdown(path)
+        messages = [error.message for error in errors]
+        self.assertTrue(any("乱写" in m and "T01" in m for m in messages), messages)
+        self.assertFalse(any("unknown dependency" in m for m in messages), messages)
+        self.assertFalse(any("T02" in m for m in messages), messages)
+
+    def test_blocking_decision_is_read_from_the_column_not_the_prose(self) -> None:
+        # T07 G2-AC-01 / G2-AC-02: the blocking flag is read from 是否阻塞 by name and accepts
+        # both "阻塞/不阻塞" and "是/否". Scanning every cell for the substring 阻塞 both missed a
+        # row that said "是" and invented blockers from prose that merely mentioned 阻塞.
+        def errors_for(table: str) -> list[str]:
+            with tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "PLAN-TEST-006.md"
+                path.write_text(
+                    "---\nplan_id: PLAN-TEST-006\nplan_version: 0.1.0\n"
+                    "status: approved\nobjective: o\nrecorded_at: 2026-09-17T00:00:00Z\n---\n\n"
+                    "## 进展概览\n\n概述\n\n## 任务清单\n\n"
+                    "| ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据回写 |\n"
+                    "| --- | --- | --- | --- | --- | --- | --- |\n"
+                    "| `T01` | 甲 | P0 | a.ts | — | ☐ 未开始 | |\n"
+                    "\n### 未决项\n\n"
+                    + table
+                    + "\n## 验证命令\n\n```sh\necho x\n```\n",
+                    encoding="utf-8",
+                )
+                return [error.message for error in validate.validate_plan_markdown(path)]
+
+        yes_row = (
+            "| 编号 | 问题 | 状态 | 是否阻塞 |\n| --- | --- | --- | --- |\n"
+            "| U-01 | 权限模型待定 | 尚未关闭 | 是 |\n"
+        )
+        self.assertTrue(any("U-01" in m for m in errors_for(yes_row)), "「是」must block approval")
+
+        prose_row = (
+            "| 编号 | 问题 | 状态 | 是否阻塞 |\n| --- | --- | --- | --- |\n"
+            "| U-02 | 阻塞风险已登记，但本项不阻塞实施 | 尚未关闭 | 否 |\n"
+        )
+        self.assertFalse(
+            any("U-02" in m for m in errors_for(prose_row)),
+            "prose mentioning 阻塞 with 是否阻塞=否 must not block",
+        )
+
+        three_column = (
+            "| 前置 | 关联任务 | 说明 |\n| --- | --- | --- |\n"
+            "| V-F1 | T01 | 落点未核实 |\n"
+        )
+        self.assertTrue(
+            any("V-F1" in m for m in errors_for(three_column)),
+            "the official three-column form must enter the check",
+        )
+
+        unknown_row = (
+            "| 编号 | 问题 | 状态 | 是否阻塞 |\n| --- | --- | --- | --- |\n"
+            "| U-03 | 权限模型待定 | 尚未关闭 | 待定 |\n"
+        )
+        self.assertTrue(
+            any("U-03" in m for m in errors_for(unknown_row)),
+            "an unrecognised blocking value must fail closed",
+        )
+
     def test_schema_else_without_if_is_not_applied(self) -> None:
         # Item E: JSON Schema applies then/else only as branches of an if. An else without an if
         # used to run unconditionally, so a bare else could reject every instance.
@@ -749,6 +939,61 @@ class ValidatorRegressionTests(unittest.TestCase):
             messages,
         )
         self.assertIn("filename date must match recorded_at date 2026-09-15", messages)
+
+    def test_credentials_field_rejects_obvious_secret_shapes(self) -> None:
+        """2026-10-29 拍板 C：只给 credentials 加 pattern，只覆盖该字段。
+
+        Positive values describe the injection method ("session-injected env");
+        the negative values are the shapes no legitimate plan/run should carry.
+        """
+        plan = {
+            "test_plan_id": "TP-2026-10-29-001",
+            "title": "t",
+            "project": "p",
+            "feature": "f",
+            "target_revision": "r1",
+            "credentials": "session-injected env (AF_TEST_ACCOUNT / AF_TEST_PASSWORD)；值永不落盘",
+            "case_count": "1",
+            "test_version": "1",
+            "status": "active",
+            "recorded_at": "2026-10-29T00:00:00+08:00",
+        }
+        run = {
+            "test_run_id": "TR-2026-10-29-001",
+            "title": "t",
+            "project": "p",
+            "test_plan_id": "TP-2026-10-29-001",
+            "test_plan_version": "1",
+            "target_revision": "r1",
+            "environment": "local",
+            "credentials": "session-injected env；值永不落盘",
+            "summary_pass": "1",
+            "summary_fail": "0",
+            "summary_blocked": "0",
+            "summary_not_run": "0",
+            "decision": "pass",
+            "recorded_at": "2026-10-29T00:00:00+08:00",
+        }
+        plan_validator = validate.SchemaValidator(ROOT / "schemas" / "test-plan.schema.json")
+        run_validator = validate.SchemaValidator(ROOT / "schemas" / "test-run.schema.json")
+        self.assertEqual(plan_validator.validate(plan), [])
+        self.assertEqual(run_validator.validate(run), [])
+        for allowed in ("token: injected via env", "api_key: vault-managed", "password: rotated by ops"):
+            with self.subTest(allowed=allowed):
+                self.assertEqual(plan_validator.validate({**plan, "credentials": allowed}), [])
+                self.assertEqual(run_validator.validate({**run, "credentials": allowed}), [])
+        for secret in (
+            "sk-abcdefgh12345678",
+            "ghp_abcdefgh12345678",
+            "AKIAABCDEFGHIJKLMNOP",
+            "Bearer abcdefgh12345678",
+            "token=abcdef123456",
+            "PASSWORD=abcdef123456",
+            "SECRET=abcdef123456",
+        ):
+            with self.subTest(secret=secret):
+                self.assertTrue(plan_validator.validate({**plan, "credentials": secret}))
+                self.assertTrue(run_validator.validate({**run, "credentials": secret}))
 
     @staticmethod
     def _git(repository: Path, *arguments: str) -> None:

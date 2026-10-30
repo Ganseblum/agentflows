@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 from .constants import *
@@ -170,17 +171,46 @@ def split_row(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 
+def is_separator_row(line: str) -> bool:
+    """A table separator row. The leading/trailing pipe is optional (CommonMark)."""
+    return bool(SEP_RE.match(line))
+
+
+def is_table_row(line: str) -> bool:
+    """A pipe-table row: carries a pipe, is not a fence, and is not a separator.
+
+    CommonMark does not require the leading or trailing pipe, so a table written as
+    `ID | 任务 | 状态` (no outer pipes) must be read the same as `| ID | 任务 | 状态 |`.
+    Reading only pipe-wrapped rows made the two gate families disagree on the same file
+    (2026-10-25 提案 §2.2 L3), which is why this predicate lives in one place now.
+    """
+    s = line.strip()
+    if not s or "|" not in s:
+        return False
+    if s.startswith(("```", "~~~")):
+        return False
+    return not is_separator_row(s)
+
+
+def column_index(header: list[str], name: str) -> int | None:
+    """Position of `name` in a header row, or None. Cells may carry `**` / backticks."""
+    for position, cell in enumerate(header):
+        if cell.strip().strip("`*_ ").strip() == name:
+            return position
+    return None
+
+
 def md_tables(text: str) -> list[tuple[list[str], list[list[str]]]]:
     """Pipe tables as (header cells, body rows): a pipe line followed by a separator line."""
     lines = text.splitlines()
     out: list[tuple[list[str], list[list[str]]]] = []
     i = 0
     while i < len(lines) - 1:
-        if lines[i].lstrip().startswith("|") and "-" in lines[i + 1] and SEP_RE.match(lines[i + 1]):
+        if is_table_row(lines[i]) and "-" in lines[i + 1] and SEP_RE.match(lines[i + 1]):
             header = split_row(lines[i])
             rows: list[list[str]] = []
             j = i + 2
-            while j < len(lines) and lines[j].lstrip().startswith("|"):
+            while j < len(lines) and is_table_row(lines[j]):
                 rows.append(split_row(lines[j]))
                 j += 1
             out.append((header, rows))
@@ -504,6 +534,23 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
             if any(cell.startswith("非阻塞") for cell in cells):
                 continue  # non-blocking rows may stay open pending review confirmation
             errors.append(f"C3 反审门: {f.relative_to(feature_dir)} 存在未关闭的阻塞项: {line.strip()[:80]}")
+        # The shipped spec/checklist.md template does not use ☐; it marks an open blocker as
+        # 状态=未确认 with a non-"无" 阻塞阶段. Reading the status/stage columns by name keeps the
+        # official form under the same gate without broad keyword matching (T09).
+        for header, rows in md_tables(text):
+            status_col = column_index(header, "状态")
+            stage_col = column_index(header, "阻塞阶段")
+            if status_col is None or stage_col is None:
+                continue
+            for row in rows:
+                status = row[status_col].strip() if status_col < len(row) else ""
+                stage = row[stage_col].strip() if stage_col < len(row) else ""
+                if status.startswith("未") and stage not in ("", "无", "—", "-"):
+                    rendered = " | ".join(cell.strip() for cell in row)
+                    errors.append(
+                        f"C3 反审门: {f.relative_to(feature_dir)} 官方 checklist 行未确认且阻塞阶段为"
+                        f" {stage}: {rendered[:80]}"
+                    )
     if spec_files and not audit_found:
         errors.append("C3 反审门: spec/ 下没有任何文件包含「不合规项/反审」checklist")
 
@@ -661,8 +708,10 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     if readme.is_file() and "agentflow 文档链方法生成" in all_text.get(readme, ""):
         be_heads = "\n".join(all_text[f] for f in be_files) if be_files else ""
         fe_heads = "\n".join(all_text[f] for f in fe_files) if fe_files else ""
-        import re as _re
-        if not _re.search(r"^##+ .*(先说结论|关键决策速览|结论先行)", be_heads, _re.MULTILINE):
+        # `re` is already imported at module top; the function-local `import re as _re` was a
+        # stray duplicate (lint never flagged it inside this 75KB module until tests/ joined
+        # the static-check scope).
+        if not re.search(r"^##+ .*(先说结论|关键决策速览|结论先行)", be_heads, re.MULTILINE):
             errors.append("C11 结构模板: design/be 缺固定标题（先说结论/关键决策速览）")
         if "影响面评估" not in be_heads:
             errors.append("C11 结构模板: design/be 缺「影响面评估」章")
@@ -756,12 +805,28 @@ def _source_refs(cell: str, repo_root: Path) -> tuple[list[str], list[str]]:
     external: list[str] = []
     for span in re.findall(r"`([^`\n]+)`", cell):
         tok = span.strip()
-        if ISS_RE.search(tok):
-            target = repo_root / "docs" / "issues" / tok
-            if not target.is_file():
-                external.append(tok)
+        if "@" in tok:
+            continue  # repo-qualified source; the qualified-ref path owns resolution
+        if ":" in tok:
+            tok = tok.split(":", 1)[0].strip()  # ISS-….md:3 / path:line → strip the line
+        if "/" in tok:
+            p = tok.split("#")[0].split("?")[0].strip()
+            if p and not p.startswith(("/", "http:", "https:", "mailto:")):
+                in_repo = _ref_is_in_repo(repo_root, p)
+                if in_repo is None:
+                    continue
+                if in_repo:
+                    if not (repo_root / p).exists():
+                        missing.append(tok)
+                else:
+                    external.append(tok)
             continue
-        p = tok.split("#")[0].split("?")[0].split(":")[0].strip()
+        if ISS_RE.search(tok):
+            candidates = [tok] if tok.endswith(".md") else [tok + ".md", tok]
+            if not any((repo_root / "docs" / "issues" / candidate).is_file() for candidate in candidates):
+                missing.append(tok)
+            continue
+        p = tok.split("#")[0].split("?")[0].strip()
         if not p or p.startswith(("/", "http:", "https:", "mailto:")):
             continue
         in_repo = _ref_is_in_repo(repo_root, p)
@@ -772,10 +837,13 @@ def _source_refs(cell: str, repo_root: Path) -> tuple[list[str], list[str]]:
                 missing.append(tok)
         else:
             external.append(tok)
-    for m in ISS_RE.findall(cell):
-        full = m + ".md"
-        if not (repo_root / "docs" / "issues" / full).is_file() and full not in external:
-            external.append(full)
+    # An ISS id outside backticks is still an in-repo reference unless it is explicitly
+    # repo-qualified; a missing file is red, not "external" (T09).
+    outside = re.sub(r"`[^`\n]*`", " ", cell)
+    for m in ISS_RE.findall(outside):
+        full = m if m.endswith(".md") else m + ".md"
+        if not (repo_root / "docs" / "issues" / full).is_file() and m not in missing:
+            missing.append(m)
     return missing, external
 
 
@@ -1048,37 +1116,85 @@ def pending_ledger_findings(label: str, batch_dir: Path) -> list[str]:
     return errors
 
 
-def decision_marker_presence_findings(repo_root: Path) -> list[str]:
-    """The 拍板口 must still carry the marker that switches C16/C17 on.
+def _marker_declared(body: str, marker: str) -> bool:
+    """True when `marker` appears as a standalone declaration line in `body`.
 
-    Removing the marker does not fail the gate — it removes the file from coverage, and the gate
-    goes green for the wrong reason. That is exactly the "靠摘标记转绿" the chain contract forbids,
-    and it happened by accident on 2026-10-29 while moving closed notes out of the ledger
-    (docs/issues/ISS-2026-10-29-拍板口改写中两处自述超出事实.md).
+    Only a declaration line counts: a prose mention (「已把 `<marker>` 标记单独成行」 in a table
+    cell) is a reference, not an opt-in — the 指称与使用不分 hole that let a hidden un-declare
+    keep the gate green (C13's old problem).
     """
-    ledger = repo_root / PENDING_LEDGER_REL
-    if not ledger.is_file():
-        return []  # 目标仓没有拍板口这一载体，不凭空要求
-    body = read(ledger)
-    declared = any(
-        line.strip().lstrip("> ").strip("`").strip() == DECISION_MARKER for line in body.splitlines()
+    return any(
+        line.strip().lstrip("> ").strip("`").strip() == marker for line in body.splitlines()
     )
-    if declared:
+
+
+def _marker_presence_errors(kind: str, rel: str, body: str, marker: str) -> list[str]:
+    """One anti-removal assertion, shared by every opt-in marker family.
+
+    Removing an opt-in marker does not fail any per-file check — it removes the file from that
+    family's coverage, and the gate goes green for the wrong reason. That is exactly the
+    「靠摘标记转绿」 the chain contract forbids, and it happened by accident on 2026-10-29 while
+    moving closed notes out of the ledger
+    (docs/issues/ISS-2026-10-29-拍板口改写中两处自述超出事实.md). Originally written for the
+    拍板口 only, it now covers all four marker families (决策记录 / 问题台账 / 决策归属 /
+    目标承接); per family it fires only when the file still shows the family's *other*
+    fingerprints, so deleting a file wholesale (or a batch being removed) stays out of scope.
+    """
+    if _marker_declared(body, marker):
         return []
-    # 只在散文里提及同名标记不算声明：本轮反证实测，把独立声明行删掉后，表格里的一句
-    # 「已把 `agentflow 决策记录` 标记单独成行」让子串检查仍为真，门照样绿。指称与使用不分，
-    # 开关就能被藏进正文里——那是 C13 同族的老问题，不许在新断言里复活。
     hint = (
         "只在散文中提及该词，没有独立声明行——检查器按声明行认它"
-        if DECISION_MARKER in body
-        else "在场但缺该标记，C16 与 C17 会静默失去对象，绿门不证明合规"
+        if marker in body
+        else "在场但缺该标记，对应判据会静默失去对象，绿门不证明合规"
     )
     return [
         (
-            f"C18 decision-marker: {PENDING_LEDGER_REL} {hint}；"
+            f"C18 {kind}: {rel} {hint}；"
             "把标记作为独立声明行加回来，而不是让它悄悄消失"
         )
     ]
+
+
+def decision_marker_presence_findings(repo_root: Path) -> list[str]:
+    """Anti-removal assertions for the four opt-in marker families.
+
+    See `_marker_presence_errors`. Fingerprint heuristics per family, kept narrow so the
+    assertion never invents a duty a file never opted into:
+    - 决策记录 → the 拍板口 (PENDING-DECISIONS.md), fingerprinted by its title.
+    - 问题台账 → docs/issues/README.md only (the C15 ledger lives there; per-record ISS files
+      quote the word 「台账」 in prose about recurrence ledgers, so a whole-directory scan
+      would flag records that never opted in).
+    - 决策归属 / 目标承接 → batch READMEs under docs/features/: a README that mentions the
+      marker name at all has shown intent (the per-file switches are substring-based, so a
+      backtick-quoted mention already switches C18/C22 on — its removal would silently drop
+      coverage), so the assertion demands the standalone declaration line the 2026-10-29
+      convention standardized.
+    """
+    errors: list[str] = []
+    ledger = repo_root / PENDING_LEDGER_REL
+    if ledger.is_file():
+        body = read(ledger)
+        # 目标仓没有拍板口这一载体时不凭空要求；指纹是标题行，标记被摘但文件还在场即报。
+        if "待用户拍板" in body or "PENDING-DECISIONS" in body:
+            errors.extend(_marker_presence_errors(
+                "decision-marker", PENDING_LEDGER_REL, body, DECISION_MARKER))
+    issues_readme = repo_root / "docs" / "issues" / "README.md"
+    if issues_readme.is_file():
+        body = read(issues_readme)
+        if LEDGER_MARKER in body:
+            rel = issues_readme.relative_to(repo_root).as_posix()
+            errors.extend(_marker_presence_errors("ledger-marker", rel, body, LEDGER_MARKER))
+    for batch_dir in sorted(p for p in repo_root.glob("docs/features/*") if p.is_dir()):
+        readme = batch_dir / "README.md"
+        if not readme.is_file():
+            continue
+        body = read(readme)
+        rel = readme.relative_to(repo_root).as_posix()
+        if OWNERSHIP_MARKER in body:
+            errors.extend(_marker_presence_errors("ownership-marker", rel, body, OWNERSHIP_MARKER))
+        if TRACE_MARKER in body:
+            errors.extend(_marker_presence_errors("trace-marker", rel, body, TRACE_MARKER))
+    return errors
 
 
 # --- Traceability and evidence-presence checks (C22-C23). Marker-gated like C15-C18: a batch
@@ -1229,6 +1345,88 @@ def evidence_carriers(cell: str, repo_root: Path, batch_dir: Path | None = None)
     return sorted(set(kinds))
 
 
+ASSERTION_CLASS_RE = re.compile(r"^[A-Z][A-Za-z0-9_]+(?:Tests?|Cases?)$")
+ASSERTION_FUNC_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\(\)$")
+ASSERTION_FILE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:py|md|json|sh|txt|ya?ml)$")
+_GENERATED_PARTS = {".git", ".venv", "node_modules", "__pycache__"}
+
+
+@lru_cache(maxsize=8)
+def _repo_code_text(root: str) -> str:
+    """Source text used to resolve class/function assertions (tests/ and tools/ only).
+
+    Docs are deliberately excluded: a plan that merely discusses a ghost test class must not
+    make that class "resolve" and hide the very gap this layer exists to catch.
+    """
+    parts: list[str] = []
+    root_path = Path(root)
+    for top in ("tests", "tools"):
+        base = root_path / top
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*.py"):
+            if any(part in _GENERATED_PARTS for part in path.parts):
+                continue
+            try:
+                parts.append(path.read_text(encoding="utf-8", errors="ignore"))
+            except OSError:
+                continue
+    return "\n".join(parts)
+
+
+@lru_cache(maxsize=8)
+def _repo_file_names(root: str) -> frozenset[str]:
+    names: set[str] = set()
+    root_path = Path(root)
+    for path in root_path.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part in _GENERATED_PARTS for part in path.parts):
+            continue
+        if "packaging/runtime" in path.as_posix():
+            continue
+        names.add(path.name)
+    return frozenset(names)
+
+
+def assertion_resolvability_findings(
+    label: str, task_id: str, evidence: str, repo_root: Path
+) -> list[str]:
+    """C23 assertion layer (T17): code/file assertions in evidence must resolve in the repo.
+
+    An evidence cell can carry a real path *and* a fabricated class/function/file name; the
+    carrier check alone would accept the row. This layer only inspects tokens shaped like a
+    test-class name, a `name()` call, or a bare filename, so prose and command output are
+    untouched (no false positives from ordinary quotations).
+    """
+    errors: list[str] = []
+    # A row that explicitly marks the carrier as N/A or historical is not making a positive
+    # "this still exists" claim; the removed-object exemption must not be re-red by T17.
+    if NA_RE.search(evidence) or any(word in evidence for word in ("已随", "已失", "不复存在", "已删除")):
+        return errors
+    code_text = _repo_code_text(str(repo_root))
+    file_names = _repo_file_names(str(repo_root))
+    for span in re.findall(r"`([^`\n]+)`", evidence):
+        token = span.strip()
+        if not token or "/" in token or "@" in token or ":" in token:
+            continue
+        if ASSERTION_FUNC_RE.match(token):
+            name = token[:-2]
+            if name not in code_text:
+                errors.append(
+                    f"C23 断言可解析: {label} {task_id} 的断言 {token} 在仓内代码中不可解析"
+                )
+        elif ASSERTION_CLASS_RE.match(token) and token not in code_text:
+            errors.append(
+                f"C23 断言可解析: {label} {task_id} 的断言 {token} 在仓内代码中不可解析"
+            )
+        elif ASSERTION_FILE_RE.match(token) and token not in file_names:
+            errors.append(
+                f"C23 断言可解析: {label} {task_id} 的断言 {token} 在仓内不存在"
+            )
+    return errors
+
+
 def evidence_presence_findings(
     label: str, plan_text: str, repo_root: Path, batch_dir: Path | None = None
 ) -> list[str]:
@@ -1239,6 +1437,7 @@ def evidence_presence_findings(
         if not status.strip().startswith(DONE_GLYPH):
             continue  # 进行中 / 未开始 / 阻塞 / 本期不做 carry no evidence duty yet
         if evidence_carriers(evidence, repo_root, batch_dir):
+            errors.extend(assertion_resolvability_findings(label, task_id, evidence, repo_root))
             continue
         if not evidence.strip():
             detail = "证据列为空"

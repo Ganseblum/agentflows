@@ -7,13 +7,13 @@
 
 | 规格 | 验收方式（会失败的东西） | 标尺落点 | 当前状态 |
 | --- | --- | --- | --- |
-| S1 角色面 | 14 个角色文件存在、frontmatter name=文件名、SKILL 引用可解析 | `validate.py docs`、`validate.py manifests` | 绿 |
+| S1 角色面 | 10 个角色文件存在、frontmatter name=文件名、SKILL 引用可解析 | `validate.py docs`、`validate.py manifests` | 绿 |
 | S2 十步流程 | episode 落盘过编译（material 变更必带 `review_roundtrips`）；步骤顺序仍缺独立机器标尺 | `validate.py artifacts` + episode schema；顺序需独立流程评审 | 部分：记录可编译，流程顺序未验证 |
 | S3 委派契约 | 候选 diff 触碰保护门被拒；越界写入被 `check-diff` 拒绝 | `isolation.py check-diff`、`contracts.md` | 绿（/tmp 注入实验历史证据见台账） |
 | S4 独立评审门 | 无 `review_roundtrips` 的 material episode 编译失败 | episode schema + `validate.py artifacts` | 绿 |
 | S5 失败语义 | 三类语义文本在 contracts 单点成文（作者不自证/超预算重试=主会话 缺陷） | 人工评审 + episode 抽查 | 绿（文本）；注入演练未做（见待建标尺） |
 | S6 记录体系 | 每类记录样例过 schema；坏记录（如引用断链）编译失败 | `validate.py schemas` + `artifacts` | 绿 |
-| S7 改进环 | ~~未知/重复 `--case-ids` 退出 1；digest 对贴被 policy 拒；候选碰保护门被拒~~ | 原 `eval_runner.py` + `policy.py`（已删） | **机制已停用**（2026-10-12：改进三件套、发布记录与评测装置整线退役） |
+| S7 改进环 | ~~未知/重复 `--case-ids` 退出 1；digest 对贴被 policy 拒；候选碰保护门被拒~~ | 原 `eval_runner.py` + `policy.py`（已删） | **已裁撤**（2026-10-12 装置退役；2026-10-29 改进环整体裁撤） |
 | S8 确定性验证面 | 任一检查红则 `all` 退出非 0；CI 缺门则 `protected` 失败 | `validate.py all` + `.github/` | 绿 |
 | S9 打包安装 | 生成树缺组件、与源面不一致或 sha256 对不上即 FAIL；安装快照状态按当前宿主单独记录 | `validate.py manifests`（生成树新鲜度）+ `installed`（宿主快照） | 部分：生成树与源一致；宿主安装面随版本 bump 过期——0.15.0 快照曾于 2026-10-25 复核 PASS，仓内现为 0.16.0，须重装后复跑（状态以 `docs/releases/pending-test.md` 第 5 行为准） |
 | S10 业务仪器 | ~~被测树含 seeds 即 fail-closed；缺 allowed-tools/隔离参数被大声拒绝~~ | 原 `seed_grader.py` 与 `evals/` 已删 | **已裁撤**（2026-10-12：用户拍板「保公开、裁业务」） |

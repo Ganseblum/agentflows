@@ -55,11 +55,19 @@ OPERATORS: dict[str, str] = {
     "drop_enum_member": "枚举元组裁掉末个成员",
     "empty_iter": "循环空迭代：`for … in X:` → `for … in ():`",
     "drop_statement": "errors.append/extend 语句 → pass",
-    "drop_continue": "continue → pass",
 }
 
 # Inventory of gate check items: name -> (file, what the item decides). Every item needs at least
 # one mutation or an EXEMPT entry; coverage_gaps() enforces this.
+#
+# Known snapshot limits (2026-10-29, declared rather than silent — the reviewer's D9 finding):
+# the remaining decision_gate opt-in families (C15, C16, C18, C22-C23 marker files), the static
+# lint gate, and the post-2026-10-21 marker families (carrier map, review_tier, episode
+# pointers) are NOT in this inventory. They are covered by docchain/selftest.py (pinned by the
+# doc_chain gate) and validate_unit_tests instead. C17 was the thin spot named by the 2026-10-26
+# audit G20 and now has two mutations (2026-10-29 拍板 A). Registering the rest without mutation
+# specs would make coverage_gaps() report permanent gaps; the honest state is the note, until
+# someone writes the specs.
 ITEMS: dict[str, tuple[str, str]] = {
     "plan.approval-gate": ("tools/lab/gate/plan.py", "未决项审批门（approved 计划不得含未关闭阻塞决策）"),
     "plan.approved-scope": ("tools/lab/gate/plan.py", "审批门触发条件 status == approved"),
@@ -112,6 +120,7 @@ ITEMS: dict[str, tuple[str, str]] = {
     "doc_chain.C7": ("tools/lab/docchain/checks.py", "C7 fe 线框数量或原型"),
     "doc_chain.C9": ("tools/lab/docchain/checks.py", "C9 plan 分支策略节"),
     "doc_chain.C10": ("tools/lab/docchain/checks.py", "C10 mermaid 围栏闭合"),
+    "doc_chain.C17": ("tools/lab/docchain/checks.py", "C17 核验过期：引用路径在核验日期之后被修改即红"),
     "doc_chain.C22": ("tools/lab/docchain/checks.py", "C22 目标承接：打标批次的目标须双向闭合、任务号不得幻影、状态不得谎报"),
     "doc_chain.C23": ("tools/lab/docchain/checks.py", "C23 证据在场：☑ 已完成行须留可复核载体"),
 }
@@ -138,7 +147,9 @@ class Mutation:
 SPECS: list[tuple[str, str, str, str]] = [
     ("plan.approval-gate", "if is_blocking and not closed:", "disable_if", "examples"),
     ("plan.approved-scope", 'if frontmatter.get("status") == "approved":', "invert_cmp", "examples"),
-    ("plan.status-enum", 'PLAN_TASK_STATUSES = (', "drop_enum_member", "artifacts"),
+    # 2026-10-30: PLAN_TASK_STATUSES now aliases the single TASK_STATUS_WORDS tuple (T08), so the
+    # old drop_enum_member anchor no longer exists; the disable_if spec below still covers the
+    # enum branch. A future member-drop mutation needs an operator that targets the shared tuple.
     ("plan.status-enum", "if status_word not in PLAN_TASK_STATUSES:", "disable_if", "examples"),
     ("plan.dep-cycle", "if node in visiting:", "disable_if", "examples"),
     ("plan.dep-resolve", "if dep not in known:", "disable_if", "examples"),
@@ -188,13 +199,15 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("doc_chain.C7", "if len(wireframes) < 2 and not has_prototype:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C9", "if not BRANCH_HEADING_RE.search(all_text[f]):", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C10", "if opened != blocks:", "invert_cmp", "doc_chain_selftest"),
+    ("doc_chain.C17", "if c_date > v_date:", "invert_cmp", "doc_chain_selftest"),
+    ("doc_chain.C17", "for p, commit in ref_commits:", "empty_iter", "doc_chain_selftest"),
     ("doc_chain.C22", "if TRACE_MARKER not in readme_text:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C22", "errors.append(f\"C22 目标承接: 提案声明的目标 {g} 未进入承接表（缺承接）\")", "drop_statement", "doc_chain_selftest"),
     ("doc_chain.C22", "if status.strip()[:1] in (DONE_GLYPH, BLOCKED_GLYPH) and task_id not in referenced:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C23", "if not status.strip().startswith(DONE_GLYPH):", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C23", "errors.append(\n            f\"C23 证据在场: {label} {task_id} 标为已完成但{detail}\"", "drop_statement", "doc_chain_selftest"),
     ("doc_chain.C22", "if \"\u76ee\u6807\u627f\u63a5\" in section.splitlines()[0]:", "disable_if", "doc_chain_selftest"),
-    ("doc_chain.C23", "if any(_ref_is_in_repo(r, p) is True and (r / p).exists() for r in roots):", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C23", "if any(_ref_is_in_repo(r, p) is True and (r / p).is_file() for r in roots):", "disable_if", "doc_chain_selftest"),
 ]
 
 MUTATIONS: list[Mutation] = [
@@ -308,6 +321,9 @@ def apply_mutation(source: str, mutation: Mutation) -> str:
         _, eol = _split_eol(lines[end - 1])
         lines[node.lineno - 1 : end] = [indent + "pass" + eol]
     elif mutation.op == "drop_continue":
+        # Registered-but-unused operator: no SPECS entry selects it today (2026-10-29 audit).
+        # Kept as reachable code for future line-scoped continue mutations; if it stays
+        # unselected at the next audit, remove it together with its last SPECS candidate.
         tree = ast.parse(source)
         nodes = [
             node

@@ -15,7 +15,7 @@
 | [feature/design/be/backend.md](feature/design/be/backend.md) · [fe](feature/design/fe/frontend.md) · [qa](feature/design/qa/testing.md) · [ui](feature/design/ui/visual.md) | 各角色技术方案（`design/<角色>/`） |
 | [feature/plan/execution.md](feature/plan/execution.md) | 执行契约（单文件；目标仓有自己的计划约定时用其约定） |
 | [feature/prototype/index.html](feature/prototype/index.html) · [README](feature/prototype/README.md) | 双形态可直开原型骨架：形态 A 只留入口页链接块（删 sections，指到库内正文 + `path@revision`），形态 B 复制到 `<feature 目录>/prototype/index.html` 按真实视觉基线改造；四态可切换、页签自动生成、零依赖 |
-| [decision/decision-record.md](decision/decision-record.md) · [decision-brief.md](decision/decision-brief.md) | 决策记录八列表（拍板口逐条占行，C16 机器可判）与决策简报骨架（出处/选项/影响/关闭条件）：记录落 `docs/PENDING-DECISIONS.md` 等拍板口，检查由 `validate.py decision_gate` 承载 |
+| [decision/decision-record.md](decision/decision-record.md) · [decision-brief.md](decision/decision-brief.md) | 决策记录九列表（八个决策字段 + 生命周期状态列；拍板口逐条占行，C16 机器可判）与决策简报骨架（出处/选项/影响/关闭条件）：记录落 `docs/PENDING-DECISIONS.md` 等拍板口，检查由 `validate.py decision_gate` 承载 |
 | [testing/plan.md](testing/plan.md) · [testing/run.md](testing/run.md) | 测试用例库 / 执行记录骨架（frontmatter 信封固定字段）：复制到 `docs/features/<批次>/testing/<project>-<feature>/plan-<YYYY-MM-DD>-<NNN>.md` 与 `run-<YYYY-MM-DD>-<NNN>.md` |
 | [host/README.md](host/README.md) · [host/global-rules.md](host/global-rules.md) | 宿主级全局规则（跨仓）：托管块正文 + 操作清单（协议权威是 [`references/hosts.md`](../references/hosts.md)）。只在用户明确确认后写入宿主全局指令文件，不随仓库 Init 自动写 |
 | [engineering/baseline.md](engineering/baseline.md) | 目标仓工程基线骨架：技术栈与运行环境、目录与文件职责、命名与类型、禁止的平行方案、新增模块必做清单、测试栈、质量门顺序、配置与边界、规范入口与规则写法。已有工程规范时只登记入口，没有时与用户确认后落一份最小基线 |
@@ -28,7 +28,7 @@
 ## 可选层（语料中出现的扩展，按需启用）
 
 - `api/`：接口文档（研发提交 QA 用；§0 文档粒度约定 + §7 提交前自检清单）。
-- `复盘.md`：feature 收口后的复盘（喂改进环的证据来源）。
+- `复盘.md`：feature 收口后的复盘（方法复盘与后续证据池的来源）。
 - `code-gap-matrix`：文档 vs 代码现状完成度矩阵（在既有代码上落地的 feature 强烈建议）。
 - 超大 feature 的模块化拆分：一模块一套 proposal/spec/design/plan 四件套 + 总控 spec。
 

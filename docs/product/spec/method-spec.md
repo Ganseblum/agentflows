@@ -28,10 +28,10 @@
 
 ### S1 触发与角色面
 
-- **陈述**：方法以 Skill 形式被宿主加载；14 个角色是按需取用的能力清单（backend-engineer /
+- **陈述**：方法以 Skill 形式被宿主加载；10 个角色是按需取用的能力清单（backend-engineer /
   frontend-engineer / plan-architect / technical-director / reviewer / test-planner / test-executor /
-  bug-investigator / bug-fixer / bug-recorder / candidate-engineer / evaluator /
-  feedback-analyst / release-governor），默认路径不启动不降低风险的角色。
+  bug-investigator / bug-fixer / bug-recorder），默认路径不启动不降低风险的角色。
+  改进环的四个治理角色已于 2026-10-29 随该环整体裁撤。
 - **验收口径**：角色文件齐全且 frontmatter name 与文件名一致；「不经点名获得正确路由」为
   设计意图——宿主侧未实测，按 S15 不作已验证声明。
 - **标尺**：`validate.py docs`（角色引用解析 + name 一致性）；`validate.py manifests`。
@@ -42,8 +42,7 @@
 - **陈述**：Intake → 架构门 → Plan → Delegate → Implement → Integrate → 验证工件 → 评审门
   → 单轮修复 → Decide，十步为一次开发任务的默认骨架。
 - **验收口径**：任意一次 material 改动能按十步还原出对应证据（计划、工件、评审、决定记录）。
-- **标尺**：episode 落盘契约（`skills/improve/references/episode.schema.json`）+ `validate.py
-  artifacts`。
+- **标尺**：episode 落盘契约（`schemas/episode.schema.json`）+ `validate.py artifacts`。
 - **状态**：在建（缺：十步顺序本身的独立机器标尺；证据还原由 episode 契约与 `validate.py
   artifacts` 覆盖，见 S15）。
 
@@ -99,16 +98,17 @@
 - **验收口径**（停用前口径，留存备查）：一次完整闭环产出四类工件（candidate / evaluations /
   comparison / policy 建议）且全部过编译门；发布由用户 `approved` 触发。
 - **标尺（停用前口径）**：原 `validate.py evals` + runner + policy；`isolation.py check-diff` 保留为通用工具。
-- **状态**：**已停用**（2026-10-12 用户拍板：改进三件套记录根与逐版本发布记录退役；
-  方法级改动一律 `measurement: none`；恢复仪器化时落点由 主会话 显式指派）。
+- **状态**：**已裁撤**（2026-10-12 改进三件套与评测装置退役；2026-10-29 用户拍板 B 将改进环
+  整体裁撤）。方法级改动仍用 `measurement: none` 口径，改走批次流程；设计知识与恢复清单见
+  `docs/design-decisions.md` §3。
 
 ### S8 确定性验证面
 
 - **陈述**：`validate.py all` 全套检查（schemas / examples / artifacts / protected /
   manifests / docs / tests / doc_chain 自测 / doc_chain_live 活面 / decision_gate 决策可追溯 /
   lint，项数以 `validate.py --list` 自报为准）全绿是任何交付的最低门槛；保护门清单
-  （`protected-paths.txt`）覆盖评测官/发布官角色、测量路径、记录 schema、钉住
-  回归测试；门变更须人工评审。
+  （`protected-paths.txt`）覆盖测量路径、记录 schema、钉住回归测试与清单自身；
+  门变更须人工评审。
 - **验收口径**：`python3 tools/lab/validate.py all` 退出码 0；`validate.py protected`
   拒绝清单失去覆盖。
 - **标尺**：validate.py 自身 + `.github/` CI 门进（fail-closed）。
@@ -187,9 +187,10 @@
 
 ### S15 诚实声明条款
 
-- **陈述**：角色分离不是环境隔离（评测官/发布官同模型同宿主族，靠只读工具面 + 保护门
-  分立）；`measurement: none` 是方法级改动的合法且诚实的取值；记录状态 `fixed-pending-review`
-  在回归未跑前不得自称 verified。文档与记录不得声称未观察到的宿主行为。
+- **陈述**：角色分离不是环境隔离（reviewer / technical-director / bug-investigator 同模型
+  同宿主族，靠只读角色契约与评审门分立）；`measurement: none` 是方法级改动的合法且诚实的
+  取值；记录状态 `fixed-pending-review` 在回归未跑前不得自称 verified。文档与记录不得声称
+  未观察到的宿主行为。
 - **验收口径**：抽任何记录/文档，其强度声明与证据等级一致。
 - **标尺**：`validate.py recurrence` / `report`（状态与回归字段一致性）+ 人工评审。
 - **状态**：生效。
@@ -198,13 +199,13 @@
 
 | 条目 | 一句话 | 状态 |
 | --- | --- | --- |
-| S1 | 14 角色能力库，默认路径短 | 生效 |
+| S1 | 10 角色能力库，默认路径短 | 生效 |
 | S2 | 十步主工作流 | 在建（流程标尺缺口） |
 | S3 | 写/读范围分离 + 14 条硬边界 | 生效 |
 | S4 | 独立评审门（作者参与不可豁免） | 生效 |
 | S5 | 失败语义三类，编排层不做保底 | 待验证（注入演练未做） |
 | S6 | 记录体系 + 编译门 | 生效 |
-| S7 | 改进环：预声明 → 独立评测 → 人批门 | **已停用**（2026-10-12） |
+| S7 | 改进环：预声明 → 独立评测 → 人批门 | **已裁撤**（2026-10-29） |
 | S8 | 确定性检查全套 + 保护门 | 生效 |
 | S9 | 瘦快照打包，manifest 为版本事实源 | 生效（生成树与源逐字节一致）；宿主安装快照随版本 bump 过期，状态以 `docs/releases/pending-test.md` 为准 |
 | S10 | 业务尺子 | **已裁撤**（2026-10-12） |

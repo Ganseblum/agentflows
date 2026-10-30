@@ -1,0 +1,37 @@
+# 全量门实跑（2026-10-29 第二轮修复后 · 最终）
+date: 2026-10-29T20:15:52+0800
+HEAD: f73a4e9ef94c3194ecb28f121661754859b7c2c2（工作树未提交）
+command: .venv/bin/python tools/lab/validate.py all
+PASS schemas
+PASS examples
+PASS artifacts
+PASS protected
+PASS manifests
+PASS docs
+PASS tests
+PASS doc_chain
+PASS doc_chain_live
+PASS decision_gate
+PASS lint
+EXIT=0
+
+command: .venv/bin/python tools/lab/doc_chain.py --self-test
+PASS C18-08 checklist-shaped 未决项 table without an entry trips too
+136/136 self-test cases pass
+EXIT=0
+
+command: .venv/bin/python tools/lab/doc_chain.py "docs/features/feature-2026-10-29-全面修正与瘦身"
+PASS doc-chain docs/features/feature-2026-10-29-全面修正与瘦身
+EXIT=0
+
+command: .venv/bin/python -m unittest discover -s tests
+Ran 201 tests in 23.640s
+
+OK
+EXIT=0
+
+command: .venv/bin/python tools/lab/validate.py installed（授权不含重装，预期报漂移）
+  - skills/agentflow/templates/host/README.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.23.0
+  - skills/agentflow/templates/host/global-rules.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.23.0
+  - skills/agentflow/templates/hub/repo-rules.md: differs between the source tree and the installed copy at /Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.23.0
+EXIT=1

@@ -515,7 +515,7 @@ $ validate.py recurrence                             → 9 类；recurred 5 / si
 | G05 | **`validate.py docs` 第 5 组断言是幽灵** | `gate/docs.py:184` docstring / `AGENTS.md:27` / `tools/lab/README.md:47-48` vs 代码无实现；R4 复现差集 3 个且门 PASS | D2 D5 | 实现镜像比对，或删掉三处声称 | 未立案 |
 | G06 | **`check-diff` 对 `__pycache__/*.pyc` 误判越界** | 副本实测 blocked 13–14 条 exit 1；与 `tools/lab/README.md:42-43` 矛盾 | D2 D9 | isolation 排除 `__pycache__`/`*.pyc`，或把 `tools/lab/gate/` 改逐文件保护 | 未立案 |
 | G07 | **`trend.py` 在现行树崩溃** | exit 1 traceback（5 角色独立复现同一文件） | D1 D3 D9 | 把「`## 发现摘要`」纳入评审契约，或让 trend.py 跳过并记 null | 未立案 |
-| G08 | **`mutate.py` 实测 43/51，仓内三处写「51/51 全杀」** | `index.md:32`、`PLAN-QUALITY-001.md:29`、`EP-2026-10-19-001.json:20` vs 实跑 exit 1 | D2 D9 D11 | 撤回三处数字或补上被杀死的回归测试（`MutationKillCorpusTests` 在 git 全历史零命中） | 未立案 |
+| G08 | **`mutate.py` 实测 43/51，仓内三处写「51/51 全杀」** | `index.md:32`、`PLAN-QUALITY-001.md:29`、`EP-2026-10-19-001.json:20` vs 实跑 exit 1 | D2 D9 D11 | 撤回三处数字或补上被杀死的回归测试（`MutationKillCorpusTests` 在 git 全历史零命中；勘误：该类从未进入提交历史） | 未立案 |
 | G09 | **单测 95/96 注水，实测 78**（散布 24 个文件） | 实跑 `Ran 78 tests`；`git log --all -S` 零命中 | D8 D11 | 全仓改写为 78（或补上 17 个测试使其为真） | 未立案 |
 | G10 | **「照指令产出必被自己的门拒」：计划模板 4 处不兼容** | 副本照抄 → 3 条 `body section … is required`；`gate/doc_chain.py:362` 按列名 vs `gate/plan.py:107` 按索引 | D5 D7 | 拆两份模板（本仓形态 + 目标仓形态）；`gate/plan.py` 状态列改按列名读 | 未立案 |
 | G11 | **测试角色授权的 `scratch/`/`evidence/` 落点被记录门全拒** | 副本 → `FAIL artifacts (5 error(s))`；现行仓从未出现过这两个目录 | D5 | `gate/workspace.py` testing 分支放行；或改 `test-records.md:11,12,23` 与 `test-executor.md:17` | 未立案 |

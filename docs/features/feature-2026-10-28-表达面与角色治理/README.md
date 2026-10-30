@@ -21,9 +21,9 @@
 | proposal | `proposal/proposal.md` | 两条问题的实测现状、范围、不做事项 |
 | spec | `spec/be/backend.md`、`spec/qa/acceptance.md` | 载体归属表、收敛判据、验收点 |
 | design | `design/be/backend.md`、`design/qa/testing.md` | 收敛方案、异常矩阵、回滚点 |
-| plan | `plan/PLAN-GOV-001.md` | 执行计划（当前全部未开始） |
+| plan | `plan/PLAN-GOV-001.md` | 执行计划（superseded，八项任务并入 FIX 批） |
 | testing | `testing/` | 28 例边界测试复跑证据（T05） |
-| reviews | `reviews/` | 独立评审落点（当前为空，见评审档位） |
+| reviews | `reviews/` | `review-2026-10-28-001.md`（L2 / approved / superseded_plan PLAN-GOV-001） |
 
 ## 推进进度
 
@@ -37,14 +37,14 @@
 ☑ spec/qa 已成文（`spec/qa/acceptance.md`），验收点与判据预先写定
 
 ### 3. 需求评审 [门禁]
-☑ (N/A: 宿主委派不可用，按 L0 档主审自审；补复核条件见元信息)
+☑ 独立 L2 复核 `approved`（`reviews/review-2026-10-28-001.md`；原 L0 欠账已由 DEBT T03 清偿）
 
 ### 4. Design [按角色]
 ☑ design/be 已成文（`design/be/backend.md`）
 ☑ design/qa 已成文（`design/qa/testing.md`）
 
 ### 5. 技术方案评审 [门禁]
-☑ (N/A: 同第 3 项，L0 档；补复核条件见元信息)
+☑ 独立 L2 复核 `approved`（`reviews/review-2026-10-28-001.md`）
 
 ### 6. Plan [执行契约]
 ☑ 已成文（`plan/PLAN-GOV-001.md`），全部任务未开始——本批只定范围

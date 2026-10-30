@@ -31,7 +31,7 @@
   判据用**记录契约已有的字段名**（`schemas/review.schema.json` 的 `source_revision`，不是
   `reviewed_revision`——后者只存在于 reviewer 结果信封 `contracts.md:132`，不是记录字段）：
   `review_tier ∈ {L1, L2}` 且 `source_revision` 非空且 `git cat-file -e <值>^{commit}` 退出 0
-  且 `decision ∈ {approved, changes_requested, blocked}`。
+  且 `review_decision ∈ {approved, changes_requested, blocked}`（批次内记录口径；根契约记录用 `decision`）。
 - **G1-AC-02**：评审记录的 `decision` 为 `changes_requested` 时，其 `findings` 里每个 `ISS-*`
   都必须在 `docs/issues/` 存在。**不设「正文写已就地修复」的旁路**——`reviews/README.md:59-61`
   要求「发现的问题一条一条写进 issues/」，`schemas/review.schema.json:40-45` 也把 findings 定义为
@@ -45,9 +45,9 @@
   `dispatch_errors` 缺失/为空 ⇒ 校验器红；(b) 批次文档：README/计划声明 L0 且对应 `reviews/`
   为空 ⇒ 计入 G2-AC-01 的「未清偿」派生集合，不得被标成已清偿。判据：(a) 两个反向夹具各跑一次断言
   退出码；(b) 拿现存两批实测，断言派生集合恰好含这两条。
-- **G3-AC-01**：五条 `fixed-pending-review` 记录（ISS-2026-10-23-元信息同行声明默认落点基准被误判/058/060/061/066）逐条有结论：
+- **G3-AC-01**：五条 `fixed-pending-review` 记录（ISS-2026-10-23-元信息同行声明默认落点基准被误判、ISS-2026-10-23-变异语料锚点漂移致判据不可观察、ISS-2026-10-23-仓扫PASS被当作门有效的证据、ISS-2026-10-23-新判据声明了却不被校验的六处、ISS-2026-10-28-整改批自述与实现面不同步）逐条有结论：
   转 `verified`（frontmatter 需 `reviewer` + `review_decision: approved` + `regression_status: pass`
-  + `closure_criteria`，**且正文含 `## 审查` 节**——`tools/lab/gate/records.py:317` 对 verified
+  + `closure_criteria`，**且正文含 `## 审查` 节**——`tools/lab/gate/records.py` 的 `## 审查` 强制断言（当前 :448）对 verified
   记录强制该标题）或退回 `open` 并写明缺什么。
   判据：逐条读 frontmatter + 断言正文 `## 审查` 存在（转 verified 的条目）。
 - **G3-AC-02**：`fix_revision` 的值域**只有一种合法形态**：可被 `git cat-file -e <值>^{commit}`

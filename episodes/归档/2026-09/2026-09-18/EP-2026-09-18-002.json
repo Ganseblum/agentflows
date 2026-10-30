@@ -18,7 +18,7 @@
     {
       "kind": "gate_change",
       "value": "one optional schema field, human-authorized in session",
-      "evidence_ref": "skills/improve/references/episode.schema.json 在 protected-paths.txt 门内；本次为用户在会话中明确批准的人工门变更（C2' 完整 diff：单 hunk 41 行，additionalProperties: false 与 required 列表未动，C5 五项正反探针全过）"
+      "evidence_ref": "agentflows@f73a4e9:skills/improve/references/episode.schema.json（2026-10-29 改进环裁撤后迁至 schemas/episode.schema.json）在 protected-paths.txt 门内；本次为用户在会话中明确批准的人工门变更（C2' 完整 diff：单 hunk 41 行，additionalProperties: false 与 required 列表未动，C5 五项正反探针全过）"
     },
     {
       "kind": "change_surface",

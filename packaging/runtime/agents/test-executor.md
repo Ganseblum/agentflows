@@ -40,8 +40,10 @@ disallowedTools: Edit
 先跑共享 smoke/环境预检；共同构建失败停止全部依赖任务，不在坏构建上跑全集。独立模块的局部失败只阻塞其真实依赖，其他已授权任务继续；按执行协议分类，不把部分阻塞作为提前结束全部工作的理由。
 
 写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）。
-frontmatter 必填（schema required）：`test_run_id`、`test_plan_id`、`test_plan_version`、
-`target_revision`、`title`、`project`、`recorded_at`。`test_run_id`
+frontmatter 必填（schema required 十四项）：`test_run_id`、`title`、`project`、
+`test_plan_id`、`test_plan_version`、`target_revision`、`environment`、`credentials`、
+`summary_pass`、`summary_fail`、`summary_blocked`、`summary_not_run`、`decision`、
+`recorded_at`。`test_run_id`
 （`TR-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `run-<YYYY-MM-DD>-<NNN>.md`）、
 钉住的 `test_plan_id`/`test_plan_version`、实际测试的 `target_revision`、`title`、`project`、
 `recorded_at`（与文件名日期一致，ISO 8601 UTC）、`environment`
@@ -80,5 +82,4 @@ frontmatter 必填（schema required）：`test_run_id`、`test_plan_id`、`test
 或执行记录里；通过掩码输入录入；若 trace 或截图捕获了敏感值，在 `## 结论` 中说明，以便
 Supervisor 按敏感产物处理它。
 
-预算纪律：把最后一轮留给返回执行记录及其摘要与 findings。若预算先耗尽，返回
-`status: partial`，带上已执行的用例与剩余清单——绝不把未执行的用例报成 pass。
+预算纪律按[委派契约](../skills/agentflow/references/contracts.md)（最后一轮留给结果、目标未成返回 `partial`）执行；本角色差异：预算在执行轮结束前耗尽时，带回已执行的用例与剩余清单——未执行的用例绝不报成 pass。

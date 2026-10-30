@@ -13,8 +13,8 @@ episodes/
   README.md
 ```
 
-契约**复用** improve 环的既有
-[`skills/improve/references/episode.schema.json`](../skills/improve/references/episode.schema.json)
+契约是
+[`schemas/episode.schema.json`](../schemas/episode.schema.json)
 （在保护门内），不另设平行载体。字段速览：`schema_version=1`、`episode_id`、`source_type`（user_feedback / acceptance / test / review / incident / rollback）、`revision`（source/base）、`run`（run_id/时间/状态）、`claims`（每条带可执行 check）、`evidence`（稳定引用）、`objective`、`outcome`
 （accepted / rejected / partial / failed / unknown）、`signals[]`（kind + value +
 evidence_ref）、`review_roundtrips[]`（0.7.2 引入、0.8.0 起必填：每轮独立评审一行——`at` / `reviewer` /
@@ -25,15 +25,15 @@ evidence_ref）、`review_roundtrips[]`（0.7.2 引入、0.8.0 起必填：每�
 要点：
 
 - **谁写**：supervisor 在会话收口时写（final decision record 的落盘动作，不需要新角色）。
-- **何时写**：0.7.2 起 material 改动（开过独立评审门的）一律写，不再限于「可能喂给改进环」
-  的任务；评审每一轮（含 `changes_requested` 与分歧收场）落 `review_roundtrips`。outcome 用
+- **何时写**：0.7.2 起 material 改动（开过独立评审门的）一律写，不限任务类型；
+  评审每一轮（含 `changes_requested` 与分歧收场）落 `review_roundtrips`。outcome 用
   worker result 同一语义——预算耗尽是 `partial`，永不 `complete`。`review_roundtrips` 自
   0.8.0 起 schema 必填：没开过评审门的任务写 `[]`；早于该字段的历史 episode 以 `[]` 回填，
   并在 `signals[]` 加一条 `review_roundtrips_backfill` 说明「未捕获」与「没有评审」的区别，
   不虚构当时没有结构化记录的轮次。
 - **负向 episode 必须收录（0.8.0 约定，针对生存者偏差）**：`outcome: rejected / partial /
   failed` 的任务与 `accepted` 一样是一等证据。独立评审 `changes_requested` 后放弃或返工的
-  任务、被门拦下的候选、预算耗尽的中断，都要落 episode；只挑成功任务落盘会让改进环把
+  任务、被门拦下的候选、预算耗尽的中断，都要落 episode；只挑成功任务落盘会让后续复盘把
   「没做坏过」误读成「不会做坏」。supervisor 收口自检：这批任务里有没有一条没写、正因为它
   失败了？
 - **脱敏**：`redactions` 声明已脱敏的内容；凭证与私人对话内容不进 episode。
@@ -45,7 +45,8 @@ evidence_ref）、`review_roundtrips[]`（0.7.2 引入、0.8.0 起必填：每�
 ## 与其他记录的关系
 
 bug 记录（`issues/`）承载**缺陷**证据；episode 承载**任务级**证据——正常完成的任务、
-被门拦下的任务、成本与摩擦，都是 improve 环的输入。两者共同构成 feedback-analyst 的证据池。
+被门拦下的任务、成本与摩擦。两者共同构成方法复盘与改进批次的证据池（改进环已于
+2026-10-29 整体裁撤，episode 仍是现行记录根）。
 
 回溯：
 

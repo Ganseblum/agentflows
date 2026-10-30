@@ -1,0 +1,25 @@
+# C17 变异实跑（2026-10-29 第二轮修复后）
+date: 2026-10-29T18:29:27+0800
+command: .venv/bin/python tools/lab/mutate.py --check doc_chain_selftest
+CONTROL PASS doc_chain_selftest
+M43 已杀死  doc_chain.C1                   doc_chain_selftest exit 1
+M44 已杀死  doc_chain.C2                   doc_chain_selftest exit 1
+M45 已杀死  doc_chain.C3                   doc_chain_selftest exit 1
+M46 已杀死  doc_chain.C4                   doc_chain_selftest exit 1
+M47 已杀死  doc_chain.C4                   doc_chain_selftest exit 1
+M48 已杀死  doc_chain.C5                   doc_chain_selftest exit 1
+M49 已杀死  doc_chain.C6                   doc_chain_selftest exit 1
+M50 已杀死  doc_chain.C7                   doc_chain_selftest exit 1
+M51 已杀死  doc_chain.C9                   doc_chain_selftest exit 1
+M52 已杀死  doc_chain.C10                  doc_chain_selftest exit 1
+M53 已杀死  doc_chain.C17                  doc_chain_selftest exit 1
+M54 已杀死  doc_chain.C17                  doc_chain_selftest exit 1
+M55 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M56 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M57 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M58 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+M59 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+M60 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M61 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+总变异数 19  已杀死 19  存活 0（其中超时 0）  无效 0
+EXIT=0

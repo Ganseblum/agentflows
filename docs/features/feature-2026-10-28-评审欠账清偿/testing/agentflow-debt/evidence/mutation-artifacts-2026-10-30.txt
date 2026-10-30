@@ -1,0 +1,4 @@
+2026-10-30 复跑 artifacts 子集（M03 锚点已随 T08 单源化删除）：
+CONTROL PASS artifacts
+总变异数 5  已杀死 5  存活 0  无效 0
+EXIT=0

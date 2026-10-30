@@ -2,6 +2,7 @@
 name: reviewer
 description: 在编码后独立评审 material 实现，核查验收标准、正确性、回归、安全边界与验证证据。评审期间为只读。
 model: inherit
+maxTurns: 20
 tools: Read, Glob, Grep
 disallowedTools: Bash, Write, Edit
 ---
@@ -142,3 +143,7 @@ Security / Test depth / Flow reasonableness / Documentation accuracy 四份专�
 `status: complete | partial | blocked` 与 `reviewed_revision`。缺少所需的原始 diff/证据时
 使用 `status: partial`；partial 绝不是批准。包含具体证据、最小必要修改、已运行的检查与
 残余风险。
+
+**预算纪律**：保留最后一轮用于返回评审报告（决定、findings 与覆盖表）。若轮次预算在评审
+取证完成之前耗尽，返回 `status: partial` 并列出尚未核实的断言清单——被截断的评审绝不报告为
+`complete`，未核实的断言按 `unverified` 处理，不得默认其成立。

@@ -1,21 +1,31 @@
+---
+decision_deps: [DEC-2026-001#r2]
+---
+
 # feature-2026-10-25-总体评审吸收与修复 — 把外部总体评审变成可执行的修复契约
 
 > 段落映射：逐段声明落点（下表）。落点非空且非「—」的段落可缺目录；其余段落齐全。
 > 轻量形态：本批为评审吸收批，spec 与 design 不另造目录——验收判据随提案（proposal §七），
 > 逐项修法随计划任务行（file:line 级）承载；此为段落映射豁免的合法形态，不是降档逃逸。
 > 落点形态：普通业务仓（`docs/features/`），本仓即为该形态。
-> 本批次启用两项标记：`agentflow 目标承接`（目标承接表进入 C22 检查）与 `agentflow 决策归属`（未决项须有归属，2026-10-29 起含「需用户抉择的待决行必须带拍板口编号」——本提案 §六 的 Q-02、Q-04、Q-05 已据此补上条目编号，Q-01 以实测事实闭合）；
+> 本批次启用两项标记（声明行形态，2026-10-29 起由防摘除断言核验）：
+>
+> agentflow 目标承接
+>
+> agentflow 决策归属
+>
+> 目标承接表进入 C22 检查；未决项须有归属（2026-10-29 起含「需用户抉择的待决行必须带拍板口编号」——本提案 §六 的 Q-02、Q-04、Q-05 已据此补上条目编号，Q-01 以实测事实闭合）。
 > 结构模板标记未启用（本批无 design 固定章节要求）。
 
 ## 元信息
 
 - 需求原文/页面链接：2026-10-25 用户原话，逐字保留于 `proposal/proposal.md` 文档信息节；主实施仓：
   本仓（agentflows）；相关系统/仓库：无；UI 轨：未启用；埋点：N/A（本批不产出用户可见行为，
-  无事件新增或变更）；最后更新时间：2026-10-29（本批承接关系节同日回写；Q-02…Q-05 已补拍板口条目编号）
+  无事件新增或变更）；最后更新时间：2026-10-30（活任务收口；删除类留下一批）
 - 升格来源：无。由 2026-10-25 会话总体评审直接立项：架构 / 逻辑 / 功能 / 文档四维评审，
   含三路独立深审（角色面、文档面、门工具逻辑）与 `/tmp` 一次性副本上的破坏性探针；
   评审结论全文收口于 `proposal/proposal.md` §二至 §四。
-- 状态：立项（部分并入）。唯一权威状态源是 `plan/PLAN-REVIEW-001.md` 的任务看板；本 README 只作批次入口索引。
+- 状态：已完成（部分并入；看板 25 ☑ / 5 本期不做）。唯一权威状态源是 `plan/PLAN-REVIEW-001.md` 的任务看板；本 README 只作批次入口索引。
 - **承接关系（2026-10-29）**：与本批同题的收敛项已并入 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 并取得唯一任务号——T24（必读面）→ 该计划 T12；T13/T14（`roles.md` 序列与评审口径、`AGENTS.md` 工具白名单措辞）→ 该计划 T17；§六 的 Q-01…Q-05 → 该计划 T03 并逐条登记 `docs/PENDING-DECISIONS.md` 第 19…25 条（Q-01 经 2026-10-29 实测已由 2026-10-26 的安装面修复落地，不再当未决项问人，见 `docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 的 Q-09 行）。
 - **仍留本批的项（不被吸收，理由随行）**：T01…T10 与 T15…T17、T27…T30 属门工具与记录索引的工程议程，不在「修正+瘦身」范围内；T18…T22 属删除类，其授权现登记为 `docs/PENDING-DECISIONS.md` 第 21 条；T23 术语表与 T25、T26 各自待拍板（第 20、10 条）。
 
@@ -57,7 +67,7 @@
 
 ### 6. Plan [执行契约]
 
-☑ 已成文（`plan/PLAN-REVIEW-001.md`，status: proposed）；Q-01 至 Q-05 拍板后转 approved 才可指派实施
+☑ 已成文（`plan/PLAN-REVIEW-001.md`，status: approved）；Q-01 至 Q-05 已关闭，2026-10-29 授权实施
 
 ### 7. 实施与验证 / 8. 收口
 
@@ -70,17 +80,17 @@
 
 | 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |
 | --- | --- | --- | --- | --- |
-| G1 安装面闭合 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「安装面」） | T01、T02 | ☐ 未开始 |
-| G2 门逻辑补洞 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「门逻辑」） | T03、T04、T05、T06、T07、T08、T09 | ☐ 未开始 |
-| G3 声明与执行对齐 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「契约对齐」） | T10、T11、T12、T13、T14 | ☐ 未开始 |
-| G4 勘误可追平 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「勘误传播」） | T15、T16、T17 | ☐ 未开始 |
-| G5 记录面回到产出比 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「记录面」） | T18、T19、T20、T21、T22 | ☐ 未开始 |
-| G6 表达与结构减负 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「表达与结构」） | T23、T24、T25、T26 | ☐ 未开始 |
-| G7 决策跨批次统一 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §四 4.2 与 §七「决策统一」） | T27、T28、T29、T30 | ☐ 未开始 |
+| G1 安装面闭合 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「安装面」） | T01、T02 | ☑ 已完成 |
+| G2 门逻辑补洞 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「门逻辑」） | T03、T04、T05、T06、T07、T08、T09 | ☑ 已完成 |
+| G3 声明与执行对齐 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「契约对齐」） | T10、T11、T12、T13、T14 | ☑ 已完成 |
+| G4 勘误可追平 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「勘误传播」） | T15、T16、T17 | ☑ 已完成 |
+| G5 记录面回到产出比 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「记录面」） | T18、T19、T20、T21、T22 | — 本期不做（删除类留下一批，2026-10-29 拍板） |
+| G6 表达与结构减负 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「表达与结构」） | T23、T24、T25、T26 | ☑ 已完成 |
+| G7 决策跨批次统一 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §四 4.2 与 §七「决策统一」） | T27、T28、T29、T30 | ☑ 已完成 |
 
 ## 当前步骤
 
-立项阶段：提案、计划与承接表已成文并通过机器检查；等待需求评审门与用户对 Q-01 至 Q-05 的拍板。
+已完成：活任务 25 项闭合，G1–G4/G6/G7 已完成；G5 的删除类 5 项按 2026-10-29 拍板留下一批。Q-01 至 Q-05 已全部关闭。
 权威进度以 `plan/PLAN-REVIEW-001.md` 的任务看板为准。
 
 ## 当前实施仓与分支基线

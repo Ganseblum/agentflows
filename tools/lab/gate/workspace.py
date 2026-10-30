@@ -301,7 +301,6 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 continue
 
     # Test records under features/<batch>/testing/: plans first, so each run can resolve its plan.
-    # The run-findings bug-id cross-check is still deferred (see the note at the end of this function).
     seen_plan_ids: dict[str, Path] = {}
     seen_run_ids: dict[str, Path] = {}
     test_plans: dict[str, dict[str, Any]] = {}
@@ -311,8 +310,19 @@ def validate_workspace_artifacts() -> list[ValidationError]:
         if entry is not None:
             test_plans[entry["frontmatter"]["test_plan_id"]] = entry
     for path in testing_runs:
-        run_errors, _, _ = validate_test_run_markdown(path, path.relative_to(ROOT), seen_run_ids, test_plans)
+        run_errors, findings, flow_findings = validate_test_run_markdown(
+            path, path.relative_to(ROOT), seen_run_ids, test_plans
+        )
         errors.extend(run_errors)
+        # Every bug_id a run's findings or flow_findings cite must resolve to an issue record
+        # the walk has seen (T10; the three-return signature existed for this comparison).
+        for bug_id in [*findings, *flow_findings]:
+            if isinstance(bug_id, str) and bug_id not in seen_bug_ids:
+                errors.append(
+                    ValidationError(
+                        str(path.relative_to(ROOT)), f"references unknown bug_id {bug_id!r}"
+                    )
+                )
 
     # Cross-check recurrence ledgers against the records they claim.
     for class_id, entry in ledgers.items():
@@ -366,9 +376,7 @@ def validate_workspace_artifacts() -> list[ValidationError]:
                 errors.append(
                     ValidationError(str(review_path), f"review findings reference unknown bug_id {bug_id!r}")
                 )
-    # Test records under features/<batch>/testing/ are walked and validated above. Still deferred to
-    # a separately reviewed change: the run-findings bug-id cross-check (a run's findings and
-    # flow_findings must resolve to issue records), which validate_test_run_markdown returns but
-    # this walk does not yet compare. The improve-loop artifact cross-checks were retired with the
-    # improvements/ three-subtree (2026-10-12, user decision).
+    # Test records under features/<batch>/testing/ are walked and validated above. The
+    # improve-loop artifact cross-checks were retired with the improvements/ three-subtree
+    # (2026-10-12, user decision).
     return errors

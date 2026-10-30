@@ -135,7 +135,7 @@ def validate_body_references(body: str, path: Path) -> list[ValidationError]:
 
 
 def validate_episode_document(path: Path) -> list[ValidationError]:
-    """Validate one episode record: improve-loop episode schema, timestamp, filename=id."""
+    """Validate one episode record: episode schema, timestamp, filename=id."""
     document, load_errors = load_json(path)
     if load_errors or not isinstance(document, dict):
         return load_errors or [ValidationError(str(path), "episode record is not a JSON object")]

@@ -27,7 +27,7 @@
 
 ## 工作链（默认入口）
 
-任务是先落到一条链上，再从链里取角色。六条链覆盖全部任务形态，链与链的区别是**输入契约**，不是资历；链外没有第七种入口，「专家并行」是链内的取证手段，不是独立的链。
+任务是先落到一条链上，再从链里取角色。五条链覆盖全部任务形态，链与链的区别是**输入契约**，不是资历；链外没有第六种入口，「专家并行」是链内的取证手段，不是独立的链。
 
 | 链 | 默认序列 | 默认可省 | 不可省的一步（硬边界，跳过即改变结论效力） |
 | --- | --- | --- | --- |
@@ -35,7 +35,6 @@
 | 缺陷 | Bug investigator → Bug fixer → Reviewer → Bug recorder | 已复现的小 bug 可合并诊断与记录环节 | Fixer 不得批准或关闭自己的修复；Recorder 不得凭 Fixer 摘要标 `verified` |
 | 测试 | Test planner → Test executor → Reviewer（流程合理性模式） | 无计划的少量手工核对可不立案 | Executor 不改被测对象；失败先分离真 red 与 flaky，再立案 |
 | 规划 | Technical director → Plan architect | 无跨层或契约决策时可跳过 TD | 计划只由 Plan architect 写；批准、指派执行与回滚决定归 Supervisor |
-| 改进 | Feedback analyst → Candidate engineer → Evaluator → Release governor | 无（四步各自承担一项独立性） | Candidate 不自评、不自放行；Evaluator 与 Release governor 全程只读 |
 | 独立评审 | Reviewer（单点） | 无 | 评审期间不编辑实现、不运行受候选控制的命令；无基线须声明，不得假定符合 |
 
 选链的顺序与判据：
@@ -62,7 +61,6 @@
 | 已有验证复现的小 bug | Supervisor 自己做诊断/修复/检查；Supervisor 亲写的改动独立 Reviewer 门仍然强制；需要沉淀时再记录 |
 | 评审按另一系统规则编写的文档 | Supervisor（归档 + 评审记录）+ Reviewer；findings 落成带 `provenance: external` 的 bug 记录 |
 | 任务本身是带解冲突的分支合并 | Supervisor 解决并验证 + 独立 Reviewer（supervisor 亲解代码冲突时强制；报完成前留存合并后确定性检查的原始输出） |
-| 插件/角色指令改进 | Feedback Analyst → Candidate Engineer → Evaluator → Release Governor |
 
 > 「专家」指宿主按任务域提供的领域专家角色（专家中心 / 专家市场按域选用）：它产出建议与判断依据，不写计划、不执行改动；上表「专家并行」即按任务域同时启用多名专家，交汇结论交 Plan Architect。
 
@@ -76,9 +74,9 @@ supervisor 决定是否委派，保持范围不重叠，并停止不再产出新
 
 ### 收敛注记
 
-bug investigator、feedback analyst、technical director 与 evaluator 与 reviewer 画像同构（只读、证据进、结构化结论出），且**有意不**收敛进它：四者的输入契约与产出不同——分别是带复现与归因的诊断、归一化证据聚类、带边界与排序的架构决策、对不可变结果记录的四值对照判定（`better`/`neutral`/`worse`/`invalid`）——折成 reviewer 的模式会掩盖简报必须满足哪个输入契约。它们保持独立角色文件，是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，不作为常规编辑执行。
+bug investigator 与 technical director 与 reviewer 画像同构（只读、证据进、结构化结论出），且**有意不**收敛进它：三者的输入契约与产出不同——分别是带复现与归因的诊断、带边界与排序的架构决策、对 diff 的独立评审——折成 reviewer 的模式会掩盖简报必须满足哪个输入契约。它们保持独立角色文件，是一个显式的过渡态；合并或重塑它们会改动公开角色面，属产品决策，不作为常规编辑执行。
 
-2026-10-19 拍板（Q-02 方案 D）：**角色文件数量不合并**——收敛发生在「工作链」入口层，不在角色文件层。理由有两条：一是默认路径已经按需加载，慢的不是加载而是"从条目里现拼流程"；二是 14 个角色里 2 个在 `protected-paths.txt` 的保护面内，另有四组独立性（候选不自评、候选不自放行、修复者不写验收记录、测试设计与执行分离）会因合并而消失。唯一仍待议的合并对是 frontend / backend engineer（同属实现层、按层选一）；evaluator 与 release-governor 不进入合并候选。
+2026-10-19 拍板（Q-02 方案 D）：**角色文件数量不合并**——收敛发生在「工作链」入口层，不在角色文件层。理由有两条：一是默认路径已经按需加载，慢的不是加载而是"从条目里现拼流程"；二是两组独立性（修复者不写验收记录、测试设计与执行分离）会因合并而消失。改进环已于 2026-10-29 整体裁撤，其四个角色一并退场；当前角色能力库为 10 个文件。frontend / backend engineer 的合并悬案已于 2026-10-29 按实测数字裁决为**保持分立**（见下节）。
 
 **frontend / backend engineer 合并的裁决规则**（2026-10-28 补，此前只有「待议」而无判据，是空悬）：
 以 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` 的 28 例为语料，
@@ -93,11 +91,22 @@ bug investigator、feedback analyst、technical director 与 evaluator 与 revie
   不是候选可自行实施的范围）；不满足时，在本节写明「已裁决：保持分立」与实际测得的数字，
   让该悬案关闭，不再以「待议」长期挂着。
 
-evaluator 与 release-governor 不进入合并候选。
+**已裁决：保持分立（2026-10-29 复跑）。** 实测数字：① 可比 6 例中 4 例结论不同（4/6；28 例
+全量不可复现——8 例属于已裁撤的改进环角色、14 例是角色专属输入）；② 产物所有权分歧 2 项
+（前端独占 `src/web/**`、后端独占 `src/api/**`），该项一票否决；③ 合并稿 44 + 35 = 79 行，
+超过 60 行上限。复跑记录见
+`docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/evidence/adjudication-2026-10-29.md`。
+重审触发条件：角色面把 10 个角色的所有权矩阵统一成一张表且前后端写路径不再互斥；或形成
+≥10 例共享语料且不一致率 <10%；或宿主提供角色级环境隔离。任一成立才重新开案。
 
 ## 角色文件是详细职责权威
 
 本表只导航，不再复制角色提示词。产物所有权、工具限制、专项深度和预算以实际文件为准；实现方法统一读取[执行与验证](execution.md)。
+
+**记录根清单**（单点定义，角色文件只引用此处）：现行记录根为 `docs/issues/`（含
+`recurrence/` 台账与 `docs/issues/归档/`）、`episodes/`、`docs/features/<批次>/plan/`（各批次
+计划在该批次 `plan/` 下）、`docs/releases/`（在途批次索引与待验收）与 `reviews/`。Supervisor
+为每一条记录显式指派路径；这些根归 Recorder 与 Plan Architect 所有，实现角色不写入。
 
 | 角色 | 何时读取 |
 | --- | --- |
@@ -111,9 +120,5 @@ evaluator 与 release-governor 不进入合并候选。
 | [Bug investigator](../../../agents/bug-investigator.md) | 复现、归因与可证伪诊断 |
 | [Bug fixer](../../../agents/bug-fixer.md) | 有诊断后的修复和同路径回归 |
 | [Bug recorder](../../../agents/bug-recorder.md) | 经验证后的缺陷记录，不凭修复摘要关闭 |
-| [Feedback analyst](../../../agents/feedback-analyst.md) | 仅改进环的反馈归因 |
-| [Candidate engineer](../../../agents/candidate-engineer.md) | 仅实现有界改进候选 |
-| [Evaluator](../../../agents/evaluator.md) | 只读评价候选证据 |
-| [Release governor](../../../agents/release-governor.md) | 只读发布建议，最终授权仍归人 |
 
 遗留补测是测试链的盘点模式，继续使用 Test planner / Test executor / Reviewer，不创建第七条链或新的执行角色。补测不自动授权生产修复；依赖分流、原生报告和覆盖复核按执行协议处理。

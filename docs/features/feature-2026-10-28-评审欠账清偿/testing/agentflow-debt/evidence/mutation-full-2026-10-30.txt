@@ -1,0 +1,67 @@
+CONTROL PASS artifacts
+CONTROL PASS doc_chain
+CONTROL PASS doc_chain_selftest
+CONTROL PASS examples
+CONTROL PASS tests
+M01 已杀死  plan.approval-gate             examples           exit 1
+M02 已杀死  plan.approved-scope            examples           exit 1
+M03 无效   plan.status-enum               artifacts          anchor 'PLAN_TASK_STATUSES = (' matches 0 lines, need exactly 1
+M04 已杀死  plan.status-enum               examples           exit 1
+M05 已杀死  plan.dep-cycle                 examples           崩溃（traceback）
+M06 已杀死  plan.dep-resolve               examples           exit 1
+M07 已杀死  plan.task-id-unique            examples           exit 1
+M08 已杀死  plan.row-width                 examples           exit 1
+M09 已杀死  records.bug-verified-review    examples           exit 1
+M10 已杀死  records.bug-open-fix           artifacts          exit 1
+M11 已杀死  records.bug-closed-change-log  tests              exit 1
+M12 已杀死  records.recurrence-name        tests              exit 1
+M13 已杀死  records.bug-layout             artifacts          exit 1
+M14 存活   workspace.issues-layout        tests              exit 0
+M15 已杀死  workspace.issues-depth         artifacts          exit 1
+M16 已杀死  workspace.files-walk           tests              exit 1
+M17 已杀死  workspace.occurrence-unique    artifacts          崩溃（traceback）
+M18 存活   common.files-containment       tests              exit 0
+M19 已杀死  common.files-containment       tests              exit 1
+M20 已杀死  schema.if-then-else            tests              exit 1
+M21 已杀死  schema.enum                    tests              exit 1
+M22 已杀死  schema.pattern                 tests              exit 1
+M23 已杀死  schema.required                tests              exit 1
+M24 已杀死  schema.min-length              artifacts          exit 1
+M25 存活   schema.max-items               tests              exit 0
+M26 存活   schema.contains                tests              exit 0
+M27 已杀死  testing.case-count             examples           exit 1
+M28 已杀死  testing.summary                examples           exit 1
+M29 已杀死  testing.fail-evidence          tests              exit 1
+M30 已杀死  testing.decision-pass          examples           exit 1
+M31 已杀死  testing.case-registry          tests              exit 1
+M32 存活   docs.version-prose             tests              exit 0
+M33 已杀死  docs.retired-path              tests              exit 1
+M34 已杀死  docs.broken-link               tests              exit 1
+M35 已杀死  manifests.version-agree        tests              exit 1
+M36 已杀死  manifests.version-agree        tests              exit 1
+M37 存活   manifests.name-agree           tests              exit 0
+M38 已杀死  manifests.protected-coverage   tests              exit 1
+M39 已杀死  checks.unit-floor              tests              exit 1
+M40 已杀死  checks.unit-empty              tests              exit 1
+M41 已杀死  checks.doc-chain-pair          doc_chain          exit 1
+M42 已杀死  checks.doc-chain-floor         doc_chain          exit 1
+M43 已杀死  doc_chain.C1                   doc_chain_selftest exit 1
+M44 已杀死  doc_chain.C2                   doc_chain_selftest exit 1
+M45 已杀死  doc_chain.C3                   doc_chain_selftest exit 1
+M46 已杀死  doc_chain.C4                   doc_chain_selftest exit 1
+M47 已杀死  doc_chain.C4                   doc_chain_selftest exit 1
+M48 已杀死  doc_chain.C5                   doc_chain_selftest exit 1
+M49 已杀死  doc_chain.C6                   doc_chain_selftest exit 1
+M50 已杀死  doc_chain.C7                   doc_chain_selftest exit 1
+M51 已杀死  doc_chain.C9                   doc_chain_selftest exit 1
+M52 已杀死  doc_chain.C10                  doc_chain_selftest exit 1
+M53 已杀死  doc_chain.C17                  doc_chain_selftest exit 1
+M54 已杀死  doc_chain.C17                  doc_chain_selftest exit 1
+M55 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M56 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M57 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M58 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+M59 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+M60 已杀死  doc_chain.C22                  doc_chain_selftest exit 1
+M61 已杀死  doc_chain.C23                  doc_chain_selftest exit 1
+总变异数 61  已杀死 54  存活 6（其中超时 0）  无效 1

@@ -1,0 +1,116 @@
+FAIL：8 个受跟踪文件在快照后被删除
+      - agents/candidate-engineer.md
+      - agents/feedback-analyst.md
+      - examples/improve/release-record-none-better.json
+      - examples/improve/release-record-valid.json
+      - packaging/runtime/agents/candidate-engineer.md
+      - packaging/runtime/agents/feedback-analyst.md
+      - packaging/runtime/skills/improve/SKILL.md
+      - skills/improve/SKILL.md
+FAIL agents/bug-fixer.md：3 行内容消失
+      - 你是 Agentflow 团队中的 Bug Fixer，主要服务于目标仓的缺陷链（investigator → fixer → reviewer → recorder）；当缺陷位于 Agentflow 插件仓自身时，才经由改进环的候选流程走到本角色。
+      - | Evaluator、holdout 答案、发布策略、权限、hooks、MCP 配置（仅当缺陷位于 Agentflow 插件仓时适用——改进环语境的排除项） | ❌ | 绝不 |
+      - 只在 Supervisor 指派的工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。**bug 有用户可见面时，复现与修复验证用 Ego Light（`ego-browser` 命令行，先跑 `ego-browser skill` 取用法）**：修前按诊断给出的 Ego 操作序列复现失败并留存原始证据（截图、DOM 文本、网络日志），修复后重跑同一序列确认症状消失，把修前/修后两组证据一并返回——只有重跑通过才算修复验证成立。「绝不编辑已安装的 Agentflow 副本、Evaluator、holdout、发布策略、权限、hooks 或 MCP 配置」这类改进环语境的排除项，仅当缺陷位于 Agentflow 插件仓时适用。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。
+FAIL agents/technical-director.md：1 行内容消失
+      - 决策以实际仓库为依据。返回：决策、受影响的边界、接口契约、实现顺序、考虑过的备选方案、风险，以及需要进行的验证。对于 material 特性，决策要点名关键路径，并要求 [contracts](../skills/agentflow/references/contracts.md) 中的设计完备性产物（关键链路时序、异常矩阵、与回滚点配对的发布顺序——完备性判据以该契约为准）；作为决策者，你要把它们列为决策成立的完备性产物要求，缺件即驳回。埋点决策为「新增」时，把**事件级契约**一并列为完备性产物（事件名、触发点与代码落点、触发时机与去重、逐事件参数、隐私边界、失败降级），并要求每个事件有一条会失败的验证；决策为「复用」或 N/A 时，要求给出出处或理由，而不是留空。解决具体取舍，而不是产出一篇泛泛的架构文章。若任务不需要架构决策，明说并把控制权交回 Supervisor。若证据或预算不足，返回 `status: partial` 并列出缺失的决策输入，而不是给出完整的架构决策。
+FAIL docs/PENDING-DECISIONS.md：6 行内容消失
+      - | 10 | 2026-10-20 评测报告拍板项 P1/G28（`docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md` 第十七节） | improve 治理机器怎么处置：A 冻结（不删文件，只在路由与对外描述里写明当前停用，并清掉 `improve/SKILL.md` description 与 `openai.yaml` 里残留的「独立基线对照」话术；代价是四个角色文件与两份 schema 继续留在保护面与文档面里）；B 砍掉（按 2026-10-12 瘦身批先例整体裁撤，设计知识留 `docs/design-decisions.md` §3；代价是恢复时要照重建清单重建，且属受保护面门变更）；C 保留现状（不动；代价是继续 0 候选 0 发布记录的空转，且对外描述与实际能力的差距要靠人反复澄清） | 2026-10-28 重跑同一条命令，输出仍为 `记录文件数: 0`（与首跑一致，结论未变；本次刷新只因 `d5b52ce` 改过被引用的评测文档，触发 C17 到期重验）。命令（2026-10-23 立）： `python3.12 -c "from pathlib import Path; roots=[Path('episodes'),Path('docs/releases')]; ps=sorted(p for r in roots if r.exists() for p in r.rglob('*') if p.is_file() and p.suffix in {'.json','.md'} and p.name != 'README.md' and ('candidate' in p.name.lower() or 'release' in p.name.lower())); print('记录文件数:',len(ps)); [print(p) for p in ps]"` | A 冻结：不再投入、路由降权、保留记录面与恢复清单，恢复条件成熟再启用 | 用户在 A/B/C 中书面选定，并记日期与选定后的落点（选 A 或 B 时由当次批改动 `skills/improve/` 与两份 schema 的路由与描述） | P2 | 多模块(skills/improve/ 执行面、agents/evaluator.md 与 agents/release-governor.md 两个受保护角色、skills/improve/references/ 的 candidate 与 release-record 两份 schema) | N | 已拍板（2026-10-29 · B 砍掉；实施未开始） |
+      - | 12 | 2026-10-26 整体审核 G19（`docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md` 第 72 行） | 凭据值形状无机器检查：A 不机器检查（明文凭据本就不该进记录，属流程纪律而非 schema 形状；在 `AGENTS.md` / `docs/system-guide.md` 写明纪律即可）；B 在 gate 加凭据形态扫描（`records.py` 或 `testing.py` 扫正文禁止 `sk-` / `token=` / `Bearer ` 等形态，而非给 `credentials` 加 pattern）— 两条路择一 | 2026-10-28 复跑（被引文件于 51e6754 改动后）`grep -n pattern schemas/test-plan.schema.json schemas/test-run.schema.json` → 13 处 pattern 全部是 id 格式（`^TP-`/`^TR-`/`^ISS-`/数字），`credentials` 字段只有 `type`/`minLength`，无凭据形状 pattern；`tools/lab/gate/` 无凭据值扫描。该字段语义是「凭据如何送达执行者（如 session 注入的环境变量、不落盘）」，并非凭据值本身 | B 在 gate 加凭据形态扫描（扫描正文比给 `credentials` 加 pattern 更稳：前者拦所有字段的明文凭据，后者只拦该字段） | 用户在 A/B 中拍定；选 B 属受保护面门变更（`schemas/`、`tools/lab/gate/` 均在 `protected-paths.txt`），需逐项授权 | P2 | 多模块(schemas/test-plan.schema.json、schemas/test-run.schema.json、tools/lab/gate/testing.py 或 records.py 的扫描逻辑) | N | 已拍板（2026-10-29 · C 只给 credentials 加 pattern；仅覆盖该字段） |
+      - | 13 | 2026-10-26 整体审核 G20（`docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md` 第 73 行） | C17 变异覆盖最薄：A 补 1–2 个变异项（给 `doc_chain.C17` 加进 `ITEMS` 与 `MUTATIONS`，配正反夹具，由 `mutate.py` 实跑证明变异被杀死）；B 不纳入变异覆盖（C17 已有 `doc_chain.py --self-test` 与 `validate.py decision_gate` 间接守护，变异覆盖只是纵深，不补亦可）— 两条路择一 | 2026-10-28 复跑（被引文件于 51e6754 改动后）`python3 tools/lab/mutate.py --list` → `doc_chain.C17` 不在 `ITEMS`（无覆盖）；`coverage_gaps()` 当前不把 C17 列为缺口（它只比对 `ITEMS` 与 `EXEMPT`）。`ITEMS` 覆盖 24 个检查项；C17 实现于 `tools/lab/docchain/checks.py:750-789` 的 `staleness_findings` | A 补 1–2 个变异项（把最薄的 C17 纳入变异网，纵深更齐；成本是一次 mutate.py + 夹具改动，属受保护面门变更） | 用户在 A/B 中拍定；若选 A，`mutate.py` + `checks.py` 改动 + 夹具属受保护面门变更（`tools/lab/mutate.py`、`tools/lab/docchain/checks.py` 均在 `protected-paths.txt`），需逐项授权 | P2 | 多模块(tools/lab/mutate.py 的 ITEMS/MUTATIONS、tools/lab/docchain/checks.py 的 C17 实现、examples/decisions/ 或 doc_chain 自测夹具) | N | 已拍板（2026-10-29 · A 补 1–2 个变异项；待实施） |
+      - | 14 | 2026-10-27 评审耗时复盘（`skills/agentflow/references/contracts.md:119` 的 read_scope 只约束下限） | `skills/agentflow/references/contracts.md` 的 `read_scope` 只约束读取下限（必须覆盖改动经过的一切），没有要求简报提供可核实定位，也没有对应的读取上限或定位质量判据：A 在契约里补「定位即预算」条——简报对要求核实的字段/调用必须给 `path:line` 或可复核 Grep 模式，大文件以片段交付，worker 因定位不足须扩读时先索取定位（代价：`contracts.md` 在保护面内，属门变更，需逐项授权）；B 只在角色层约束，契约不动（代价：目标仓的 Supervisor 读不到角色文件，派发时仍可能只给文件名）；C 维持现状（代价：本轮已由 `agents/reviewer.md` 与 `SKILL.md` 第 4 步局部兜住，但契约层仍是单侧约束）— 三条路择一 | 2026-10-28 复跑（被引文件于 51e6754 改动后）`grep -n "read_scope" skills/agentflow/references/contracts.md` → 第 35 行字段定义、第 119 行「读取范围大于写范围」、第 121 行设计引用，三处均为下限约束，无定位质量或读取上限条款；`grep -n "读取" agents/reviewer.md` → 本轮新增的读取纪律属角色层，非契约层 | A 在契约里补「定位即预算」条（契约层才是 Supervisor 的实际依据，角色层的补充不能替代） | 用户在 A/B/C 中书面选定；选 A 属受保护面门变更（`skills/agentflow/references/contracts.md` 在 `protected-paths.txt` 第 80 行），需逐项授权并在同一变更内重建 `packaging/runtime` | P2 | 多模块(skills/agentflow/references/contracts.md 的 read_scope 契约、agents/reviewer.md 的读取纪律、skills/agentflow/SKILL.md 第 4 步的简报要求) | N | 已拍板（2026-10-29 · A 契约补「定位即预算」；待实施，受保护面） |
+      - | 16 | 2026-10-28 评测报告 G34（`docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md` §五 第 1 条） | 成本收益缺对照组：「不用 agentflow 需要多少成本」从未实测，存在意义维度只有推理支撑：A 补一次同题对照实验（选一个小型真实任务，with/without 各跑一遍，记录人时、门次数、返工轮次）；B 不做对照，对外叙事明确不押「成本更低」 | 2026-10-28 全仓检索无对照实验载体（`docs/evaluations/` 十份档案均为单向评测）；本报告 §五 已如实列入无证据推测清单 | A 补一次同题对照实验（存在意义是该方法的核心理由，唯一缺的证据就是它） | 实验协议与结果落盘后关闭；选 B 则须在 README 对外叙事处写明不主张成本优势 | P3 | 多模块(docs/evaluations/、README.md 对外叙事) | N | 已拍板（2026-10-29 · A 补同题对照实验；待实施） |
+      - | 18 | 2026-10-28 评审欠账清偿批（`skills/agentflow/references/contracts.md:42-43` 的载体与实际声明位置不一致） | `review_tier` 的权威载体选谁：A 补进契约点名的两处（`skills/improve/references/episode.schema.json` 增字段、决策记录契约加该字段；代价是两份受保护面 schema 一起改，门变更面扩大）；B 改契约措辞指向实际载体（把「决策记录或 episode」改写为「评审记录或批次 README/计划」，代价是改 `contracts.md` 受保护面正文）；C 维持现状（本批的真实欠账在批次 README/计划层，由派生清单覆盖；代价是契约点名处仍无该字段，读契约的人仍会去找不存在的载体） | 2026-10-29 复跑：`grep -n "review_tier" schemas/review.schema.json` → `:47` 起字段已在**评审记录 schema** 落地（`review_tier` 枚举 + `dispatch_errors` + `allOf` 护栏，由第 17 条的 A 方案带入），即「评审记录」载体一侧已可承载该字段；`skills/improve/references/episode.schema.json` 与决策记录契约仍无该字段（维持原状）。历史核验（2026-10-28）：两处点名载体均无该字段，两批真实 L0 声明均在批次 README/计划正文 | C 维持现状（评审记录 schema 已有字段；episode 与决策记录两处仍不补，真实声明面由批次 README/计划覆盖） | 用户在 A/B/C 中书面选定；现状已随第 17 条的落地部分演变（评审记录侧有字段），若用户选 A 或 B 仍属受保护面门变更，需逐项授权 | P3 | 多模块(skills/improve/references/episode.schema.json、skills/agentflow/references/contracts.md、schemas/review.schema.json、docs/PENDING-DECISIONS.md 的决策记录契约) | N | 未决 |
+FAIL docs/features/README.md：1 行内容消失
+      - | [`feature-2026-10-29-全面修正与瘦身`](feature-2026-10-29-全面修正与瘦身/README.md) | 全面修正与瘦身（议程归并 / 拍板口归口 / 四组门判据 / 必读面收敛 / 证据件与重复导航删除） | 进行中，已随 0.23.0 发布（提交 `f73a4e9`，2026-10-29）：看板实测 12 ☑ / 3 ◐（T11、T12、T14）/ 3 ☐（T15–T17）/ 1 本期不做（T18），共 19 项（当日时点值）；第二轮独立评审待跑，结论上限 `partial`；状态以 `plan/PLAN-FIX-001.md` 为准 |
+FAIL docs/features/feature-2026-10-29-全面修正与瘦身/README.md：6 行内容消失
+      - - 状态：**进行中（已随 0.23.0 发布，提交 `f73a4e9`，2026-10-29）**。计划看板 `plan/PLAN-FIX-001.md` 为唯一任务状态源。
+      - ◐ 进行中（实施任务状态与证据以 `plan/PLAN-FIX-001.md` 看板为唯一权威：当日实测 12 ☑ / 3 ◐ / 3 ☐ / 1 本期不做，共 19 项；0.23.0 发版与全量门原始输出见 `CHANGELOG.md` 0.23.0 节及批次 `testing/` 证据，第二轮独立评审待跑）
+      - | G5 必读面回到预算内且无副本 | `proposal/proposal.md` §1.2 | M-E，G5-AC-01、G5-AC-02、G5-AC-03、G5-AC-04 | T07、T12、T15 | ◐ 进行中（归属表与断言、同步义务退场、清单移出已绿；G5-AC-01 于 2026-10-29 按用户拍板 C 改为「只消副本、不设总量上限」，观测值 631 行 / 40,607 字符仅作记录；T15 未开始） |
+      - ① G5-AC-01 的必读面 ≤450 行目标已于 2026-10-29 由用户拍板改判为 C「不设总量上限、只消副本」，
+      - 观测值 631 行 / 40,607 字符（基线 663 行 / 42,652 字符）只作记录、不再作判据——原目标与「收敛不等于删判据」
+      - （M-E-04）相抵，硬压到 450 只能靠删判据；② `reviews/` 内部重复快照不能删——`reviewed_docs` 判据要求它们在盘，
+FAIL docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md：1 行内容消失
+      - | T12 | 必读面收敛：四文件只消副本（2026-10-29 拍板 C，不设总量上限）；`SKILL.md` 去版本史散文与重复声明、宿主易变细节压成一句结论；`document-chain.md` 拆出判据细则文件并同步 4 处引用；同步义务条款退场（以 T07 的归属表为据） | P1 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/document-chain.md`、`skills/agentflow/references/document-chain-checks.md`（待核实：拆分时新建）、`skills/agentflow/references/roles.md`、`agents/reviewer.md`、`skills/agentflow/references/contracts.md` | T07 | ◐ 进行中 | 已做：`agents/reviewer.md` 的两份深度清单移出（201 行/7,774 字符 → 144 行/5,336 字符），落点 `skills/agentflow/references/review-checklists.md`；`skills/agentflow/SKILL.md` 的审核节与文档交付链节改为指向各自权威（-775 字符）；「改一处就改另一处」同步义务从五个规则载体退场并由 `validate.py docs` 断言钉住。**未完成**：`document-chain.md` 的判据细则拆分（原治理批 T04）未实施；行数观测值 631 行 / 40,607 字符（基线 663 行 / 42,652），按 2026-10-29 拍板 C 不再作判据 |
+FAIL docs/features/feature-2026-10-29-全面修正与瘦身/spec/qa/acceptance.md：1 行内容消失
+      - | G5-AC-01 | M-E-01 | 四文件里同一规则存在多份副本（2026-10-29 用户拍板 C：不设总量上限，判据改为「副本是否消除」） | 逐行比对 `skills/agentflow/references/carrier-map.md` 的「规则 / 权威载体 / 副本处置」三列，副本处置为「保留」或「已移出」以外的行数须为 0；`wc -l` 只作观测值打印，不再作判据 | ☐ 待覆盖 |
+FAIL docs/releases/pending-test.md：1 行内容消失
+      - | 8 | 全面修正与瘦身批（`docs/features/feature-2026-10-29-全面修正与瘦身/`，已随 **0.23.0** 发布，提交 `f73a4e9`，2026-10-29）：议程归并 / 拍板口归口 / 四组新判据（episode 指针存在性、`review_tier` 伪降级、待决项归口、字形映射单源）/ 载体归属表与核验断言 / L3 原始证据件移出 + 重复导航退场 | ① 阅读向：用户在 `docs/PENDING-DECISIONS.md` 第 19…25 条逐条给结论（本批按推荐值先行，未拍板前验收点记「按建议值执行」）；② `python3 tools/lab/validate.py all` 与 `doc_chain.py --self-test`、`-m unittest discover -s tests` 实跑全绿并贴原始输出；③ 新判据的反证在 `/tmp` 副本上跑（摘掉标记必须判红、伪降级必须判红）；④ 独立评审门按实测档位关闭，评审记录含 `review_tier` | **部分达成**：①②③ 已在仓内闭环（本批实施时实跑）；批内任务仍 3 项 ◐ / 3 项 ☐ 在途（现行值以 `plan/PLAN-FIX-001.md` 看板为准），第二轮独立评审（④ 的入口门）待跑，本批结论上限 `partial`；① 属用户侧阅读与拍板，待用户 |
+FAIL docs/releases/todo.md：8 行内容消失
+      - - 2026-10-29 全面修正与瘦身批（`feature-2026-10-29-全面修正与瘦身`）——已随 **0.23.0 发布**
+      -   （提交 `f73a4e9`，2026-10-29；发布方式 `publish.sh`）。批内任务仍部分在途：看板实测
+      -   12 ☑ / 3 ◐ / 3 ☐ / 1 本期不做（当日时点值；现行值以
+      -   `plan/PLAN-FIX-001.md` 看板为准）；第二轮独立评审待跑，结论上限 `partial`。
+      - - **另有 5 条 2026-10-29 已拍板、尚未实施**（状态见 `../PENDING-DECISIONS.md`）：第 10 条 `skills/improve/`
+      -   整体砍掉（B）、第 12 条凭据 `credentials` 字段加 pattern（C）、第 13 条 C17 补 1–2 个变异项（A）、
+      -   第 14 条契约补「定位即预算」（A，需重建 `packaging/runtime`）、第 16 条补同题对照实验（A）。
+      -   其中第 10、12、13、14 条都触受保护面，按门变更走。
+FAIL examples/README.md：3 行内容消失
+      - 由 `validate.py examples` 每次编译实跑，撤离即门红）。`improve/` 是改进环契约（candidate /
+      - release-record schema）的门内夹具：两份正例必须通过校验、一份反例必须被 `measurement: none ⇒
+      - 不得 better` 护栏恰好拒绝。`decisions/` 是 C15–C17 决策门的 opt-in 演示语料（问题台账与
+FAIL index.md：1 行内容消失
+      - - 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务仍部分在途——12 ☑ / 3 ◐ / 3 ☐ / 1 本期不做（当日时点值，现行值以看板为准），第二轮独立评审待跑）——见 [批次入口](docs/features/feature-2026-10-29-全面修正与瘦身/README.md)、[计划](docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md)；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)
+FAIL packaging/runtime/agents/bug-fixer.md：3 行内容消失
+      - 你是 Agentflow 团队中的 Bug Fixer，主要服务于目标仓的缺陷链（investigator → fixer → reviewer → recorder）；当缺陷位于 Agentflow 插件仓自身时，才经由改进环的候选流程走到本角色。
+      - | Evaluator、holdout 答案、发布策略、权限、hooks、MCP 配置（仅当缺陷位于 Agentflow 插件仓时适用——改进环语境的排除项） | ❌ | 绝不 |
+      - 只在 Supervisor 指派的工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。**bug 有用户可见面时，复现与修复验证用 Ego Light（`ego-browser` 命令行，先跑 `ego-browser skill` 取用法）**：修前按诊断给出的 Ego 操作序列复现失败并留存原始证据（截图、DOM 文本、网络日志），修复后重跑同一序列确认症状消失，把修前/修后两组证据一并返回——只有重跑通过才算修复验证成立。「绝不编辑已安装的 Agentflow 副本、Evaluator、holdout、发布策略、权限、hooks 或 MCP 配置」这类改进环语境的排除项，仅当缺陷位于 Agentflow 插件仓时适用。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。
+FAIL packaging/runtime/agents/technical-director.md：1 行内容消失
+      - 决策以实际仓库为依据。返回：决策、受影响的边界、接口契约、实现顺序、考虑过的备选方案、风险，以及需要进行的验证。对于 material 特性，决策要点名关键路径，并要求 [contracts](../skills/agentflow/references/contracts.md) 中的设计完备性产物（关键链路时序、异常矩阵、与回滚点配对的发布顺序——完备性判据以该契约为准）；作为决策者，你要把它们列为决策成立的完备性产物要求，缺件即驳回。埋点决策为「新增」时，把**事件级契约**一并列为完备性产物（事件名、触发点与代码落点、触发时机与去重、逐事件参数、隐私边界、失败降级），并要求每个事件有一条会失败的验证；决策为「复用」或 N/A 时，要求给出出处或理由，而不是留空。解决具体取舍，而不是产出一篇泛泛的架构文章。若任务不需要架构决策，明说并把控制权交回 Supervisor。若证据或预算不足，返回 `status: partial` 并列出缺失的决策输入，而不是给出完整的架构决策。
+FAIL packaging/runtime/skills/agentflow/references/document-chain.md：7 行内容消失
+      - > 该命令的相对路径按**当前进程目录**解析（插件仓内运行时即插件仓根）。随插件安装后，在目标仓根
+      - > 目录运行：`python3 <插件根>/tools/lab/doc_chain.py --root <目标仓根> <feature-dir>`——位置参数
+      - > 相对当前目录解析（不相对 `--root`），因此必须先 cd 到目标仓根；`--root` 决定落点与路径核验的基准，
+      - > 缺省按本仓根解析、会凭空多出成批「路径不存在」假阳性。
+      - **跨仓运行与既有仓基线**——linter 以「目标仓根 + 批次目录」为坐标：在目标仓根目录运行
+      - `python3 tools/lab/doc_chain.py --root <目标仓根> <feature-dir>` 指定仓根（位置参数相对当前目录解析，
+      - 不相对 `--root`），缺省按本仓根解析、
+FAIL packaging/runtime/skills/agentflow/references/roles.md：11 行内容消失
+      - **bug-fixer 与 candidate-engineer 为什么分立**（同 reviewer 与 evaluator 分立的论证口径）：
+      - 两者画像同构（有界写范围、最小实现、聚焦回归、不自评），且**有意不**合并——它们的适用面
+      - 不同：**bug-fixer 服务目标仓缺陷链**（investigator → fixer → reviewer → recorder），输入是
+      - 一份已诊断的目标仓缺陷，其「候选工作区」指 Supervisor 为该缺陷指派的隔离修复工作区；
+      - **candidate-engineer 服务插件仓改进环**（feedback analyst → candidate engineer → evaluator
+      - → release governor），输入是一个可证伪的改进假设，其「候选工作区」是改进环的规范候选源码
+      - 树，并受 `protected-paths.txt` 硬排除面约束（bug-fixer 不受该清单约束，其排除项——Evaluator、
+      - holdout、已安装插件副本——仅当缺陷位于 Agentflow 插件仓自身时适用）。折成一个角色会让
+      - 「保护区边界」「评测独立性」这类改进环语境的排除项泄进目标仓缺陷修复，反之也会让目标仓
+      - 缺陷修复绕过改进环必经的 evaluator 对照与 release-governor 门。两者保持独立角色文件，是
+      … 另有 1 行
+FAIL skills/agentflow/references/document-chain.md：7 行内容消失
+      - > 该命令的相对路径按**当前进程目录**解析（插件仓内运行时即插件仓根）。随插件安装后，在目标仓根
+      - > 目录运行：`python3 <插件根>/tools/lab/doc_chain.py --root <目标仓根> <feature-dir>`——位置参数
+      - > 相对当前目录解析（不相对 `--root`），因此必须先 cd 到目标仓根；`--root` 决定落点与路径核验的基准，
+      - > 缺省按本仓根解析、会凭空多出成批「路径不存在」假阳性。
+      - **跨仓运行与既有仓基线**——linter 以「目标仓根 + 批次目录」为坐标：在目标仓根目录运行
+      - `python3 tools/lab/doc_chain.py --root <目标仓根> <feature-dir>` 指定仓根（位置参数相对当前目录解析，
+      - 不相对 `--root`），缺省按本仓根解析、
+FAIL skills/agentflow/references/roles.md：11 行内容消失
+      - **bug-fixer 与 candidate-engineer 为什么分立**（同 reviewer 与 evaluator 分立的论证口径）：
+      - 两者画像同构（有界写范围、最小实现、聚焦回归、不自评），且**有意不**合并——它们的适用面
+      - 不同：**bug-fixer 服务目标仓缺陷链**（investigator → fixer → reviewer → recorder），输入是
+      - 一份已诊断的目标仓缺陷，其「候选工作区」指 Supervisor 为该缺陷指派的隔离修复工作区；
+      - **candidate-engineer 服务插件仓改进环**（feedback analyst → candidate engineer → evaluator
+      - → release governor），输入是一个可证伪的改进假设，其「候选工作区」是改进环的规范候选源码
+      - 树，并受 `protected-paths.txt` 硬排除面约束（bug-fixer 不受该清单约束，其排除项——Evaluator、
+      - holdout、已安装插件副本——仅当缺陷位于 Agentflow 插件仓自身时适用）。折成一个角色会让
+      - 「保护区边界」「评测独立性」这类改进环语境的排除项泄进目标仓缺陷修复，反之也会让目标仓
+      - 缺陷修复绕过改进环必经的 evaluator 对照与 release-governor 门。两者保持独立角色文件，是
+      … 另有 1 行
+FAIL tests/test_doc_chain.py：1 行内容消失
+      -             when = _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%dT%H:%M:%S+0000")
+FAIL tools/lab/mutate.py：6 行内容消失
+      - # the decision_gate opt-in families (C15-C18, C22-C23 marker files), the static lint gate, and
+      - # the post-2026-10-21 marker families (carrier map, review_tier, episode pointers) are NOT in
+      - # this inventory. They are covered by docchain/selftest.py (pinned by the doc_chain gate) and
+      - # validate_unit_tests instead. Registering them here without mutation specs would make
+      - # coverage_gaps() report permanent gaps; the honest state is the note, until someone writes the
+      - # specs.
+
+失败：存在未提交内容消失。先分辨是不是你自己刚刚有意改写的——自己改写同一行也会报红，这是已知局限。
+确属有意改写时：verify <快照> --accept "<理由>"；需要取回原文时：tar -tf /private/tmp/agentflows-snapshot-tar-2026-10-29/at-risk.tar
+
+## 分辨结论（主审逐条核对）
+- 8 个被删受跟踪文件 = 本批 T20 授权删除的改进环面（2 个角色 + skills/improve/SKILL.md + examples/improve 两份夹具 + 其 packaging/runtime 副本），无额外删除。
+- 逐行消失项全部落在本会话有意重写的文件与行上（agents/bug-fixer.md 与 technical-director.md 的改进环措辞、roles.md 的 candidate-engineer 对比段、document-chain.md 拆出的细则分册、PENDING 条目移出、todo/pending-test/index/features README 的状态回写、mutate.py 注释重写、test_doc_chain.py 的一行临时改动已还原为 HEAD 原样）。
+- 已知局限复用：自己改写同一行也会报红；此处不存在非本会话的未提交内容丢失。
+- tests/test_doc_chain.py 第 216 行的 datetime 时区写法：并发会话在 19:0x 前已自行把 `_dt.UTC` 回退为 `_dt.timezone.utc`；我的临时改动亦已还原，当前该行与 HEAD 一致，门 lint（ruff --target-version py310）与 mypy（--python-version 3.10）均 PASS。

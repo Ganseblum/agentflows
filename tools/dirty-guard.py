@@ -73,7 +73,7 @@ def git(root: Path, *args: str) -> str:
 def now() -> str:
     # 本工具要在「出事前一刻」就能跑，所以兼容系统 python3（本机 3.9.6）；
     # `datetime.UTC` 别名需 3.11+，故保留 timezone.utc 形态。
-    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")  # noqa: UP017
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
 def unmerged_paths(root: Path) -> dict[str, dict[str, str]]:

@@ -10,7 +10,7 @@ recorded_at: 2026-10-28T14:30:00+08:00
 
 ## 进展概览
 
-- 总任务 8 项：☐ 8 项未开始（T01–T08）。本批当前只交付范围与判据，不含实施。
+- 总任务 9 项：☑ 9 项（T01–T09）。五条缺陷已全部离开 `fixed-pending-review`；收口门与回写完成。
 - 阻塞：无。
 - 权威状态：本表即唯一任务状态源。
 
@@ -18,14 +18,15 @@ recorded_at: 2026-10-28T14:30:00+08:00
 
 | ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据 |
 | --- | --- | --- | --- | --- | --- | --- |
-| T01 | 两组委派探测：先派 1 个只读角色，再派 2 个；按结果定档（1 成功 + 第 2 个失败 ⇒ L1；2 个都成功 ⇒ L2），原始返回落批次证据；同时把欠账清单的人读镜像写进 `docs/releases/todo.md` | P0 | `docs/releases/todo.md`、`docs/features/feature-2026-10-28-评审欠账清偿/testing/` | — | ☐ 未开始 | — |
-| T02 | 对评测整改批（0.20.0，被评审 revision `26988a4`）派独立评审，记录落批次 `reviews/`，含按 T01 结果确定的 `review_tier` 与 `source_revision` | P0 | `docs/features/feature-2026-10-28-评测整改批/reviews/` | T01 | ☐ 未开始 | — |
-| T03 | 对表达面与角色治理批（范围冻结批，被评审 revision `26988a4`）派独立评审，记录落批次 `reviews/` | P0 | `docs/features/feature-2026-10-28-表达面与角色治理/reviews/` | T01 | ☐ 未开始 | — |
-| T04 | 给 `review_tier` 加校验：schema 增两字段 + 一条 `allOf`，校验器判伪降级（L0 而 `dispatch_errors` 空），并跑 `packaging/build_runtime.py` 重建生成树；**属受保护面门变更，须逐项授权后方可开工** | P0 | `schemas/review.schema.json`、`tools/lab/gate/records.py`、`tests/test_gate_records.py`、`packaging/runtime/schemas/review.schema.json` | — | ☐ 未开始 | — |
-| T05 | 清偿 ISS-2026-10-23-元信息同行声明默认落点基准被误判 与 ISS-2026-10-23-变异语料锚点漂移致判据不可观察：独立复核修复是否成立，成立则补 `fix_revision`（提交号）+ `reviewer` + `review_decision` + `closure_criteria` + 正文 `## 审查`，转 `verified`；不成立则退回 `open` 并写复核结论 | P0 | `docs/issues/ISS-2026-10-23-元信息同行声明默认落点基准被误判.md`、`docs/issues/ISS-2026-10-23-变异语料锚点漂移致判据不可观察.md` | T01 | ☐ 未开始 | — |
-| T06 | 清偿 ISS-2026-10-23-仓扫PASS被当作门有效的证据 与 ISS-2026-10-23-新判据声明了却不被校验的六处（后者原文本就写着「待独立评审第二轮复跑」，直接走第二轮） | P0 | `docs/issues/ISS-2026-10-23-仓扫PASS被当作门有效的证据.md`、`docs/issues/ISS-2026-10-23-新判据声明了却不被校验的六处.md` | T01 | ☐ 未开始 | — |
-| T07 | 清偿 ISS-2026-10-28-整改批自述与实现面不同步：复核四处不同步是否已消除，`fix_revision` 改写为可解析提交号（如 `26988a4`） | P0 | `docs/issues/ISS-2026-10-28-整改批自述与实现面不同步.md` | T01 | ☐ 未开始 | — |
-| T08 | 全量门实跑 + 把清偿结果回写 `docs/releases/pending-test.md` 与批次 README 目标承接表 | P0 | `docs/releases/pending-test.md`、`docs/features/feature-2026-10-28-评审欠账清偿/README.md` | T01、T02、T03、T04、T05、T06、T07 | ☐ 未开始 | — |
+| T01 | 两组委派探测：先派 1 个只读角色，再派 2 个；按结果定档（1 成功 + 第 2 个失败 ⇒ L1；2 个都成功 ⇒ L2），原始返回落批次证据；同时把欠账清单的人读镜像写进 `docs/releases/todo.md` | P0 | `docs/releases/todo.md`、`docs/features/feature-2026-10-28-评审欠账清偿/testing/` | — | ☑ 已完成 | 两组委派探测随 FIX T14 执行并定档 L2：`docs/features/feature-2026-10-29-全面修正与瘦身/testing/agentflow-全面修正与瘦身/evidence/dispatch-probe/tier-2026-10-29-r2.md`；欠账清单人读镜像已写入 `docs/releases/todo.md` |
+| T02 | 对评测整改批（0.20.0（未单独发布，内容并入 0.22.0 发布），被评审 revision `26988a4`）派独立评审，记录落批次 `reviews/`，含按 T01 结果确定的 `review_tier` 与 `source_revision` | P0 | `docs/features/feature-2026-10-28-评测整改批/reviews/` | T01 | ☑ 已完成 | `docs/features/feature-2026-10-28-评测整改批/reviews/review-2026-10-28-001.md`（L2 / approved / source_revision 26988a4） |
+| T03 | 对表达面与角色治理批（范围冻结批，被评审 revision `26988a4`）派独立评审，记录落批次 `reviews/` | P0 | `docs/features/feature-2026-10-28-表达面与角色治理/reviews/` | T01 | ☑ 已完成 | `docs/features/feature-2026-10-28-表达面与角色治理/reviews/review-2026-10-28-001.md`（L2 / approved / superseded_plan PLAN-GOV-001） |
+| T04 | 给 `review_tier` 加校验：schema 增两字段 + 一条 `allOf`，校验器判伪降级（L0 而 `dispatch_errors` 空），并跑 `packaging/build_runtime.py` 重建生成树；**属受保护面门变更，须逐项授权后方可开工** | P0 | `schemas/review.schema.json`、`tools/lab/gate/records.py`、`tests/test_gate_records.py`、`packaging/runtime/schemas/review.schema.json` | — | ☑ 已完成 | 由 FIX T09 落地：`schemas/review.schema.json` 的 review_tier/dispatch_errors + allOf 伪降级判据、`tools/lab/gate/records.py` 校验、`tests/test_gate_records.py` 用例；生成树已重建 |
+| T05 | 清偿 ISS-2026-10-23-元信息同行声明默认落点基准被误判 与 ISS-2026-10-23-变异语料锚点漂移致判据不可观察：独立复核修复是否成立，成立则补 `fix_revision`（提交号）+ `reviewer` + `review_decision` + `closure_criteria` + 正文 `## 审查`，转 `verified`；不成立则退回 `open` 并写复核结论 | P0 | `docs/issues/ISS-2026-10-23-元信息同行声明默认落点基准被误判.md`、`docs/issues/ISS-2026-10-23-变异语料锚点漂移致判据不可观察.md` | T01 | ☑ 已完成 | 两条记录均已转 verified：`docs/issues/ISS-2026-10-23-元信息同行声明默认落点基准被误判.md` 与 `docs/issues/ISS-2026-10-23-变异语料锚点漂移致判据不可观察.md`；整门变异 60=55/5/0（`mutation-full-2026-10-30-r2.txt`）；复核见各记录 `## 审查` |
+| T06 | 清偿 ISS-2026-10-23-仓扫PASS被当作门有效的证据 与 ISS-2026-10-23-新判据声明了却不被校验的六处（后者原文本就写着「待独立评审第二轮复跑」，直接走第二轮） | P0 | `docs/issues/ISS-2026-10-23-仓扫PASS被当作门有效的证据.md`、`docs/issues/ISS-2026-10-23-新判据声明了却不被校验的六处.md` | T01 | ☑ 已完成 | `docs/issues/ISS-2026-10-23-仓扫PASS被当作门有效的证据.md` 与 `docs/issues/ISS-2026-10-23-新判据声明了却不被校验的六处.md` 已转 verified；独立复核见各记录 `## 审查`；夹具 100/101–106 与 `--self-test` 150/150 |
+| T07 | 清偿 ISS-2026-10-28-整改批自述与实现面不同步：复核四处不同步是否已消除，`fix_revision` 改写为可解析提交号（如 `26988a4`） | P0 | `docs/issues/ISS-2026-10-28-整改批自述与实现面不同步.md` | T01 | ☑ 已完成 | `docs/issues/ISS-2026-10-28-整改批自述与实现面不同步.md` 已转 verified；`fix_revision: 26988a4`；四处同步复核见 `## 审查` |
+| T08 | 全量门实跑 + 把清偿结果回写 `docs/releases/pending-test.md` 与批次 README 目标承接表 | P0 | `docs/releases/pending-test.md`、`docs/features/feature-2026-10-28-评审欠账清偿/README.md` | T01、T02、T03、T04、T05、T06、T07、T09 | ☑ 已完成 | 2026-10-30 最终门 11/11 PASS、unittest 251 OK、self-test 151/151；清点命令收口输出 4 项（均为范围外记录）；五条缺陷均已转 verified；回写见 `docs/releases/pending-test.md` 第 9 行与批次 README 目标承接表 |
+| T09 | 实现清点命令 `validate.py review_debt`：输出派生集合（L0 且 `reviews/` 空 / `fixed-pending-review` 无 reviewer），补夹具并落原始输出 | P0 | `tools/lab/gate/reports.py`、`tools/lab/validate.py`、`tests/test_gate_integrity.py` | T04 | ☑ 已完成 | `validate.py review_debt` 初测 9 项、收口后 4 项（均为本批范围外记录）；`tests/test_gate_integrity.py` 的 test_review_debt_reports_derived_batch_and_issue 实跑 OK；输出见 `testing/agentflow-debt/evidence/review-debt-count.txt` |
 
 ## 分支策略
 
@@ -64,8 +65,8 @@ python3.12 -m unittest discover -s tests
 
 | # | 事项 | 推荐 | 说明 |
 | --- | --- | --- | --- |
-| 1 | T04 是否授权改 `schemas/review.schema.json`、`tools/lab/gate/` 并重建生成树 | 授权 | 伪降级判据没有不受保护面的落点；不授权则 G2 只能停在「清单可清点」，`review_tier` 仍无人校验。已登记 `docs/PENDING-DECISIONS.md` 第 17 条 |
-| 2 | 是否把 `review_tier` 补进 episode 与决策记录两处契约指名的载体 | 本批不做，另立 | 契约 `contracts.md:42-43` 点名的是「决策记录或 episode」，那两处当前都无该字段且同属受保护面；本批的真实欠账在批次 README/计划层，由派生清单覆盖。已登记第 18 条 |
-| 3 | 五条 ISS 中若有复核不成立者，是否允许退回 `open` | 允许（已定为 spec M-C-01） | 不设为待决项——不允许就只剩「推到 verified」一条路，那是伪造结论。此项已由 spec 冻结，不再作为并行台账存在 |
+| 1 | T04 是否授权改 `schemas/review.schema.json`、`tools/lab/gate/` 并重建生成树 | **已授权并完成（2026-10-29 第 17 条；FIX T09 落地）** | 伪降级判据没有不受保护面的落点；不授权则 G2 只能停在「清单可清点」，`review_tier` 仍无人校验。 |
+| 2 | 是否把 `review_tier` 补进 episode 与决策记录两处契约指名的载体 | **已决定：本批不做，另立** | 契约 `contracts.md:42-43` 点名的是「决策记录或 episode」，那两处当前都无该字段且同属受保护面；本批的真实欠账在批次 README/计划层，由派生清单覆盖。已登记第 18 条 |
+| 3 | 五条 ISS 中若有复核不成立者，是否允许退回 `open` | **已冻结（spec M-C-01）** | 不允许就只剩「推到 verified」一条路，那是伪造结论。此项已由 spec 冻结，不再作为并行台账存在 |
 
 > 档位（L1/L2）**不是**待拍板事项：它由 T01 的两组派发结果决定，属能力事实而非偏好选择。

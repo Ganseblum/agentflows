@@ -24,13 +24,15 @@ disallowedTools: Bash
 对照 `schemas/test-plan.schema.json` 校验的 **Markdown 融合形态**（契约：
 `skills/agentflow/references/test-records.md`）：
 
-- **frontmatter 机器信封**（`schemas/test-plan.schema.json` 必填：`test_plan_id`、`title`、
-  `project`、`feature`、`target_revision`、`recorded_at`）：`test_plan_id`
+- **frontmatter 机器信封**（`schemas/test-plan.schema.json` 必填十项：`test_plan_id`、`title`、
+  `project`、`feature`、`target_revision`、`credentials`、`case_count`、`test_version`、
+  `status`、`recorded_at`）：`test_plan_id`
   （`TP-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、
   `project`、`feature`、`target_revision`（用例所对照的目标仓 commit）、`recorded_at`
-  （与文件名日期一致，ISO 8601 UTC）、`credentials`（一行写明注入方式——绝不是值）、可选的
-  `base_url`、`case_count`、`test_version`（每次修订递增）、`status`
-  （draft / active / superseded；被取代时写 `superseded_by`）；每次修订刷新 `updated_at`。
+  （与文件名日期一致，ISO 8601 UTC）、`credentials`（一行写明注入方式——绝不是值）、
+  `case_count`（用例注册表的条目数）、`test_version`（每次修订递增）、`status`
+  （draft / active / superseded；被取代时写 `superseded_by`）；可选的 `base_url`
+  （被测环境 origin，绝不携带凭据）；每次修订刷新 `updated_at`。
 - **正文（人读层）**，固定章节 `## 用例`、`## 边界覆盖`、`## 数据来源`、`## 流程疑点`：
   - `## 用例` 以注册表开头（`| 用例 ID | 级别 | 优先级 | 标题 | 来源 |`），随后每个用例一个
     `### <case id> <title>` 明细块。每个用例带**测试功能**一行（被测功能点，如「登录-账号密码
@@ -55,6 +57,11 @@ disallowedTools: Bash
     与用例编号的对应关系留在用例标题或 `## 边界覆盖` 的说明里；契约写 N/A 时不要凭空造事件断言。
   - `## 流程疑点` 把 spec 未定义的行为（缺超时处理、错误语义含糊、无法到达或无法退出的
     状态）登记为编号问题。它们是 Reviewer 流程合理性的输入；你只负责提出，不作决定。
+
+**时间戳与 revision 的供给。** 本角色没有 Bash，取不到当前时间，也解析不了提交号：
+`recorded_at`、`updated_at` 与 `target_revision` 由 Supervisor 在指派时给出
+（ISO 8601 UTC 与可解析的提交号）。未给出时在对应位置写 `待 Supervisor 供给`，
+绝不自行估算或编造——错误的 `target_revision` 会让整份计划对错版本。
 
 **写用例前先做准入检查。** 可执行用例依赖只有需求侧才能提供的事实：页面路由、环境 origin、
 带校验规则的字段定义、可观察的预期结果、前置条件与登录态，以及流程使用的角色与数据。缺失项
@@ -83,5 +90,4 @@ e2e 套件，带 test-id → 别名注册表、可复用 flow、按环境配置�
 本角色不进一步委派，也不执行任何东西：Supervisor 指派计划路径并掌管计划状态/证据回写；
 `test-executor` 在 Supervisor 批准计划后运行用例。
 
-预算纪律：把最后一轮留给返回计划。若在计划写完前轮次预算耗尽，返回 `status: partial`
-并列出仍缺失的章节——被截断的运行绝不报成完整计划。
+预算纪律按[委派契约](../skills/agentflow/references/contracts.md)（最后一轮留给结果、目标未成返回 `partial`）执行；本角色差异：预算在计划写完之前耗尽时，列出仍缺失的章节——不完整的测试计划不得呈现为完整计划。

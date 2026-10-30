@@ -39,6 +39,14 @@
       "type": "string",
       "pattern": "^PLAN-[A-Z0-9][A-Z0-9._-]*$"
     },
+    "decision_deps": {
+      "description": "Optional cross-batch decision dependencies, one token per element (DEC-YYYY-NNN#rN or DEC-YYYY-NNN#invariant=原文); enforced by tools/lab/decisions.py check.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
     "recorded_at": {
       "type": "string",
       "format": "date-time"

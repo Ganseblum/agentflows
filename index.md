@@ -10,17 +10,17 @@
 | --- | --- |
 | **第一次用 / 5 分钟上手** | `docs/quickstart.md`（先判断要不要用这套，再决定走哪条路） |
 | 日常两轨 | 小修与零星事项走 `docs/issues/`；成批 / 跨层工作立 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md` |
-| 改角色定义 | `agents/README.md`（<!-- count:agents -->14<!-- /count --> 个角色文件 + 工作链调度入口） |
-| 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）、`skills/improve/`；仓库整体审核契约见 [`skills/agentflow/references/repo-audit.md`](skills/agentflow/references/repo-audit.md) |
+| 改角色定义 | `agents/README.md`（<!-- count:agents -->10<!-- /count --> 个角色文件 + 工作链调度入口） |
+| 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）；仓库整体审核契约见 [`skills/agentflow/references/repo-audit.md`](skills/agentflow/references/repo-audit.md) |
 | 配宿主级全局规则 | `skills/agentflow/references/hosts.md`（三层分工、托管块、宿主矩阵）· `skills/agentflow/templates/host/global-rules.md`（规则正文） |
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md`（含目标仓工程基线的可复制骨架） |
 | 查批次与实施计划 | `docs/features/README.md`（活跃批次入口与状态）；具体任务状态只看各批次 `plan/` 看板 |
 | 查缺陷与事项 | `docs/issues/README.md`（`ISS-<YYYY-MM-DD>-<slug>`，含看板与归档规则） |
 | 查对外评审落点 | `reviews/README.md` |
-| 查发布与待验证清单 | `docs/releases/`：`todo.md`（待办与索引）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md` |
+| 查发布与待验证清单 | `docs/releases/`：`todo.md`（发版待办，批次状态指针）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md`（0.22.1 及更早的历史条目归档于 [`docs/changelog-archive.md`](docs/changelog-archive.md)） |
 | 看设计、指南与事实 | `docs/`：`product/`（产品链）、`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
-| 记录与改进环 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）；改进三件套已停用 |
+| 记录 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
 | 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
 
@@ -39,14 +39,14 @@
 > 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
 > 不再复述改动细节——索引只描述现行结构。
 
-- 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除）——见 [批次入口](docs/features/feature-2026-10-29-全面修正与瘦身/README.md)、[计划](docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md)
-- 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门待跑；已并入 `main`，随 0.22.0 发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-关闭证据门/README.md)、[计划](docs/features/feature-2026-10-28-关闭证据门/plan/PLAN-CLOSE-001.md)
-- 2026-10-28 工程基线吸收批（工程基线模板与 Init 六项 / 后端数据与配置核对 / 原型可点性 / 测试设计三维 / 前端实现纪律；原四项已评审，FE 增量独立评审未运行；0.22.0 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-工程基线吸收/README.md)、[计划](docs/features/feature-2026-10-28-工程基线吸收/plan/PLAN-BASE-001.md)
-- 2026-10-28 评审欠账清偿批（立项：两批 L0 欠账清偿 / `review_tier` 伪降级记录侧校验 / 五条待评审缺陷逐条清偿；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-评审欠账清偿/README.md)、[计划](docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md)
-- 2026-10-28 表达面与角色治理批（立项：载体归属表 / 同步义务退场 / document-chain 拆分 / FE-BE 裁决 / 实现角色深度；T01–T08 未开始）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)
-- 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线 / 改进环首份真实记录；版本号已并入 0.22.0，已发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
+- 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务已全部收口——23 ☑ / 0 ⚠ / 0 ☐ / 1 本期不做（T18）；两轮评审 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整）——见 [批次入口](docs/features/feature-2026-10-29-全面修正与瘦身/README.md)、[计划](docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md)；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)
+- 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门于 2026-10-29 经独立委派 L2 `approved` 闭环；已并入 `main`，随 0.22.0 发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-关闭证据门/README.md)、[计划](docs/features/feature-2026-10-28-关闭证据门/plan/PLAN-CLOSE-001.md)
+- 2026-10-28 工程基线吸收批（工程基线模板与 Init 六项 / 后端数据与配置核对 / 原型可点性 / 测试设计三维 / 前端实现纪律；原四项已评审，FE 增量独立评审于 2026-10-29 经独立委派 L2 `approved`（T12 ☑）；0.22.0 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-28-工程基线吸收/README.md)、[计划](docs/features/feature-2026-10-28-工程基线吸收/plan/PLAN-BASE-001.md)
+- 2026-10-28 评审欠账清偿批（实施完成：T01–T09 全闭；五条缺陷均 verified；工作树未提交、未发布；入口门最终 delta 复审中）——见 [批次入口](docs/features/feature-2026-10-28-评审欠账清偿/README.md)、[计划](docs/features/feature-2026-10-28-评审欠账清偿/plan/PLAN-DEBT-001.md)
+- 2026-10-28 表达面与角色治理批（已并入 2026-10-29 全面修正与瘦身批；PLAN-GOV-001 置 superseded，八项任务各有唯一承接号）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)
+- 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线；版本号已并入 0.22.0，已发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
 - 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
-- 2026-10-25 总体评审吸收与修复批（立项：会话总体评审结论入仓——问题清单、四维评分与理由、26 项修复任务）
+- 2026-10-25 总体评审吸收与修复批（实施完成：看板 25 ☑ / 5 本期不做；Q-01 至 Q-05 已关闭；受保护路径门变更与 D8 决策台账已落地，独立评审最终 delta 复审中；删除类 T18–T22 留下一批）——见 [批次入口](docs/features/feature-2026-10-25-总体评审吸收与修复/README.md)、[计划](docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md)
 - 2026-10-25 测试链路 Ego Light 切换批 / 门与测试拆分批（0.15.0）
 - 2026-10-24 宿主接入批（Host Init：跨仓全局规则分发、托管块模板、0.14.0）
 - 2026-10-23 追溯闭环与证据在场批（门变更：文档链新增 C22 目标承接闭环与 C23 证据在场；记录契约补 `disposition`；拍板口八列化；八条文本缺陷收口）

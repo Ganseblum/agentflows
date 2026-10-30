@@ -1,0 +1,27 @@
+# D8 评审修复后的最终复核（2026-10-30）
+
+$ .venv/bin/python -m unittest tests.test_decisions -q
+Ran 31 tests in 0.035s
+OK
+
+$ .venv/bin/python tools/lab/decisions.py check
+OK decisions: 无过期决策依赖
+
+$ .venv/bin/python tools/lab/decisions.py index --verify
+OK（exit 0）
+
+$ .venv/bin/python tools/lab/validate.py all
+11/11 PASS（decision_gate 367 objects）
+
+$ .venv/bin/python -m unittest discover -s tests
+Ran 254 tests OK
+
+$ .venv/bin/python tools/lab/doc_chain.py --self-test
+151/151 self-test cases pass
+
+## 真树消费者证伪探针（/tmp 副本）
+$ cp -r <repo> /tmp/af-dec-probe; 将 README 依赖改为 DEC-2026-001#r1
+$ python3 tools/lab/decisions.py check --root /tmp/af-dec-probe
+STALE docs/features/feature-2026-10-25-总体评审吸收与修复/README.md: 依赖 DEC-2026-001 钉定 r1 已过期（当前 r2，且既非撤回等价也非已登记豁免）
+$ python3 tools/lab/decisions.py check
+OK decisions: 无过期决策依赖

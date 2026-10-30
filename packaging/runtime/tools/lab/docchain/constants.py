@@ -131,10 +131,8 @@ C13_EXEMPT_FILES: dict[str, str] = {
     "agents/bug-fixer.md": "角色定义",
     "agents/bug-investigator.md": "角色定义",
     "agents/bug-recorder.md": "角色定义",
-    "agents/candidate-engineer.md": "角色定义",
     "agents/frontend-engineer.md": "角色定义",
     "agents/plan-architect.md": "角色定义",
-    "agents/release-governor.md": "角色定义",
     "agents/reviewer.md": "角色定义；列举被禁止的会话词本身",
     "agents/technical-director.md": "角色定义",
     "agents/test-executor.md": "角色定义",
@@ -145,7 +143,6 @@ C13_EXEMPT_FILES: dict[str, str] = {
     "skills/agentflow/references/roles.md": "方法定义（角色表）",
     "skills/agentflow/references/document-chain.md": "方法定义；条款本身引用被禁止的词",
     "skills/agentflow/references/test-records.md": "方法定义（角色交接）",
-    "skills/improve/SKILL.md": "方法定义（改进环角色）",
     "reviews/README.md": "方法定义（评审流程）",
     # product design: the glossary entry 「Supervisor = 主会话」 and the role table
     "docs/product/design/product-design.md": "术语定义表",

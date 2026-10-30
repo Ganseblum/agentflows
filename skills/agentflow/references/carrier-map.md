@@ -15,16 +15,20 @@
 | 十四条硬边界 | `skills/agentflow/references/contracts.md` | ## 硬边界 | SKILL 与各角色文件只按编号引用，不复述条款正文 |
 | 评审能力分级 L0/L1/L2 与三条不变式 | `skills/agentflow/references/contracts.md` | ## 评审能力分级 | SKILL 第 8 步只写「先探测并记录 `review_tier`」，档位定义不出现第二遍 |
 | 简报与 worker 结果字段 | `skills/agentflow/references/contracts.md` | ## Worker 任务简报 与 ## Worker 结果 | 角色文件写「按契约的哪些字段产出」，不另立字段表 |
+| 定位即预算（读取定位与上限） | `skills/agentflow/SKILL.md` | ## 评审简报的定位义务 | `contracts.md` 只留一条判据与指针，详细口径不复制第二份 |
 | 判断词的可判定定义（小改动 / risky work / 相同原因） | `skills/agentflow/SKILL.md` | ## 判断词的可判定定义 | `skills/agentflow/references/roles.md` 与契约只指向这三条，不各写一套阈值 |
 | 角色路由与工作链默认入口 | `skills/agentflow/references/roles.md` | ## 工作链 | SKILL 不复述路由表；角色文件不重复「何时选我」的整段 |
-| 文档链阶段骨架、档位判据与阶段门 | `skills/agentflow/references/document-chain.md` | ## 门 与 ## 质量密度下限（机器检查） | 判据正文只在这一份里；细则拆分（原治理批 T04）本批未实施，登记为计划 ☐ 任务，不在表里指向尚不存在的文件 |
+| 文档链阶段骨架、档位判据与阶段门语义 | `skills/agentflow/references/document-chain.md` | ## 门 | 门 1–9 只定义语义；机器判据与逐文档质量标准的正文在 `document-chain-checks.md`，主契约不复制细则 |
+| 文档链机器判据细则与逐文档质量标准 | `skills/agentflow/references/document-chain-checks.md` | ## 质量密度下限（机器检查） | 判据正文只在这一份里；主契约的门节只指向本文件，不另写副本 |
 | 文档链 C 判据的逐条口径（执行体一侧） | `tools/lab/docchain/checks.py` | def batch_traceability_findings | 人读口径同上，不复述代码；`tools/lab/` 不随插件全量交付，只发链检查器（`packaging/build_runtime.py` 的 `RUNTIME_SUBTREES`） |
 | 测试计划与运行记录形态、bug 状态联动 | `skills/agentflow/references/test-records.md` | ## 契约 与 ## Bug 回归用例与状态联动 | SKILL 的自动化测试节只指路径，不重复联动表 |
 | 开工预检、选测、证据复用与失败分流 | `skills/agentflow/references/execution.md` | ## 环境预检与选测 与 ## 三种结论分开 | 契约与 SKILL 只引用该节，不再列一份测试纪律 |
 | 证据工具 seal / verify / run 的接口 | `skills/agentflow/references/workflow-tool.md` | ## 命令 | 批次 `testing/` 写用法实例，不重定义命令语义 |
 | 埋点评审清单 | `skills/agentflow/references/telemetry.md` | ## 评审门检查清单 | SKILL 的埋点节明写「本文不复述那十条」，只指路径 |
-| 仓库整体审核档位与铁律 | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 的审核节只列七种档位名称与入口，不抄铁律正文 |
+| 仓库整体审核档位与铁律 | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 审核节只留指针，档位与铁律以 repo-audit.md 为准（档位数与铁律数不在此计数，以该文件实列为准），不抄铁律正文 |
+| 检索纪律（存在性结论不用裸 grep、先打印命中原文再判 PASS/FAIL） | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 的 Init 节已指针化（指向 repo-rules 模板第 4 节与本铁律清单）；`templates/hub/repo-rules.md` 第 4 节是写进目标仓的安装态固定块（同步机制随版本标记重跑 Init 刷新），`templates/host/global-rules.md` 第 11 节同理 |
 | 宿主托管块协议（dry-run、只改块内、三项校验） | `skills/agentflow/references/hosts.md` | ## 托管块协议 与 ## 版本与漂移 | SKILL 的宿主级接入节只保留三条硬约束与指针 |
+| 合并收口纪律（material 合并的构建/测试/对账义务） | `skills/agentflow/SKILL.md` | ## 运行工作流 | 与 `skills/agentflow/templates/host/global-rules.md` §3/§5/§6 是同一组规则的宿主级安装态副本：SKILL 第 6 步是权威正文，模板承载跨会话安装态，同步机制 = bump 插件版本后重跑 Host Init（见 `skills/agentflow/references/hosts.md`「版本与漂移」节），不靠人工逐句比对 |
 | 宿主级全局规则正文（跨仓纪律的文本） | `skills/agentflow/templates/host/global-rules.md` | `<!-- agentflow:begin v{{version}} -->` | 目标仓的托管块是该文件的安装态副本：改模板必须同时 bump 插件版本并重跑 Host Init，**不靠「改一处就改另一处」的人工记忆**（同一内容有两个物理载体且无法指针化，同步机制是版本号，见 `skills/agentflow/references/hosts.md` 的漂移判定） |
 | 本仓质量门命令与接受产物前置 | `AGENTS.md` | ## 接受任何产物之前 | `tools/lab/README.md` 写各门项职责，不重复命令清单；README 与 index 不复述门项数 |
 | 本仓记录根、命名与落点 | `AGENTS.md` | ## 在本仓库工作 | `docs/issues/README.md`、`docs/features/README.md` 等各写本域的形态细节，顶层归属只在 AGENTS |

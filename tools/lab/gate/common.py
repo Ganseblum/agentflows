@@ -8,6 +8,21 @@ import re
 from pathlib import Path
 from typing import Any
 
+from docchain.checks import (
+    is_separator_row as _dc_is_separator_row,
+)
+from docchain.checks import (
+    is_table_row as _dc_is_table_row,
+)
+from docchain.checks import (
+    split_row as _dc_split_row,
+)
+
+# 2026-10-29 (PLAN-REVIEW-001 T05): the table-row dialect lives in exactly one place now.
+# `docchain` owned a tolerant parser (`split_row` strips the optional outer pipes) while the
+# gate carried its own stricter copy requiring a trailing `|`; the two families could read the
+# same file differently. Both now delegate here — do not reintroduce a second regex.
+
 ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -26,7 +41,7 @@ TEST_PLAN_SCHEMA = ROOT / "schemas" / "test-plan.schema.json"
 TEST_RUN_SCHEMA = ROOT / "schemas" / "test-run.schema.json"
 
 
-EPISODE_SCHEMA = ROOT / "skills" / "improve" / "references" / "episode.schema.json"
+EPISODE_SCHEMA = ROOT / "schemas" / "episode.schema.json"
 
 
 PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
@@ -36,18 +51,13 @@ PROTECTED_PATHS_FILE = ROOT / "protected-paths.txt"
 # policy change and requires explicit human review; it is not something a candidate may arrange
 # around. Keep it in sync with the inclusion rule documented in protected-paths.txt.
 REQUIRED_PROTECTED_PATHS = {
-    "agents/evaluator.md",
-    "agents/release-governor.md",
     "schemas/bug-record.schema.json",
     "schemas/recurrence.schema.json",
     "schemas/review.schema.json",
     "schemas/plan.schema.json",
     "schemas/test-plan.schema.json",
     "schemas/test-run.schema.json",
-    "skills/improve/references/evidence-and-release.md",
-    "skills/improve/references/episode.schema.json",
-    "skills/improve/references/candidate.schema.json",
-    "skills/improve/references/release-record.schema.json",
+    "schemas/episode.schema.json",
     "tests/test_gate_schema.py",
     "tests/test_gate_integrity.py",
     "tests/test_gate_records.py",
@@ -63,6 +73,8 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/docchain/checks.py",
     "tools/lab/docchain/selftest.py",
     "tools/lab/docchain/cli.py",
+    "docs/decisions/index.md",
+    "docs/decisions/issued.txt",
     "tools/lab/gate/checks.py",
     "tools/lab/gate/common.py",
     "tools/lab/gate/docs.py",
@@ -75,10 +87,10 @@ REQUIRED_PROTECTED_PATHS = {
     "tools/lab/gate/schema.py",
     "tools/lab/gate/testing.py",
     "tools/lab/gate/workspace.py",
+    "tools/lab/decisions.py",
     "tools/lab/isolation.py",
     "tools/lab/mutate.py",
     "tools/lab/record_store.py",
-    "tools/lab/trend.py",
     "tools/lab/validate.py",
     "packaging/build_runtime.py",
     "skills/agentflow/scripts/check-write-scope.sh",
@@ -102,6 +114,7 @@ EXPECTED_TEST_FILES = (
     "test_record_store.py",
     "test_workflow.py",
     "test_pre_push.py",
+    "test_decisions.py",
 )
 
 
@@ -317,6 +330,9 @@ def parse_rfc3339_date_time(value: str) -> dt.datetime:
     return parsed
 
 
+SUPPORTED_JSON_TYPES = ("object", "array", "string", "boolean", "integer", "number", "null")
+
+
 def is_type(value: Any, expected: str) -> bool:
     if expected == "object":
         return isinstance(value, dict)
@@ -332,7 +348,9 @@ def is_type(value: Any, expected: str) -> bool:
         return isinstance(value, (int, float)) and not isinstance(value, bool)
     if expected == "null":
         return value is None
-    return True
+    # Fail closed: a misspelled type used to return True and silently disable the field's
+    # whole validation. The schema walker rejects the same value at load time (T08).
+    raise ValueError(f"unsupported schema type {expected!r}")
 
 
 def path_inside_root(relative_ref: str) -> Path | None:
@@ -382,7 +400,11 @@ def validate_timestamp_order(document: dict[str, Any], path: Path) -> list[Valid
             parsed[name] = parse_rfc3339_date_time(raw)
         except ValueError:
             return [ValidationError(str(path), f"{name} must be an RFC 3339 date-time value")]
-    now = dt.datetime.now(dt.UTC)
+    # `dt.UTC` is a 3.11+ alias; this module must run on the gate's declared floor of 3.10
+    # (dirty-guard.py already documents the same constraint). The mypy/ruff target pins added
+    # 2026-10-29 are what surfaced this: with the default target the 3.11 alias passed lint and
+    # would have raised AttributeError on a 3.10 interpreter at every timestamp validation.
+    now = dt.datetime.now(dt.timezone.utc)
     for name, value in parsed.items():
         if value > now + dt.timedelta(minutes=5):
             errors = [ValidationError(str(path), f"{name} is in the future; stamps must reflect real time")]
@@ -398,7 +420,11 @@ def record_date_of(frontmatter: dict[str, Any]) -> dt.date | None:
     if not isinstance(recorded, str):
         return None
     try:
-        return dt.datetime.fromisoformat(recorded.replace("Z", "+00:00")).date()  # noqa: FURB162
+        # RFC3339_DATE_TIME (and the schemas) accept lowercase `t`/`z`; replacing only the
+        # uppercase `Z` made every lowercase-stamped record parse to None, silently switching
+        # off the date cross-checks that consume this value (dated_id_errors, bug layout).
+        normalized = recorded[:-1] + "+00:00" if recorded[-1:] in ("Z", "z") else recorded
+        return dt.datetime.fromisoformat(normalized).date()
     except ValueError:
         return None
 
@@ -432,24 +458,36 @@ def dated_id_errors(
 
 
 def is_separator_row(line: str) -> bool:
-    """True for a Markdown table separator row (---|:---:|...)."""
-    stripped = line.strip()
-    if not (stripped.startswith("|") and stripped.endswith("|")):
-        return False
-    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
-    return bool(cells) and all(set(cell) <= {"-", ":", " "} and cell for cell in cells)
+    """True for a Markdown table separator row (---|:---:|...); outer pipes optional."""
+    return _dc_is_separator_row(line)
+
+
+def is_table_row(line: str) -> bool:
+    """True for a Markdown table row, with or without the outer pipes."""
+    return _dc_is_table_row(line)
+
+
+def header_columns(line: str) -> dict[str, int] | None:
+    """Column name → position for a header row, else None.
+
+    Rows are read by column name so that inserting a column cannot silently shift which cell
+    a check reads (the `cells[4]` coupling T05 removed).
+    """
+    if not is_table_row(line):
+        return None
+    cells = _dc_split_row(line)
+    if len(cells) < 3:
+        return None
+    return {name: position for position, name in enumerate(cells) if name}
 
 
 def parse_plan_task_row(line: str) -> dict[str, list[str]] | None:
     """Parse one Markdown table row of the plan task table into its cells."""
-    stripped = line.strip()
-    if not (stripped.startswith("|") and stripped.endswith("|")):
+    if not is_table_row(line):
         return None
-    cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+    cells = _dc_split_row(line)
     if len(cells) < 3:
         return None
-    if all(set(cell) <= {"-", ":", " "} for cell in cells):
-        return None  # separator row
     return {"cells": cells}
 
 

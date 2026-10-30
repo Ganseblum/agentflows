@@ -1,29 +1,22 @@
 import argparse
 import contextlib
-import datetime as _dt
 import io
 import json
-import os
-import shutil
-import sys
 import subprocess
+import sys
 import tempfile
+import typing
 import unittest
 from pathlib import Path
-from typing import Any
 from unittest import mock
-
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "tools" / "lab"
 if str(LAB) not in sys.path:
     sys.path.insert(0, str(LAB))
 
-import artifact_digest  # noqa: E402
-import doc_chain  # noqa: E402
-import isolation  # noqa: E402
-import validate  # noqa: E402
-
+import isolation
+import validate
 
 
 class StructuredReadFailureTests(unittest.TestCase):
@@ -217,6 +210,118 @@ class GateIntegrityNegativeTests(unittest.TestCase):
         self.assertEqual(errors[0].path, ".codex-plugin/plugin.json")
         self.assertIn("disagrees with plugin.json", errors[0].message)
 
+    def test_review_debt_reports_derived_batch_and_issue(self) -> None:
+        # T09/G2-AC-01: the count comes from repo facts, not a hand-maintained table.
+        from gate import reports
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = root / "docs" / "features" / "batch-a"
+            batch.mkdir(parents=True)
+            (batch / "README.md").write_text("# batch\n\nreview_tier: L0\n", encoding="utf-8")
+            (batch / "reviews").mkdir()
+            (batch / "reviews" / "README.md").write_text("# reviews placeholder\n", encoding="utf-8")
+            issues = root / "docs" / "issues"
+            issues.mkdir(parents=True)
+            (issues / "ISS-2026-01-02-x.md").write_text(
+                "---\nbug_id: ISS-2026-01-02-x\nstatus: fixed-pending-review\n---\n", encoding="utf-8"
+            )
+            lines = reports.review_debt_report(root)
+        self.assertTrue(any(line.startswith("batch:") for line in lines), lines)
+        self.assertTrue(any("ISS-2026-01-02-x" in line for line in lines), lines)
+
+    def test_review_debt_mirror_contradiction_is_reported(self) -> None:
+        from gate import reports
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs" / "releases").mkdir(parents=True)
+            (root / "docs" / "releases" / "todo.md").write_text(
+                "| 项 | 状态 |\n| --- | --- |\n| ISS-2026-01-02-x | 已清偿 |\n",
+                encoding="utf-8",
+            )
+            errors = reports.review_debt_mirror_findings(["issue: ISS-2026-01-02-x"], root)
+        self.assertTrue(any("标成已清偿" in error for error in errors), errors)
+
+    def test_docs_scan_count_matches_the_live_surface(self) -> None:
+        # R2-F1: the PASS count must be the set the docs check actually walks.
+        import gate.docs as docs_module
+
+        self.assertEqual(len(docs_module.live_doc_paths(ROOT)), validate._scan_count("docs"))
+
+    def test_doc_chain_help_exits_zero(self) -> None:
+        # T03/G2-AC-06: --help is a usage success, not a finding.
+        import docchain.cli as docchain_cli
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = docchain_cli.main(["--help"])
+        self.assertEqual(0, code)
+        self.assertIn("usage", out.getvalue().lower())
+
+    def test_docs_gate_calls_role_and_correction_checks(self) -> None:
+        # F8: a per-function test cannot prove the assertion is still wired into the gate.
+        import gate.docs as docs_module
+
+        role_sentinel = validate.ValidationError("x", "role-sentinel")
+        correction_sentinel = validate.ValidationError("x", "correction-sentinel")
+        with (
+            mock.patch.object(docs_module, "role_contract_findings", return_value=[role_sentinel]),
+            mock.patch.object(
+                docs_module, "correction_propagation_findings", return_value=[correction_sentinel]
+            ),
+        ):
+            errors = docs_module.validate_doc_consistency()
+        messages = [error.message for error in errors]
+        self.assertIn("role-sentinel", messages)
+        self.assertIn("correction-sentinel", messages)
+
+    def test_agents_readme_alone_is_not_a_role_surface(self) -> None:
+        # F4: agents/README.md is the index, not a role; deleting every role file must be red.
+        import gate.docs as docs_module
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "agents").mkdir()
+            (root / "agents" / "README.md").write_text("# agents\n", encoding="utf-8")
+            (root / "skills" / "agentflow").mkdir(parents=True)
+            (root / "skills" / "agentflow" / "SKILL.md").write_text("# skill\n", encoding="utf-8")
+            with mock.patch.object(docs_module, "ROOT", root):
+                errors = docs_module.validate_doc_consistency()
+        self.assertTrue(
+            any("holds no role files" in error.message for error in errors),
+            [error.message for error in errors],
+        )
+
+    def test_shipped_runtime_broken_relative_link_is_reported(self) -> None:
+        # T02 / G1-AC-01: a relative link inside the installed surface must resolve within the
+        # runtime subset, not merely in the full source tree.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_manifests(root)
+            runtime = root / "packaging" / "runtime"
+            runtime.mkdir(parents=True)
+            (root / "packaging" / "source-only.md").write_text("# outside\n", encoding="utf-8")
+            (runtime / "inside.md").write_text("# inside\n", encoding="utf-8")
+            (runtime / "guide.md").write_text(
+                "[outside](../source-only.md)\n[inside](inside.md)\n", encoding="utf-8"
+            )
+            errors = validate.validate_manifests(root)
+        messages = [error.message for error in errors]
+        self.assertTrue(
+            any("shipped link target missing" in message and "../source-only.md" in message for message in messages),
+            messages,
+        )
+        self.assertFalse(any("inside.md" in message for message in messages), messages)
+
+    def test_report_appends_the_scan_count_on_pass(self) -> None:
+        # T03: an audit line must say how many objects the check actually walked.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            passed = validate.report("docs", [], 55)
+        self.assertTrue(passed)
+        self.assertIn("PASS docs (55 objects)", out.getvalue())
+
     def test_protected_list_shrinkage_and_missing_list_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
@@ -264,8 +369,10 @@ class GateIntegrityNegativeTests(unittest.TestCase):
         self.assertEqual(
             [f"{error.path} {error.message}" for error in undeclared_errors],
             [
-                "tests/smuggled_test.py unexpected entry in the test directory; "
-                "declare it here and in protected-paths.txt"
+                (
+                    "tests/smuggled_test.py unexpected entry in the test directory; "
+                    "declare it here and in protected-paths.txt"
+                )
             ],
         )
         self.assertTrue(
@@ -338,7 +445,7 @@ class GateIntegrityNegativeTests(unittest.TestCase):
         # forbids at the top level of the generated tree.
         sys.path.insert(0, str(ROOT / "packaging"))
         try:
-            import build_runtime  # noqa: E402  (packaging/ is not a package)
+            import build_runtime
         finally:
             sys.path.pop(0)
         readme = (ROOT / "packaging" / "README.md").read_text(encoding="utf-8")
@@ -409,7 +516,7 @@ class ValidateResidualTests(unittest.TestCase):
             errors = validate.validate_unit_tests(Path(temporary))
         self.assertTrue(any("unexpected entry in the test directory" in error.message for error in errors))
 
-    LIVE_FIXTURE_FILES = {
+    LIVE_FIXTURE_FILES: typing.ClassVar[dict[str, str]] = {
         "docs/issues/README.md": "# issues\n",
         "docs/releases/todo.md": "# todo\n",
         "docs/features/README.md": "# features\n",
@@ -519,9 +626,8 @@ class ValidateResidualTests(unittest.TestCase):
 
     def test_missing_agent_and_skill_directories_fail_the_docs_check(self) -> None:
         # Item C: a missing agents/ or skills/ directory made the glob empty and the check passed.
-        with tempfile.TemporaryDirectory() as temporary:
-            with mock.patch.object(validate, "ROOT", Path(temporary)):
-                errors = [str(error) for error in validate.validate_doc_consistency()]
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(validate, "ROOT", Path(temporary)):
+            errors = [str(error) for error in validate.validate_doc_consistency()]
         self.assertTrue(any("agents/ directory is missing" in error for error in errors), errors)
         self.assertTrue(any("skills/ directory is missing" in error for error in errors), errors)
 
@@ -577,6 +683,7 @@ class WriteScopeScriptTests(unittest.TestCase):
                 cwd=directory,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             self.assertIn("OK", completed.stdout)
@@ -590,40 +697,32 @@ class WriteScopeScriptTests(unittest.TestCase):
                 cwd=directory,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
             self.assertIn("FAIL", completed.stdout)
 
 
+class TrendRetirementTests(unittest.TestCase):
+    """The trend.py apparatus remnant (2026-10-12 裁撤) was removed 2026-10-29.
 
+    It had zero consumers (not in the gate, not in CI, not shipped, no reader of its
+    docs/trend.jsonl output) and had already rotted on the live corpus — it demanded a
+    「## 发现摘要」 section no current review record carries, so manual runs crashed while
+    every test stayed green (self-built fixtures only). This pin keeps it retired: neither
+    the module nor its data file may silently return, and prose surfaces must not point
+    readers at it as a live tool.
+    """
 
-class TrendReviewFindingsTests(unittest.TestCase):
-    def setUp(self) -> None:
-        import trend
+    def test_trend_module_and_data_file_are_gone(self) -> None:
+        import validate as _validate_root_pkg
 
-        self.trend = trend
-        self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name)
-        (self.root / "reviews" / "feat").mkdir(parents=True)
-        self.patch = mock.patch.object(trend, "ROOT", self.root)
-        self.patch.start()
+        tools_lab = Path(_validate_root_pkg.__file__).resolve().parent
+        self.assertFalse((tools_lab / "trend.py").exists(), "trend.py must stay retired")
+        self.assertFalse((tools_lab.parent.parent / "docs" / "trend.jsonl").exists())
 
-    def tearDown(self) -> None:
-        self.patch.stop()
-        self.tmp.cleanup()
-
-    def test_review_without_findings_section_is_an_error(self) -> None:
-        (self.root / "reviews" / "feat" / "review-2026-10-13-001.md").write_text(
-            "# review\n\n无摘要\n", encoding="utf-8")
-        with self.assertRaises(ValueError) as caught:
-            self.trend.open_review_findings()
-        self.assertIn("## 发现摘要", str(caught.exception))
-
-    def test_counts_bullets_under_findings_section(self) -> None:
-        (self.root / "reviews" / "feat" / "review-2026-10-13-001.md").write_text(
-            "# review\n\n## 发现摘要\n\n- F1 一条\n- F2 一条\n\n## 其它\n\n- 不计\n",
-            encoding="utf-8")
-        self.assertEqual(self.trend.open_review_findings(), 2)
-
-
+    def test_live_tool_surfaces_do_not_advertise_trend(self) -> None:
+        for rel in ("README.md", "tools/lab/README.md", "index.md"):
+            text = (validate.ROOT / rel).read_text(encoding="utf-8")
+            self.assertNotIn("trend.py", text, f"{rel} still advertises the retired trend.py")
 

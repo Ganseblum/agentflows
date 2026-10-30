@@ -1,0 +1,14 @@
+# 改进环退役面扫描（2026-10-29）
+命令：python3 - <<'PY' ...（见本文件末尾脚本）
+
+## 文件存在性
+PASS: skills/improve 不存在
+PASS: agents/feedback-analyst.md 不存在
+PASS: agents/candidate-engineer.md 不存在
+PASS: agents/evaluator.md 不存在
+PASS: agents/release-governor.md 不存在
+
+## 活方法面命中（允许的退役说明须含 裁撤/停用/已删/恢复清单/归档/历史 之一）
+
+未带退役说明的命中数: 0
+EXIT=0

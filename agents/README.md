@@ -12,13 +12,13 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 选角色先认链，再读对应的实际角色文件。详细职责不在路由里复制；执行方法集中在
 [执行与验证](../skills/agentflow/references/execution.md)。遗留补测复用测试链，不另建角色或第七条链。
 
-六条链——实现、缺陷、测试、规划、改进、独立评审——的默认序列、默认可省步骤，以及那一步
+五条链——实现、缺陷、测试、规划、独立评审——的默认序列、默认可省步骤，以及那一步
 **不可省**（跳过即改变结论效力），单点定义在
 [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的工作链节；
 本文件不再复制那张表。2026-10-22 的走查发现这张表在两个文件里各写一份且列数已经分歧（这里三列、
 那里四列），而「同一结论双源并存、不声明取舍」正是本仓自己列为出现即缺陷的反模式。
 
-## 角色清单（14）
+## 角色清单（10）
 
 | 文件 | 一句话职责 | 工具面 |
 | --- | --- | --- |
@@ -32,10 +32,6 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 | `plan-architect.md` | 把各角色发现转成带状态与证据回写的执行计划 | 写计划 |
 | `test-planner.md` | 为用户可见功能设计可执行测试计划 | 写计划 |
 | `test-executor.md` | 对目标环境执行测试计划（脚本自动化优先） | 写执行记录（禁 Edit） |
-| `feedback-analyst.md` | 归一化改进反馈的证据、聚类失败、归因 | 只读 |
-| `candidate-engineer.md` | 实现单个有界的改进候选（不自评） | 读写 |
-| `evaluator.md` | 只读对照候选与冻结基线的结果记录 | 只读 |
-| `release-governor.md` | 晋升 / 修订 / 拒绝 / 回退决策 | 只读 |
 
 ## 调度要点
 
@@ -43,6 +39,6 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 - 并行只并行「写范围互不重叠」的实现；两个写入者共用同一仓库时还要各用分支或 worktree。
 - `maxTurns` 按意图元数据对待（声明未验证）；生效约束是各角色提示词里的预算纪律
   （最后一轮留给结果，目标未成返回 `partial`）。
-- 每个角色的 `tools` / `disallowedTools` 由宿主白名单强制；各角色的写范围见其文件内的
+- 只观察到宿主强制 `tools` 白名单（ZCode 实测）；`disallowedTools` 在 Qoder 等宿主未验证强制，不得当作隔离保证。各角色的写范围见其文件内的
   `## 产物归属` 矩阵，文档链各阶段谁产出见
   [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的「阶段 × 角色速查」表。
