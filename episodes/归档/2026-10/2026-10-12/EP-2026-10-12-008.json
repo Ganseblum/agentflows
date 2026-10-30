@@ -28,7 +28,7 @@
     {
       "kind": "user_instruction",
       "value": "用户 2026-10-12 指示『先全部修复处理』，授权执行 plans/PLAN-OPT-CLOSEOUT-001.md 的 T01/T02/T04",
-      "evidence_ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-OPT-CLOSEOUT-001.md"
+      "evidence_ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     }
   ],
   "claims": [

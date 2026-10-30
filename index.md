@@ -18,7 +18,7 @@
 | 查缺陷与事项 | `docs/issues/README.md`（`ISS-<YYYY-MM-DD>-<slug>`，含看板与归档规则） |
 | 查对外评审落点 | `reviews/README.md` |
 | 查发布与待验证清单 | `docs/releases/`：`todo.md`（发版待办，批次状态指针）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md`（0.22.1 及更早的历史条目归档于 [`docs/changelog-archive.md`](docs/changelog-archive.md)） |
-| 看设计、指南与事实 | `docs/`：`product/`（产品链）、`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
+| 看设计、指南与事实 | `docs/`：`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
@@ -46,7 +46,7 @@
 - 2026-10-28 表达面与角色治理批（已并入 2026-10-29 全面修正与瘦身批；PLAN-GOV-001 置 superseded，八项任务各有唯一承接号）——见 [批次入口](docs/features/feature-2026-10-28-表达面与角色治理/README.md)、[计划](docs/features/feature-2026-10-28-表达面与角色治理/plan/PLAN-GOV-001.md)
 - 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线；版本号已并入 0.22.0，已发布）——见 [批次入口](docs/features/feature-2026-10-28-评测整改批/README.md)、[计划](docs/features/feature-2026-10-28-评测整改批/plan/PLAN-EVAL-001.md)、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
 - 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 [批次入口](docs/features/feature-2026-10-26-L3工作流增强/README.md)、[计划](docs/features/feature-2026-10-26-L3工作流增强/plan/PLAN-L3-001.md)、[执行记录](docs/features/feature-2026-10-26-L3工作流增强/testing/agentflow-workflow/run-2026-10-27-001.md)
-- 2026-10-25 总体评审吸收与修复批（实施完成：看板 25 ☑ / 5 本期不做；Q-01 至 Q-05 已关闭；受保护路径门变更与 D8 决策台账已落地，独立评审 L2 approved（`review-2026-10-30-001.md`）；删除类 T18–T22 留下一批）——见 [批次入口](docs/features/feature-2026-10-25-总体评审吸收与修复/README.md)、[计划](docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md)
+- 2026-10-25 总体评审吸收与修复批（实施完成：看板 30 ☑；Q-01 至 Q-05 已关闭；受保护路径门变更与 D8 决策台账已落地，独立评审 L2 approved（`review-2026-10-30-001.md`）；删除类 T18–T22 已执行）——见 [批次入口](docs/features/feature-2026-10-25-总体评审吸收与修复/README.md)、[计划](docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md)
 - 2026-10-25 测试链路 Ego Light 切换批 / 门与测试拆分批（0.15.0）
 - 2026-10-24 宿主接入批（Host Init：跨仓全局规则分发、托管块模板、0.14.0）
 - 2026-10-23 追溯闭环与证据在场批（门变更：文档链新增 C22 目标承接闭环与 C23 证据在场；记录契约补 `disposition`；拍板口八列化；八条文本缺陷收口）

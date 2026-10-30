@@ -228,15 +228,13 @@ def validate_doc_chain(root: Path = ROOT) -> list[ValidationError]:
 
 # Live-document surfaces the compile gate lints with the doc-chain linter. validate_doc_chain
 # pins the *checker* (its self-test); this pins the checker on the *documents* it exists for.
-#   - docs/product/ is the product chain's own text (proposal/spec/design): the text-form checks
-#     (C12/C13/C14) on every *.md, since it is not a feature batch.
 #   - docs/features/<batch>/ is a feature batch: the full pass (structure C1–C11 plus text
 #     C12–C14) on each batch directory, and the text pass on each batch README and on the loose
 #     *.md directly under docs/features/.
 # C13 exemptions are per file (C13_EXEMPT_FILES in doc_chain.py), so no surface is skipped whole.
 # Deleting either surface is a visible gate change: validate_doc_chain_live fails when a declared
 # surface is missing.
-DOC_CHAIN_LIVE_ROOTS = ("docs/product", "docs/features")
+DOC_CHAIN_LIVE_ROOTS = ("docs/features",)
 
 
 DOC_CHAIN_FEATURE_SURFACE = "docs/features"
@@ -295,8 +293,7 @@ def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:
     """Run the doc-chain linter over the live document surfaces; any finding fails the gate.
 
     Companion to validate_doc_chain: that check pins the linter's self-test, this one points the
-    linter at the documents. docs/product/ gets the text-form checks (--file) on every *.md.
-    docs/features/ gets the full feature-directory pass on each batch directory (structure
+    linter at the documents.     docs/features/ gets the full feature-directory pass on each batch directory (structure
     C1–C11 plus text C12–C14, run with --root so C9 paths resolve against this repository), and
     the text pass on each batch README and on the loose *.md directly under docs/features/.
     A missing declared surface fails the gate. `root` defaults to the repository; findings keep

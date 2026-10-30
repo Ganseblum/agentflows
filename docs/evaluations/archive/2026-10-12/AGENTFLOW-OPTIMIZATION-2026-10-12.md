@@ -4,7 +4,7 @@
 > 凡原评价报告路径/事实有误的，已在本文件"勘误"一节标明，不沿用错误行号。
 > 本文件同样故意排除在受治理文档面之外（不碰 protected-paths.txt），可随时删除。
 > **2026-10-18 合并说明**：本文件随 `workbuddy/main-b0d8652c` 并入 `main`（用户拍板只并入记录类内容），落点已在 `index.md`「迁移与清理记录」登记一行；其中提及的 `policy.py`、`eval_runner.py`、`host_adapter.py`、`evals/`、`improvements/` 均指 2026-10-12 裁撤前状态，现行结构以 `docs/design-decisions.md` §3 为准。
-> **2026-10-19 现状指针**：§7 汇总表中 G1/G2 的「已修」结论同样只对 `workbuddy/main-b0d8652c` 成立，未随合并带入 `main`；`main` 上的现行状态以 [`PENDING-DECISIONS.md`](../PENDING-DECISIONS.md) 第 7 条为准。
+> **2026-10-19 现状指针**：§7 汇总表中 G1/G2 的「已修」结论同样只对 `workbuddy/main-b0d8652c` 成立，未随合并带入 `main`；`main` 上的现行状态以 [`PENDING-DECISIONS.md`](../../../PENDING-DECISIONS.md) 第 7 条为准。
 
 ---
 
@@ -165,13 +165,13 @@
 - **验证**：构造非 UTF-8 清单 / 字符串节点 Pointer，确认不再 traceback。
 
 ### T2.10 · 模板核查
-- 待回填（先定位真实模板逐项核查）。
+- 已归档（2026-10-30），无需回填（先定位真实模板逐项核查）。
 
 ### T2.11 · document-chain / 批次链
-- 待回填。
+- 已归档（2026-10-30），无需回填。
 
 ### T2.12 · metrics.schema.json 共享 $defs
-- 待回填（新建 metrics.schema.json + 三处 `$ref`）。
+- 已归档（2026-10-30），无需回填（新建 metrics.schema.json + 三处 `$ref`）。
 
 ### T3.13 · eval_runner.py
 - **改前**：`subprocess.run(command, input=..., text=True, capture_output=True, cwd=ROOT, check=False)`。
@@ -179,7 +179,7 @@
 - **验证**：`python3 -m py_compile tools/lab/eval_runner.py`。
 
 ### T3.12 · 首次 BT 对照
-- 待回填（运行动作，生成 baseline/candidate 结果 + measurement 记录）。
+- 已归档（2026-10-30），无需回填（运行动作，生成 baseline/candidate 结果 + measurement 记录）。
 
 ---
 

@@ -22,7 +22,7 @@
   "claims": [
     {
       "claim_id": "C1",
-      "claim": "两份计划迁入 docs/features/feature-2026-09-19-产品线完善/plan/；PENDING-DECISIONS 提至 docs/；顶层 docs/plans/ 撤销；批次 README 以段落映射复用 docs/product/ 链，不重复造册",
+      "claim": "两份计划迁入 docs/features/feature-2026-09-19-产品线完善/plan/（该路径已于 2026-10-30 关闭删除，原文见 git 历史 agentflows@40147df）；PENDING-DECISIONS 提至 docs/；顶层 docs/plans/ 撤销；批次 README 以段落映射复用 docs/product/ 链，不重复造册",
       "status": "verified",
       "check": "validate artifacts 对 docs/features 根的两份 plan 实测通过（计划契约含依赖图无环）；docs 断链扫描 PASS",
       "evidence_ref": "E1"

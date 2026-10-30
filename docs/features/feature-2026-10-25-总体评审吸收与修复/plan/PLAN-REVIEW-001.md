@@ -15,15 +15,14 @@ recorded_at: 2026-10-25T16:23:53+08:00
 
 ## 进展概览
 
-- 总任务 30 项：☑ 25 项已完成 / — 5 项本期不做（T18 至 T22 删除类，2026-10-29 拍板留下一批）/ ☐ 0 项。
-  受保护路径任务 13 项（T01 至 T09、T12、T16、T17、T29）已全部落地，2026-10-30 全量门与自测实跑绿；
-  删除类 5 项按拍板留在下一批，不在本批执行。出提案不实施 2 项（T25、T26）已于 2026-10-29 完成。
+- 总任务 30 项：☑ 30 项已完成 / — 0 / ☐ 0。删除类 T18–T22 已于 2026-10-30 执行。
+  受保护路径任务 13 项已全部落地；删除类 5 项已于 2026-10-30 完成。出提案不实施 2 项（T25、T26）已于 2026-10-29 完成。
 - 三视角概览：
 
 | 视角 | 现在在哪 | 下一步 | 阻塞 |
 | --- | --- | --- | --- |
-| 方法维护者 | 活任务 25 项已闭，Q-01 至 Q-05 全部关闭；删除类 5 项留下一批 | 删除类由下一批执行并复测产出比 | 无（删除类按拍板留下，不阻塞本批收口） |
-| 工具链实现 | 四组门绕过逐项修复：安装面/输出计数/记录索引/统一解析/schema fail-closed/C3-C16/C23 断言层/更正追平 | 随下一批删除类复跑全量门 | 无 |
+| 方法维护者 | 30 项已闭，Q-01 至 Q-05 全部关闭；删除类 5 项已于 2026-10-30 执行 | 删除后复测产出比 | 无 |
+| 工具链实现 | 四组门绕过逐项修复；删除类已执行 | 复跑全量门 | 无 |
 | 交付效果 | 记录面基线 23,030 行已留档；本批未执行删除，产出比复测随下一批 | 下一批删除后复测（目标 ≤ 2.5） | 无 |
 
 - 阻塞与风险：无阻塞。Q-01 至 Q-05 已全部关闭；T05 统一解析器按「先基线、后统一」执行，
@@ -60,11 +59,11 @@ recorded_at: 2026-10-25T16:23:53+08:00
 | T15 | 幽灵测试类勘误追平：`MutationKillCorpusTests` 与 `SchemaSubsetFailClosedTests` 在九处引用（计划 T05 行、评审记录两处、episode 两处、评测报告两处等）逐处补勘误标注——只追加，不改写原文 | P0 | `docs/features/feature-2026-10-13-质量提升/plan/PLAN-QUALITY-001.md`、`docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-001.md`、`episodes/归档/2026-10/2026-10-19/EP-2026-10-19-001.json`（2026-10-29 随月度归档移入）、`docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md` | — | ☑ 已完成 | 2026-10-30 复扫：逐条命中与计数见 `testing/agentflow-review/evidence/erratum-scan-2026-10-30.txt`（含命令、扫描面与 path:line 原文）；按 T16 的「更正来源 + 未带勘误/N/A」口径，未追平引用 = 0，`validate.py docs` PASS；N/A: 两类均为幽灵测试类，从未进入提交历史；扫描原文见 `testing/agentflow-review/evidence/erratum-scan-2026-10-30.txt`。原 9 处由 `4c5c17a` 补勘误，`9ef0b0e` 重写 T05 证据列；2026-10-30 又给 `AGENTFLOW-EVALUATION-2026-10-20.md` 与 `review-2026-10-19-001.md` 的剩余两处补了勘误标注 |
 | T16 | 新增「更正必须追平」检查：凡 CHANGELOG 或记录出现「从未进入 / 不实 / 勘误」更正语句，被更正标识符在 `docs/`、`reviews/`、`agents/`、`skills/`、`episodes/` 下 md 与根 README/AGENTS/CHANGELOG/index 的其余引用处须带勘误标注（episodes JSON 为历史证据，不在扫描面）；实现触发词为「从未进入/不实/勘误/证伪」，追踪对象限反引号包裹的 `*Tests`/`*Cases` 形标识符，文件级证据由 C23 承担，否则门红；配破坏例夹具（受保护，门变更） | P1 | `tools/lab/gate/docs.py` | T15 | ☑ 已完成 | `tools/lab/gate/docs.py` 的 correction_propagation_findings；`tests/test_gate_schema.py` 的 test_correction_propagation_flags_unannotated_references 实跑 OK |
 | T17 | `C23` 增「断言可解析」层：证据列反引号引用的类名 / 文件名 / 函数名须在仓内可解析；以幽灵测试类构造正例夹具（受保护，门变更） | P1 | `tools/lab/docchain/checks.py` | — | ☑ 已完成 | `tools/lab/docchain/checks.py` 的 assertion_resolvability_findings；`tools/lab/docchain/selftest.py` 用例 95a–95e；`doc_chain.py --self-test` 146/146 |
-| T18 | `docs/product/` 结论（产品定位 / 方法行为规格要点）并入 `docs/design-decisions.md` 一节后整目录删除；两道挂起评审门的处置随迁说明；状态三说一并消失（删除类，Q-04） | P1 | `docs/design-decisions.md` | — | — 本期不做（2026-10-29 拍板留下一批） | — |
-| T19 | `docs/evaluations/` 留三删五：保留独立评测（6.43）、10-23 审核、评测任务书；7.6 / 7.7 加「历史自我评分，已被 6.43 证伪，勿引用」标注后归档；10-12 行动件清「待回填」占位后归档（删除类，Q-04） | P1 | `docs/evaluations/README.md` | — | — 本期不做（2026-10-29 拍板留下一批） | — |
-| T20 | 16 条外部项目记录（`ISS-2026-09-19-office计划缺异常矩阵` 至 `ISS-2026-09-19-office计划事件清理回放缺口`）迁出至 infinite-canvas 仓或单文件汇总；`docs/issues/recurrence/` 对应台账改指针（删除类，Q-04） | P1 | `docs/issues/ISS-2026-09-19-office计划缺异常矩阵.md` | — | — 本期不做（2026-10-29 拍板留下一批） | — |
-| T21 | CHANGELOG 改「每版 ≤10 行 + 细节入 episode」形态；旧内容随版本归档进 git 历史；0.15.0 安装面「同日 FAIL / PASS」改为时间线一句（删除类，Q-04；CHANGELOG 历史条目按原样保留的口径随本项一并定） | P2 | `CHANGELOG.md` | — | — 本期不做（2026-10-29 拍板留下一批） | — |
-| T22 | 执行既有删档规则：关闭 `feature-2026-09-19-产品线完善` 批（结论入 CHANGELOG 与 episode 后删目录）；`episodes/` 空轮次与无 claims 早期记录按月归档；`reviews/` 内部重复快照去重（外部快照保留）（删除类，Q-04） | P2 | `docs/features/feature-2026-09-19-产品线完善/README.md`、`episodes/归档/` | — | — 本期不做（2026-10-29 拍板留下一批） | — |
+| T18 | `docs/product/` 结论（产品定位 / 方法行为规格要点）并入 `docs/design-decisions.md` 一节后整目录删除；两道挂起评审门的处置随迁说明；状态三说一并消失（删除类，Q-04） | P1 | `docs/design-decisions.md` | — | ☑ 已完成 | docs/design-decisions.md §4 已并入产品链结论；`docs/product/` 5 个文件删除；两道评审门处置随节说明；原文 git 40147df。 |
+| T19 | `docs/evaluations/` 留三删五：保留独立评测（6.43）、10-23 审核、评测任务书；7.6 / 7.7 加「历史自我评分，已被 6.43 证伪，勿引用」标注后归档；10-12 行动件清「待回填」占位后归档（删除类，Q-04） | P1 | `docs/evaluations/README.md` | — | ☑ 已完成 | `docs/evaluations/README.md` 已加「留三归档五」；10-12 两件、7.6/7.7、Youc 复盘共 5 件移入 `docs/evaluations/archive/`，7.6/7.7 加证伪标注。 |
+| T20 | 16 条外部项目记录（`ISS-2026-09-19-office计划缺异常矩阵` 至 `ISS-2026-09-19-office计划事件清理回放缺口`）迁出至 infinite-canvas 仓或单文件汇总；`docs/issues/recurrence/` 对应台账改指针（删除类，Q-04） | P1 | `docs/issues/ISS-2026-09-19-office计划采纳汇总.md` | — | ☑ 已完成 | 16 条 office 记录已汇总为 `docs/issues/ISS-2026-09-19-office计划采纳汇总.md`；原记录删除；评审 findings 与 recurrence 指针改汇总号。 |
+| T21 | CHANGELOG 改「每版 ≤10 行 + 细节入 episode」形态；旧内容随版本归档进 git 历史；0.15.0 安装面「同日 FAIL / PASS」改为时间线一句（删除类，Q-04；CHANGELOG 历史条目按原样保留的口径随本项一并定） | P2 | `CHANGELOG.md` | — | ☑ 已完成 | `CHANGELOG.md` 压缩为 0.23.0 与 2026-10-30 各 3 行；详细记录移入 `docs/changelog-archive.md`；0.15.0 同日 FAIL/PASS 保留在归档时间线。 |
+| T22 | 执行既有删档规则：关闭 `feature-2026-09-19-产品线完善` 批（结论入 CHANGELOG 与 episode 后删目录）；`episodes/` 空轮次与无 claims 早期记录按月归档；`reviews/` 内部重复快照去重（外部快照保留）（删除类，Q-04） | P2 | `docs/design-decisions.md`、`episodes/2026-10-30/EP-2026-10-30-001.json` | — | ☑ 已完成 | 产品线批次已关闭删除（结论见 `CHANGELOG.md` 与 `episodes/2026-10-30/EP-2026-10-30-001.json`）；episodes 无空轮次；reviews 无同轮重复快照可去重，外部快照保留。 |
 | T23 | 术语表落地：`docs/system-guide.md` 首节一表（台账 / 拍板口 / 门 / 档位 / 收口 / 承接 / 落点 / 载体 / 批次 / 链 / 口径）；`README.md`、`index.md`、`docs/quickstart.md` 对照词表清零内部词裸用 | P1 | `docs/system-guide.md`、`README.md`、`index.md`、`docs/quickstart.md` | — | ☑ 已完成 | `docs/system-guide.md` §0「术语对照」已建 11 词表（台账 / 拍板口 / 门 / 档位 / 收口 / 承接 / 落点 / 载体 / 批次 / 链 / 口径）；`index.md` 顶部有词表指针；`docs/quickstart.md` 与 `README.md` 的「文档档位」均为指向定义的链接。2026-10-29 清理 `README.md` 最后一处裸用：「批次流程」→「成批流程」、「会话收口」→「会话收尾」 |
 | T24 | 最小必读面瘦身：四文件（skill + roles + contracts + reviewer）只消副本、不设总量上限（Q-05 2026-10-29 拍板 C）——去重以引用代替复述、「分派前必读」改「按链必读」 | P2 | `skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md` | — | ☑ 已完成 | 由 FIX T12 落地：`skills/agentflow/SKILL.md` 152 行、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md` 已只消副本；四文件实测 622 行（152/124/197/149）；见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` T12 行 |
 | T25 | 文档链默认档改轻提案：默认「一页提案 + 验收判据 + 计划看板」，全链为按需启用加强档；本任务只产提案文本（Q-02 拍板后另批实施） | P2 | `skills/agentflow/references/document-chain.md` | — | ☑ 已完成 | `skills/agentflow/references/document-chain.md` 末新增「待拍板提案：默认档改轻（Q-02）」节（文件 317 → 345 行），含问题陈述、A/B/C 三选项与各自做/不做后果、推荐 B 及理由、落地前置四项；节首明标「提案，未生效」。**只出提案不实施**，契约正文未改 |

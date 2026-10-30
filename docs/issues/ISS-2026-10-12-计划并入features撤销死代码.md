@@ -11,7 +11,7 @@ files:
   - tools/lab/validate.py
   - tools/lab/record_store.py
   - docs/features/README.md
-  - docs/features/feature-2026-09-19-产品线完善/README.md
+  - docs/design-decisions.md
   - tests/test_gate_integrity.py
   - docs/PENDING-DECISIONS.md
   - AGENTS.md

@@ -49,12 +49,12 @@
     {
       "evidence_id": "E3",
       "kind": "plan",
-      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-LOOP-SMOKE-001.md"
+      "ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     },
     {
       "evidence_id": "E4",
       "kind": "plan",
-      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
+      "ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     }
   ],
   "objective": "继续第一次噪声底闭环；端点不可用时推进不依赖 live 的评审与默认路径缩短，不声称闭环已跑通",

@@ -14,7 +14,7 @@ $ .venv/bin/python tools/lab/validate.py all
 11/11 PASS（decision_gate 367 objects）
 
 $ .venv/bin/python -m unittest discover -s tests
-Ran 254 tests OK
+Ran 259 tests OK
 
 $ .venv/bin/python tools/lab/doc_chain.py --self-test
 151/151 self-test cases pass

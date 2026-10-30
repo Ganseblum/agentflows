@@ -4,7 +4,7 @@
 > 边界原则与现时状态，去掉已实施的过程细节。版本以 manifest 与 `CHANGELOG.md` 为准，
 > 本文不重复版本号。原三份文档的完整推理过程见 git 历史。
 >
-> 与产品链的关系：`docs/product/`（proposal → spec → design → plan）是产品语义的现行出处；
+> 与产品链的关系：原 `docs/product/`（proposal → spec → design → plan）已于 2026-10-30 并入本文件 §4；
 > 本记录为**决策出处**——被产品链引用为结论来源，冲突时以产品链为准并在此补翻案记录。
 
 ---
@@ -189,6 +189,28 @@ adapter 扫描工具结果计数写入 `observed_permission_denials`（**缺失 
 （**仍在**——它是通用摘要工具）、`isolation.py check-diff`（**仍在**——候选 diff 禁区检查）、
 `examples/evaluation-results` 样例。恢复时落点由 Supervisor 显式指派并声明契约，并重新评估
 是否仍需 `measurement: none` 口径。
+
+## §4 产品链结论（2026-10-30 并入，原 docs/product/）
+
+2026-10-30 关闭「产品线完善」批：产品链结论并入本节，`docs/product/` 与批次目录删除；原文可从
+git 历史 `40147df:docs/product/` 取回。自此产品链状态只有本节、`CHANGELOG.md` 与该日 episode 三处
+同源记录，不再存在「method-spec 生效 / acceptance-matrix 部分 / pending-test 已验证」的状态三说。
+
+- **产品定位**：宿主原生多角色协作方法插件，不是运行时、Flow 画布或组织图；方法写一次，
+  循环交给宿主。分发形态为 ZCode / Claude Code / Codex 插件，`marketplace.json` 的 `source`
+  指向 `packaging/runtime` 生成树。
+- **角色与默认路径**：10 个角色是按需取用的能力清单，默认路径短；角色分离 ≠ 环境隔离。
+  Supervisor 是主会话，不是独立进程。
+- **文档链**：proposal → spec → design → plan；spec 反审 proposal、design 冻结前独立评审、
+  plan 引用冻结后的 design。
+- **关键决策**：只做方法不做运行时；宿主插件载体；受治理的人工闭环；保护门单点声明；
+  schema + 编译门；Markdown 融合计划；失败语义成文；瘦快照分发；manifest/CHANGELOG 是版本单点；
+  评测仪器 2026-10-12 整线裁撤，方法级改动 `measurement: none`；文档链吸收（D12）与门禁（D13）；
+  边界如实声明（D14）。
+- **评审门处置**：需求评审 REV-2026-10-19-003 `approved`（F1–F12 全关闭）；技术方案评审
+  `reviews/review-2026-09-19-001.md` 经独立委派 L2 `approved`（2026-10-29，Design 冻结）。
+- **计划处置**：PLAN-PRODUCT 8 ☑ / 6 本期不做；PLAN-LOOP 5 ☑ / 5 本期不做；T02 与 LOOP T09
+  的对象已随评测装置/改进环裁撤注销，PRODUCT T09 的 Intake FTS5 再犯类检索已落。
 
 ---
 

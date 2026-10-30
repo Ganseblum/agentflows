@@ -1,4 +1,4 @@
-# 2026-10-30 最终全量门与回归实跑（收口提交 9a87bc5）
+# 2026-10-30 最终全量门与回归实跑（T18–T22 收口后）
 
 > 命令：`.venv/bin/python tools/lab/validate.py all`、`-m unittest discover -s tests`、`tools/lab/doc_chain.py --self-test`
 
@@ -7,23 +7,23 @@
 ```text
 PASS schemas (8 objects)
 PASS examples (34 objects)
-PASS artifacts (281 objects)
+PASS artifacts (262 objects)
 PASS protected (26 objects)
 PASS manifests (171 objects)
-PASS docs (351 objects)
+PASS docs (326 objects)
 PASS tests (8 objects)
 PASS doc_chain (151 objects)
-PASS doc_chain_live (134 objects)
-PASS decision_gate (369 objects)
+PASS doc_chain_live (124 objects)
+PASS decision_gate (344 objects)
 PASS lint (43 objects)
 ```
 
 ## unittest（退出码 0）
 
 ```text
-..............................................................................................................................................................................................................................................................
+...................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Ran 254 tests in 22.628s
+Ran 259 tests in 18.894s
 
 OK
 ```

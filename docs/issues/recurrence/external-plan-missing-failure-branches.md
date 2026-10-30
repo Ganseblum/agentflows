@@ -3,16 +3,9 @@ class_id: external-plan-missing-failure-branches
 title: 外部计划缺失败分支与安全边界约束——异常矩阵/时序/发布顺序/可观测性/鉴权整块缺席
 status: consolidated
 consolidated_in: 0.11.0
-first_record: ISS-2026-09-19-office计划缺异常矩阵
+first_record: ISS-2026-09-19-office计划采纳汇总
 occurrences:
-  - ISS-2026-09-19-office计划缺异常矩阵
-  - ISS-2026-09-19-office计划结算循环未定义
-  - ISS-2026-09-19-office计划恢复与扩缩竞态
-  - ISS-2026-09-19-office计划缺关键路径步骤表
-  - ISS-2026-09-19-office计划无鉴权rce原语
-  - ISS-2026-09-19-office计划产物渲染缺消毒
-  - ISS-2026-09-19-office计划缺可观测性
-  - ISS-2026-09-19-office计划缺发布顺序与回滚
+  - ISS-2026-09-19-office计划采纳汇总
 recorded_at: 2026-10-19T20:20:00+08:00
 updated_at: 2026-10-19T22:10:00+08:00
 ---
@@ -57,3 +50,7 @@ hallucination / other，未并入本类：它们的失败方式不同，混进�
   不可改写的评审记录。聚合到本台账已经达到「吸收」的目的：一个类 + 八次 occurrence，可查询、可计数。
   十六条记录保持 `open`——它们是对外部计划的有效发现，infinite-canvas 仓不在本机、本仓无法代为修复；
   本仓侧的收敛即本台账的归纳（条款级对应如上）。
+
+## 迁移注记
+
+2026-10-30 按 T20 把原 16 条外部记录汇总为 `ISS-2026-09-19-office计划采纳汇总`；类内 8 次 occurrence 的历史原文见 summary 与 git 历史 `agentflows@40147df:docs/issues/`。

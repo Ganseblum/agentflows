@@ -16,6 +16,28 @@ import validate
 
 
 class ValidatorRegressionTests(unittest.TestCase):
+    def test_files_entry_rejects_absolute_and_outside_paths(self) -> None:
+        absolute = validate.files_entry_errors("/etc/passwd", Path("ISS-x.md"))
+        outside = validate.files_entry_errors("../outside.md", Path("ISS-x.md"))
+        self.assertTrue(any("must be repository-relative" in error.message for error in absolute), absolute)
+        self.assertTrue(any("resolves outside the repository" in error.message for error in outside), outside)
+
+    def test_max_items_rejects_overflow(self) -> None:
+        import gate.schema as schema_module
+
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://example.test/max-items.json",
+            "type": "array",
+            "maxItems": 1,
+            "items": {"type": "string"},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "max-items.schema.json"
+            path.write_text(json.dumps(schema), encoding="utf-8")
+            errors = schema_module.SchemaValidator(path).validate(["a", "b"])
+        self.assertTrue(any("must contain at most 1 items" in error.message for error in errors), [e.message for e in errors])
+
     def test_contains_allows_more_than_minimum_matches(self) -> None:
         # Kills the `matched_count < minimum` → `!=` mutation: more than the minimum must pass.
         import gate.schema as schema_module
@@ -156,11 +178,10 @@ class ValidatorRegressionTests(unittest.TestCase):
             # The launcher delegates to the docchain package; copy it too so the copied
             # launcher can import and re-invoke itself in the temp tree.
             shutil.copytree(LAB / "docchain", root / "tools" / "lab" / "docchain")
-            (root / "docs" / "features").mkdir(parents=True)
             errors = validate.validate_doc_chain_live(root)
-            self.assertTrue(any("docs/product" in error.path for error in errors))
-            (root / "docs" / "product").mkdir(parents=True)
-            (root / "docs" / "product" / "drifted.md").write_text(
+            self.assertTrue(any("docs/features" in error.path for error in errors))
+            (root / "docs" / "features").mkdir(parents=True)
+            (root / "docs" / "features" / "drifted.md").write_text(
                 "# 报告\n\nD 桶积分中断最多。\n", encoding="utf-8"
             )
             errors = validate.validate_doc_chain_live(root)

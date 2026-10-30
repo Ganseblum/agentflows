@@ -80,7 +80,7 @@
       "claim": "0.14.0 已安装到宿主",
       "status": "failed",
       "check": "validate.py installed → FAIL：no snapshot for source version 0.14.0；installed versions 0.11.0, 0.12.0, 0.8.2, 0.8.4, 0.8.6；exit 1",
-      "evidence_ref": "docs/releases/pending-test.md 第 4 行；docs/product/spec/acceptance-matrix.md S9"
+      "evidence_ref": "docs/releases/pending-test.md 第 4 行；docs/design-decisions.md S9"
     }
   ],
   "evidence": [

@@ -322,6 +322,45 @@ class GateIntegrityNegativeTests(unittest.TestCase):
         self.assertTrue(passed)
         self.assertIn("PASS docs (55 objects)", out.getvalue())
 
+    def test_manifest_name_divergence_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_manifests(root)
+            (root / ".codex-plugin" / "plugin.json").write_text(
+                json.dumps({"name": "other-plugin", "version": "9.9.9"}), encoding="utf-8"
+            )
+            errors = validate.validate_manifests(root)
+        self.assertTrue(any("disagrees with plugin.json" in error.message for error in errors), [e.message for e in errors])
+
+    def test_issues_layout_rejects_unexpected_entry(self) -> None:
+        import gate.workspace as workspace_module
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs" / "issues").mkdir(parents=True)
+            (root / "docs" / "issues" / "unexpected-dir").mkdir()
+            with mock.patch.object(workspace_module, "ROOT", root):
+                errors = workspace_module.validate_workspace_artifacts()
+        self.assertTrue(
+            any("unexpected entry under issues/" in error.message for error in errors),
+            [error.message for error in errors],
+        )
+
+    def test_version_prose_guard_finds_a_literal(self) -> None:
+        import gate.docs as docs_module
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs").mkdir()
+            (root / "README.md").write_text("当前版本 1.2.3。\n", encoding="utf-8")
+            (root / "docs" / "design-decisions.md").write_text("# d\n", encoding="utf-8")
+            with mock.patch.object(docs_module, "ROOT", root):
+                errors = docs_module.validate_doc_consistency()
+        self.assertTrue(
+            any("version literal" in error.message for error in errors),
+            [error.message for error in errors],
+        )
+
     def test_protected_list_shrinkage_and_missing_list_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)

@@ -21,13 +21,13 @@ decision_deps: [DEC-2026-001#r2]
 
 - 需求原文/页面链接：2026-10-25 用户原话，逐字保留于 `proposal/proposal.md` 文档信息节；主实施仓：
   本仓（agentflows）；相关系统/仓库：无；UI 轨：未启用；埋点：N/A（本批不产出用户可见行为，
-  无事件新增或变更）；最后更新时间：2026-10-30（活任务收口；删除类留下一批）
+  无事件新增或变更）；最后更新时间：2026-10-30（30 项全部闭环）
 - 升格来源：无。由 2026-10-25 会话总体评审直接立项：架构 / 逻辑 / 功能 / 文档四维评审，
   含三路独立深审（角色面、文档面、门工具逻辑）与 `/tmp` 一次性副本上的破坏性探针；
   评审结论全文收口于 `proposal/proposal.md` §二至 §四。
-- 状态：已完成（部分并入；看板 25 ☑ / 5 本期不做）。唯一权威状态源是 `plan/PLAN-REVIEW-001.md` 的任务看板；本 README 只作批次入口索引。
+- 状态：已完成（30 ☑ / 0 本期不做）。唯一权威状态源是 `plan/PLAN-REVIEW-001.md` 的任务看板；本 README 只作批次入口索引。
 - **承接关系（2026-10-29）**：与本批同题的收敛项已并入 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 并取得唯一任务号——T24（必读面）→ 该计划 T12；T13/T14（`roles.md` 序列与评审口径、`AGENTS.md` 工具白名单措辞）→ 该计划 T17；§六 的 Q-01…Q-05 → 该计划 T03 并逐条登记 `docs/PENDING-DECISIONS.md` 第 19…25 条（Q-01 经 2026-10-29 实测已由 2026-10-26 的安装面修复落地，不再当未决项问人，见 `docs/features/feature-2026-10-29-全面修正与瘦身/spec/checklist.md` 的 Q-09 行）。
-- **仍留本批的项（不被吸收，理由随行）**：T01…T10 与 T15…T17、T27…T30 属门工具与记录索引的工程议程，不在「修正+瘦身」范围内；T18…T22 属删除类，其授权现登记为 `docs/PENDING-DECISIONS.md` 第 21 条；T23 术语表与 T25、T26 各自待拍板（第 20、10 条）。
+- **仍留本批的项（不被吸收，理由随行）**：T01…T10 与 T15…T17、T27…T30 属门工具与记录索引的工程议程，不在「修正+瘦身」范围内；T18…T22 属删除类，已于 2026-10-30 执行；T23 术语表与 T25、T26 各自待拍板（第 20、10 条）。
 
 ## 段落映射
 
@@ -71,7 +71,7 @@ decision_deps: [DEC-2026-001#r2]
 
 ### 7. 实施与验证 / 8. 收口
 
-☑ 已完成（25 ☑ / 5 本期不做；`validate.py all` 11/11、unittest 254 OK、self-test 151/151；证据 `testing/agentflow-review/evidence/gate-2026-10-30.txt`）
+☑ 已完成（30 ☑；`validate.py all` 11/11、unittest 259 OK、self-test 151/151；证据 `testing/agentflow-review/evidence/gate-2026-10-30.txt`）
 
 ## 目标承接表
 
@@ -84,13 +84,13 @@ decision_deps: [DEC-2026-001#r2]
 | G2 门逻辑补洞 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「门逻辑」） | T03、T04、T05、T06、T07、T08、T09 | ☑ 已完成 |
 | G3 声明与执行对齐 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「契约对齐」） | T10、T11、T12、T13、T14 | ☑ 已完成 |
 | G4 勘误可追平 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「勘误传播」） | T15、T16、T17 | ☑ 已完成 |
-| G5 记录面回到产出比 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「记录面」） | T18、T19、T20、T21、T22 | — 本期不做（删除类留下一批，2026-10-29 拍板） |
+| G5 记录面回到产出比 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「记录面」） | T18、T19、T20、T21、T22 | ☑ 已完成 |
 | G6 表达与结构减负 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §七「表达与结构」） | T23、T24、T25、T26 | ☑ 已完成 |
 | G7 决策跨批次统一 | `proposal/proposal.md` §1.2 | 验收判据随提案（`proposal/proposal.md` §四 4.2 与 §七「决策统一」） | T27、T28、T29、T30 | ☑ 已完成 |
 
 ## 当前步骤
 
-已完成：活任务 25 项闭合，G1–G4/G6/G7 已完成；G5 的删除类 5 项按 2026-10-29 拍板留下一批。Q-01 至 Q-05 已全部关闭。
+已完成：30 项全部闭合，G1–G7 全部完成；G5 的删除类 5 项已于 2026-10-30 执行。Q-01 至 Q-05 已全部关闭。
 权威进度以 `plan/PLAN-REVIEW-001.md` 的任务看板为准。
 
 ## 当前实施仓与分支基线

@@ -418,11 +418,11 @@ def self_test() -> int:
     run_file_case("39 C13 role word passes in an exempt defining file (product-design.md)",
                   0, ["PASS doc-chain --file"],
                   "# product design\n\n| Supervisor（主会话） | 收口、委派 |\n",
-                  sub="docs/product/design/product-design.md")
+                  sub="docs/design-decisions.md")
     run_file_case("40 C13 exempt file may quote the session words it defines as forbidden", 0,
                   ["PASS doc-chain --file"],
                   "# product design\n\n表达纪律禁止 supervisor、TD、本轮评审 一类会话词。\n",
-                  sub="docs/product/design/product-design.md")
+                  sub="docs/design-decisions.md")
     run_file_case("41 Execution Coordinator is a planned role name, not a session word", 0,
                   ["PASS doc-chain --file"],
                   "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n")
@@ -430,10 +430,10 @@ def self_test() -> int:
                   1, ["C13 会话角色词"],
                   "# 说明\n\n按 supervisor 的指示执行。\n",
                   sub="skills/agentflow/references/unlisted.md")
-    run_file_case("43 C13 exemption is per file: a non-exempt docs/product stage doc trips",
+    run_file_case("43 C13 exemption is per file: a non-exempt feature stage doc trips",
                   1, ["C13 会话角色词", "method-spec.md"],
                   "# method spec\n\nspec 由 supervisor 起草。\n",
-                  sub="docs/product/spec/method-spec.md")
+                  sub="docs/features/x/spec/method-spec.md")
 
     # --- C4/C5/C8 applicability (cases 60–62): a role's checks apply when spec/<role>/ or
     # design/<role>/ holds a document, so an empty design/<role>/ cannot skip them.
@@ -464,7 +464,7 @@ def self_test() -> int:
         f.pop("design/fe/f.md")
         f["README.md"] += (
             "\n| 链阶段 | 落点 | 说明 |\n| --- | --- | --- |\n"
-            "| design | `docs/product/design/product-design.md` | 产品设计 |\n"
+            "| design | `docs/design-decisions.md` | 产品设计 |\n"
         )
         return f
     run_case("47 C1 段落映射豁免: empty design/ passes when README names a landing", 0,

@@ -14,13 +14,13 @@ python3 tools/lab/validate.py all
 `all` 覆盖 schema、examples、现行记录根（`docs/issues/`、`docs/features/`、`episodes/`、
 `docs/releases/`、`reviews/`）下的记录产物、
 角色/文档面与版本散文守卫、受保护门清单的完整性、文档链 linter 的判别自测、
-文档链 linter 对活文档面（`docs/product/`、`docs/features/`）的扫描、
+文档链 linter 对活文档面（`docs/features/`）的扫描、
 manifest 的名字/版本一致性（外加 `packaging/runtime` 生成树在场时与源面的逐字节
 新鲜度——marketplace 装的就是这棵生成树，漂移即静默装出旧角色）、`tests/` 下仓库自身的回归测试，
 以及 lint（ruff + mypy 静态检查，依赖 `requirements-dev.txt`）、decision_gate（决策可追溯
 与追溯闭环 C15–C18 与 C22–C23，标记启用）。项数与内容以
 `python3 tools/lab/validate.py --list` 自报为准，本文件与 `README.md` 都不手写它——历史上手写过的
-计数在门项变化时都与实跑对不上（见 `docs/evaluations/AGENTFLOW-EVAL-REPORT-2026-10-20-redo.md` 的
+计数在门项变化时都与实跑对不上（见 `docs/evaluations/archive/2026-10-20/AGENTFLOW-EVAL-REPORT-2026-10-20-redo.md` 的
 D1 与 D2 两节）。失败的检查
 是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
@@ -57,7 +57,7 @@ python3 tools/lab/doc_chain.py <feature-dir>
 
 linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`，自测作为门的一部分
 运行）：`python3 tools/lab/doc_chain.py --self-test`。`validate.py doc_chain_live` 进一步把
-同一个 linter 跑在本仓的活文档面（`docs/product/`、`docs/features/`）上，任一发现即门红——
+同一个 linter 跑在本仓的活文档面（`docs/features/`）上，任一发现即门红——
 自测绿只说明检查器没坏，不说明它照看的文档没漂移。
 契约：[skills/agentflow/references/document-chain.md](skills/agentflow/references/document-chain.md)。
 

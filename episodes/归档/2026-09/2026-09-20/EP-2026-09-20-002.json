@@ -3,7 +3,7 @@
   "episode_id": "EP-2026-09-20-002",
   "source_type": "user_feedback",
   "revision": {
-    "source": "worktree (uncommitted batch: AGENTS.md, skills/agentflow/SKILL.md, skills/agentflow/references/document-chain.md, tools/lab/doc_chain.py, docs/product/)",
+    "source": "worktree (uncommitted batch: AGENTS.md, skills/agentflow/SKILL.md, skills/agentflow/references/document-chain.md, tools/lab/doc_chain.py, docs/design-decisions.md",
     "base": "agentflows@5da90f2"
   },
   "run": {

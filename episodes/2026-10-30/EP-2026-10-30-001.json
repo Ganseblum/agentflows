@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "episode_id": "EP-2026-10-30-001",
+  "source_type": "user_feedback",
+  "revision": {"source": "agentflows 本地 main", "base": "40147df"},
+  "objective": "关闭产品线完善批并执行 T18/T22：把 docs/product 结论并入 docs/design-decisions.md，删除产品链与批次目录，保留评审快照与 git 历史可追溯性。",
+  "outcome": "accepted",
+  "signals": [
+    {"kind": "record_deletion", "value": "docs/product/ 5 个文件与 docs/features/feature-2026-09-19-产品线完善/ 批次目录删除；原文见 40147df", "evidence_ref": "docs/design-decisions.md"},
+    {"kind": "gate_behavior_change", "value": "活文档面从 docs/product + docs/features 收为 docs/features；C13 定义文件豁免改为 docs/design-decisions.md", "evidence_ref": "tools/lab/gate/checks.py"},
+    {"kind": "measurement", "value": "none"}
+  ],
+  "feedback_summary": "用户 2026-10-30 指示彻底完成剩余删档/迁移；产品链结论并入设计决策节，原文留在 git 历史。",
+  "agentflow_version": "0.23.0",
+  "host": "other",
+  "provenance": {"carrier": "本机工作树（Qoder），已脱敏", "sanitized": true},
+  "redactions": [],
+  "review_roundtrips": [
+    {"at": "2026-10-29T00:00:00Z", "reviewer": "independent-delegate", "decision": "approved", "finding": "技术方案评审", "resolution": "review-2026-09-19-001"},
+    {"at": "2026-10-19T00:00:00Z", "reviewer": "independent-delegate", "decision": "approved", "finding": "需求评审", "resolution": "REV-2026-10-19-003"}
+  ]
+}

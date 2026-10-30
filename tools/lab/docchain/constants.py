@@ -144,8 +144,8 @@ C13_EXEMPT_FILES: dict[str, str] = {
     "skills/agentflow/references/document-chain.md": "方法定义；条款本身引用被禁止的词",
     "skills/agentflow/references/test-records.md": "方法定义（角色交接）",
     "reviews/README.md": "方法定义（评审流程）",
-    # product design: the glossary entry 「Supervisor = 主会话」 and the role table
-    "docs/product/design/product-design.md": "术语定义表",
+    # design decisions: the glossary entry 「Supervisor = 主会话」 and the role table
+    "docs/design-decisions.md": "术语定义表",
     # immutable review records and their snapshots
     "reviews/agentflow-product-chain/review-2026-10-10-001.md": "评审记录（不可改写）",
     "reviews/agentflow-product-chain/archive/2026-10-10-001/proposal.md": "评审快照（不可改写）",

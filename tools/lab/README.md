@@ -50,7 +50,7 @@ SKILL 引用的每个 `agentflow:<role>` 都解析到一个 agent 文件，docs/
 
 `validate.py doc_chain` 运行文档链 linter 的判别自测（`python3 tools/lab/doc_chain.py --self-test`），
 断言退出码、N/M 通过计数与无静默截断——它钉的是检查器本身。`validate.py doc_chain_live` 把同一个
-linter 跑在**文档**上：`docs/product/` 与 `docs/features/`（`DOC_CHAIN_LIVE_ROOTS`）下的每份 Markdown
+linter 跑在**文档**上：`docs/features/`（`DOC_CHAIN_LIVE_ROOTS`）下的每份 Markdown
 都过文本形态检查（C12 时效性引用 / C13 会话角色词 / C14 代号裸用；结构检查 C1–C11 属 feature 链
 模式），任一发现即门失败，声明的面缺失也失败。两者都在 `all` 中：只钉检查器、不跑被检物，正是
 2026-10-13 审计量到的缺口——门全绿，而检查器本该守住的文档已经漂移。

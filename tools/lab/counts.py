@@ -32,7 +32,6 @@ DOC_FILES = (
     "AGENTS.md",
     "docs/system-guide.md",
     "docs/design-decisions.md",
-    "docs/product/README.md",
 )
 
 OPEN_TAG = "<!-- count:"

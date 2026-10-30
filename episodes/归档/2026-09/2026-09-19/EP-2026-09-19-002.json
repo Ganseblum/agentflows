@@ -18,7 +18,7 @@
       "claim": "产品完善路线已落盘为 PLAN-PRODUCT-001，含架构结论、已拍板事项、已做/没做与后续顺序",
       "status": "verified",
       "check": "test -f plans/PLAN-PRODUCT-001.md && python3.12 tools/lab/validate.py artifacts",
-      "evidence_ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
+      "evidence_ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     },
     {
       "claim_id": "C2",
@@ -32,12 +32,12 @@
     {
       "evidence_id": "E1",
       "kind": "plan",
-      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-PRODUCT-001.md"
+      "ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     },
     {
       "evidence_id": "E2",
       "kind": "plan",
-      "ref": "docs/features/feature-2026-09-19-产品线完善/plan/PLAN-LOOP-SMOKE-001.md"
+      "ref": "N/A: 对象已随产品线批关闭删除（2026-10-30）；原文见 git 历史 agentflows@40147df:docs/features/feature-2026-09-19-产品线完善/plan/"
     },
     {
       "evidence_id": "E3",
