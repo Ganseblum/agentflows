@@ -19,14 +19,14 @@ recorded_at: 2026-10-28T12:10:00+08:00
 
 | ID | 任务 | 优先级 | 代码落点 | 依赖 | 状态 | 证据 |
 | --- | --- | --- | --- | --- | --- | --- |
-| T01 | 建载体归属表核验脚本（表驱动：断言权威路径存在 + 锚点命中 + 指针可解析） | P0 | `tools/lab/gov_carrier.py`（待核实：新文件，实施时创建并登记进 `tools/lab/validate.py` 与 `protected-paths.txt`） | — | ☐ 未开始 | — |
-| T02 | 压缩 `SKILL.md:131` 为一句摘要 + 指向 `contracts.md` 的链接（第三份副本退场） | P0 | `skills/agentflow/SKILL.md` | T01 | ☐ 未开始 | — |
-| T03 | 删除 `SKILL.md:102` 的「改一处就改另一处」同步义务；把 A↔B 无法指针化的场合写进归属表 | P0 | `skills/agentflow/SKILL.md`、`docs/features/feature-2026-10-28-表达面与角色治理/spec/be/backend.md` | T02 | ☐ 未开始 | — |
-| T04 | 拆分 `document-chain.md` → `document-chain.md`（≤150 行契约）+ `document-chain-checks.md`（判据细则）；同步 4 处引用 | P1 | `skills/agentflow/references/document-chain.md`、`skills/agentflow/references/document-chain-checks.md`（待核实：拆分时新建）、`skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | — | ☐ 未开始 | — |
-| T05 | 复跑 28 例边界语料，实测 FE/BE 三条件（不一致例数 / 所有权分歧项数 / 合并稿行数） | P0 | `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` | — | ☐ 未开始 | — |
-| T06 | 按实测结论更新 `roles.md` 裁决段：写数字 + 明确结论 +（若保持分立）重审触发条件 | P0 | `skills/agentflow/references/roles.md` | T05 | ☐ 未开始 | — |
-| T07 | 对齐三个实现角色的深度：逐条核对职责覆盖，补缺或写明「由谁承担」 | P1 | `agents/backend-engineer.md`、`agents/frontend-engineer.md`、`agents/technical-director.md` | — | ☐ 未开始 | — |
-| T08 | 全量门 + 生成树重建 + 独立复核（L2 恢复后补） | P0 | 五份 manifest、`packaging/runtime/` | T01、T02、T03、T04、T05、T06、T07 | ☐ 未开始 | — |
+| T01 | 建载体归属表核验脚本（表驱动：断言权威路径存在 + 锚点命中 + 指针可解析） | P0 | `tools/lab/gov_carrier.py`（待核实：新文件，实施时创建并登记进 `tools/lab/validate.py` 与 `protected-paths.txt`） | — | — 本期不做（已由 FIX T07（carrier-map + validate docs 断言） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T02 | 压缩 `SKILL.md:131` 为一句摘要 + 指向 `contracts.md` 的链接（第三份副本退场） | P0 | `skills/agentflow/SKILL.md` | T01 | — 本期不做（已由 FIX T12（只消副本、去除第三份副本） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T03 | 删除 `SKILL.md:102` 的「改一处就改另一处」同步义务；把 A↔B 无法指针化的场合写进归属表 | P0 | `skills/agentflow/SKILL.md`、`docs/features/feature-2026-10-28-表达面与角色治理/spec/be/backend.md` | T02 | — 本期不做（已由 FIX T12（同步义务退场，归属表承载） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T04 | 拆分 `document-chain.md` → `document-chain.md`（≤150 行契约）+ `document-chain-checks.md`（判据细则）；同步 4 处引用 | P1 | `skills/agentflow/references/document-chain.md`、`skills/agentflow/references/document-chain-checks.md`（待核实：拆分时新建）、`skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md` | — | — 本期不做（已由 FIX T12（document-chain 拆分与引用同步） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T05 | 复跑 28 例边界语料，实测 FE/BE 三条件（不一致例数 / 所有权分歧项数 / 合并稿行数） | P0 | `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` | — | — 本期不做（已由 FIX T16（28 例边界语料复跑与裁决） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T06 | 按实测结论更新 `roles.md` 裁决段：写数字 + 明确结论 +（若保持分立）重审触发条件 | P0 | `skills/agentflow/references/roles.md` | T05 | — 本期不做（已由 FIX T16（roles.md 裁决段更新） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T07 | 对齐三个实现角色的深度：逐条核对职责覆盖，补缺或写明「由谁承担」 | P1 | `agents/backend-engineer.md`、`agents/frontend-engineer.md`、`agents/technical-director.md` | — | — 本期不做（已由 FIX T15（实现角色深度对齐） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
+| T08 | 全量门 + 生成树重建 + 独立复核（L2 恢复后补） | P0 | 五份 manifest、`packaging/runtime/` | T01、T02、T03、T04、T05、T06、T07 | — 本期不做（已由 FIX T14（全量门 + 生成树 + 独立复核） 承接） | 见 `docs/features/feature-2026-10-29-全面修正与瘦身/plan/PLAN-FIX-001.md` 对应任务行 |
 
 ## 分支策略
 
