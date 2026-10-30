@@ -35,8 +35,11 @@ class ValidatorRegressionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "max-items.schema.json"
             path.write_text(json.dumps(schema), encoding="utf-8")
-            errors = schema_module.SchemaValidator(path).validate(["a", "b"])
-        self.assertTrue(any("must contain at most 1 items" in error.message for error in errors), [e.message for e in errors])
+            validator = schema_module.SchemaValidator(path)
+            overflow = validator.validate(["a", "b"])
+            exact = validator.validate(["a"])
+        self.assertTrue(any("must contain at most 1 items" in error.message for error in overflow), [e.message for e in overflow])
+        self.assertEqual([], [e.message for e in exact])
 
     def test_contains_allows_more_than_minimum_matches(self) -> None:
         # Kills the `matched_count < minimum` → `!=` mutation: more than the minimum must pass.

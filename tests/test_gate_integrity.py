@@ -330,7 +330,9 @@ class GateIntegrityNegativeTests(unittest.TestCase):
                 json.dumps({"name": "other-plugin", "version": "9.9.9"}), encoding="utf-8"
             )
             errors = validate.validate_manifests(root)
-        self.assertTrue(any("disagrees with plugin.json" in error.message for error in errors), [e.message for e in errors])
+        self.assertEqual(1, len(errors), [e.message for e in errors])
+        self.assertEqual(".codex-plugin/plugin.json", errors[0].path)
+        self.assertIn("disagrees with plugin.json", errors[0].message)
 
     def test_issues_layout_rejects_unexpected_entry(self) -> None:
         import gate.workspace as workspace_module
