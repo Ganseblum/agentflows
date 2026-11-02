@@ -41,6 +41,7 @@
 > 现在只剩本文件；索引里的「见 `agentflows@c8ed0b2:docs/features/<批次>/`」是仓限定引用（rev 是删除前
 > 的最后一个提交），用 `git show` 取回原文，不是可点击的仓内链接。
 
+- 2026-11-02 瘦身批（`0.25.0`，提交 `81463c7`）：删除全部 10 个已完成批次目录（175 文件 / 6.1 万行，原文 `agentflows@c8ed0b2:docs/features/<批次>/`）、`docs/features/README.md` 在途表收拢为指针、5 份早期评测件下沉 `docs/evaluations/archive/`、更正 1 条虚假归档自述（`ISS-2026-09-19-office计划采纳汇总`）；54 条 verified 缺陷记录按 `validate_bug_layout` 口径原地保留，未搬归档
 - 2026-10-31 整改（无批次目录，以门变更 + 表达面收口直接推进）：C27 模板骨架判据（用户批准的门变更）、门项数 11→12（`installed` 纳入 `all`）、交付面版本守卫、角色面 5 处矛盾/歧义收口、references 对齐代码事实、模板结构缺陷修复；原分两棵工作树（主树早期草稿、worktree `fix/remaining-2026-10-31` 后继版），2026-11-02 逐行比对确认无独有内容后合入 `main`（`bb56cb1`）——见 [`CHANGELOG.md`](CHANGELOG.md) 的 0.24.0 节与[待验收](docs/releases/pending-test.md)第 10、11 行
 - 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务已全部收口——23 ☑ / 0 ⚠ / 0 ☐ / 1 本期不做（T18）；两轮评审 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-29-全面修正与瘦身/`；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)
 - 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门于 2026-10-29 经独立委派 L2 `approved` 闭环；已并入 `main`，随 0.22.0 发布并装入双端）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/`

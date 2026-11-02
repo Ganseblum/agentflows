@@ -13,7 +13,7 @@
 - 更正一条虚假自述：`ISS-2026-09-19-office计划采纳汇总` 声称 16 份外部记录「已迁入 `docs/issues/归档/2026-09-19/`」，实为该目录在盘为空、git 从未含该路径，原件随 `bf5ae9d` 删除——17 处取回地址改为只引用 git 历史载体，并在记录的变更记录节留痕。
 - **未做的两项（如实记）**：54 条 `verified` 缺陷记录不搬 `docs/issues/归档/`——`docs/issues/README.md` 的归档口径（仅 rejected 进归档，verified 原地保留）由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，且 `schemas/bug-record.schema.json` 与 `agents/bug-recorder.md` 都按该口径引用路径；搬动既不减少体量（只是换目录），又要改受保护的 schema，属门变更需显式评审。`docs/changelog-archive.md`（184K）无新的早期节可并——现行 CHANGELOG 只含 0.23.0 之后的节。
 
-- 复跑：`validate.py all` 除 `installed`（三端仍装 0.24.0，随本轮发版重装）外 11 项 PASS、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`artifacts` 136 objects PASS。
+- 发布 0.25.0（提交 `81463c7`，已推送 origin/main）并三端重装：`validate.py all` **12 项全 PASS（退出码 0）**、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`artifacts` 136 objects PASS；ZCode（`Updated plugin agentflow@agentflow-local from 0.24.0 to 0.25.0`，需重启加载）、Codex（`personal/agentflow/0.25.0`）、Qoder（拷 `cache/local/agentflow/0.25.0` + 改登记表，`installed --path` PASS、`agents`+`skills` 与源面逐字节一致）。
 
 ## 0.24.0 — 2026-11-02
 
