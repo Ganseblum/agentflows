@@ -12,6 +12,7 @@ command-code-session-*.html
 # ignored, every fresh clone lacked the directory and install failed with "plugin source not
 # found". `validate.py manifests` keeps the committed snapshot byte-identical to the source.
 .workbuddy/
+.workbuddy-ai/
 # Local dev interpreter for the `lint` gate item (see README). Generated, never shipped.
 .venv/
 # 本地临时备份：宿主全局规则改写前的 `<文件名>.agentflow-backup-<时间戳>`（见 AGENTS.md「实验与恢复」）。
