@@ -3,7 +3,7 @@
   "episode_id": "EP-2026-09-20-003",
   "source_type": "user_feedback",
   "revision": {
-    "source": "agentflows working tree at git:d908135 (0.8.3)；本轮未改 skills/agents 本体，仅产出外部仓文档链并按用户反馈纠偏；目标仓 aiwork-workflow-ai docs/features/feature-2026-09-18-定时任务 的 spec/design 草案（未 commit，评审门未收口）",
+    "source": "agentflows working tree at git:d908135 (0.8.3)；本轮未改 skills/agents 本体，仅产出外部仓文档链并按用户反馈纠偏；目标仓 aiwork-workflow-ai agentflows@c8ed0b2:docs/features/feature-2026-09-18-定时任务 的 spec/design 草案（未 commit，评审门未收口）",
     "base": "git:d908135 (0.8.3)"
   },
   "run": {

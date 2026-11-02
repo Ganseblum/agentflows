@@ -48,7 +48,7 @@
       "claim": "f76094a 引入的受保护面改动（agents/evaluator.md 一行、tools/lab/isolation.py 两行）没有对应的独立评审记录；两份 2026-10-19 评审（REV-2026-10-19-002）覆盖的是 4c767eb / 6d10b14 / 8996016，不含 f76094a。",
       "status": "verified",
       "check": "对比 REV-2026-10-19-002 的 reviewed_docs 与 source_revision 字段（列 4c767eb/6d10b14/8996016）与 f76094a 的 diff 文件清单；reviews/ 下无覆盖 f76094a 的记录",
-      "evidence_ref": "docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-002.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-13-质量提升/reviews/review-2026-10-19-002.md"
     }
   ],
   "signals": [

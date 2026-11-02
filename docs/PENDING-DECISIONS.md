@@ -25,7 +25,7 @@
 
 | # | 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 | 状态 | DEC编号 | 修订 | 撤回 | 等价 | 终态 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md` Q-05（T24） | 最小必读面瘦身幅度：A 维持现状 B 压到 ≤350 行 C 压到 ≤450 行；2026-10-29 用户改拍「只消副本、不设总量上限」（原 C 的 ≤450 不再适用） | 2026-10-30 `wc -l skills/agentflow/SKILL.md skills/agentflow/references/roles.md skills/agentflow/references/contracts.md agents/reviewer.md` 实测合计 622 行（152 / 124 / 197 / 149）；用户 2026-10-29 改拍「只消副本、不设总量上限」，T24 由 FIX T12 落地 | 只消副本、不设总量上限（B 的 ≤350 与 C 的 ≤450 均不再作为上限） | 已关闭：2026-10-29 用户拍板 C | P2 | 多模块(`skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md`) | N | 已拍板（2026-10-29 · C：只消副本、不设总量上限） | DEC-2026-001 | r2 |  |  |  |
+| 1 | `agentflows@c8ed0b2:docs/features/feature-2026-10-25-总体评审吸收与修复/plan/PLAN-REVIEW-001.md` Q-05（T24） | 最小必读面瘦身幅度：A 维持现状 B 压到 ≤350 行 C 压到 ≤450 行；2026-10-29 用户改拍「只消副本、不设总量上限」（原 C 的 ≤450 不再适用） | 2026-10-30 `wc -l skills/agentflow/SKILL.md skills/agentflow/references/roles.md skills/agentflow/references/contracts.md agents/reviewer.md` 实测合计 622 行（152 / 124 / 197 / 149）；用户 2026-10-29 改拍「只消副本、不设总量上限」，T24 由 FIX T12 落地 | 只消副本、不设总量上限（B 的 ≤350 与 C 的 ≤450 均不再作为上限） | 已关闭：2026-10-29 用户拍板 C | P2 | 多模块(`skills/agentflow/SKILL.md`、`skills/agentflow/references/roles.md`、`skills/agentflow/references/contracts.md`、`agents/reviewer.md`) | N | 已拍板（2026-10-29 · C：只消副本、不设总量上限） | DEC-2026-001 | r2 |  |  |  |
 
 > 分工口径（2026-10-29 全面修正与瘦身批 T03 加入，同见 `AGENTS.md` 决策记录节与
 > `skills/agentflow/references/document-chain.md` 的 spec 节）：本文件是**唯一需要用户逐条回复的清单**；

@@ -6,7 +6,7 @@
   "objective": "关闭产品线完善批并执行 T18/T22：把 docs/product 结论并入 docs/design-decisions.md，删除产品链与批次目录，保留评审快照与 git 历史可追溯性。",
   "outcome": "accepted",
   "signals": [
-    {"kind": "record_deletion", "value": "docs/product/ 5 个文件与 docs/features/feature-2026-09-19-产品线完善/ 批次目录删除；原文见 40147df", "evidence_ref": "docs/design-decisions.md"},
+    {"kind": "record_deletion", "value": "docs/product/ 5 个文件与 agentflows@c8ed0b2:docs/features/feature-2026-09-19-产品线完善/ 批次目录删除；原文见 40147df", "evidence_ref": "docs/design-decisions.md"},
     {"kind": "gate_behavior_change", "value": "活文档面从 docs/product + docs/features 收为 docs/features；C13 定义文件豁免改为 docs/design-decisions.md", "evidence_ref": "tools/lab/gate/checks.py"},
     {"kind": "measurement", "value": "none"}
   ],

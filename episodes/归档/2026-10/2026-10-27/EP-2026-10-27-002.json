@@ -68,7 +68,7 @@
       "claim": "四项修正经实际回归和独立批准",
       "status": "verified",
       "check": "完整检查、18项hook回归、真实模板实例及独立只读评审",
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
     },
     {
       "claim_id": "C4",
@@ -98,7 +98,7 @@
     {
       "evidence_id": "EV4",
       "kind": "independent_review",
-      "ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+      "ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
     }
   ],
   "review_roundtrips": [
@@ -116,7 +116,7 @@
       "decision": "approved",
       "finding": "冻结四修无剩余阻塞，17源文件与8生成文件无漂移",
       "resolution": "关闭 ISS-2026-10-27-门清单部分输出失败仍被放行 … ISS-2026-10-27-L3批次安装摘要前后矛盾（062–065 四条），完成最终检查后提交本地main",
-      "evidence_ref": "docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-26-L3工作流增强/reviews/review-2026-10-27-003.md"
     }
   ],
   "feedback_summary": "用户明确要求先把所有代码和分支合并到main，然后处理已确认四项问题；合并和本地提交已获授权，未扩大为远端推送或宿主更新。",

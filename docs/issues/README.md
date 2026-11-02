@@ -62,7 +62,7 @@ verified 必须同时具备 `reviewer`、`review_decision: approved`、`regressi
 `closure_criteria`，缺一项或取值矛盾即 FAIL；rejected 必须带 `rejection_reason`。
 `tools/lab/gate/records.py` 另要求所有非 open 记录正文含 `## 变更记录`（每次状态流转追加一行）。
 `fix_revision` 仍为散文要求，未做条件必填（存量 verified 中有无单一提交号的文档修正，见
-`docs/features/feature-2026-10-28-关闭证据门/proposal/proposal.md` Q-01）。外部产物或代码问题记录其来源 `source_revision`；归因到
+`agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/proposal/proposal.md` Q-01）。外部产物或代码问题记录其来源 `source_revision`；归因到
 Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 
 **引用自包含**：`files` 条目要么是本仓路径（校验器查在盘），要么是仓限定引用

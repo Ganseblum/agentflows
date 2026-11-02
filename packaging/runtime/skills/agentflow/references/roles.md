@@ -79,7 +79,7 @@ bug investigator 与 technical director 与 reviewer 画像同构（只读、证
 2026-10-19 拍板（Q-02 方案 D）：**角色文件数量不合并**——收敛发生在「工作链」入口层，不在角色文件层。理由有两条：一是默认路径已经按需加载，慢的不是加载而是"从条目里现拼流程"；二是两组独立性（修复者不写验收记录、测试设计与执行分离）会因合并而消失。改进环已于 2026-10-29 整体裁撤，其四个角色一并退场；当前角色能力库为 10 个文件。frontend / backend engineer 的合并悬案已于 2026-10-29 按实测数字裁决为**保持分立**（见下节）。
 
 **frontend / backend engineer 合并的裁决规则**（2026-10-28 补，此前只有「待议」而无判据，是空悬）：
-以 `docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` 的 28 例为语料，
+以 `agentflows@c8ed0b2:docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/` 的 28 例为语料，
 按同一批场景分别让两个角色文件独立作答，然后判定：
 
 - **合并**的条件（须同时满足）：① 同场景判定不一致率 **< 10%**（28 例中 ≤2 例给出不同结论）；
@@ -95,7 +95,7 @@ bug investigator 与 technical director 与 reviewer 画像同构（只读、证
 全量不可复现——8 例属于已裁撤的改进环角色、14 例是角色专属输入）；② 产物所有权分歧 2 项
 （前端独占 `src/web/**`、后端独占 `src/api/**`），该项一票否决；③ 合并稿 44 + 35 = 79 行，
 超过 60 行上限。复跑记录见
-`docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/evidence/adjudication-2026-10-29.md`。
+`agentflows@c8ed0b2:docs/features/feature-2026-10-13-质量提升/testing/agentflows-role-boundary/evidence/adjudication-2026-10-29.md`。
 重审触发条件：角色面把 10 个角色的所有权矩阵统一成一张表且前后端写路径不再互斥；或形成
 ≥10 例共享语料且不一致率 <10%；或宿主提供角色级环境隔离。任一成立才重新开案。
 

@@ -3,7 +3,7 @@
   "episode_id": "EP-2026-09-22-001",
   "source_type": "user_feedback",
   "revision": {
-    "source": "agentflows working tree at git:e32ef14 + uncommitted candidate（document-chain-templates.md 新增 spec/ui 与 design/ui 骨架、document-chain.md 新增 UI 轨条款，经独立 evaluator 修复轮收口）；目标仓 Youc（feature-ui-showcase 分支工作树，未 commit）：docs/features/feature-2026-09-19-office-agent/ 十件文档链 + docs/planning 追溯索引与 11 份状态行 + records/README.md + records/bugs/README.md",
+    "source": "agentflows working tree at git:e32ef14 + uncommitted candidate（document-chain-templates.md 新增 spec/ui 与 design/ui 骨架、document-chain.md 新增 UI 轨条款，经独立 evaluator 修复轮收口）；目标仓 Youc（feature-ui-showcase 分支工作树，未 commit）：agentflows@c8ed0b2:docs/features/feature-2026-09-19-office-agent/ 十件文档链 + docs/planning 追溯索引与 11 份状态行 + records/README.md + records/bugs/README.md",
     "base": "agentflows git:e32ef14 (0.8.4)"
   },
   "run": {
@@ -18,7 +18,7 @@
     {
       "kind": "doc_chain_linter",
       "value": "Youc 试点 feature 目录 linter PASS（修复 C5 一处：A9 接口号未在 design/fe 显式出现）；linter 自测 26/26 PASS 不回归",
-      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：python3 tools/lab/doc_chain.py /Users/lihanghang1/Desktop/TestProject/Youc/docs/features/feature-2026-09-19-office-agent（exit 0）；tools/lab/doc_chain.py --self-test 26/26）"
+      "evidence_ref": "N/A: 一次性现场（当年本机 /tmp 产物，随临时目录清理，未入版本库）（原引用：python3 tools/lab/doc_chain.py /Users/lihanghang1/Desktop/TestProject/Youc/agentflows@c8ed0b2:docs/features/feature-2026-09-19-office-agent（exit 0）；tools/lab/doc_chain.py --self-test 26/26）"
     },
     {
       "kind": "validate_all",

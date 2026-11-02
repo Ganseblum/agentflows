@@ -16,7 +16,7 @@
     {
       "kind": "gate_behavior_change",
       "value": "非 open 记录缺 ## 变更记录 由静默通过改为报错；旧门 0 错误、新门精确点名、补齐后 PASS",
-      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
     },
     {
       "kind": "regression_cases_added",
@@ -31,7 +31,7 @@
     {
       "kind": "existing_records_impact",
       "value": "66 条记录 0 误伤（44 verified / 5 fixed-pending-review / 17 open）",
-      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
     }
   ],
   "claims": [
@@ -40,7 +40,7 @@
       "claim": "缺失 ## 变更记录 的非 open 记录会被门拒绝",
       "status": "verified",
       "check": "临时记录在新门 FAIL、旧门 0 错误；补齐后 PASS；临时文件已删除",
-      "evidence_ref": "docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
+      "evidence_ref": "agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/testing/agentflow-关闭证据门/evidence/run-2026-10-28-001.md"
     },
     {
       "claim_id": "CLM-CLOSE-02",
