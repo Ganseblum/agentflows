@@ -70,6 +70,9 @@ episode 是任务级证据的最小落盘，会随时间累积。为保持 `epis
 - 归档后 `episodes/*/*.json` 的回溯命令会继续命中归档目录，无需改脚本。
 - 触发时机：每月初把上月（及更早）的目录归档一次；当前月的目录留在顶层为「当期」。
 
-> 注意：live record 门（`validate_workspace_artifacts`）只认 `episodes/` 直接下的 `*.json`，
-> 不会下钻 `episodes/归档/`，因此归档后的目录不再计入门扫描——这正是「历史移出当期面」的预期，
-> 不视为记录丢失。
+> 更正（2026-11-02 实测）：本文件此前写「live record 门只认 `episodes/` 直接下的 `*.json`、
+> 不会下钻 `episodes/归档/`」——**这条是错的**。`tools/lab/gate/workspace.py` 用
+> `root.rglob("*")` 递归遍历记录根，实测 48 个 episode JSON 中 46 个位于 `归档/` 之下、
+> 全部被门扫到（`validate.py artifacts` 现报 137 objects 即含它们）。归档的作用只是把
+> 「当期」视图从顶层移开、便于人读，**不减少任何机器覆盖面**；别把归档当成可以让记录脱离
+> 校验的手段。

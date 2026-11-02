@@ -3,6 +3,16 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.26.0 — 2026-11-02（自述一致性全量核对批）
+
+- 两路只读审计 + 主代理逐条对着代码验真，把「文档说的执法点 / 模板教的写法」与「门实际强制的东西」全量对了一遍：**新出 13 处对不上**（加上归档口径那 4 处，累计 17 处），**没有一处是门代码写错**——全是散文与模板漂移。修法一律以代码为权威，不动门。
+- 文档侧 8 处：`DECISION_MARKER` 的行号引用过时（实在 `checks.py:836`，旧述 `:719` 现在是 C19 报错字面量）、三个实现角色行数旧值（`bug-fixer` 28 非 22）、`doc_chain_live` 覆盖面写成含 `docs/product/`（实在 `gate/checks.py:237` 只有 `docs/features`）、「本仓不保留归档桶」未限定层级并补四义对照、`episodes/README.md` 把门的递归扫描写反（`root.rglob` 实扫到 `归档/` 下 46 个文件）、`escalated` 档位「触发 improve 环」（该环 2026-10-29 已裁撤，`reports.py` 只推导打印）、`todo.md` 把 C18/C22 的载体写成导航表（实读各批次 README）、`document-chain.md` 的 C1–C26 应为 C1–C27。
+- 交付面 5 处会教出红线的写法：轻量降档必须有字面标记行（`checks.py:540` 的识别式），段落映射写「—」不顶替；proposal 的「spec/qa 按需」需 README 声明 `qa 不适用`/`无 qa 轨` 才豁免 C19；拍板口模板补上 `DEC编号/修订/撤回/等价/终态` 五个生命周期列（`decisions.py:292` 缺列即报，本仓实表 15 列）；`templates/testing/run.md` 补 `findings`/`flow_findings`（schema 有该字段且 `additionalProperties: false`，bug 去向靠它校验）；hub issues 模板的台账标记改为给出**独立声明行**并解释开关语义。
+- C18 的接口此前无处可查：判据要表头含 `记录编号 | 任务号`（`checks.py:1090`），而 AGENTS.md 只说「挂进批次承接表」、模板里根本没这张表、分册也完全没写 C15–C18 各读哪张表——新仓照模板做，开放记录登记当天必红。本轮三处补齐：AGENTS.md 写明列名与「两张表别混用」、`document-chain-checks.md` 加四标记 × 四张表对照、`templates/feature/README.md` 加记录归属表骨架。
+- 我自己本轮引入又当场改掉的一处：改 hub 模板时在散文里裸提了一次 `agentflow 问题台账` 词面——按 `checks.py:1252` + `:1194-1196`，目标仓的 issues README 只散文提及、无独立声明行即判「提及但未声明」。同类缺陷记进记录第 11 条。
+- **未闭合的门覆盖缺口**：没有任何检查把「文档点名的执法点」与「代码实际执法点」对照起来，C27 只管阶段文档与模板的相似度、不管模板口径是否与门一致。补这条属门变更，未擅自实施，登记在缺陷记录的「修复方案」节等你授权。
+- 记录：`docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md` 追加「全量核对」节（13 处逐条含 `文件:行` 与实况）。
+
 ## 0.25.1 — 2026-11-02（归档口径统一）
 
 - 实测钉口径：在一次性 worktree 副本上跑两例，逐字命中 `a rejected record must be moved into issues/归档/` 与 `only rejected records may be archived; verified records stay in place`——确认「只有被拒进归档、已验证原地保留」是机器约束而非惯例，副本跑完即 `git worktree remove --force` 拆除，真实树全程未动。

@@ -51,11 +51,16 @@ docs/features/
 - 目录由「首次接入 / 批次立项」创建；对实际目录跑
   `python3 tools/lab/doc_chain.py <feature-dir>` 接受文档链，全绿才算链完成。该命令是独立命令：
   结构检查 C1–C11，文本形态检查 C12–C14。同一 linter 另由 `python3 tools/lab/validate.py doc_chain_live`
-  以 `--file` 模式扫描 `docs/product/`、`docs/features/` 下全部 `.md`（已接入 `validate.py all`），任一发现即门红。
+  以 `--file` 模式扫描 `docs/features/` 下全部 `.md`（覆盖面单点：`tools/lab/gate/checks.py` 的
+`DOC_CHAIN_LIVE_ROOTS = ("docs/features",)`；已接入 `validate.py all`），任一发现即门红。
+`docs/product/` 已随「产品线完善」批退役、结论并入 `docs/design-decisions.md` §4，不在扫描面内。
 - 批次内的 `plan/<plan_id>.md` 受计划契约校验（文件名 = `plan_id`、固定状态枚举、任务表
   依赖图无环——完整断言见下节）；其他段落由文档链 linter 管。
 - 完成批次不长期留存：结论写进 `CHANGELOG.md` 与 episode 后随瘦身批删除，git 历史
-  即归档（2026-10-12 起本仓不保留归档桶）。
+  即归档（2026-10-12 起本仓不保留**批次归档桶**，即 `docs/features/归档/` 这一类目录）。
+  注意仓内另有三处也叫「归档」而同名不同义：`docs/issues/归档/` 只覆盖被拒记录
+  （定义单点见 `../issues/README.md` 的归档规则节）、`episodes/归档/` 按月下沉、
+  `reviews/**/archive/<轮次>/` 按评审轮次封存——三者都与批次留存规则无关。
 - 开放事项：缺陷走 `docs/issues/`，跨批次待拍板走 `docs/PENDING-DECISIONS.md`。
 
 ## 计划形态（原 `docs/plans/README.md`，随 2026-10-12 归位并入）

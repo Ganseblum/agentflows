@@ -36,10 +36,16 @@ design/fe 三处缺任一埋点节（C20）；README UI 轨行声明「已启用
 `python3 tools/lab/doc_chain.py --self-test`。
 
 模板骨架不算交付物（C27，2026-10-31 门变更，用户批准）：上面这些结构判据读的都是**形状**——标题、
-表头列名、图的种类，而这些在未填写的模板里全都存在。实测把 `skills/agentflow/templates/feature/`
-的 11 份模板逐字复制成一条链，判据**零发现**通过；同一时刻本仓 10 个批次的 123 份 Markdown 与模板
-的行级相似度最高只有 0.41。于是判据把这两类材料分开：任一阶段文档与随插件模板的相似度 ≥ 0.85
+表头列名、图的种类，而这些在未填写的模板里全都存在。实测把 `skills/agentflow/templates/feature/` 的
+**阶段模板逐字复制成一条链**（集合 = `README.md` + `proposal/proposal.md` + `spec/{be,fe,qa,ui}` 四份 +
+`design/{be,fe,qa,ui}` 四份 + `plan/execution.md`，共 **11 份**；`lightweight.md`、`prototype/*`、
+`spec/checklist.md` 不在这 11 份里），当时判据**零发现**通过；同一时刻本仓 10 个批次的 123 份 Markdown
+与模板的行级相似度最高只有 0.41（该实测对象已随 2026-11-02 瘦身批删除，数字为当轮逐字输出）。
+于是判据把这两类材料分开：任一阶段文档与随插件模板的相似度 ≥ 0.85
 即判红（阈值与理由写在 `tools/lab/docchain/constants.py`）。已声明轻量档的批次同样受这一条照看。
+**照抄的条数按复制的份数一一对应**：2026-11-02 在主树复跑，逐字复制这 11 份 → 11 条 C27；
+把 `spec/checklist.md` 一起复制（12 份）→ 12 条 C27；只放 `README.md` → 1 条 C27 + 4 条 C1
+（四个阶段段落各一条）。别把「11 份」与「12 条」当成同一件事，那份数差就是一个 checklist。
 它有意留一处盲区：保住模板小节顺序、再写进真实内容的文档不算骨架——那部分由逐节质量标准与独立
 评审承担，不由相似度承担。模板自身的两处新默认也配合这一条：段落映射的落点列出厂即为「—」（照抄
 即被 C1 逐段追问），checklist 不再自带未确认的占位行。
@@ -48,6 +54,19 @@ design/fe 三处缺任一埋点节（C20）；README UI 轨行声明「已启用
 `doc_chain.py --repo <仓根>` 则把所有打标批次的承接问题与所有批次计划的证据列纳入仓扫
 （`validate.py decision_gate` 用它）。判据过宽若在存量文档上出现意料外命中，按缺陷收窄实现并补夹具，
 **不得靠给批次摘标记转绿**——那正是本批要消灭的「门绿在没打标上」。
+
+**四组标记判据各自读哪张表（列名就是接口，别猜）**——`tools/lab/docchain/checks.py`：
+
+| 标记（独立声明行） | 判据 | 它真正读的表/字段 |
+| --- | --- | --- |
+| `agentflow 问题台账` | C15 `ledger_index_findings` | 台账表头 `编号 \| 一句话 \| 记录链接 \| 归属`；无 ISS 链接的行不得带状态词 |
+| `agentflow 决策记录` | C16 / C17 `DECISION_MARKER` | 拍板口八列 `来源 \| 待决问题 \| 现状核验 \| 推荐 \| 关闭条件 \| 优先级 \| 影响范围 \| 自动决策`；C17 拿「现状核验」里的路径去比对提交时间 |
+| `agentflow 决策归属` | C18 `ownership_findings` + `pending_ledger_findings` | **记录归属表**，表头必须含 `记录编号 \| 任务号`（按列名匹配，`目标承接表` 不顶替）；另一半要求需用户抉择且未关闭的台账行带 `docs/PENDING-DECISIONS.md` 条目编号 |
+| `agentflow 目标承接` | C22 `batch_traceability_findings` | **目标承接表**，列 `目标 \| proposal 出处 \| spec 承接 \| plan 任务 \| 状态` |
+
+C18 与 C22 是两张不同的表，这是本仓最容易混的一处：目标承接表关闭 C22，记录归属表关闭 C18，
+写错表头等于没写。2026-11-02 全量核对时，`AGENTS.md` 只写了「挂进批次承接表」、模板里根本没有
+记录归属表，照模板做的新仓会在开放记录登记当天判红——已补进 `templates/feature/README.md`。
 
 **跨仓运行与既有仓基线**——linter 以「目标仓根 + 批次目录」为坐标：在目标仓根目录运行
 `python3 tools/lab/doc_chain.py --root <目标仓根> <feature-dir>` 指定仓根（位置参数相对当前目录解析，

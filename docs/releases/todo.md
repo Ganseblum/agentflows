@@ -1,7 +1,9 @@
 # 发布待办
 
-> 发版待办与待人工验收口径。在途批次的逐批状态以 `../features/README.md` 在途表为单一权威
-> （它被 C18/C22 判据消费），本文件不再维护第二份逐批状态表；已完成条目见 git 历史与
+> 发版待办与待人工验收口径。在途批次的逐批状态以 `../features/README.md` 在途表为**人读**单一权威
+> （注意：C18/C22 判据读的不是这张表，而是各批次自己的 `README.md`——标记 + 承接表，见
+> `../features/README.md` 的纪律节与 `skills/agentflow/references/document-chain.md`；本表只是导航），
+> 本文件不再维护第二份逐批状态表；已完成条目见 git 历史与
 > `../../CHANGELOG.md`；待用户拍板的事项见 `../PENDING-DECISIONS.md`；待人工验收见 `pending-test.md`。
 
 ## 在途批次（指针）

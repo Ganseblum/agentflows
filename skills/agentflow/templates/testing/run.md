@@ -12,6 +12,8 @@ summary_fail: "<数量>"
 summary_blocked: "<数量>"
 summary_not_run: "<数量>"
 decision: pass
+findings: []          # 本轮新发现的缺陷记录 id（ISS-YYYY-MM-DD-<slug>）；无发现写 []，别留空字符串
+flow_findings: []     # 流程/方法侧发现，同样必须指向已存在的记录 id（未知 id 会被 artifacts 判红）
 recorded_at: "<RFC 3339 含时区>"
 updated_at: "<RFC 3339 含时区>"
 ---

@@ -145,5 +145,8 @@ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 必须有对应台账；已归纳类的记录必须带 `agentflow_version`，否则无法判定它在归纳前还是归纳后。
 
 档位**由事实推导，不靠人工标记**：`python3 tools/lab/validate.py recurrence` 输出
-`single`（只有一次）/ `recurred`（改了又出现）/ `escalated`（归纳后再犯——最高档加重标记，
-触发 improve 环升级）。
+`single`（只有一次）/ `recurred`（改了又出现）/ `escalated`（归纳后再犯——最高档加重标记）。
+档位**只由事实推导并打印**，不触发任何动作：改进环已于 2026-10-29 整体裁撤（见
+`docs/design-decisions.md` §3），本文件下方也写明这点，别再写「触发 improve 环升级」——
+那是裁撤前的语义（2026-11-02 全量核对时更正）。加重档位的实际后果是**人读层面的最高优先级提示**，
+要落到行动得靠拍板口或批次立项。

@@ -72,5 +72,6 @@
 ## 关联文档
 - 需求原文：<链接>
 - 业务补充：<business-supplement 路径，按需>
-- Spec：spec/be、spec/fe、spec/qa、spec/ui（按需）
-- Design：design/be、design/fe、design/ui、design/qa（按需）
+- Spec：spec/be、spec/fe、spec/qa、spec/ui（各轨按需；**spec/ 一旦有内容而 spec/qa 为空即判 C19**，
+  确无 qa 轨须在批次 README 写一行 `qa 不适用` 或 `无 qa 轨` 才豁免——豁免是声明门，判据不会自己推断）
+- Design：design/be、design/fe、design/ui、design/qa（按需；缺轨同样要在批次 README 明写理由）

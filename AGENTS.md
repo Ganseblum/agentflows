@@ -132,7 +132,10 @@ linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`�
 - **核验会过期**：条目「现状核验」引用的仓内路径若在核验日期之后被提交修改过，
   C17 会红，须重跑核验命令并刷新日期——不允许拿旧清单直接问人拍板。
 - **未决问题必须有归属**（C18，批次 README 加标记 `agentflow 决策归属` 后检查）：
-  `status: open` 的记录要么挂进批次承接表，要么显式 `disposition: deferred/not-doing`。
+  `status: open` 的记录要么挂进批次 README 的**记录归属表**（表头必须含两列 `记录编号 | 任务号`，
+  判据按列名匹配、`checks.py` 的 `ownership_findings`），要么显式 `disposition: deferred/not-doing`。
+  这张表与 C22 的**目标承接表**（列：目标 / proposal 出处 / spec 承接 / plan 任务 / 状态）是两张不同的表，
+  别混用——只有前者能关闭 C18。
 - **目标必须有承接**（C22，批次 README 加标记 `agentflow 目标承接` 后检查）：提案 §1.2 声明的每个
   目标编号都要出现在批次 README 的目标承接表里（列：目标 / proposal 出处 / spec 承接 / plan 任务 / 状态），
   表里引用的模块号、验收点与任务号必须在 spec 与计划看板真实存在，看板已 ☑/⚠ 的任务不得无人承接，

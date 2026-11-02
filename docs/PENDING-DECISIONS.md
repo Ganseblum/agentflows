@@ -17,8 +17,10 @@
 >
 > agentflow 决策记录
 >
-> 本行标记是**启用门检查的声明**，不是注释：`tools/lab/docchain/checks.py:719` 的
-> `DECISION_MARKER` 以此字符串为开关，去掉它 C16（八列形态）与 C17（核验过期）就不再照本文件。
+> 本行标记是**启用门检查的声明**，不是注释：`tools/lab/docchain/checks.py` 的
+> `DECISION_MARKER` 常量（定义在 836 行附近，消费在 `repo_policy_findings`）以此字符串为开关，
+> 去掉它 C16（八列形态）与 C17（核验过期）就不再照本文件。引用它请按**符号名**找，别按行号——
+> 本文件此前写的 `checks.py:719` 已经过时（那一行现在是 C19 的报错字面量），2026-11-02 全量核对时更正。
 > 2026-10-29 移出表尾历史注记时曾把它一并删掉，`decision_gate` 当场转为「不检查所以绿」，
 > 已按「不得靠摘标记转绿」的既有规则恢复并把它单独成行。
 >
@@ -37,7 +39,7 @@
 > `agentflows@6229a65:docs/PENDING-DECISIONS.md` 逐行取回；各条的结论与证据载体分别在
 > `CHANGELOG.md` 对应节与 `episodes/归档/2026-10/2026-10-18/`、`episodes/归档/2026-10/2026-10-19/` 下的 episode（月度归档后的现行路径）。
 
-> 2026-10-29 拍板并移出（结论与载体）：第 17 条 A（四件已落地）→ Q-03 与 `tools/lab/gate/records.py`、`schemas/review.schema.json`；第 19 条 C「不设总量上限、只消副本」→ `spec/qa/acceptance.md` 的 G5-AC-01 与 `spec/checklist.md` Q-05；第 20 条 A「完整链维持默认」→ Q-10；第 21 条 A+B「本批维持、下一批执行」→ Q-07 与 `docs/releases/todo.md`；第 22 条 C「分立并补实现深度」→ Q-06 与计划 T16；第 25 条 A「维持移出并留出处」→ Q-13 与本文件规则正文。另第 23 条（载体表并入既有 `docs` 项）与第 24 条（实现角色 ≤120 行）按已落地事实关闭：前者见 `spec/checklist.md` Q-11 与本批 T07，后者见 Q-12、`agents/` 三个实现角色实测 34 / 44 / 22 行，且第 22 条所选 C 本身以 ≤120 行为前提。
+> 2026-10-29 拍板并移出（结论与载体）：第 17 条 A（四件已落地）→ Q-03 与 `tools/lab/gate/records.py`、`schemas/review.schema.json`；第 19 条 C「不设总量上限、只消副本」→ `spec/qa/acceptance.md` 的 G5-AC-01 与 `spec/checklist.md` Q-05；第 20 条 A「完整链维持默认」→ Q-10；第 21 条 A+B「本批维持、下一批执行」→ Q-07 与 `docs/releases/todo.md`；第 22 条 C「分立并补实现深度」→ Q-06 与计划 T16；第 25 条 A「维持移出并留出处」→ Q-13 与本文件规则正文。另第 23 条（载体表并入既有 `docs` 项）与第 24 条（实现角色 ≤120 行）按已落地事实关闭：前者见 `spec/checklist.md` Q-11 与本批 T07，后者见 Q-12、`agents/` 三个实现角色实测 34 / 44 / 28 行（2026-11-02 复测；本行原写 22，是 `bug-fixer` 内容增补前的旧值），且第 22 条所选 C 本身以 ≤120 行为前提。
 
 > **当前无未决项。** 2026-10-29 第二轮拍板与实施（结论与载体逐条可定位）：
 

@@ -1,7 +1,9 @@
 # `feature-<日期>-<主题>` Feature 总览
 <一句话：本 README 是当前 Feature 的唯一入口；推荐阅读顺序 proposal/需求提案 → spec/{be,fe,qa} → design/{be,fe,qa} → plan/execution>
 > 段落映射：逐段声明落点（下表），落点指向本目录之外的活文档时写对方路径；落点非空且非「—」的段落可缺目录，其余段落齐全。
-> 轻量降档：只在「元信息」的段落映射表里声明降档范围，不再另立标记行。
+> 轻量降档：必须在元信息里写出一行字面标记 `轻量模式：无 spec/design 轨（理由：…）`——
+> 判据按这条正则识别降档（`tools/lab/docchain/checks.py` 的 `轻量模式[：:][^\n]*无\s*spec/design\s*轨`），
+> **只在段落映射表里把落点写成「—」不构成降档**，那样 proposal/plan 之外的阶段仍按完整链要求判。
 > 落点形态：<文档枢纽仓（`<repo>/<name>-workflow-ai/`）｜普通业务仓（`docs/features/`）> 二选一，随接入约定。
 ## 元信息
 - 需求原文/页面链接：<路径或链接>；主实施仓：<仓>；相关系统/仓库：<仓>；UI 轨：<已启用（spec/ui/visual.md + design/ui/visual.md）｜未启用>；最后更新时间：<日期>
@@ -24,6 +26,14 @@
 | 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |
 | --- | --- | --- | --- | --- |
 | G1 | `proposal/proposal.md` §1.2 | `spec/qa/acceptance.md` M01-AC-01 | T01 | ☐ 未开始 |
+## 记录归属
+> 立项当天把 `agentflow 决策归属` 标记独立成行写进本文件后，本表负责关闭 C18：`status: open` 的缺陷
+> 记录要么在这里挂上任务号，要么在记录自己的 frontmatter 写 `disposition: deferred/not-doing`。
+> **表头两列 `记录编号 | 任务号` 是判据的接口**（按列名匹配，见 `checks.py` 的 `ownership_findings`），
+> 上面那张目标承接表顶替不了它——写错表头等于没写，登记当天即红。
+| 记录编号 | 任务号 | 说明 |
+| --- | --- | --- |
+| ISS-YYYY-MM-DD-<slug> | T01 | <这条开放记录由本批哪个任务关闭> |
 ## 推进进度
 > 规则：完成即将行首 ☐ 改 ☑；不适用改 ☑ 并写 (N/A: 原因)；评审类门禁只能由独立评审勾选。
 ### 1. Proposal [PM]  <填：☐/☑ 主稿、业务补充（按需）>
