@@ -1,6 +1,6 @@
 # issues — 缺陷与事项
 
-给人读的缺陷与事项归档：每个缺陷或事项一个 Markdown 文件，命名为
+给人读的缺陷与事项记录面：每个缺陷或事项一个 Markdown 文件，命名为
 `ISS-<YYYY-MM-DD>-<slug>.md`（日期取记录 `recorded_at` 的日期部分；文件名去掉 `.md` 就是记录 id，
 `bug_id` 与它完全一致；slug 用中文短语，无中文译法的技术词保留原文）；复发的失败类另在 `recurrence/` 下配一本台账：
 
@@ -109,11 +109,30 @@ Agentflow 或需要判断复发版本时记录 `agentflow_version`。
 `python3 tools/lab/validate.py report` 第 7 列输出该字段，可直接
 `awk -F'\t' '$7=="agentflow"'` 过滤。
 
-归档规则：`rejected` 记录必须移入 `docs/issues/归档/<same-date-dir>/`；`verified` 记录原地保留
-作为参考。`rejected` 记录若仍留在 `docs/issues/` 根目录，`validate.py artifacts` 会 FAIL（目录结构约束：
-「归档规则」节的规则由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，已在 2026-10-26
-`/tmp` 副本演练确认：根目录留 `rejected` → FAIL、移入 `归档/<date>/` → PASS）；`归档/` 目录当前 0 条记录，
-故尚不存在，首个 `rejected` 记录创建时随其日期目录生成。
+**归档规则（本仓单点定义，别处只引用本节，不在别处复述）**：这里的「归档」只有一个含义——
+**被拒（`rejected`）记录的移出面**，不是「已完成记录的存放处」，也和 `episodes/归档/`（按月下沉的
+任务证据）、`docs/evaluations/archive/`（评测件下沉）、`reviews/**/archive/<轮次>/`（评审快照）
+不同义，那三处都与记录状态无关。
+
+- 只有 `rejected` 记录进 `docs/issues/归档/<YYYY-MM-DD>/`，日期目录必须等于该记录的 `recorded_at` 日期；
+  `verified`、`fixed-pending-review`、`open` 一律留在 `docs/issues/` 平铺面。关闭态不搬的理由：
+  记录 id 就是文件名，复发台账（`recurrence/`）、评审记录、待验收表都按这个路径引用，搬走会打断引用链。
+- **两个方向都由门判红**（不是惯例，是机器约束），执法点在
+  [`tools/lab/gate/workspace.py`](../../tools/lab/gate/workspace.py)（状态与位置的耦合）与
+  [`tools/lab/gate/records.py`](../../tools/lab/gate/records.py) 的 `validate_bug_layout`（文件名形状、
+  `bug_id` = 文件名 stem、日期目录 = `recorded_at` 日期、id 唯一）：
+  - `rejected` 留在根 → `FAIL artifacts: a rejected record must be moved into issues/归档/`
+  - `verified` 放进归档 → `FAIL artifacts: only rejected records may be archived; verified records stay in place`
+  复现方式（只在一次性副本上做，绝不在工作树上做）：`git worktree add --detach /tmp/<名> HEAD`，
+  在副本里改一条记录的 `status` 或移动它，再跑 `python3 tools/lab/validate.py artifacts`，跑完
+  `git worktree remove --force /tmp/<名>`。2026-11-02 按此法实跑，两条判据逐字命中。
+- 勘误（此前本节把两条判据一并归给 `validate_bug_layout`，那是错的：该函数只管形状，
+  状态与位置的耦合在 `workspace.py`）。`reviews/agentflow-关闭证据门/archive/2026-10-28-001/` 内的
+  提案与设计快照沿用旧归属，作为当轮逐字快照原样保留，现行口径以本节为准。
+- 现状：`docs/issues/归档/` 0 条记录（git 历史从未有过该路径下的内容）。本节描述的是边界的形状，
+  不是已发生的事实——`rejected` 这条跃迁在本仓至今零触发，属评测报告记过的「死条款」观察对象
+  （见 `../evaluations/archive/2026-10-26/AGENTFLOW-AUDIT-2026-10-26.md` 的 G28）；本轮演练只是
+  在副本上证明判据可达，不等于真实记录走过这条边。
 
 ## 再犯台账
 

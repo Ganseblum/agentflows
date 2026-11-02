@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 未发布 — 2026-11-02（归档口径统一批）
+
+- 实测钉口径：在一次性 worktree 副本上跑两例，逐字命中 `a rejected record must be moved into issues/归档/` 与 `only rejected records may be archived; verified records stay in place`——确认「只有被拒进归档、已验证原地保留」是机器约束而非惯例，副本跑完即 `git worktree remove --force` 拆除，真实树全程未动。
+- 定义收拢到单点：`docs/issues/README.md` 的「归档规则」节写明四件事——只有 `rejected` 进 `归档/<recorded_at 日期>/`、关闭态不搬的理由（id 即文件名，台账与评审按路径引用）、执法点分两处（状态↔位置在 `tools/lab/gate/workspace.py`，形状与 id 在 `records.py::validate_bug_layout`）、以及本仓「归档」一词的四义对照（缺陷被拒桶 / `episodes/归档/` 按月下沉 / 评测件 `archive/` / 评审快照 `archive/<轮次>/`，后三者与记录状态无关）。
+- 更正三处打架的自述：`docs/issues/README.md` 旧节把两条判据一并归给 `validate_bug_layout`（实测证明位置耦合在 `workspace.py`）；`episodes/README.md` 声称 episode 归档「采用与 `docs/issues/归档/` 一致的口径」（两者并不一致，改为「不同义，别互相套用」）；本文件 0.25.0 节把「口径禁止」写成「改门需授权」，已附勘误。`reviews/agentflow-关闭证据门/archive/2026-10-28-001/` 内的旧归属作为当轮逐字快照原样保留，由定义节声明其已过时。
+- 模板侧修正与本仓相反的规则（接入新仓会被教错）：`templates/hub/issues-README.md` 与 `templates/hub/index.md` 原写「关闭或被拒条目移入归档」——照做即在 `verified` 上进归档、门直接判红；改为「只有被拒进归档，已验证原地保留」，并把看板表头对齐 `AGENTS.md` 的台账四列（编号 / 一句话 / 记录链接 / 归属，行内不写状态结论），去掉与 C15 打架的「状态」列。
+- 立缺陷记录：`docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md`（`fixed-pending-review`，待独立评审后推进状态）。
+
 ## 0.25.0 — 2026-11-02
 
 - 本版的实际内容是一轮瘦身：交付面（`agents/`、`skills/`）只有 `roles.md` 的两处语料地址改为 git 载体，其余全部是仓内记录面的收拢。
@@ -11,7 +19,8 @@
 - 连带后果（如实记）：`doc_chain_live` 的活文档面从 124 份降到 1 份（只剩 `docs/features/README.md`），C27 与本仓真实文档的对照在本轮之后不再有对象，直到下一个新批次建立；待验收第 11 行 ⑥ 的「123 份真实文档无一命中 C27」其对象已消失。
 - 评测面收口：活跃面按既有「留三」口径落成实际——10-19 任务书、10-20 评测、10-21 行动件、10-23/10-26 审核共 5 份下沉 `docs/evaluations/archive/<文件日期>/`，活跃面只留 10-28 评测、10-28 耗时基线、10-29 对照实验三份；`README.md` 收存清单补齐此前漏记的对照实验一行（清单与在盘文件各写各的，属本仓记录过的同一形态），index.md 与 changelog-archive.md 的两个失效链接随迁。
 - 更正一条虚假自述：`ISS-2026-09-19-office计划采纳汇总` 声称 16 份外部记录「已迁入 `docs/issues/归档/2026-09-19/`」，实为该目录在盘为空、git 从未含该路径，原件随 `bf5ae9d` 删除——17 处取回地址改为只引用 git 历史载体，并在记录的变更记录节留痕。
-- **未做的两项（如实记）**：54 条 `verified` 缺陷记录不搬 `docs/issues/归档/`——`docs/issues/README.md` 的归档口径（仅 rejected 进归档，verified 原地保留）由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，且 `schemas/bug-record.schema.json` 与 `agents/bug-recorder.md` 都按该口径引用路径；搬动既不减少体量（只是换目录），又要改受保护的 schema，属门变更需显式评审。`docs/changelog-archive.md`（184K）无新的早期节可并——现行 CHANGELOG 只含 0.23.0 之后的节。
+- **未做的两项（如实记）**：54 条 `verified` 缺陷记录不搬 `docs/issues/归档/`——归档桶只覆盖 `rejected`，两个方向都由门判红（`verified` 放进归档即 `FAIL artifacts: only rejected records may be archived; verified records stay in place`），且搬动只是换目录、不减体量。`docs/changelog-archive.md`（184K）无新的早期节可并——现行 CHANGELOG 只含 0.23.0 之后的节。
+  - 勘误（2026-11-02 同日下午实测）：本条原写「由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，且…要改受保护的 schema，属门变更需显式评审」——执法点应为 `tools/lab/gate/workspace.py:159-167`（状态↔位置耦合），`validate_bug_layout` 只管文件名形状与 id 唯一；`schemas/bug-record.schema.json` 里那句只是 `description` 散文、不构成约束，搬 `verified` 不需要也不允许改门。原句把「口径禁止」写成了「需授权」，已随口径统一批更正。
 
 - 发布 0.25.0（提交 `81463c7`，已推送 origin/main）并三端重装：`validate.py all` **12 项全 PASS（退出码 0）**、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`artifacts` 136 objects PASS；ZCode（`Updated plugin agentflow@agentflow-local from 0.24.0 to 0.25.0`，需重启加载）、Codex（`personal/agentflow/0.25.0`）、Qoder（拷 `cache/local/agentflow/0.25.0` + 改登记表，`installed --path` PASS、`agents`+`skills` 与源面逐字节一致）。
 

@@ -20,7 +20,7 @@
 | 查发布与待验证清单 | `docs/releases/`：`todo.md`（发版待办，批次状态指针）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md`（0.22.1 及更早的历史条目归档于 [`docs/changelog-archive.md`](docs/changelog-archive.md)） |
 | 看设计、指南与事实 | `docs/`：`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
-| 记录 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
+| 记录 | `docs/issues/`（缺陷与台账，「归档」在这是**被拒记录的移出面**，定义单点见 `docs/issues/README.md` 的归档规则节）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
 | 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/archive/2026-10-26/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
 
@@ -41,6 +41,7 @@
 > 现在只剩本文件；索引里的「见 `agentflows@c8ed0b2:docs/features/<批次>/`」是仓限定引用（rev 是删除前
 > 的最后一个提交），用 `git show` 取回原文，不是可点击的仓内链接。
 
+- 2026-11-02 归档口径统一批（0.25.1）：把「只有 `rejected` 进 `docs/issues/归档/`、`verified` 原地保留」收拢到 `docs/issues/README.md` 的归档规则节（含执法点两处分工、四义对照、可复现演练）；更正 hub 两份模板与本仓门相反的「关闭也归档」口径、撤掉 `episodes/README.md` 的虚假类比、CHANGELOG 附勘误；缺陷记录 `docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md`
 - 2026-11-02 瘦身批（`0.25.0`，提交 `81463c7`）：删除全部 10 个已完成批次目录（175 文件 / 6.1 万行，原文 `agentflows@c8ed0b2:docs/features/<批次>/`）、`docs/features/README.md` 在途表收拢为指针、5 份早期评测件下沉 `docs/evaluations/archive/`、更正 1 条虚假归档自述（`ISS-2026-09-19-office计划采纳汇总`）；54 条 verified 缺陷记录按 `validate_bug_layout` 口径原地保留，未搬归档
 - 2026-10-31 整改（无批次目录，以门变更 + 表达面收口直接推进）：C27 模板骨架判据（用户批准的门变更）、门项数 11→12（`installed` 纳入 `all`）、交付面版本守卫、角色面 5 处矛盾/歧义收口、references 对齐代码事实、模板结构缺陷修复；原分两棵工作树（主树早期草稿、worktree `fix/remaining-2026-10-31` 后继版），2026-11-02 逐行比对确认无独有内容后合入 `main`（`bb56cb1`）——见 [`CHANGELOG.md`](CHANGELOG.md) 的 0.24.0 节与[待验收](docs/releases/pending-test.md)第 10、11 行
 - 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务已全部收口——23 ☑ / 0 ⚠ / 0 ☐ / 1 本期不做（T18）；两轮评审 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-29-全面修正与瘦身/`；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)

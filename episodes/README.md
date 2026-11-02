@@ -58,7 +58,9 @@ jq -r '[.occurred_at, .episode_id, .source_type, .outcome] | @tsv' episodes/归�
 ## 存档策略（归档）
 
 episode 是任务级证据的最小落盘，会随时间累积。为保持 `episodes/` 顶层只放「当期」目录、
-又不丢历史，采用与 `docs/issues/归档/` 一致的口径：
+又不丢历史，这里的归档按**时间**下沉（与记录状态无关）——注意它和 `docs/issues/归档/`
+**不同义**：那里只覆盖被拒（`rejected`）记录，已验证记录原地保留（定义单点见
+`docs/issues/README.md` 的「归档规则」节）。两处都叫「归档」，规则却不相干，别互相套用：
 
 - 目录按**月份**归档到 `episodes/归档/<YYYY-MM>/`，整月目录原样搬入（目录名保留原 `YYYY-MM-DD`，
   不重命名，文件名仍 = episode_id，唯一性不变）。
