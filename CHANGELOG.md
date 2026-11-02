@@ -10,6 +10,7 @@
 - 更正三处打架的自述：`docs/issues/README.md` 旧节把两条判据一并归给 `validate_bug_layout`（实测证明位置耦合在 `workspace.py`）；`episodes/README.md` 声称 episode 归档「采用与 `docs/issues/归档/` 一致的口径」（两者并不一致，改为「不同义，别互相套用」）；本文件 0.25.0 节把「口径禁止」写成「改门需授权」，已附勘误。`reviews/agentflow-关闭证据门/archive/2026-10-28-001/` 内的旧归属作为当轮逐字快照原样保留，由定义节声明其已过时。
 - 模板侧修正与本仓相反的规则（接入新仓会被教错）：`templates/hub/issues-README.md` 与 `templates/hub/index.md` 原写「关闭或被拒条目移入归档」——照做即在 `verified` 上进归档、门直接判红；改为「只有被拒进归档，已验证原地保留」，并把看板表头对齐 `AGENTS.md` 的台账四列（编号 / 一句话 / 记录链接 / 归属，行内不写状态结论），去掉与 C15 打架的「状态」列。
 - 立缺陷记录：`docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md`（`fixed-pending-review`，待独立评审后推进状态）。
+- 发布 0.25.1（提交 `c5eae26`，已推送 origin/main）并三端重装：`validate.py all` **12 项全 PASS（退出码 0）**、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`artifacts` 137 objects PASS（含新记录）；ZCode（`Updated plugin ... from 0.25.0 to 0.25.1`，需重启加载）、Codex、Qoder 缓存均为 0.25.1，Qoder 侧 `installed --path` PASS 且 `agents`+`skills` 与源面逐字节一致。
 
 ## 0.25.0 — 2026-11-02
 
