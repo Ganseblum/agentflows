@@ -32,7 +32,10 @@ def self_test() -> int:
     C23 evidence presence — /tmp-only, empty cell, repo-qualified and N/A carriers, and the
     repo scan applying C23 to every batch while C22 stays marker-gated); cases 99–102 pin C24
     single-ledger mode (HISTORY.md without README carries C2 gates and C22 承接表; both files
-    present keeps README as the leader and treats HISTORY.md as an ordinary stage doc).
+    present keeps README as the leader and treats HISTORY.md as an ordinary stage doc); cases
+    C27-01…C27-03 pin the template fingerprint added by the 2026-10-31 gate change — a verbatim
+    stage template and a verbatim entry page are findings, while a document that keeps the
+    template's section order and then carries its own substance is not.
     """
 
     # The linter is the thin launcher (doc_chain.py), not this module: the self-test
@@ -63,7 +66,7 @@ def self_test() -> int:
             "```mermaid\nerDiagram\n    t1 ||--o{ t2 : has\n```\n"
         ),
         "design/fe/f.md": (
-            "# fe\n\nA1 调用见异常矩阵\n\n"
+            "# fe\n\n## 2. 接口调用与异常矩阵\n\nA1 调用见异常矩阵\n\n"
             "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n| A1 | ok | 412 |\n\n"
             "```mermaid\nflowchart LR\n    L --> D\n```\n"
             "```mermaid\nsequenceDiagram\n    U->>L: click\n```\n"
@@ -160,6 +163,10 @@ def self_test() -> int:
              lambda f: rep(f, "design/fe/f.md",
                            "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n| A1 | ok | 412 |\n\n",
                            "| 接口 | 成功 | 失败/异常 |\n| --- | --- | --- |\n\n"),
+             results)
+    run_case("12c C6 a table under a heading without 异常/错误/失败 does NOT satisfy C6", 1,
+             ["C6 design/fe: 缺少接口异常边界矩阵"],
+             lambda f: rep(f, "design/fe/f.md", "## 2. 接口调用与异常矩阵", "## 2. 接口调用"),
              results)
     run_case("13 C10 unclosed mermaid fence trips C10", 1, ["C10 mermaid"],
              lambda f: f.update({"design/be/b.md": f["design/be/b.md"] + "```mermaid\nflowchart X\n"}) or f,
@@ -523,6 +530,17 @@ def self_test() -> int:
     run_case("56 C5 contract id in fe prose closes (table row removed, prose mention kept)", 0,
              ["PASS doc-chain"],
              lambda f: rep(f, "design/fe/f.md", "| A1 | ok | 412 |", "| X1 | ok | 412 |"), results)
+
+    run_case("57 C5 method+path contract row absent from fe trips C5", 1,
+             ["C5 契约闭合", "/api/x"],
+             lambda f: rep(f, "design/be/b.md", "| A1 | d(string,Y) | uid |",
+                           "| POST /api/x | d(string,Y) | uid |"), results)
+    run_case("58 C5 method+path contract row closes when fe cites the path", 0,
+             ["PASS doc-chain"],
+             lambda f: rep(rep(f, "design/be/b.md", "| A1 | d(string,Y) | uid |",
+                               "| POST /api/x | d(string,Y) | uid |"),
+                           "design/fe/f.md", "A1 调用见异常矩阵", "A1 调用见异常矩阵，路径 /api/x"),
+             results)
 
     def m_lightweight(f):
         f.pop("spec/s.md")
@@ -1181,6 +1199,37 @@ def self_test() -> int:
                        "# checklist\n\n| # | 事项 | 属主 | 状态 |\n| --- | --- | --- | --- |\n"
                        "| 1 | 目标值取哪个 | 用户 | 未确认 |\n"),
                    "docs/PENDING-DECISIONS.md": PEND_LEDGER})
+
+    # C27 template fingerprint (2026-10-31 gate change, user-authorized). The structural gates read
+    # shape, so a batch assembled by copying the shipped templates reported zero findings — this
+    # pins that an untouched copy is now a finding, and that keeping the section order while
+    # writing real content is not.
+    def m_c27_stage_skeleton(f):
+        f["spec/be/backend.md"] = (TEMPLATE_ROOT / "spec/be/backend.md").read_text(encoding="utf-8")
+        return f
+    run_case("C27-01 verbatim stage template trips the fingerprint", 1, ["C27 模板骨架"],
+             mutate=m_c27_stage_skeleton, results=results)
+
+    def m_c27_readme_skeleton(f):
+        f["README.md"] = (TEMPLATE_ROOT / "README.md").read_text(encoding="utf-8")
+        return f
+    run_case("C27-02 the entry page is covered too", 1, ["C27 模板骨架"],
+             mutate=m_c27_readme_skeleton, results=results)
+
+    def m_c27_filled(f):
+        skeleton = (TEMPLATE_ROOT / "spec/be/backend.md").read_text(encoding="utf-8")
+        # tolerance (declared, not accidental): similarity is line-wise, so a document that keeps
+        # the template's headings and then carries its own substance falls under the threshold.
+        # The shape gates still judge that document section by section — C27 only removes the
+        # free pass an empty skeleton used to get.
+        content = "".join(
+            f"| 决策 D-{i:02d} | 采用方案 {i}：写入 `migrations/x.sql` | 代价：一次回填 | 回滚：撤销该迁移 |\n"
+            for i in range(1, 21))
+        f["spec/be/backend.md"] = (
+            skeleton.replace("（填写）", "已定事实") + "\n## 实际决策\n" + content)
+        return f
+    run_case("C27-03 template-shaped headings with real content stay green", 0, ["PASS doc-chain"],
+             mutate=m_c27_filled, results=results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

@@ -16,7 +16,7 @@ disallowedTools: Bash
 | 批次 `plan/` 下显式指派的计划 | ✅ 写入 | 仅限 Supervisor 给出的确切路径 |
 | 记录根中的任何其它路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、测试、schema | ❌ 只读 | 实现文件不在范围内 |
-| Evaluator 规则、发布策略、已安装的插件文件 | ❌ | 绝不 |
+| 门自身（`schemas/` 记录 schema、发布策略、钉住的回归测试、`protected-paths.txt` 清单）、已安装的插件文件 | ❌ | 绝不 |
 
 读取所提供的专家输出、技术决策、仓库证据与用户约束，把计划写成 **Markdown 融合形态**
 （信封 + 叙述，即你交回计划后 Supervisor 依 `schemas/plan.schema.json` 与计划校验器校验的

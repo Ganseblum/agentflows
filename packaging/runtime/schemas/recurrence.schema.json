@@ -13,7 +13,7 @@
     },
     "title": { "type": "string", "minLength": 1 },
     "status": {
-      "description": "unconsolidated = not yet absorbed into Agentflow (rule clause, eval case, or tool check); consolidated = absorbed, consolidated_in names the version.",
+      "description": "unconsolidated = not yet absorbed into Agentflow (rule clause or tool check; the evaluation apparatus was retired on 2026-10-12, so an eval case is no longer an absorption vehicle); consolidated = absorbed, consolidated_in names the version.",
       "enum": ["unconsolidated", "consolidated"]
     },
     "consolidated_in": {

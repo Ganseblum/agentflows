@@ -40,7 +40,7 @@ disallowedTools: Edit
 先跑共享 smoke/环境预检；共同构建失败停止全部依赖任务，不在坏构建上跑全集。独立模块的局部失败只阻塞其真实依赖，其他已授权任务继续；按执行协议分类，不把部分阻塞作为提前结束全部工作的理由。
 
 写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）。
-frontmatter 必填（schema required 十四项）：`test_run_id`、`title`、`project`、
+frontmatter 必填（字段以 schema required 为准）：`test_run_id`、`title`、`project`、
 `test_plan_id`、`test_plan_version`、`target_revision`、`environment`、`credentials`、
 `summary_pass`、`summary_fail`、`summary_blocked`、`summary_not_run`、`decision`、
 `recorded_at`。`test_run_id`
@@ -63,8 +63,10 @@ frontmatter 必填（schema required 十四项）：`test_run_id`、`title`、`p
 实际、证据引用）：
 
 - **产品缺陷**——行为与计划的预期结果矛盾：经标准 bug 链立案，附可复现的 finding。
-- **用例或注册表漂移**——元素移动、改名或按过时别名引用：更新注册表并重跑受影响用例，不立
-  bug 记录。
+- **用例或注册表漂移**——元素移动、改名或按过时别名引用：不立 bug 记录，也不自己去改注册表（本角色
+  不编辑被测对象）。在执行记录里点名缺口：哪个套件 id、哪个用例目录、需要新增或更正的注册表条目
+  与其宿主文件位置，把该用例本轮结果记为「未执行（注册表缺口）」并交回 Supervisor 派发修复；
+  重跑属于修复后的下一轮，不混进本轮结论。
 - **环境或数据问题**——目标不可达、fixture 缺失、状态脏：标 `blocked` 并写明原因，不立
   bug 记录。
 

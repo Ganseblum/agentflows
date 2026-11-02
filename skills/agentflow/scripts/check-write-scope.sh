@@ -17,9 +17,10 @@
 # 说明：
 #   - 委派时已经 dirty 的路径也会显示为变更；要么从干净的树委派，要么在阅读报告时
 #     减去已知的 dirty 路径。
-#   - 未跟踪文件与被 .gitignore 忽略的文件都计入（2026-10-20 起与 `isolation.py
-#     check-diff` 同口径：worker 把产物写进被忽略的路径同样属于写范围事实，此前
-#     「被忽略的文件不计入」是覆盖面缺口）。
+#   - 未跟踪文件计入。被 .gitignore 忽略的文件默认不计入：基线之前就存在的
+#     .venv / .mypy_cache / 本地库在每次调用里都会被列为「越界」（2026-10-31 实测
+#     3010/3010，工具整体不可用）。需要把构建产物写面也纳入审计时设
+#     AGENTFLOW_WRITE_SCOPE_INCLUDE_IGNORED=1。
 #
 # 退出状态：所有变更路径都在范围内时为 0；任一变更路径在范围之外时为 1；
 # 用法错误时为 2。
@@ -56,11 +57,13 @@ if ! git ls-files --others --exclude-standard -z >"$tmp_others" 2>/dev/null; the
   echo "error: git ls-files failed" >&2
   exit 1
 fi
-# 被忽略的文件同样计入（与 isolation.py check-diff 同口径）：写进 .gitignore 命中的
-# 路径（如构建产物目录、本地库文件）也是真实写入面，不是审计盲区。
-if ! git ls-files --others --ignored --exclude-standard -z >"$tmp_ignored" 2>/dev/null; then
-  echo "error: git ls-files --ignored failed" >&2
-  exit 1
+# 被忽略的文件只在显式开启时计入（AGENTFLOW_WRITE_SCOPE_INCLUDE_IGNORED=1）。默认关闭：
+# 基线之前就存在的缓存目录在每次调用里都会被列为越界，使工具整体不可用。
+if [ "${AGENTFLOW_WRITE_SCOPE_INCLUDE_IGNORED:-0}" = "1" ]; then
+  if ! git ls-files --others --ignored --exclude-standard -z >"$tmp_ignored" 2>/dev/null; then
+    echo "error: git ls-files --ignored failed" >&2
+    exit 1
+  fi
 fi
 
 changed=()

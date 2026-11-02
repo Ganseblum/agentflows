@@ -363,6 +363,36 @@ class GateIntegrityNegativeTests(unittest.TestCase):
             [error.message for error in errors],
         )
 
+    def test_delivered_face_version_guard_discriminates(self) -> None:
+        """The face the host loads is guarded by version family, not by any x.y.z shape.
+
+        A blanket pattern over `skills/**` reports the template's own section numbering (`§1.4.3`)
+        as drift, so the guard reads literals that belong to the major declared in plugin.json —
+        and a quoted host observation stays legal.
+        """
+        import gate.docs as docs_module
+
+        def run(skills_text: str) -> list[str]:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "docs").mkdir()
+                (root / "plugin.json").write_text(
+                    '{"name": "agentflow", "version": "0.23.0"}\n', encoding="utf-8"
+                )
+                (root / "README.md").write_text("# r\n", encoding="utf-8")
+                (root / "docs" / "design-decisions.md").write_text("# d\n", encoding="utf-8")
+                face = root / "skills" / "agentflow"
+                face.mkdir(parents=True)
+                (face / "SKILL.md").write_text(skills_text, encoding="utf-8")
+                with mock.patch.object(docs_module, "ROOT", root):
+                    errors = docs_module.validate_doc_consistency()
+            return [error.message for error in errors if "delivered face" in error.message]
+
+        self.assertTrue(run("# s\n自 0.9.9 起该义务强制。\n"), "own-family literal in prose must be found")
+        self.assertEqual([], run("# s\n见 §1.4.3 与 §1.1.3.1。\n"), "section numbering is not a version")
+        self.assertEqual([], run("# s\n宿主 Claude Code 2.1.268 观察。\n"), "other-family literal is not ours")
+        self.assertEqual([], run("# s\n现场输出 `version=0.21.0`。\n"), "quoted output is a fact, not a claim")
+
     def test_protected_list_shrinkage_and_missing_list_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)

@@ -11,12 +11,19 @@
 - 原型基线：<原型正文 `path@revision`（可解析的提交号；形态 A 与入口页登记的一致，跨仓写 `<repo>@<revision>:<path>`）；目标页面实现 `path:line@revision`；若沿用上一版，再列上游 feature 的 `prototype/index.html@revision`；全新页面写「新建」；无 UI 写 `N/A: 原因`>
 - 埋点：<本期新增 n 个事件（design/fe §1.7）｜复用既有事件 <事件名>｜`N/A: 理由`>
 ## 段落映射
+> 落点列先写「—」，正文落盘后才回填实际路径：照抄示例路径等于在还没写任何正文时就免检了那个目录。
+> 规则本身见本文件开头第三行，不在此重述。
 | 段落 | 落点 | 说明 |
 | --- | --- | --- |
-| proposal | `proposal/proposal.md` | 或指向本目录之外的活文档 |
-| spec | `spec/{be,fe,qa}/` | 不适用写「—」 |
-| design | `design/{be,fe,qa}/` | 不适用写「—」 |
-| plan | `plan/execution.md` | 目标仓有自己的计划约定时指向它 |
+| proposal | — | 正文写入 `proposal/proposal.md` 后回填该路径 |
+| spec | — | 各轨落盘后回填；确无该轨写「—」并在说明列给理由 |
+| design | — | 同上 |
+| plan | — | 正文或目标仓自有计划落盘后回填 |
+## 目标承接
+> 立项当天把 `agentflow 目标承接` 标记独立成行写进本文件后，必须同时填写本表；目标编号取 proposal §1.2，spec 承接列写模块号（`M-A`）或验收点编号，plan 任务列写任务号，状态列随计划看板回写。
+| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |
+| --- | --- | --- | --- | --- |
+| G1 | `proposal/proposal.md` §1.2 | `spec/qa/acceptance.md` M01-AC-01 | T01 | ☐ 未开始 |
 ## 推进进度
 > 规则：完成即将行首 ☐ 改 ☑；不适用改 ☑ 并写 (N/A: 原因)；评审类门禁只能由独立评审勾选。
 ### 1. Proposal [PM]  <填：☐/☑ 主稿、业务补充（按需）>

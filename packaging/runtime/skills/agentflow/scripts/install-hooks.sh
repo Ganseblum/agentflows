@@ -43,7 +43,7 @@ case "$MODE" in
     fi
     ln -sfn "../../${HOOK_SRC}" "$HOOK_DST"
     echo "已安装：${HOOK_DST} → ../../${HOOK_SRC}"
-    echo "验证：git push 前会自动跑十项门禁。用 --no-verify 可临时跳过。"
+    echo "验证：git push 前会自动跑全部门禁（项数以 validate.py --list 自报为准）。用 --no-verify 可临时跳过。"
     ;;
   check)
     if [ ! -L "$HOOK_DST" ]; then

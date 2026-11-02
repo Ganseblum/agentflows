@@ -3,6 +3,7 @@
 > 先按[文档档位](../references/document-chain.md#文档档位)选择轻量或完整模板。完整链固定标题不得改名或删除，不适用节写 `N/A: 原因`；轻量使用单份 README 的四个固定章节。目标仓已有体系时复用，不另建重复正文。
 > 写前自查（术语与指称）：按「换 > 释 > 删」处理；**代号裸用**（代号只在定义处出现，正文以「白话（代号）」或「代号（白话）」成对伴随）与**模式词分域**（标识符留在代码、SQL、日志语境，正文用业务白话）两条形态同受约束；判据见 [`document-chain.md` 表达纪律节](../references/document-chain.md)。
 > 命名与目录形态：骨架按链契约的角色目录组织——`spec/be/backend.md` ↔ `design/be/backend.md`、`spec/fe/frontend.md` ↔ `design/fe/frontend.md`、`spec/qa/acceptance.md` ↔ `design/qa/testing.md`、`spec/ui/visual.md` ↔ `design/ui/visual.md` 镜像；proposal 使用 `proposal/proposal.md`。计划按使用位置选择：目标仓使用自身约定；没有约定时复制 `plan/execution.md`。Agentflow 仓库的批次记录使用 `plan/<plan_id>.md` 混合契约。复制时保持对应形态的文件名与信封。
+> **模板内链接**：`feature/`、`testing/` 等模板里的相对链接指向插件安装树（`skills/agentflow/references/…`）。复制到目标仓后这些链接会断——复制时按「目标仓相对路径或插件根路径」改写，或删除链接只留文字说明。
 > 三条跨阶段贯通项（复制骨架时不要漏）：**产品原型**（目标仓已维护原型库 → 必须形态 A：正文在库内、批次 `prototype/index.html` 只做入口页；确无原型库 → 形态 B：批次内可编辑 HTML 是正文。两种形态都沿用项目真实视觉基线，跨批次登记上游路径与 revision，截图可由 HTML 导出）；**视觉来源** `spec/ui` §2.1 → `design/ui` §0.1（组件库/主题机制/token 源文件给 `path:line`，A 复用 / B 移植 / C 冷启动三档，禁凭空造色值）；**埋点** 三处口径——`proposal/proposal.md` §6.2 决策 → `spec/fe/frontend.md` §4 口径 → `design/fe/frontend.md` §1.7 事件契约，验收在 `spec/qa` 与 `design/qa`（评审清单与隐私红线见 [`telemetry.md`](../references/telemetry.md)）。
 
 | 模板 | 用法（复制到 feature 目录的对应路径） |
@@ -25,12 +26,14 @@
 | [releases/todo.md](releases/todo.md) · [releases/pending-test.md](releases/pending-test.md) | 发布待办 / 待验收双文件骨架：复制到 `releases/`（这两个文件就是发布侧的现行载体） |
 
 
-## 可选层（语料中出现的扩展，按需启用）
+## 可选层（按需启用，本插件不随包提供骨架）
 
-- `api/`：接口文档（研发提交 QA 用；§0 文档粒度约定 + §7 提交前自检清单）。
-- `复盘.md`：feature 收口后的复盘（方法复盘与后续证据池的来源）。
-- `code-gap-matrix`：文档 vs 代码现状完成度矩阵（在既有代码上落地的 feature 强烈建议）。
-- 超大 feature 的模块化拆分：一模块一套 proposal/spec/design/plan 四件套 + 总控 spec。
+以下形态来自实际语料，**没有随包模板文件**；启用时按要点在批次目录内自建，不要假设插件里有可复制骨架：
+
+- `api/`：接口文档（研发提交 QA 用）。最低要求：§0 文档粒度约定（一个接口一页或按用户旅程分组）、字段级请求/响应、错误号与客户端动作、§7 提交前自检清单。
+- `复盘.md`：feature 收口后的复盘。最低要求：实际结果与预期差异、触发过的失败与处置、可复用的条款或测试缺口、后续证据池的去向。
+- `code-gap-matrix`：文档 vs 代码现状完成度矩阵。最低要求：需求点 × 现状（已有/半有/无）× 落点 `path:line` × 本期处置（补/改/不做+理由）。
+- 超大 feature 的模块化拆分：一模块一套 proposal/spec/design/plan 四件套 + 总控 spec；拆分判据写进批次 README。
 
 ## 执行证据工具输入
 

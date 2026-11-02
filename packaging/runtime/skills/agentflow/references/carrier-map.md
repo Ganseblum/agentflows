@@ -18,7 +18,7 @@
 | 定位即预算（读取定位与上限） | `skills/agentflow/SKILL.md` | ## 评审简报的定位义务 | `contracts.md` 只留一条判据与指针，详细口径不复制第二份 |
 | 判断词的可判定定义（小改动 / risky work / 相同原因） | `skills/agentflow/SKILL.md` | ## 判断词的可判定定义 | `skills/agentflow/references/roles.md` 与契约只指向这三条，不各写一套阈值 |
 | 角色路由与工作链默认入口 | `skills/agentflow/references/roles.md` | ## 工作链 | SKILL 不复述路由表；角色文件不重复「何时选我」的整段 |
-| 文档链阶段骨架、档位判据与阶段门语义 | `skills/agentflow/references/document-chain.md` | ## 门 | 门 1–9 只定义语义；机器判据与逐文档质量标准的正文在 `document-chain-checks.md`，主契约不复制细则 |
+| 文档链阶段骨架、档位判据与阶段门语义 | `skills/agentflow/references/document-chain.md` | ## 门 | 门 1–10 只定义语义；机器判据与逐文档质量标准的正文在 `document-chain-checks.md`，主契约不复制细则 |
 | 文档链机器判据细则与逐文档质量标准 | `skills/agentflow/references/document-chain-checks.md` | ## 质量密度下限（机器检查） | 判据正文只在这一份里；主契约的门节只指向本文件，不另写副本 |
 | 文档链 C 判据的逐条口径（执行体一侧） | `tools/lab/docchain/checks.py` | def batch_traceability_findings | 人读口径同上，不复述代码；`tools/lab/` 不随插件全量交付，只发链检查器（`packaging/build_runtime.py` 的 `RUNTIME_SUBTREES`） |
 | 测试计划与运行记录形态、bug 状态联动 | `skills/agentflow/references/test-records.md` | ## 契约 与 ## Bug 回归用例与状态联动 | SKILL 的自动化测试节只指路径，不重复联动表 |

@@ -396,6 +396,17 @@ ALL_CHECKS: list[tuple[str, Callable[..., list[ValidationError]]]] = [
     ("lint", validate_static_checks),
 ]
 
+# Items `all` runs after the in-repo set, each reporting its own status line. `installed` compares
+# bytes with a plugin snapshot outside the repository, so it cannot return the in-repo signature —
+# and "there is no local install" must print SKIP rather than a PASS it did not earn. It belongs to
+# `all` because leaving it out let a green 11/11 sit next to a host running a snapshot two batches
+# behind source, including roles the repository deleted (2026-10-31 audit). publish.sh and
+# pre-push.sh already filter this label out of their per-target loops: push and publish precede the
+# reinstall by design, so the comparison is not a push gate.
+EXTRA_CHECKS: list[tuple[str, Callable[[str | None], tuple[str, list[ValidationError]]]]] = [
+    ("installed", validate_installed),
+]
+
 
 def main(argv: list[str] | None = None) -> int:
     # Hard floor: tests/ use PEP 604 syntax without a future import, so an
@@ -460,7 +471,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.list_checks:
         for label, _ in ALL_CHECKS:
             print(label)
-        print(f"all runs {len(ALL_CHECKS)} checks")
+        for label, _ in EXTRA_CHECKS:
+            print(label)
+        print(f"all runs {len(ALL_CHECKS) + len(EXTRA_CHECKS)} checks")
         return 0
 
     if args.target is None:
@@ -516,6 +529,13 @@ def main(argv: list[str] | None = None) -> int:
     for label, check in checks:
         errors = check()
         success = report(label, errors, _scan_count(label)) and success
+    if args.target == "all":
+        for extra_label, extra_check in EXTRA_CHECKS:
+            extra_status, extra_errors = extra_check(None)
+            if extra_status == "skip":
+                print(f"SKIP {extra_label} (no local plugin install found; nothing to compare)")
+                continue
+            success = report(extra_label, extra_errors) and success
     return 0 if success else 1
 
 

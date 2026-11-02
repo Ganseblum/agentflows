@@ -1,6 +1,6 @@
 """Constants and regexes for the doc-chain linter (shared across docchain.* modules).
 
-Check catalogue (C1–C26). The full prose lives in skills/agentflow/references/document-chain.md;
+Check catalogue (C1–C27). The full prose lives in skills/agentflow/references/document-chain.md;
 this is the quick-reference summary the linter enforces.
 
   C1  structure        every stage directory holds at least one real document (no .gitkeep only),
@@ -82,6 +82,12 @@ this is the quick-reference summary the linter enforces.
                        table. Purely additive: a batch that also has README.md is NOT in this mode
                        (README governs unchanged; any HISTORY.md present is treated as an ordinary
                        stage document, not a ledger).
+  C27 template fingerprint  a stage document that is (near-)verbatim the shipped template is an
+                       unfilled skeleton, not a deliverable: every structural gate reads shape —
+                       headings, table columns, diagram kinds — so a copied skeleton satisfied all
+                       of them (2026-10-31 audit; measured 0 findings for 11 template files copied
+                       into a batch). Line similarity against each template under the plugin's
+                       skills/agentflow/templates/feature, applied to full and compact profiles alike.
 """
 
 from __future__ import annotations
@@ -94,6 +100,14 @@ BOX_CHARS = ("┌", "└", "├", "│")
 # Repository root, used to resolve C9 code-location paths. Overridable with --root (self-test
 # fixtures and validate.py's live pass pass their own root explicitly).
 REPO_ROOT = Path(__file__).resolve().parents[3]
+
+# C27 template fingerprint. Threshold sits far above anything a real document reaches: across the
+# 123 Markdown files in this repository's own batches the best template similarity is 0.41, while
+# a copied skeleton is 1.00 — so 0.85 catches scaffolding without punishing an author who kept the
+# template's section order and filled it in. No length guard: the shortest shipped template is 16
+# lines, and a document shorter than that cannot reach the threshold anyway.
+TEMPLATE_ROOT = REPO_ROOT / "skills" / "agentflow" / "templates" / "feature"
+TEMPLATE_MIN_SIMILARITY = 0.85
 
 # C26 compact profile: explicit eligibility, substantive acceptance/tasks, completed evidence;
 # declarations and tables inside fenced examples do not grant an exemption from full checks.

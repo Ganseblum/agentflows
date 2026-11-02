@@ -163,6 +163,18 @@ VERSION_PROSE_FILES = (
 )
 
 
+# The delivered face — what a host actually loads — also restates the plugin's version, but it is
+# full of *section* numbers shaped exactly like versions (`§1.1.3`, `#### 1.4.2`): a blanket x.y.z
+# guard over it measured 60 false hits on the shipped templates alone. So this face is guarded by
+# membership in the plugin's own version family, taken from the major declared in plugin.json:
+# `0.x.y` claims are drift, while a Claude Code `2.1.268` observation or a `§1.4.3` cross-reference
+# stays legal. Host-version facts belong in `docs/host-platform-facts.md`, which is not on this face.
+VERSION_PROSE_GLOBS = (
+    "agents/*.md",
+    "skills/agentflow/**/*.md",
+)
+
+
 # Init's repo-level AGENTS section used to be prose-only: the SKILL asked for "a compact
 # section with three gate clauses" but shipped no carrier, so every target repo wrote its own
 # shape (Youc's section, added 2026-09-19, had already drifted from the SKILL wording). The
@@ -615,6 +627,25 @@ def validate_doc_consistency() -> list[ValidationError]:
             continue
         errors.extend(version_prose_errors(path, text))
 
+    # Same drift family, guarded on the face the host loads (see VERSION_PROSE_GLOBS).
+    major = declared_version_major()
+    if major is None:
+        errors.append(
+            ValidationError(
+                "plugin.json",
+                "cannot read the declared version for the delivered-face version guard "
+                "(fail-closed: an unobservable guard is not a passing one)",
+            )
+        )
+    else:
+        for pattern in VERSION_PROSE_GLOBS:
+            for path in sorted(ROOT.glob(pattern)):
+                text, read_errors = read_document_text(path)
+                if read_errors:
+                    errors.extend(read_errors)
+                    continue
+                errors.extend(delivered_face_version_errors(path, text, major))
+
     errors.extend(validate_live_doc_references(ROOT))
     errors.extend(validate_carrier_map())
     return errors
@@ -655,6 +686,40 @@ def validate_count_markers(root: Path = ROOT) -> list[ValidationError]:
                 "counts",
                 f"counts.py exited {completed.returncode} with no parseable findings: "
                 f"{(completed.stdout + completed.stderr).strip()[:200]}",
+            )
+        )
+    return errors
+
+
+def declared_version_major() -> int | None:
+    """Major of the version the manifests declare, or None when it cannot be read."""
+    manifest, load_errors = load_json(ROOT / "plugin.json")
+    if load_errors or not isinstance(manifest, dict):
+        return None
+    version = manifest.get("version")
+    if not isinstance(version, str):
+        return None
+    match = re.match(r"^(\d+)\.", version)
+    return int(match.group(1)) if match else None
+
+
+def delivered_face_version_errors(path: Path, text: str, major: int) -> list[ValidationError]:
+    """Flag a literal in the plugin's own version family inside the delivered face.
+
+    Only prose is scanned: fenced blocks and inline code are quotations (the repo-wide reading of
+    硬边界 — a captured host output like `version=0.21.0` is a fact about a run, not a claim that
+    this document is version 0.21.0). The declared tolerance is pinned by a test.
+    """
+    errors: list[ValidationError] = []
+    pattern = re.compile(rf"\b{major}\.\d+\.\d+\b")
+    for match in pattern.finditer(prose_without_quotations(text)):
+        context = match.group(0)
+        errors.append(
+            ValidationError(
+                str(path),
+                f"version literal {context!r} in the delivered face; the version lives in the "
+                "manifests and CHANGELOG — reference them, and record a host's own version in "
+                "docs/host-platform-facts.md",
             )
         )
     return errors

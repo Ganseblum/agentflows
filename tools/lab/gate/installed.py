@@ -84,9 +84,12 @@ def installed_plugin_roots() -> tuple[Path | None, list[Path], list[ValidationEr
 def validate_installed(path_value: str | None) -> tuple[str, list[ValidationError]]:
     """Compare the runtime components of the source checkout with an installed snapshot.
 
-    Returns ("pass" | "fail" | "skip", errors). The check stays out of `all` because it reads
-    outside the repository: a clone or a candidate worktree with no local install must not fail
-    repository validation. Run it before any dogfood run and after changing `agents/` or
+    Returns ("pass" | "fail" | "skip", errors). The repository cannot be failed for a host it does
+    not have: a clone, a CI job or a candidate worktree with no local install reports "skip", which
+    `validate.py all` prints as SKIP rather than PASS. Where a snapshot *does* exist and differs,
+    that is a repository-level finding — the host is running role text the tree no longer contains —
+    so `all` fails on it (EXTRA_CHECKS in validate.py; 2026-10-31 audit closed the gap where 11/11
+    passed beside a 49-error drift). Run it before any dogfood run and after changing `agents/` or
     `skills/`, where the host loads the installed snapshot rather than the working tree.
     """
     errors: list[ValidationError] = []

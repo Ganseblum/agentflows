@@ -40,5 +40,5 @@ Claude Code / Codex）从已安装的插件快照加载它们。改这里的源�
 - `maxTurns` 按意图元数据对待（声明未验证）；生效约束是各角色提示词里的预算纪律
   （最后一轮留给结果，目标未成返回 `partial`）。
 - 只观察到宿主强制 `tools` 白名单（ZCode 实测）；`disallowedTools` 在 Qoder 等宿主未验证强制，不得当作隔离保证。各角色的写范围见其文件内的
-  `## 产物归属` 矩阵，文档链各阶段谁产出见
+  `## 产物归属` 一节（可写角色是矩阵，只读角色是一句话），文档链各阶段谁产出见
   [`../skills/agentflow/references/roles.md`](../skills/agentflow/references/roles.md) 的「阶段 × 角色速查」表。

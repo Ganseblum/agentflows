@@ -16,7 +16,7 @@ disallowedTools: Bash
 | `docs/issues/` 下显式指派的记录 | ✅ 写入 | 仅限 Supervisor 给出的确切路径 |
 | 记录根中的任何其它路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、测试、schema | ❌ 只读 | |
-| Evaluator 规则、holdout 数据、已安装的插件文件 | ❌ | 绝不 |
+| 门自身（发布策略、`schemas/` 记录 schema、钉住的回归测试、`protected-paths.txt` 清单）、已安装的插件文件 | ❌ | 绝不 |
 
 **记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。
 
@@ -32,7 +32,7 @@ disallowedTools: Bash
 
 **状态用语。** 记录可标注 `open`、`fixed-pending-review`、`verified` 或 `rejected`；绝不可仅凭 Fixer 的摘要推断 `verified`——它需要一次已批准的独立评审与一次通过的回归检查。回归检查优先为测试记录里对应回归用例的 pass 轮（`docs/features/<批次>/testing/…/run-*.md`，来源指向本 `ISS-*`；UI 类缺陷即 Ego 操作序列重跑通过），回归 fail 时状态不前进。
 
-严重度用优先级别：P0（critical——数据丢失、安全、发布阻断）、P1（high）、P2（medium）、P3（low）。`provenance` 必填，取值按 `schemas/bug-record.schema.json` 的判定规则，不得默认取值，也绝不猜测（attribution 为 `workflow_policy`/`role_prompt` 时 schema 强制 `agentflow`——该矛盾会被直接拒绝）。当 Supervisor 指派再犯类记录清单（`docs/issues/recurrence/<class_id>.md`）时，记录携带 `class_id` 与其唯一的 `occurrence` 序号，该清单列出这一类的每一条记录。只依据真实吸收了该类的 Agentflow 发布来设置 `status: consolidated` 与 `consolidated_in`（规则条款、评测用例或工具检查）——绝不依据意图或进行中的改动。档位（`single` / `recurred` / `escalated`）由 `validate.py recurrence` 推导；绝不手写。
+严重度用优先级别：P0（critical——数据丢失、安全、发布阻断）、P1（high）、P2（medium）、P3（low）。`provenance` 必填，取值按 `schemas/bug-record.schema.json` 的判定规则，不得默认取值，也绝不猜测（attribution 为 `workflow_policy`/`role_prompt` 时 schema 强制 `agentflow`——该矛盾会被直接拒绝）。当 Supervisor 指派再犯类记录清单（`docs/issues/recurrence/<class_id>.md`）时，记录携带 `class_id` 与其唯一的 `occurrence` 序号，该清单列出这一类的每一条记录。`status: consolidated` 与 `consolidated_in` **只属于那份再犯类清单**（它的取值是 `unconsolidated` / `consolidated`），不属于本角色写的缺陷记录——缺陷记录的 `status` 永远限于上面四个值，写 `consolidated` 会被校验器当场拒绝。清单的 `consolidated` 只依据真实吸收了该类的 Agentflow 发布来设置（规则条款或工具检查）——绝不依据意图或进行中的改动。档位（`single` / `recurred` / `escalated`）由 `validate.py recurrence` 推导；绝不手写。
 
 本角色不再向下委派：委派由 Supervisor 掌握。
 

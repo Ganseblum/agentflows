@@ -759,15 +759,19 @@ class ValidatorRegressionTests(unittest.TestCase):
 
     def test_shipped_plan_template_can_be_used_as_hybrid(self) -> None:
         template = ROOT / "skills/agentflow/templates/feature/plan/execution.md"
+        raw_lines = template.read_text(encoding="utf-8").splitlines()
+        # The shipped template carries the agentflow frontmatter envelope itself; this test supplies
+        # its own envelope, so the template's block is dropped rather than duplicated in the body.
+        if raw_lines[:1] == ["---"] and "---" in raw_lines[1:]:
+            raw_lines = raw_lines[raw_lines.index("---", 1) + 1:]
         lines: list[str] = []
         filled_tasks = 0
-        for line in template.read_text(encoding="utf-8").splitlines():
+        for line in raw_lines:
             for task_id, dependency in (("T01", "—"), ("T02", "T01")):
                 if line.startswith(f"| {task_id} |"):
-                    line = (
-                        f"| {task_id} | 验证模板 | QA | `src.py` | {dependency} |"
-                        " 设计说明 | 可观察结果 | ☐ 未开始 | — |"
-                    )
+                    # The row keeps the template's default seven columns; the plan gate reads the
+                    # status column by name, so the cell count has to match the shipped header.
+                    line = f"| {task_id} | 验证模板 | P0 | `src.py` | {dependency} | ☐ 未开始 | — |"
                     filled_tasks += 1
                     break
             lines.append(line)

@@ -36,7 +36,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 ## 当前成熟度
 
-版本只在 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->10<!-- /count -->个角色档案、七份记录契约 schema、Codex / Claude Code / ZCode / Qoder 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
+版本只在 manifest 与 [CHANGELOG.md](CHANGELOG.md) 中声明一次；本文件从不重复它。交付形态：一个共享开发 Skill 加<!-- count:agents -->10<!-- /count -->个角色档案、<!-- count:schemas -->8<!-- /count --> 份记录契约 schema、Codex / Claude Code / ZCode / Qoder 与可移植 Agent Plugin 清单。怎么流转、记录落哪、门怎么跑，看 [`docs/system-guide.md`](docs/system-guide.md)——本文件不复述，避免同一件事两处维护。
 
 两条别处没有的边界说明：
 

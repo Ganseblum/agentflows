@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 
@@ -456,6 +457,46 @@ def lightweight_findings(feature_dir: Path, repo_root: Path) -> list[str]:
     return errors
 
 
+def template_skeleton_findings(feature_dir: Path) -> list[str]:
+    """C27: a stage document that is still the shipped template is not a deliverable.
+
+    Shape-only gates are the reason this exists — headings, table columns and diagram kinds are
+    all present in an empty template, so a verbatim copy passed the whole chain. Similarity is
+    measured line-wise against every shipped template (the plugin's own tree, not the target
+    repo: --root does not move TEMPLATE_ROOT), and the threshold is documented at TEMPLATE_MIN_SIMILARITY.
+    """
+    if not TEMPLATE_ROOT.is_dir():
+        return []  # a standalone copy of the linter ships no template face to compare against
+    templates: list[tuple[str, list[str]]] = []
+    for path in sorted(TEMPLATE_ROOT.rglob("*.md")):
+        try:
+            templates.append((path.relative_to(TEMPLATE_ROOT).as_posix(),
+                              path.read_text(encoding="utf-8").splitlines()))
+        except OSError:
+            continue
+    errors: list[str] = []
+    for document in sorted(feature_dir.rglob("*.md")):
+        if document.name == ".gitkeep" or not document.is_file():
+            continue
+        try:
+            lines = document.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError as exc:
+            # fail-closed, same reason as C16: unreadable bytes cannot be shown to be compliant.
+            errors.append(f"C27 模板骨架: 无法读取 {document}: {exc}")
+            continue
+        best_name, best = "", 0.0
+        for name, template_lines in templates:
+            score = SequenceMatcher(None, template_lines, lines).ratio()
+            if score > best:
+                best_name, best = name, score
+        if best >= TEMPLATE_MIN_SIMILARITY:
+            errors.append(
+                f"C27 模板骨架: {document.relative_to(feature_dir).as_posix()} 与随插件模板 "
+                f"{best_name} 一致度 {best:.2f}（阈值 {TEMPLATE_MIN_SIMILARITY}）——未填写的模板骨架"
+                "不是阶段交付物，按该阶段的必需骨架写出实际内容")
+    return errors
+
+
 def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
     errors: list[str] = []
     if not feature_dir.is_dir():
@@ -463,13 +504,16 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
 
     compact_readme = feature_dir / "README.md"
     if compact_readme.is_file() and "轻量" in _light_values(read(compact_readme), "文档档位"):
-        return lightweight_findings(feature_dir, repo_root)
+        return template_skeleton_findings(feature_dir) + lightweight_findings(feature_dir, repo_root)
 
     files = sorted(feature_dir.rglob("*"))
     md_files = [f for f in files if f.is_file() and f.suffix == ".md" and f.name != ".gitkeep"]
     readme = feature_dir / "README.md"
     history = feature_dir / "HISTORY.md"
     all_text = {f: read(f) for f in md_files}
+    # C27 runs before the per-stage checks: a skeleton batch should report the skeleton, and its
+    # shape gates would otherwise pass on the template's own example rows and diagrams.
+    errors.extend(template_skeleton_findings(feature_dir))
 
     # C24 single-ledger mode (2026-10-23 gate change, user-authorized): when README.md is absent
     # but HISTORY.md is present, HISTORY.md is the chain's single ledger — it carries the entry
@@ -592,8 +636,12 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
             errors.append("C4 design/be: 缺少 ER 图或状态机图（design/be 或 spec）")
         if not re.search(r"\|\s*#?\s*接口.*\|.*请求字段.*响应字段|\|.*请求字段.*\|.*响应字段", be_text):
             errors.append("C4 design/be: 缺少字段级 API 契约表（请求字段/响应字段列表头）")
-        # C5: ids declared in the CONTRACT TABLE's first column must appear in design/fe
+        # C5: ids declared in the CONTRACT TABLE's first column must appear in design/fe.
+        # Two id dialects are accepted: a short code (A1) or the method+path itself
+        # (POST /api/x). The shipped design/be template forbids invented codes and writes
+        # paths, so accepting only A1-shaped ids made C5 a dead check (2026-10-31 audit).
         contract_ids: set[str] = set()
+        contract_paths: set[str] = set()
         # row pattern is strictly per-line: a `\s*$\n?` variant would bridge one blank
         # line and swallow the NEXT table (decision ids misread as contract ids).
         # accepted tolerance (review note): a table ending at EOF without a trailing
@@ -602,18 +650,24 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
             header = table.splitlines()[0]
             if "请求字段" in header and "响应字段" in header:
                 for row in table.splitlines()[2:]:
-                    first = row.strip("|").split("|")[0].strip()
+                    first = row.strip("|").split("|")[0].strip().strip("`")
                     m = re.match(r"^([A-Za-z]{1,3}\d{1,3})\b", first)
                     if m:
                         contract_ids.add(m.group(1).upper())
+                        continue
+                    pm = re.match(r"^(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(/\S+)", first, re.IGNORECASE)
+                    if pm:
+                        contract_paths.add(pm.group(1).split("?")[0].rstrip("`"))
         fe_body = "\n".join(body_text(all_text[f]) for f in fe_files)
         fe_ids = set(re.findall(r"\b([A-Za-z]{1,3}\d{1,3})\b", fe_body))
         # accepted tolerance (review note a): \b fails on CJK-adjacent ids (e.g. `A1的`),
         # which over-reports C5 — the safe direction for a floor linter
         fe_ids = {i.upper() for i in fe_ids}
         missing = sorted(contract_ids - fe_ids)
-        if contract_ids and missing:
-            errors.append(f"C5 契约闭合: design/be 契约表声明的接口 {missing} 未在 design/fe 出现（缺异常矩阵行或调用）")
+        missing_paths = sorted(p for p in contract_paths if p not in fe_body)
+        if (contract_ids and missing) or missing_paths:
+            absent = missing + missing_paths
+            errors.append(f"C5 契约闭合: design/be 契约表声明的接口 {absent} 未在 design/fe 出现（缺异常矩阵行或调用）")
     if fe_applies:
         kinds = mermaid_kinds(fe_text)
         for kind in ("flowchart", "sequenceDiagram", "stateDiagram"):
@@ -624,19 +678,33 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         # name and never looked at the bytes.
         if len(wireframes) < 2 and not has_prototype:
             errors.append(f"C7 design/fe: 工程线框不足 2 张（现 {len(wireframes)}）且无 prototype HTML 原型")
+        # C6: the matrix must live under a section whose heading names it. A step table whose
+        # header happened to read 「成功/异常去向」 used to satisfy this check, so a design with
+        # no exception handling could pass (2026-10-31 audit).
+        section = ""
+        section_level = 0
+        in_section = False
+        for line in fe_text.splitlines():
+            heading = re.match(r"^(#{1,4})\s+(.*)$", line)
+            if heading:
+                level = len(heading.group(1))
+                if in_section and level <= section_level:
+                    in_section = False
+                if re.search(r"异常|错误|失败", heading.group(2)):
+                    in_section = True
+                    section_level = level
+                    section = ""
+                    continue
+            if in_section:
+                section += line + "\n"
         matrix = False
-        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", fe_text, re.MULTILINE):
+        for table in re.findall(r"((?:^\|[^\n]*\|[ \t]*\n){2,})", section, re.MULTILINE):
             rows = table.splitlines()
-            header = rows[0]
-            if (
-                ("成功" in header or "正常" in header)
-                and ("失败" in header or "异常" in header)
-                and any(SEP_RE.match(row.strip()) is None for row in rows[1:])
-            ):
-                matrix = True  # a data row below the header separator: the matrix has content
+            if len(rows) >= 3 and any(SEP_RE.match(row.strip()) is None for row in rows[1:]):
+                matrix = True
                 break
         if not matrix:
-            errors.append("C6 design/fe: 缺少接口异常边界矩阵（表头需同时覆盖 成功 与 失败/异常，且至少一行数据）")
+            errors.append("C6 design/fe: 缺少接口异常边界矩阵（需在「异常/错误/失败」标题的节内给出至少一行数据的表）")
 
     # C19 qa acceptance (2026-10-21 gate change, user-authorized): a spec that carries any
     # content but no qa acceptance document is a chain that cannot be accepted. C1 only catches
@@ -1214,8 +1282,8 @@ def trace_task_ids(cell: str) -> set[str]:
     独立一份正则会造出「承接表能写、看板认不出」的空洞，所以这里只做切分与全匹配筛选。
     """
     return {tok for tok in re.split(r"[^0-9A-Za-z_-]+", cell) if TASK_ID_RE.fullmatch(tok)}
-MODULE_RE = re.compile(r"\bM-[A-Z]\b")
-AC_ID_RE = re.compile(r"\bG\d+-AC-\d+\b")
+MODULE_RE = re.compile(r"\bM(?:-[A-Z]|\d{1,3})\b")
+AC_ID_RE = re.compile(r"\b(?:G\d+|M\d+)-AC-\d+\b")
 DONE_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "已完成")
 TODO_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "未开始")
 BLOCKED_GLYPH = next(g for g, w in TASK_STATUS_GLYPHS.items() if w == "阻塞")

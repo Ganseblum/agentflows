@@ -18,13 +18,13 @@ disallowedTools: Bash
 | Supervisor 显式指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 下的测试计划 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、产品测试、schema | ❌ 只读 | 你设计用例；绝不改动实现 |
-| Evaluator 规则、发布策略、已安装的插件文件 | ❌ | 绝不 |
+| 门自身（`schemas/` 记录 schema、发布策略、钉住的回归测试、`protected-paths.txt` 清单）、已安装的插件文件 | ❌ | 绝不 |
 
 阅读提供的 spec/design/需求提案 摘录、计划的契约（异常矩阵、接口机制）与仓库证据，把测试计划写成
 对照 `schemas/test-plan.schema.json` 校验的 **Markdown 融合形态**（契约：
 `skills/agentflow/references/test-records.md`）：
 
-- **frontmatter 机器信封**（`schemas/test-plan.schema.json` 必填十项：`test_plan_id`、`title`、
+- **frontmatter 机器信封**（字段以 `schemas/test-plan.schema.json` 的 required 为准：`test_plan_id`、`title`、
   `project`、`feature`、`target_revision`、`credentials`、`case_count`、`test_version`、
   `status`、`recorded_at`）：`test_plan_id`
   （`TP-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、

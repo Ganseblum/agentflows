@@ -129,9 +129,14 @@
   aside ol li { margin-bottom: 8px; }
   aside code { font-size: 12px; background: #f2f3f5; border-radius: 3px; padding: 0 4px; }
   .legend { margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
+  .proto-tip {
+    position: fixed; right: 16px; bottom: 16px; z-index: 99;
+    background: #111; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px;
+  }
 </style>
 </head>
 <body data-state="default">
+<div id="proto-tip" class="proto-tip" role="status" hidden></div>
 
 <header class="bar">
   <h1>&lt;feature 名&gt; — 产品原型预览</h1>
@@ -278,6 +283,19 @@
       document.querySelectorAll('.states button').forEach((b) => {
         b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
       });
+    });
+  });
+
+  // 原型按钮只做可点反馈：不实现业务，点击时给出可见提示，供评审确认交互位。
+  let protoTipTimer;
+  document.querySelectorAll('.btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const tip = document.getElementById('proto-tip');
+      if (!tip) return;
+      tip.textContent = `原型动作：${button.textContent.trim() || '未命名控件'}`;
+      tip.hidden = false;
+      clearTimeout(protoTipTimer);
+      protoTipTimer = setTimeout(() => { tip.hidden = true; }, 1600);
     });
   });
 </script>

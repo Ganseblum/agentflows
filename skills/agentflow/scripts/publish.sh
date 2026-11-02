@@ -127,7 +127,6 @@ if [ "$DRY_RUN" = "1" ]; then
 else
   # 门清单单源：解析 `validate.py --list`，排除 all/installed/lint/report/recurrence
   # （2026-10-26 审计 G24）。
-  REQUIRED_KINDS="all installed lint report recurrence"
   TARGETS="$(python3 tools/lab/validate.py --list \
     | grep -vE 'all runs [0-9]+ checks' \
     | grep -vxE 'all|installed|lint|report|recurrence' \
@@ -146,8 +145,10 @@ else
 fi
   if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
     "$LINT_PYTHON" tools/lab/validate.py lint || fail "门禁红（lint）"
+  elif [ "${AGENTFLOW_PUBLISH_ALLOW_UNRUN:-0}" = "1" ]; then
+    say "WARN lint 未运行（没有 ruff/mypy），已由 AGENTFLOW_PUBLISH_ALLOW_UNRUN=1 显式放行"
   else
-    say "SKIP lint（未运行：没有 ruff/mypy；用 AGENTFLOW_LINT_PYTHON 指定装好 dev 依赖的解释器）"
+    fail "lint 未运行（没有 ruff/mypy）。装好 requirements-dev.txt，或用 AGENTFLOW_PUBLISH_ALLOW_UNRUN=1 显式放行"
   fi
 fi
 

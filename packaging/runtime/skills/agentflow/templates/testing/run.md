@@ -63,6 +63,6 @@ updated_at: "<RFC 3339 含时区>"
 - 冒烟集与主流程：<通过 / 有失败逐条说明>
 - 失败项：<可直接照跑的 Ego 操作序列（步骤、期望与实际、证据）、bug 记录去向（`ISS-<YYYY-MM-DD>-<slug>` id）>
 - 状态联动：<本轮为已立 bug 的回归轮时，逐条点名结果支撑的 bug 状态变化——用例 pass 即支撑
-  该 `ISS-*` 的 `regression_status: pass`（供 supervisor 评审后转 fixed-pending-review）；
-  fail/blocked 则写明对应 bug 不前进或退回。executor 只报证据，bug 状态由 supervisor/recorder 回写>
+  该 `ISS-*` 的 `regression_status: pass`（供主对话评审后转 fixed-pending-review）；
+  fail/blocked 则写明对应 bug 不前进或退回。executor 只报证据，bug 状态由主对话与记录角色回写>
 - 流程疑点：<与计划声明的对照，下一轮决策>

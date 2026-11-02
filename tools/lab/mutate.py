@@ -99,6 +99,7 @@ ITEMS: dict[str, tuple[str, str]] = {
     "testing.decision-pass": ("tools/lab/gate/testing.py", "decision pass 须零 fail/blocked"),
     "testing.case-registry": ("tools/lab/gate/testing.py", "结果行须属于计划注册表"),
     "docs.version-prose": ("tools/lab/gate/docs.py", "版本散文守卫"),
+    "docs.delivered-version-face": ("tools/lab/gate/docs.py", "交付面版本守卫：宿主实际加载的角色/skill 面按本插件版本族判红"),
     "docs.retired-path": ("tools/lab/gate/docs.py", "退役路径 token 扫描"),
     "docs.broken-link": ("tools/lab/gate/docs.py", "相对 Markdown 链接须可解析"),
     "manifests.version-agree": ("tools/lab/gate/manifests.py", "manifest 版本一致"),
@@ -123,6 +124,7 @@ ITEMS: dict[str, tuple[str, str]] = {
     "doc_chain.C17": ("tools/lab/docchain/checks.py", "C17 核验过期：引用路径在核验日期之后被修改即红"),
     "doc_chain.C22": ("tools/lab/docchain/checks.py", "C22 目标承接：打标批次的目标须双向闭合、任务号不得幻影、状态不得谎报"),
     "doc_chain.C23": ("tools/lab/docchain/checks.py", "C23 证据在场：☑ 已完成行须留可复核载体"),
+    "doc_chain.C27": ("tools/lab/docchain/checks.py", "C27 模板骨架：与随插件模板逐字近似的阶段文档不是交付物"),
 }
 
 # Items exempt from mutation, with the reason. Keep this list short.
@@ -179,6 +181,7 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("testing.decision-pass", 'if frontmatter.get("decision") == "pass" and', "invert_cmp", "examples"),
     ("testing.case-registry", 'if case_id not in plan["cases"]:', "disable_if", "tests"),
     ("docs.version-prose", "for match in VERSION_LITERAL_PATTERN.finditer(text):", "empty_iter", "tests"),
+    ("docs.delivered-version-face", "for match in pattern.finditer(prose_without_quotations(text)):", "empty_iter", "tests"),
     ("docs.retired-path", "if not preceded_by_word:", "disable_if", "tests"),
     ("docs.broken-link", "if not (path.parent / target_path).exists():", "disable_if", "tests"),
     ("manifests.version-agree", "if version != reference:", "invert_cmp", "tests"),
@@ -195,7 +198,7 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("doc_chain.C4", "if not seq_with_alt:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C4", 'if "flowchart" not in kinds:', "disable_if", "doc_chain_selftest"),
     ("doc_chain.C5", "C5 契约闭合: design/be 契约表声明的接口", "drop_statement", "doc_chain_selftest"),
-    ("doc_chain.C6", "for table in re.findall(r\"((?:^\\|[^\\n]*\\|[ \\t]*\\n){2,})\", fe_text, re.MULTILINE):", "empty_iter", "doc_chain_selftest"),
+    ("doc_chain.C6", "for table in re.findall(r\"((?:^\\|[^\\n]*\\|[ \\t]*\\n){2,})\", section, re.MULTILINE):", "empty_iter", "doc_chain_selftest"),
     ("doc_chain.C7", "if len(wireframes) < 2 and not has_prototype:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C9", "if not BRANCH_HEADING_RE.search(all_text[f]):", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C10", "if opened != blocks:", "invert_cmp", "doc_chain_selftest"),
@@ -208,6 +211,7 @@ SPECS: list[tuple[str, str, str, str]] = [
     ("doc_chain.C23", "errors.append(\n            f\"C23 证据在场: {label} {task_id} 标为已完成但{detail}\"", "drop_statement", "doc_chain_selftest"),
     ("doc_chain.C22", "if \"\u76ee\u6807\u627f\u63a5\" in section.splitlines()[0]:", "disable_if", "doc_chain_selftest"),
     ("doc_chain.C23", "if any(_ref_is_in_repo(r, p) is True and (r / p).is_file() for r in roots):", "disable_if", "doc_chain_selftest"),
+    ("doc_chain.C27", "if best >= TEMPLATE_MIN_SIMILARITY:", "disable_if", "doc_chain_selftest"),
 ]
 
 MUTATIONS: list[Mutation] = [
