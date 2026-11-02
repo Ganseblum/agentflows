@@ -3,7 +3,7 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
-## 未发布 — 2026-11-02（归档口径统一批）
+## 0.25.1 — 2026-11-02（归档口径统一）
 
 - 实测钉口径：在一次性 worktree 副本上跑两例，逐字命中 `a rejected record must be moved into issues/归档/` 与 `only rejected records may be archived; verified records stay in place`——确认「只有被拒进归档、已验证原地保留」是机器约束而非惯例，副本跑完即 `git worktree remove --force` 拆除，真实树全程未动。
 - 定义收拢到单点：`docs/issues/README.md` 的「归档规则」节写明四件事——只有 `rejected` 进 `归档/<recorded_at 日期>/`、关闭态不搬的理由（id 即文件名，台账与评审按路径引用）、执法点分两处（状态↔位置在 `tools/lab/gate/workspace.py`，形状与 id 在 `records.py::validate_bug_layout`）、以及本仓「归档」一词的四义对照（缺陷被拒桶 / `episodes/归档/` 按月下沉 / 评测件 `archive/` / 评审快照 `archive/<轮次>/`，后三者与记录状态无关）。
