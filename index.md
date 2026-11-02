@@ -22,7 +22,7 @@
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录 | `docs/issues/`（缺陷与台账）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
-| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
+| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/archive/2026-10-26/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
 
 ## 维护纪律
 

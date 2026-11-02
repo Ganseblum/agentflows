@@ -8,7 +8,11 @@
 - 删除 10 个已完成批次目录（`docs/features/feature-2026-10-{13,22,25,26,28×4,29}-*`，175 个文件、6.1 万行）：逐批看板已 23–30 ☑ 或「本期不做」、入口门与独立评审均闭环，按 `docs/features/README.md`「完成批次不长期留存」的既有口径删除，原文以 `agentflows@c8ed0b2:docs/features/<批次>/` 取回。`docs/features/README.md` 的在途批次表随之收拢为一句指针——不留与已删看板打架的第二份状态结论。
 - 记录面引用改写：8 条缺陷记录的 `files` 移出 12 条批次路径（取回地址记在正文），1 条（L3 安装摘要矛盾）保留仓限定引用并嵌入决定性片段以自证；episodes 41 条证据字段 + 13 处内嵌路径限定为 `agentflows@c8ed0b2:`；index.md 8 条批次索引的 17 个仓内链接改为载体串。
 - 连带后果（如实记）：`doc_chain_live` 的活文档面从 124 份降到 1 份（只剩 `docs/features/README.md`），C27 与本仓真实文档的对照在本轮之后不再有对象，直到下一个新批次建立；待验收第 11 行 ⑥ 的「123 份真实文档无一命中 C27」其对象已消失。
-- 复跑：`validate.py all` 除 `installed`（三端仍装 0.24.0，随本轮发版重装）外 11 项 PASS、`unittest` 260 OK、`doc_chain.py --self-test` 157/157。
+- 评测面收口：活跃面按既有「留三」口径落成实际——10-19 任务书、10-20 评测、10-21 行动件、10-23/10-26 审核共 5 份下沉 `docs/evaluations/archive/<文件日期>/`，活跃面只留 10-28 评测、10-28 耗时基线、10-29 对照实验三份；`README.md` 收存清单补齐此前漏记的对照实验一行（清单与在盘文件各写各的，属本仓记录过的同一形态），index.md 与 changelog-archive.md 的两个失效链接随迁。
+- 更正一条虚假自述：`ISS-2026-09-19-office计划采纳汇总` 声称 16 份外部记录「已迁入 `docs/issues/归档/2026-09-19/`」，实为该目录在盘为空、git 从未含该路径，原件随 `bf5ae9d` 删除——17 处取回地址改为只引用 git 历史载体，并在记录的变更记录节留痕。
+- **未做的两项（如实记）**：54 条 `verified` 缺陷记录不搬 `docs/issues/归档/`——`docs/issues/README.md` 的归档口径（仅 rejected 进归档，verified 原地保留）由 `tools/lab/gate/records.py` 的 `validate_bug_layout` 强制，且 `schemas/bug-record.schema.json` 与 `agents/bug-recorder.md` 都按该口径引用路径；搬动既不减少体量（只是换目录），又要改受保护的 schema，属门变更需显式评审。`docs/changelog-archive.md`（184K）无新的早期节可并——现行 CHANGELOG 只含 0.23.0 之后的节。
+
+- 复跑：`validate.py all` 除 `installed`（三端仍装 0.24.0，随本轮发版重装）外 11 项 PASS、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`artifacts` 136 objects PASS。
 
 ## 0.24.0 — 2026-11-02
 

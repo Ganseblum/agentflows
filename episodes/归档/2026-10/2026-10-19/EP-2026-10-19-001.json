@@ -57,7 +57,7 @@
       "claim": "整门变异当时报 51/51 全杀（2026-10-20 勘误降级：报告已随 /tmp 清理散失不可复核，同日树复跑 43 杀死 / 6 存活 / 2 无效，存活为语料缺口非门失效实证）",
       "status": "failed",
       "check": "python3 -B tools/lab/mutate.py --report <dir>（2026-10-20 复跑：总变异数 51 已杀死 43 存活 6 无效 2，退出码 2→修复后语义：存活=1、无效=2；报告目录可复核）",
-      "evidence_ref": "docs/evaluations/AGENTFLOW-EVALUATION-2026-10-20.md（G08：51/51 不可复核，复跑 43/51）"
+      "evidence_ref": "docs/evaluations/archive/2026-10-20/AGENTFLOW-EVALUATION-2026-10-20.md（G08：51/51 不可复核，复跑 43/51）"
     },
     {
       "claim_id": "C2",
