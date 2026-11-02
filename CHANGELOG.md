@@ -13,7 +13,7 @@
 - 评估整改：修复 C5/C6 两条空转判据与写范围工具误报（3010→仅真实变更）；模板补齐目标承接表、清 C13 会话词、修决策表与埋点表头、补可选层说明与 hub/releases 骨架。
 - 计数漂移与脚本口径收口：门 1–10（4 处）、README schema 计数改用标记、roles 五条链、repo-audit 补 D12、角色文件手抄 schema 计数改为以 schema 为准；publish/upgrade 缺 lint 依赖默认拦下（显式环境变量放行），删除三处死变量；contracts 明确 `task_id`/`baseline_revision` 适用于产出交付物的 worker。
 - 角色面与 references 对齐代码事实：`bug-recorder` 的 `status: consolidated` 明确归再犯类清单、`test-executor` 的「更新注册表」改为「记缺口并交回」（与 `disallowedTools: Edit` 一致）、`reviewer` 严重度补 P3、三个只读角色的产物归属统一为 `## 产物归属` 节、`technical-director` 补返回字段与预算页脚；`review_tier` 载体改为评审记录、C13 豁免按逐文件清单真实描述、退役残留清除、`review-checklists.md` 接进 SKILL 路由表。
-- 合并后在 `main` 复跑：`validate.py --list` 自报 12 项、其余 11 项 PASS（`installed` 待三端重装转绿）、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、C27 负例复现（12 份模板逐字成链报 12 条 C27；只放 README 报 4 条 C1）、`check-write-scope.sh HEAD .` PASS、`doc_chain_live` 无 C27 命中。
+- 合并后在 `main` 复跑并通过 `publish.sh --bump minor` 发布（提交 `93d46c7`，已推送 origin/main）：`validate.py --list` 自报 12 项、**12 项全 PASS（含第 12 项 `installed`）**、`unittest` 260 OK、`doc_chain.py --self-test` 157/157、`--check doc_chain_selftest` 变异 20/20 杀死、C27 负例复现（12 份模板逐字成链报 12 条 C27；只放 README 报 4 条 C1）、`check-write-scope.sh HEAD .` PASS、`doc_chain_live` 无 C27 命中。三端已重装 0.24.0：ZCode（CLI 升级，需重启生效）、Codex（缓存 `personal/agentflow/0.24.0`）、Qoder（本机无 `qodercli`，按 `docs/host-platform-facts.md` Q6 拷缓存 + 改登记表，`installed --path` 对照 PASS）。
 
 ## 0.23.0 — 2026-10-29
 
