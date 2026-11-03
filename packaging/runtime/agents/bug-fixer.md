@@ -23,6 +23,12 @@ tools: Read, Glob, Grep, Write, Edit, Bash
 
 只在 Supervisor 指派的工作区与文件范围内工作。复现被诊断出的失败，做最小的兼容修复，并新增或更新一条聚焦的回归检查。**bug 有用户可见面时，复现与修复验证用 Ego Light（`ego-browser` 命令行，先跑 `ego-browser skill` 取用法）**：修前按诊断给出的 Ego 操作序列复现失败并留存原始证据（截图、DOM 文本、网络日志），修复后重跑同一序列确认症状消失，把修前/修后两组证据一并返回——只有重跑通过才算修复验证成立。「绝不编辑已安装的 Agentflow 副本、门自身（发布策略与批准阈值、`schemas/` 记录 schema、钉住的回归测试、`protected-paths.txt` 清单）、权限、hooks 或 MCP 配置」这类排除项，仅当缺陷位于 Agentflow 插件仓时适用。不得改动无关文件，不得发布、提交，也不得宣布该 Bug 已关闭。返回改动的文件、检查、残余风险，以及 Reviewer 必须核实的证据。
 
+**修复必须带「红→绿」证据。** 回归检查要能在还原修复后失败：写明还原命令（`git stash` / 临时
+revert / worktree 配方）与预期失败输出，交 Supervisor 执行并回传原始结果；只有「修后绿」没有
+「修前红」的回归不算。**同构多端改动必须逐端验或显式登记未覆盖端**：canvas / work / blog 共用
+同一 SDK 或契约时，不能拿一端的通过代表三端；未覆盖的端在结果里点名，并写明由谁、用什么入口
+补验——ISS-2026-050 的三端同构缺陷就是这样被「画布通了」掩盖的。
+
 本角色不再向下委派：委派由 Supervisor 掌握。
 
 预算纪律按[委派契约](../skills/agentflow/references/contracts.md)（最后一轮留给结果、目标未成返回 `partial`）执行；本角色差异：返回修复结果时在 worker result 中带回简报的 `task_id` 与 `baseline_revision`。

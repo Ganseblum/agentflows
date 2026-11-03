@@ -76,6 +76,14 @@ index.md                  the single document index
 
 文件名口径（2026-10-23 补）：linter 的 C1 只判「该阶段目录里有没有真实文档」，**不判文件名**——`proposal/prd.md` 这类旧命名不会被门抓住，只能靠这里的约定与评审。插件仓批次一律用契约名（`proposal/proposal.md`、`spec/<角色>/<镜像名>.md`、`plan/<plan_id>.md`，其中 plan 的文件名由计划契约机器强制）；目标仓批次使用 `plan/execution.md`（见下文 plan 节），spec 与 proposal 阶段文件名同上；存量批次按「历史不回改」保留原名，接入时先跑基线再决定要不要改名。
 
+`design/qa/testing.md` 的内容下限（ISS-2026-050 复盘）：必须带**入口矩阵**（按钮 / 弹窗含
+iframe / 整页跳转 / 深链 / 回调页 / 脚本 / 纯接口逐项）、**证据层级与断言独立性**（每条 AC
+的期望值来源与最低证据层级）、**掩盖条件**（旧数据 / 遗留 cookie 或缓存 / 构建期内联 /
+功能开关）。入口矩阵与断言来源缺失按设计未完成退回，不用「登录页」这类页面级标签代替入口。
+这三节是 `templates/testing/plan.md` 与 `testing/run-*.md` 的上游真源，计划只逐条绑定、
+不复述；执行记录的 `层级` 列与 `decision: pass` 的零 not-run 要求见
+[`test-records.md`](test-records.md)。
+
 ## 阶段骨架
 
 带**固定标题字面量**的填写式模板位于

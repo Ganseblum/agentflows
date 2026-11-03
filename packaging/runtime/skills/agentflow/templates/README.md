@@ -6,6 +6,23 @@
 > **模板内链接**：`feature/`、`testing/` 等模板里的相对链接指向插件安装树（`skills/agentflow/references/…`）。复制到目标仓后这些链接会断——复制时按「目标仓相对路径或插件根路径」改写，或删除链接只留文字说明。
 > 三条跨阶段贯通项（复制骨架时不要漏）：**产品原型**（目标仓已维护原型库 → 必须形态 A：正文在库内、批次 `prototype/index.html` 只做入口页；确无原型库 → 形态 B：批次内可编辑 HTML 是正文。两种形态都沿用项目真实视觉基线，跨批次登记上游路径与 revision，截图可由 HTML 导出）；**视觉来源** `spec/ui` §2.1 → `design/ui` §0.1（组件库/主题机制/token 源文件给 `path:line`，A 复用 / B 移植 / C 冷启动三档，禁凭空造色值）；**埋点** 三处口径——`proposal/proposal.md` §6.2 决策 → `spec/fe/frontend.md` §4 口径 → `design/fe/frontend.md` §1.7 事件契约，验收在 `spec/qa` 与 `design/qa`（评审清单与隐私红线见 [`telemetry.md`](../references/telemetry.md)）。
 
+## 落地映射（哪个模板落到项目哪里、谁创建、何时）
+
+| 模板目录 | 落到目标仓哪里 | 谁创建 | 何时 |
+| --- | --- | --- | --- |
+| [hub/](hub/README.md)（README、index、issues-README） | `<repo>/<name>-workflow-ai/` 枢纽骨架 | Init（或 init 脚本化后由脚本） | 接入时 |
+| [host/global-rules.md](host/global-rules.md) | 宿主全局指令文件的托管块（不在仓内，如 `~/.zcode/AGENTS.md`） | Host Init（用户明确确认后） | 每宿主一次 |
+| [hub/repo-rules.md](hub/repo-rules.md) | 目标仓根 `AGENTS.md` 的「Agentflow 接入约定」节 | Init（重跑只替换标记内内容） | 接入时 |
+| [engineering/baseline.md](engineering/baseline.md) | `<hub>/engineering-baseline.md` | 脚本落骨架，AI 探测回填 | 接入时 |
+| [references/standards/](../references/standards/server-side.md) | `<repo>/.agentflow/standards/` | `scripts/init_workspace.py` | 接入时 |
+| [feature/](feature/README.md)（proposal / spec / design / plan / prototype） | `<hub>/features/<批次>/` | 立项会话按链复制 | 立项时 |
+| [testing/](testing/plan.md)（plan、run） | `<批次>/testing/<项目>-<功能>/` | test-planner / test-executor | 测试设计与执行时 |
+| [releases/](releases/todo.md)（todo、pending-test） | `<hub>/releases/` | Init——**仅当本仓有真实发布流程**，否则不创建 | 涉及发布时 |
+| [issue/](issue/issue-template.md) | `<hub>/issues/ISS-*.md` | 缺陷落账时 | 按需 |
+| [decision/](decision/decision-record.md) | 拍板口（如 `docs/PENDING-DECISIONS.md`） | 决策登记时 | 按需 |
+
+## 模板清单与用法
+
 | 模板 | 用法（复制到 feature 目录的对应路径） |
 | --- | --- |
 | [feature/lightweight.md](feature/lightweight.md) | 满足六条适用判据的任务：复制为 feature README，集中需求、实施证据与恢复；不能用轻量省略评审或验证 |

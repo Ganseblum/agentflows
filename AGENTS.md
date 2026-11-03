@@ -81,6 +81,11 @@ linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`�
   在 Qoder 等宿主未验证，`maxTurns` 只声明、未验证。不得在没有证据的情况下添加字段并期待其
   被强制执行（逐宿主边界见 [`docs/host-platform-facts.md`](docs/host-platform-facts.md) 的
   Z4 / Q4 / C7 行）。
+- **规范改动没有重装，等于没改**（2026-11-04 可用性批确立：登录批次工作区已补 5 份规范文件，
+  运行时快照 0.28.0 一个都没读到）。凡改动 `skills/**`、`agents/**`、`templates/**` 的会话，
+  宣告完成前必须走完发布链：bump 版本 → 更新 `CHANGELOG.md` → `python3 packaging/build_runtime.py`
+  （或发布脚本）重建生成树 → 本地重装 → `validate.py installed` 绿。做不到时（无授权、环境缺失），
+  交付结论上限是 `partial`，并明确列出「哪些改动不在运行时生效」。
 
 ## 绝不编辑门
 
@@ -116,6 +121,10 @@ linter 自测（钉住检查器自身，且由于它已并入 `validate.py all`�
 - 除非用户要求，不得提交、推送或发布。不得声称走查过自己未观察到的宿主行为——
   应改为把它连同证据、范围与再验证方法记录进
   [docs/host-platform-facts.md](docs/host-platform-facts.md)。
+- **开工提问与设计压测按方法契约走**：需求不清先按
+  [`references/intake.md`](skills/agentflow/references/intake.md) 补六要素与红线，方案边界不清先按
+  [`references/grilling.md`](skills/agentflow/references/grilling.md) 压一轮再进架构门；两者是 Intake 与
+  架构门的执行细则，不是可选的对话风格。
 
 ## 决策记录与台账
 

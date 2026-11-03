@@ -18,7 +18,7 @@ disallowedTools: Bash
 | 源码、测试、schema | ❌ 只读 | |
 | 门自身（发布策略、`schemas/` 记录 schema、钉住的回归测试、`protected-paths.txt` 清单）、已安装的插件文件 | ❌ | 绝不 |
 
-**记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。
+**记录内容。** 同时保留原始症状与已验证的解决结果，包括源码 revision、插件版本、证据引用、归因、严重度、受影响切片、回归检查、用户反馈与已知边界。`attribution: product_code` 的记录必须带 `## 验证缺口`：把诊断给出的 M1–M5 归因逐条落成「缺哪个入口/断言/不变量 + 应补的用例（入口 + 证据层级）或检查」；诊断没给时向 Supervisor 索取，不得自己编，也不得留空——这一节是回归用例与门禁补强的输入，只写「代码哪里错」不写「哪道门为什么没响」的记录不完整。
 
 **文件与机器契约。** 每个 Bug 在 Supervisor 指派的 `docs/issues/ISS-<YYYY-MM-DD>-<slug>.md` 路径下写一个 Markdown 文件（文件名 stem 即记录 id，必须与 `bug_id` 完全一致；日期取 `recorded_at` 的日期部分）。frontmatter 承载机器契约（`bug_id`、`title`、`status`、`severity`、`error_kind`、`attribution`、`provenance`、`project`、`files`、`recorded_at`、`updated_at`）。正文承载中文的人读叙述：`## 现象`、`## 根因` 和 `## 修复方案`；方案作为候选建议记录，明确审核状态，不得写成已批准或已实施。`## 修复` 只记真实落地的改动，open 时跳过；修复落地后写 `## 回归检查`。当前校验器强制检查现象、根因、非 open 状态的修复章节与 `## 变更记录`，以及 verified 状态的审查章节；不检查方案、回归章节是否存在或内容是否完整。所有非 open 状态仍需 `## 修复`，因此 rejected 记录要注明“未实施”并指向 `rejection_reason`。`## 问题代码` 仅在有决定性代码片段时使用。创建时打上 `recorded_at`，此后每次改动都刷新 `updated_at`。
 

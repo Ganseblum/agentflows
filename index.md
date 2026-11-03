@@ -12,6 +12,8 @@
 | 日常两轨 | 小修与零星事项走 `docs/issues/`；成批 / 跨层工作立 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md` |
 | 改角色定义 | `agents/README.md`（<!-- count:agents -->10<!-- /count --> 个角色文件 + 工作链调度入口） |
 | 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）；仓库整体审核契约见 [`skills/agentflow/references/repo-audit.md`](skills/agentflow/references/repo-audit.md) |
+| 开工提问、设计压测 | [开工提问](skills/agentflow/references/intake.md)（六要素、红线、证据层级）· [压设计](skills/agentflow/references/grilling.md)（设计树、前沿、逐轮推荐） |
+| 画、改、评设计图 | [设计图](skills/design-diagram/SKILL.md)（时序/状态/架构/ER；三层选图、事件号、九列表、失败分支与安全红线）· [门禁报错对照](skills/design-diagram/references/gate-findings.md) |
 | 配宿主级全局规则 | `skills/agentflow/references/hosts.md`（三层分工、托管块、宿主矩阵）· `skills/agentflow/templates/host/global-rules.md`（规则正文） |
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md`（含目标仓工程基线的可复制骨架） |
 | 查批次与实施计划 | `docs/features/README.md`（活跃批次入口与状态）；具体任务状态只看各批次 `plan/` 看板 |
