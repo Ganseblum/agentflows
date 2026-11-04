@@ -9,4 +9,7 @@
 | DEC-2026-002 | r1 | — | — | — | 未决 |
 | DEC-2026-003 | r1 | — | — | — | 未决 |
 | DEC-2026-004 | r1 | — | — | — | 未决 |
-<!-- decision-index-digest: 620b66a9e0a5c50d3782b7586bcb214959ae8ec9d463051145ac71890060f2a3 -->
+| DEC-2026-005 | r1 | — | — | — | 未决 |
+| DEC-2026-006 | r1 | — | — | — | 未决 |
+| DEC-2026-007 | r1 | — | — | — | 未决 |
+<!-- decision-index-digest: a2c77dfa76c9876cdde6eea77bd1c181cfe0303d89fc70da5fb923fd0ab18b0a -->

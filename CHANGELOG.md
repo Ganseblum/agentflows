@@ -12,6 +12,7 @@
 - 门内三项检查（C28/C29/C30）按 protected 面规则以 `DEC-2026-002/003/004` 提案登记拍板口，本批未动 `tools/lab/`。
 - 根 `AGENTS.md` 新增「规范改动没有重装等于没改」发布链纪律；`check-testcases.py` 修 AC 定义识别（定义表行首匹配，引用不计入定义）并加 `--self-test`（4/4）。
 - 验证：`validate.py docs` / `decision_gate` PASS、`unittest discover` 260 OK、三脚本自测合计 17/17；`installed` 待 push 后重装转绿。
+- 第二轮八份复盘文档全量对账补齐：design/be 字段表固定十列（补规范化 / 生命周期 / 存储载体 / 代码落点）；standards 增「按规模分级」（单进程批次声明即放行，防 demo 照字面即红）；`releases/todo.md` 改发布队列（状态列只许引用）、hub/index 批次清单删状态列、feature README 进度总览改指针；testing plan 接 `testcases.yaml` 机读权威、run 实际结果按步骤号对齐；契约增「跨阶段不复用 reviewer」；SKILL 增「原型前置」义务；门提案扩至七条（DEC-2026-002…007：AC 闭合 / 实体字段表+C4 松绑 / 状态单点 / 执行期立案 / 候选集门 / 门清单声明补齐）。
 
 ## 0.29.0 — 2026-11-02（设计图能力独立成 skill）
 

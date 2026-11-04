@@ -151,7 +151,9 @@ Supervisor 验证共享工作区，因为 worker 摘要可能过期、不完整�
 
 ## 评审结果
 
-Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。被评审对象是未提交工作区时，用 `skills/agentflow/scripts/review_snapshot.py` 生成评审快照目录（含 MANIFEST），把快照路径作为 `reviewed_revision` 与 `read_scope` 的对象——快照在修复后不失效，delta 轮不必逐文件重算哈希。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
+Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。被评审对象是未提交工作区时，用 `skills/agentflow/scripts/review_snapshot.py` 生成评审快照目录（含 MANIFEST），把快照路径作为 `reviewed_revision` 与 `read_scope` 的对象——快照在修复后不失效，delta 轮不必逐文件重算哈希。
+
+**跨阶段不复用。** 需求 → 设计 → 代码跨阶段评审时优先派发**新的** reviewer 子代理：复用同一子代理跨多阶段会让上下文持续累积、独立性逐轮递减（实测一轮登录批次复用同一 reviewer 八轮，其单轮输入从约 70 万 token 涨到 446 万，且「自己审自己上轮的判断」）。确需复用（如宿主并发额度受限）时，简报必须写明累计轮次与上轮结论锚点，reviewer 报告须声明「本结论部分依赖上轮判断」。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
 
 ```yaml
 reviewed_revision: revision whose supplied raw diff and evidence were reviewed

@@ -20,6 +20,12 @@ updated_at: "<RFC 3339 含时区，≥ recorded_at>"
 > 网络请求是否发出、上报 payload 是否含某字段），不写实现细节；UI 步骤以 testid/别名定位元素，
 > 保证可被 Ego Light 照跑。就地修订：只补用例并刷新 `case_count`、递增
 > `test_version` 与 `updated_at`；单轮执行结果由 run-* 承载，本文件不写执行结果。
+>
+> **机读权威**：同目录的 `testcases.yaml` 是用例的单一机读权威（字段契约见
+> [`references/testcases.md`](../../references/testcases.md)；样例 `templates/testing/testcases.yaml.example`），
+> 本 Markdown 是人读渲染面——两者并存时以 yaml 为准：改用例先改 yaml，再同步本文件，
+> 禁止两边各自演化（双写漂移按状态漂移处理）。覆盖校验：
+> `python3 <skill>/scripts/check-testcases.py <feature-dir>`（AC 定义表 × yaml 用例双向闭合）。
 
 ## 验证准备
 
