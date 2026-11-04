@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -331,5 +332,12 @@ def validate_manifests(root: Path = ROOT) -> list[ValidationError]:
                 errors.append(
                     ValidationError(name, f"name {plugin_name!r} disagrees with plugin.json {reference!r}")
                 )
-    errors.extend(validate_runtime_freshness(root))
+    # G1 (2026-11-04, user-authorized gate change): the generated-tree freshness check is the
+    # single most expensive step in every iteration — it costs a full `build_runtime.py` run
+    # before anything else can pass, yet it only matters at RELEASE time (the marketplace installs
+    # from the snapshot). Daily iteration may set AGENTFLOW_SKIP_RUNTIME_FRESHNESS=1 to check only
+    # name/version agreement; the release path (publish.sh / upgrade-zcode.sh / pre-push.sh) never
+    # sets it, so a stale snapshot still cannot be shipped.
+    if os.environ.get("AGENTFLOW_SKIP_RUNTIME_FRESHNESS") != "1":
+        errors.extend(validate_runtime_freshness(root))
     return errors

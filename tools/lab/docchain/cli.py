@@ -22,7 +22,6 @@ import sys
 from pathlib import Path
 
 from .checks import (
-    batch_soft_warnings,
     closure_claim_findings,
     lint,
     read,
@@ -114,13 +113,6 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     errors = lint(Path(argv[0]), root)
-    soft = batch_soft_warnings(Path(argv[0]))
-    if soft:
-        # Soft channel: printed, never counted as findings. Adoption-period only — see the
-        # C29/C30/C31 note in checks.py for why these start as warnings instead of hard failures.
-        print(f"WARN doc-chain 软警告（{len(soft)} 项，不影响退出码）")
-        for w in soft:
-            print(f"  ! {w}")
     if errors:
         print(f"FAIL doc-chain ({len(errors)} findings)")
         for e in errors:

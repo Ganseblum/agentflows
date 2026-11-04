@@ -146,7 +146,7 @@ def self_test() -> int:
     run_case("08 C4 missing flowchart trips C4", 1, ["缺少架构/流程 flowchart"],
              lambda f: rep(f, "design/be/b.md", "```mermaid\nflowchart TB\n    A --> B\n```\n", ""),
              results)
-    run_case("09 C4 missing ER/state trips C4", 1, ["缺少 ER 图或状态机图"],
+    run_case("09 C4 missing ER/state/entity-table trips C4", 1, ["缺少 ER 图、状态机图或实体字段表"],
              lambda f: rep(f, "design/be/b.md", "```mermaid\nerDiagram\n    t1 ||--o{ t2 : has\n```\n", ""),
              results)
     run_case("10 C7 single wireframe trips C7", 1, ["C7 design/fe: 工程线框不足 2 张（现 1）"],
@@ -1280,10 +1280,9 @@ def self_test() -> int:
     run_case("C28-04 spec/qa alone (no testing plan yet) stays green", 0, ["PASS doc-chain"],
              mutate=m_c28_no_plan, results=results)
 
-    # C29/C30/C31 soft channel (2026-11-04, user-authorized "make them all, start soft"). These
-    # must PRINT and must NOT change the exit code — the whole point of the adoption window is that
-    # an unmeasured false-positive surface cannot block legitimate work. Each case asserts both
-    # halves: the warning text appears, and the run still exits 0.
+    # C29/C30/C31 (2026-11-04, user-authorized). Shipped soft first to measure the false-positive
+    # surface, then promoted to hard findings at the user's instruction. The cases now assert the
+    # hard direction: the violation trips (exit 1) and a clean batch stays green.
     SOFT_PROPOSAL = (
         "# 提案\n\n## 1.3 本期范围\n\n| 类型 | 内容 | 理由 |\n| --- | --- | --- |\n"
         "| 包含 | 登录 | 需求 |\n| 不包含 | 注册 | 演示 |\n"
@@ -1292,7 +1291,7 @@ def self_test() -> int:
     def m_c31_no_candidates(f):
         f["proposal/proposal.md"] = SOFT_PROPOSAL
         return f
-    run_case("C31-01 scope without a candidate-set section warns and stays green", 0, ["C31 候选集"],
+    run_case("C31-01 scope without a candidate-set section now fails hard", 1, ["C31 候选集"],
              mutate=m_c31_no_candidates, results=results)
 
     def m_c31_with_candidates(f):
@@ -1310,8 +1309,21 @@ def self_test() -> int:
         return rep(f, "plan/be/p.md",
                    "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 | `migrations/x.sql` |",
                    "| T01 | 迁移 | `migrations/x.sql` | — | ☑ 已完成 | `migrations/x.sql`；执行中发现连点双请求并修复 |")
-    run_case("C29-01 a ☑ row claiming an on-the-fly fix warns and stays green", 0, ["C29 执行期偏差"],
+    run_case("C29-01 a ☑ row claiming an on-the-fly fix now fails hard", 1, ["C29 执行期偏差"],
              mutate=m_c29_deviation, results=results)
+
+    def m_g2_entity_table_only(f):
+        # G2: a ten-column entity field table satisfies the data-model requirement on its own.
+        # Remove both diagrams and add the table, so only the new third path can keep this green.
+        rep(f, "design/be/b.md", "```mermaid\nerDiagram\n    t1 ||--o{ t2 : has\n```\n", "")
+        f["design/be/b.md"] += (
+            "\n### 实体与字段\n\n"
+            "| 实体 | 字段 | 类型与单位 | 空值/默认 | 唯一性 | 规范化规则 | 敏感性 | 生命周期 | 存储载体 | 代码落点 |\n"
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+            "| User | id | string(uuid) | 否 | PK | — | 否 | 永久 | 内存 Map | `server/users.mjs:3` |\n")
+        return f
+    run_case("G2-01 an entity field table alone satisfies C4's data-model requirement", 0,
+             ["PASS doc-chain"], mutate=m_g2_entity_table_only, results=results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

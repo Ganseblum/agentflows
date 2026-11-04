@@ -107,8 +107,22 @@ sequenceDiagram
 ## 6. 测试准备（数据来源策略：真实优先，Mock 逐项声明）
 能从真实接口/环境取到的数据一律用真实数据（真实 origin + 注入账号 + 真实接口返回）；只有真实
 拿不到的环节（外部第三方、计费动作、不可构造状态）才 Mock，且逐项写明对象与理由——禁止全链路
-Mock。计划未声明 Mock 的环节拿不到真实数据就标 blocked，不许静默降级。UI 自动化默认 Ego Light
-（`ego-browser`），不新写 Playwright spec。
+**UI 测试的执行载体按「目标仓有没有」决定，不按工具偏好决定**（判据与凭证纪律同
+[执行与验证](../../../../references/execution.md) 的浏览器节）：
+
+| 目标仓现状 | 用什么 | 为什么 |
+| --- | --- | --- |
+| 无 e2e runner（多数新项目 / demo） | **Ego Light**（`ego-browser`） | 零安装、随时可跑；为一次验收引入 ~50MB 浏览器依赖不划算 |
+| **已有 Playwright / Cypress / vitest-browser** | **用项目既有 runner 写 spec**，不新起一套 | 两套并行 runner 是维护债；「平行套件」才是被禁止的那件事 |
+| 已有 runner 但只覆盖部分模块 | 未覆盖处先用 Ego Light 跑通，再按项目节奏迁进既有 runner | 先有证据，再谈工程化 |
+
+**「不新建平行套件」禁止的是并行，不是 Playwright 本身。** 目标仓本来就有 Playwright 时，
+用 `npx playwright test` 写 `e2e/<用例ID>.spec.ts` 是正解（`testcases.yaml` 的 `automation`
+字段指向它）；反过来说，为一个纯 Ego Light 项目新增 Playwright 才是这条禁令针对的情形。
+
+**用例 ID 与脚本的对应关系必须可查**：无论用哪种载体，`testcases.yaml` 的 `automation` 字段写
+`<runner>::<用例ID>`（如 `e2e/login.spec.ts::TC-01-01` 或 `ego-TC-01-01.mjs`），run 记录的证据列
+引用同一路径。这样「改一行前端要重跑哪些」是一次查询，不是一次回忆。
 
 **浏览器用例的操作序列要可重放。** 每条 `browser` / `manual` 层的用例，其 Ego Light 操作序列以
 **进仓脚本**形式落在 `testing/<项目>-<功能>/scripts/ego-<用例ID>.mjs`（不是 `scratch/`——那里是

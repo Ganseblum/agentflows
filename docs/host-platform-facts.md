@@ -2,7 +2,7 @@
 
 下表每一行都在本机直接观察得到，除非其证据标记为 `doc`；`doc` 行来自宿主官方指南，尚未经运行检验。每行都标明其证据与适用范围。不得把一条事实推广到超出其适用范围。重新验证请重跑该行指名的检查，而不是编辑本文件。
 
-最后验证：2026-10-28（Q1–Q6 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI 未常驻，Q1 用的是临时 npm 前缀，见 Q6）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
+最后验证：2026-11-04（Z10 行 AGENTS.md 加载实验）；2026-10-28（Q1–Q6 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI 未常驻，Q1 用的是临时 npm 前缀，见 Q6）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
 ## ZCode（桌面版）
 
@@ -12,6 +12,7 @@
 | Z2 | 技能发现顺序把工作区 `.zcode/skills/` 排在插件提供的技能根之前，同名的第一个技能胜出。 | `doc`（ZCode 配置指南）+ 观察到的符号链接布局 | ZCode | 在本仓库中，工作区副本遮蔽了已安装插件中的 `agentflow`/`improve` 副本；请在另一个工作区测试插件副本。 |
 | Z3 | 技能触发由模型根据 `name`、`description`（呈现时截断到约 250 个字符）与 `when_to_use` 决定；不存在关键词匹配器。 | `doc`（diagnosing-skills） | ZCode | 触发措辞必须前置在前约 250 个字符以内；描述超过 1024 个字符会导致技能被整体丢弃。 |
 | Z4 | 插件提供的 agent **确实**会作为子代理出现，frontmatter 的 `tools` 允许列表**确实**被强制执行：宿主呈现 `bug-fixer` 时带有 `(Tools: Read, Glob, Grep, Write, Edit, Bash)`，而未声明 `tools` 字段的三个 agent 则呈现为完整工具集。带命名空间的名称（`agentflow:bug-fixer`）与裸名称都会注册。 | Observed: 宿主子代理注册表列表，2026-09-14 的会话（解决了早先相互冲突的 `doc` 行） | ZCode 桌面版，插件安装 | 没有 `tools` 允许列表的角色会继承委派（`Agent`）、网络与 MCP 工具。对每个不应拥有这些工具的角色声明 `tools:`。 |
+| Z10 | **`<repo>/AGENTS.md` 确实被宿主自动加载**：新会话无需任何 Read 调用即可复述文件内唯一探针字符串，且能逐字给出探针所在行。这是 `init_workspace.py` 把 lean 规则写进 AGENTS.md 托管块这一设计的直接依据。 | Observed 2026-11-04：临时仓 `/tmp/af-probe` 由 `init_workspace.py` 生成五宿主入口，在 `AGENTS.md` 的「角色」节写入唯一探针 `PROBE-20261104-ZK7Q`；`zcode -p "只回答：AGENTS.md 里有没有出现 PROBE-…"` 的返回逐字复述了 `**加载探针**：PROBE-20261104-ZK7Q` 该行。 | ZCode（桌面版，本机） | AGENTS.md 可作为项目侧常驻规则的唯一载体；`.cursor/rules/*.mdc`、`CLAUDE.md`（`@AGENTS.md` 指针）、`.github/copilot-instructions.md` 三份由同一脚本生成，**加载行为未验证**（本机无对应 CLI，无法做同款实验）——在拿到复述证据之前不得声称它们生效。 |
 | Z5 | 插件角色文件从已安装的插件快照加载，插件的 `agents/` **没有**即时生效编辑路径。因此，陈旧快照在角色运行期间是不可见的。（2026-09-18 更正：原行从插件 agent 的情形推广出 "no `.zcode/agents/`"；代码显示该目录**正是**宿主的工作区文件 agent 根——见 Z9。仅快照的论断对插件角色文件成立，且 `config.json` 仍没有 `agents` 键。） | Observed: 源与缓存 diff（全部 12 个 agent 与两个技能均有差异）；`validate.py installed` 可复现。更正证据：宿主 bundle 代码 `resolveWorkspaceSubagentRoot`（`uk(e,".zcode","agents")`），读取于 2026-09-18。 | ZCode 桌面版，插件安装 | 角色编辑在插件重新安装之前不会生效。在 `validate.py installed` 通过之前，把 "the role behaves as before" 视为未验证。文件定义的 agent（Z9）是另一条即时生效路径。 |
 | Z6 | agent frontmatter 中的 `maxTurns` 仅被声明，其在本宿主的执行情况未验证；该字段沿用自 Claude Code agent 格式。 | 未实际触发——未观察到截断 | ZCode 桌面版 | 在运行演示出截断之前，不要把轮次上限当作安全控制。角色契约中的预算纪律弥补这一缺口。 |
 | Z7 | 宿主恰好内置两个子代理：`general-purpose`（工具 `["*"]`，注入 AGENTS.md，设置 `readOnly`）与 `Explore`（"Read-only search agent for broad fan-out searches"，工具恰为 `Bash/Glob/Grep/Read/WebFetch/WebSearch/TodoWrite`，不注入 AGENTS.md）；保留名称集合只包含这两个。 | Observed: 已安装 app bundle 的宿主代码——`createBuiltInAgents` 返回双元素数组，保留集合为 `new Set(["general-purpose","Explore"])`（app.asar 解包读取，2026-09-18）；现行子代理注册表将两者都列出。 | ZCode 桌面版（本安装），代码阅读 + 注册表；未端到端实际触发 | 读密集的扇出调查有宿主原生载体：委派给内置 Explore 并只保留结论——agentflow 不需要重复的侦察角色。Agentflow 自身的只读角色不带 web 工具，因此 Explore 也是唯一具备 WebFetch/WebSearch 的侦察 agent。 |

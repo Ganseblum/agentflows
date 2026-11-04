@@ -631,9 +631,18 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         if "flowchart" not in kinds:
             errors.append("C4 design/be: 缺少架构/流程 flowchart")
         spec_kinds = mermaid_kinds("\n".join(all_text[f] for f in spec_files) if spec_files else "")
+        # G2 (2026-11-04, user-authorized gate change): an entity FIELD TABLE now satisfies the
+        # data-model requirement alongside ER / state diagrams. Rationale: for batches with no
+        # database, forcing an ER diagram produced either a fake diagram or a one-line
+        # 「N/A: 无数据库」 — the latter passed the gate while leaving User/Session field types to be
+        # reverse-engineered from code. A ten-column field table is strictly more informative than
+        # a two-box erDiagram, so it counts; requiring ALL THREE would be the tightening, not this.
+        has_entity_table = bool(re.search(
+            r"\|\s*实体\s*\|.*\|", be_text)) and bool(re.search(r"字段", be_text))
         if not (kinds.get("erDiagram") or kinds.get("stateDiagram")
-                or spec_kinds.get("erDiagram") or spec_kinds.get("stateDiagram")):
-            errors.append("C4 design/be: 缺少 ER 图或状态机图（design/be 或 spec）")
+                or spec_kinds.get("erDiagram") or spec_kinds.get("stateDiagram")
+                or has_entity_table):
+            errors.append("C4 design/be: 缺少 ER 图、状态机图或实体字段表（三者任一，见 §1.3.2）")
         if not re.search(r"\|\s*#?\s*接口.*\|.*请求字段.*响应字段|\|.*请求字段.*\|.*响应字段", be_text):
             errors.append("C4 design/be: 缺少字段级 API 契约表（请求字段/响应字段列表头）")
         # C5: ids declared in the CONTRACT TABLE's first column must appear in design/fe.
@@ -1670,14 +1679,12 @@ def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
             rel = f.relative_to(repo_root).as_posix() if f.is_relative_to(repo_root) else f.name
             errors.extend(evidence_presence_findings(rel, read(f), repo_root, batch_dir))
     errors.extend(ac_coverage_findings(batch_dir, repo_root))
+    errors.extend(batch_deviation_findings(batch_dir))
     return errors
 
 
-# --- C29 / C30 / C31 — adoption-period SOFT warnings (2026-11-04 gate change, user-authorized
-# as "make them all, start soft"). These are reported through a separate channel so they never
-# fail the gate during the first batches: the repos' own precedent is `check-write-scope.sh`,
-# which stayed out of CI precisely because its false-positive surface was never measured.
-# Promote one to a hard C-number only after a batch of real data shows the false-positive rate.
+# --- C29 / C30 / C31 — HARD checks (2026-11-04 gate change, user-authorized; promoted from the
+# soft channel at the user's instruction after the soft form was verified to print correctly).
 #
 # C29  execution-time deviation must be registered: a ☑ task whose evidence cell describes a
 #      defect ("发现并修复" / "修后复测") but issues/ has no corresponding ISS-* record.
@@ -1690,8 +1697,13 @@ DEVIATION_WORDS = ("发现并修复", "修后复测", "修复后复测", "执行
 STATUS_WORDS = ("已完成", "进行中", "待验收", "已验收", "待评审", "已通过评审")
 
 
-def batch_soft_warnings(batch_dir: Path) -> list[str]:
-    """C29/C30/C31 adoption-period soft warnings — never fail the gate."""
+def batch_deviation_findings(batch_dir: Path) -> list[str]:
+    """C29 + C30 + C31 — hard findings (promoted from the 2026-11-04 adoption-period soft channel).
+
+    History: these shipped as warnings first because their judges read *wording*, and this
+    repo's precedent (`check-write-scope.sh`) is a check that never reached CI over an
+    unmeasured false-positive surface. They are promoted now on the user's instruction; the
+    self-tests pin both directions (violation trips, clean stays green)."""
     warnings: list[str] = []
 
     # C29 — ☑ rows whose evidence talks about a defect, with no ISS id anywhere in the batch.
@@ -1709,7 +1721,7 @@ def batch_soft_warnings(batch_dir: Path) -> list[str]:
             row = " ".join(cells)
             if any(w in row for w in DEVIATION_WORDS) and not re.search(r"ISS-\d{4}", row):
                 warnings.append(
-                    f"C29 执行期偏差（软）: {plan.relative_to(batch_dir)}: 「{cells[1][:40]}」"
+                    f"C29 执行期偏差: {plan.relative_to(batch_dir)}: 「{cells[1][:40]}」"
                     f"证据称发现并修复了缺陷，但本批 issues/ 无对应 ISS-* 记录"
                 )
 
@@ -1728,7 +1740,7 @@ def batch_soft_warnings(batch_dir: Path) -> list[str]:
                     conflicting = [o for o in STATUS_WORDS if o != word and o in text]
                     if conflicting:
                         warnings.append(
-                            f"C30 状态单点（软）: {doc.name} 同时出现「{word}」与"
+                            f"C30 状态单点: {doc.name} 同时出现「{word}」与"
                             f"「{'、'.join(conflicting[:2])}」——状态词应只在计划看板维护一处"
                         )
 
@@ -1740,7 +1752,7 @@ def batch_soft_warnings(batch_dir: Path) -> list[str]:
         has_candidates = "范围穷举" in text
         if has_scope and not has_candidates:
             warnings.append(
-                "C31 候选集（软）: proposal 声明了范围，但没有 §1.4「范围穷举」节——"
+                "C31 候选集: proposal 声明了范围，但没有 §1.4「范围穷举」节——"
                 "本类功能的惯例维度未逐项决策（QQ/微信/验证码这类漏问就出在这里）"
             )
     return warnings

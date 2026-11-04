@@ -3,6 +3,16 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.33.0 — 2026-11-04（门禁增删平衡批：C29–C31 转硬 + G1/G2 松绑 + 宿主加载实证）
+
+- **C29/C30/C31 从软警告转硬判据**（用户授权）：执行期偏差未立案 / 状态单点漂移 / 候选集缺失三条件现在计入 findings。自测改为断言硬红方向（违规退出 1、干净批次仍绿），164 → **165/165**（含 G2 正例）。
+- **G1 松绑：生成树新鲜度可跳过**。`validate_runtime_freshness` 是每次迭代最贵的一步（必须先跑完整 `build_runtime.py` 才能过 `manifests`），但它只在**发版时**才有意义（marketplace 装的是那棵快照）。新增 `AGENTFLOW_SKIP_RUNTIME_FRESHNESS=1` 供日常迭代只查版本一致性；发版链（`publish.sh` / `upgrade-zcode.sh` / `pre-push.sh`）不设该变量，陈旧快照仍无法发布。双向实测：SKIP=1 PASS、SKIP=0 抓到真实漂移。
+- **G2 松绑：C4 数据模型要求三选一**。原先「ER 图 **或** 状态机图」二选一，导致无数据库批次要么画假图、要么写一句 `N/A: 无数据库` 就过门（后者实际把 User/Session 字段类型留给了读代码猜）。现在**实体字段表**是第三种合格形态——十列字段表信息量严格大于两框 ER 图，所以是放宽而非收紧。新增判别自测 G2-01（移除 ER 图 + 加字段表 → 仍 PASS）。
+- **Z10 宿主加载实证**（`docs/host-platform-facts.md`）：首次拿到「`<repo>/AGENTS.md` 确实被宿主自动加载」的直接证据——临时仓写唯一探针 `PROBE-20261104-ZK7Q`，`zcode -p` 新会话无需任何 Read 即逐字复述探针所在行。这是 `init_workspace.py` 把 lean 规则写进 AGENTS.md 托管块这一设计的依据。**`.cursor/rules/*.mdc`、`CLAUDE.md`、`.github/copilot-instructions.md` 三份如实记为「加载未验证」**（本机无对应 CLI，不做无证据主张）。
+- **D1 澄清「不新建平行套件」的真实语义**：被禁的是**并行 runner**，不是 Playwright 本身。改为按目标仓现状三档：无 runner → Ego Light；已有 Playwright/Cypress → 用既有 runner 写 spec；部分覆盖 → 先 Ego 跑通再迁移。`testcases.yaml` 的 `automation` 字段统一写 `<runner>::<用例ID>`，让「改一行要重跑哪些」是一次查询。
+- **C2 用清单替代物理分家**：`README.md` 的仓库布局节新增「产品面（A）/ 实验室面（B）」两张表——这就是原「product/ 与 lab/ 物理分家」想要的效果。不搬目录的理由已写进该节：`packaging/runtime` 是安装物，`validate.py installed` 靠与源面逐字节比对防「静默装出旧角色」，改名会让 `build_runtime.py` 复制表与 `protected-paths.txt` 两个白名单同时失效。
+- 验证：11 项门 PASS、`doc_chain` 自测 165/165、`lint` PASS、260 单测 OK。
+
 ## 0.32.0 — 2026-11-04（intake / grilling 双触发 + C29–C31 软警告 + 简报生成器）
 
 - **`intake` / `grilling` 从 references 升为独立 skill（双触发）**：新增 `skills/agentflow-intake/`、`skills/agentflow-grilling/`。它们**不复制正文**——只写触发条件与硬约束，方法契约仍单点在 `references/intake.md` / `references/grilling.md`。为什么两条路径都要：**模板内嵌**（`design/be` §1.2.9、`design/fe` §1.2.9、`proposal` §1.4）覆盖「该做但模型想不起来」的自动触发；**独立 skill** 覆盖「用户主动说『压一下这个设计』」的手动触发。此前 `grilling.md` 在本仓 90 份 docs + 49 份 episodes + reviews + examples 里路径引用**命中 0 次**——单靠路由表等于从不触发。
