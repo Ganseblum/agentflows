@@ -7,7 +7,6 @@ target_revision: <被测基线 revision>
 credentials: <凭据运行时注入；值永不落盘>
 base_url: <环境 URL>
 case_count: "<与 ## 用例 注册表行数相等>"
-ac_refs: "<本计划覆盖的验收点编号，逗号分隔（与 spec/qa/acceptance.md 定义表同形，如 M01-AC-01,M02-AC-03）；check-testcases.py 按 acceptance.md 定义表与 testcases.yaml 的 ac 字段做双向闭合（不读本字段，本列作人读速览）；无 AC 体系写 none>"
 test_version: "1"
 status: active
 recorded_at: "<RFC 3339 含时区>"

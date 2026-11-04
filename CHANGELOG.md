@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.30.1 — 2026-11-04（AC↔用例映射单点化）
+
+- **起因**：0.30.0 引入的 `plan` frontmatter `ac_refs` 字段与 `schemas/test-plan.schema.json` 的 `additionalProperties: false` 冲突——任何按模板新建的 plan 都会被 schema 判红（`validate.py` 抓不到，因为模板本身不是记录）。该字段本身也是冗余：AC↔用例的映射已经写在注册表「来源」列，且该列自 T10 起由 `gate/testing.py` 强制非空。
+- **单点化**：AC↔用例映射的唯一权威收归 **plan 注册表「来源」列**（+ `testcases.yaml` 的 `ac` 字段）。三处副本删除：`spec/qa` §4 的 AC×用例覆盖映射表（改为「覆盖状态查询方式 + 机器判据」，不再维护表）、`design/qa` §2.2 的「关联用例」列、plan frontmatter 的 `ac_refs`。`design/qa` §2.1 入口矩阵保留（它判穷举，是策略），但「覆盖用例」改为「覆盖判据（最低要求）」，不列 TC 编号——避免与注册表反向重复。
+- **机器判据**：`check_records.py` R6 改为从注册表来源列 ∪ yaml `ac` 字段派生，与 spec/qa 定义表比对；新增 `latest_test_plan()`，修正「从 plan/execution.md 取 AC」的取值错误。自测 8/8（含「删掉一条用例的 AC 覆盖 → 精确报出那条 AC」反例）。
+- **权威定义**：`references/test-records.md` 的「策略、用例与执行的分工」表新增「明确不写什么」列，把三处禁止写入项写成规则。
+- 验证：新模板形态构造的完整批次在真门上 0 error（正例）/ 精确报 R6（反例）；11 项门 PASS、260 单测 OK。
+
 ## 0.30.0 — 2026-11-04（可用性批：init 安全化、评审分档与缺陷落账）
 
 - init 脚本化先行：`scripts/init_workspace.py` 重写为安全安装器（`--dry-run` 计划先行、托管块只追加/替换不覆盖既有文件、载体改为官方入口 AGENTS.md / `.cursor/rules` mdc / `CLAUDE.md` 指针 / copilot，移除不在官方清单的 `.zcode/rules/`，`.agentflow/manifest.json` + `--check` 漂移校验，自测 8/8）；`templates/host/maker.md` 引用全部改为目标仓可解析路径。

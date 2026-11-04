@@ -11,7 +11,8 @@
   R3  plan 声明「全部完成」时，最新 run 的 decision 必须为 pass
   R4  releases/pending-test.md「未做与残余」条目应携带指向 plan R 表或 ISS 的引用（warn）
   R5  最新 run 结果表中 fail/blocked 行必须有非「—」证据，且引用的文件相对 run 目录存在
-  R6  plan frontmatter `ac_refs` 集合 == spec/qa 定义表 AC 集合（与 check-testcases.py 同口径）
+  R6  AC 覆盖闭合：plan 注册表「来源」列 ∪ testcases.yaml 的 ac ≡ spec/qa 定义表 AC 集合
+      （「来源」列是唯一权威，由 gate/testing.py 强制非空；不读 frontmatter 的聚合副本）
 
 用法：
   python3 check_records.py <feature-dir> [--hub <hub 根，用于定位 releases/>]
@@ -73,6 +74,12 @@ def latest_run(feature_dir: Path) -> Path | None:
 
 def latest_plan(feature_dir: Path) -> Path | None:
     plans = sorted(feature_dir.glob("plan/*.md"))
+    return plans[-1] if plans else None
+
+
+def latest_test_plan(feature_dir: Path) -> Path | None:
+    """testing/ 下的用例库（test-planner 产出）；AC 覆盖只从这里取，不从 plan/execution.md 取。"""
+    plans = sorted(feature_dir.glob("testing/**/plan-*.md"))
     return plans[-1] if plans else None
 
 
@@ -179,36 +186,76 @@ def r5_run_evidence(feature_dir: Path, hub: Path | None = None) -> list[tuple[st
     return out
 
 
-def r6_ac_refs(feature_dir: Path, hub: Path | None = None) -> list[tuple[str, str]]:
+def plan_registry_sources(plan: Path) -> set[str]:
+    """从 plan 的 `## 用例` 注册表「来源」列派生本计划覆盖的 AC 集合。
+
+    这是 AC 覆盖的**唯一权威**：注册表每个用例一行，「来源」列指向 spec/qa 的 AC 编号
+    （或被评 `gate/testing.py` 强制非空，T10）。不得在 frontmatter 另写一份聚合副本——
+    副本一定会漂移（见 doc_chain 的「一条事实一个权威载体」）。
+    """
+    text = plan.read_text(encoding="utf-8", errors="replace")
+    in_registry = False
+    header_cols: list[str] = []
+    source_idx = -1
+    found: set[str] = set()
+    for line in text.splitlines():
+        if line.startswith("## "):
+            in_registry = line.strip() == "## 用例"
+            header_cols, source_idx = [], -1
+            continue
+        if not in_registry or not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not header_cols:
+            header_cols = cells
+            source_idx = next((i for i, h in enumerate(cells) if h == "来源"), -1)
+            continue
+        if set("".join(cells)) <= set("-: "):
+            continue  # 分隔行
+        if source_idx == -1 or source_idx >= len(cells):
+            continue
+        if not re.match(r"^TC-", cells[0]):
+            continue  # 只认用例行
+        found.update(AC_RE.findall(cells[source_idx]))
+    return found
+
+
+def r6_ac_coverage(feature_dir: Path, hub: Path | None = None) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
-    plan = latest_plan(feature_dir)
+    plan = latest_test_plan(feature_dir)
     acceptance = feature_dir / "spec" / "qa" / "acceptance.md"
     if not (plan and acceptance.is_file()):
         return out
-    refs_raw = frontmatter(plan.read_text(encoding="utf-8", errors="replace")).get("ac_refs", "")
-    if not refs_raw:
-        out.append(("error", "R6 plan frontmatter 缺 ac_refs（无 AC 体系须显式写 none）"))
-        return out
-    if refs_raw.strip() == "none":
-        return out
-    refs = {a.strip() for a in refs_raw.split(",") if a.strip()}
     defined = defined_acs(acceptance)
     if not defined:
+        return out  # 无 AC 体系，跳过
+    # 覆盖集合是**派生值**：取 plan 注册表来源列，存在 testcases.yaml 时并集（yaml 权威）
+    derived = plan_registry_sources(plan)
+    yaml_refs: set[str] = set()
+    for yf in feature_dir.rglob("testcases.yaml"):
+        if "/reviews/snapshot-" in yf.as_posix():
+            continue
+        for line in yf.read_text(encoding="utf-8", errors="replace").splitlines():
+            if re.match(r"^\s*-?\s*ac:", line):
+                yaml_refs.update(AC_RE.findall(line))
+    refs = derived | yaml_refs
+    if not refs:
+        out.append(("error", "R6 plan 注册表「来源」列与 testcases.yaml 都未声明任何 AC——无法判定覆盖（无 AC 体系时 spec/qa 不应有 AC 定义表）"))
         return out
     if refs != defined:
         only_ref = sorted(refs - defined)
         only_def = sorted(defined - refs)
         detail = []
         if only_ref:
-            detail.append(f"ac_refs 多出：{'、'.join(only_ref)}")
+            detail.append(f"用例引用了定义表里没有的 AC：{'、'.join(only_ref)}")
         if only_def:
-            detail.append(f"定义表未覆盖：{'、'.join(only_def)}")
-        out.append(("error", f"R6 plan ac_refs 与 spec/qa 定义表集合不一致——{'；'.join(detail)}"))
+            detail.append(f"无任何用例覆盖：{'、'.join(only_def)}")
+        out.append(("error", f"R6 AC 覆盖不闭合（权威＝plan 注册表来源列 ∪ testcases.yaml）——{'；'.join(detail)}"))
     return out
 
 
 CHECKS = [r1_mapping_placeholder, r2_review_rounds, r3_plan_vs_run, r4_pending_test_links,
-          r5_run_evidence, r6_ac_refs]
+          r5_run_evidence, r6_ac_coverage]
 
 
 def run_checks(feature_dir: Path, hub: Path | None) -> list[tuple[str, str]]:
@@ -228,10 +275,19 @@ def _self_test() -> int:
         "# 验收\n\n| 编号 | 场景 |\n| --- | --- |\n| M01-AC-01 | 登录成功 |\n| M01-AC-02 | 登录失败 |\n\n"
         "## 覆盖映射\n\n| AC | 用例 | 状态 |\n| --- | --- | --- |\n| M01-AC-01 | TC-01 | 已覆盖 |\n"
     )
-    PLAN_DONE = (
-        "---\nac_refs: \"M01-AC-01,M01-AC-02\"\n---\n\n# 计划\n\n全部任务已完成（30/30）。\n"
+    REGISTRY_BOTH = (
+        "\n## 用例\n\n| 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        "| TC-01-01 | e2e | P0 | 登录成功 | 按钮 | M01-AC-01 |\n"
+        "| TC-01-02 | e2e | P0 | 登录失败 | 按钮 | M01-AC-02 |\n"
     )
-    PLAN_PARTIAL = "---\nac_refs: \"M01-AC-01\"\n---\n\n# 计划\n\n进行中。\n"
+    REGISTRY_ONE = (
+        "\n## 用例\n\n| 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        "| TC-01-01 | e2e | P0 | 登录成功 | 按钮 | M01-AC-01 |\n"
+    )
+    PLAN_DONE = "---\ntest_plan_id: TP-X\n---\n\n# 计划\n\n全部任务已完成（30/30）。\n"
+    PLAN_PARTIAL = "---\ntest_plan_id: TP-X\n---\n\n# 计划\n\n进行中。\n"
     RUN_PASS = "---\ndecision: pass\n---\n\n## 结果\n\n| 用例 ID | 状态 | 层级 | 证据 | 实际结果 | 说明 |\n| --- | --- | --- | --- | --- | --- |\n| TC-01 | pass | browser | shot.png | 进入 | — |\n"
     RUN_FAIL = "---\ndecision: fail\n---\n\n## 结果\n\n| 用例 ID | 状态 | 层级 | 证据 | 实际结果 | 说明 |\n| --- | --- | --- | --- | --- | --- |\n| TC-01 | fail | browser | — | 超时 | — |\n"
 
@@ -251,13 +307,15 @@ def _self_test() -> int:
         finally:
             shutil.rmtree(base, ignore_errors=True)
 
-    def mk(base, feature, acceptance=ACCEPTANCE, plan=PLAN_DONE, run=RUN_PASS, readme=None, pending=None):
+    def mk(base, feature, acceptance=ACCEPTANCE, plan=PLAN_DONE, run=RUN_PASS, readme=None, pending=None,
+           registry=REGISTRY_BOTH):
         (feature / "spec" / "qa").mkdir(parents=True)
         (feature / "plan").mkdir(parents=True)
         (feature / "testing" / "demo").mkdir(parents=True)
         (feature / "spec" / "qa" / "acceptance.md").write_text(acceptance, encoding="utf-8")
         (feature / "plan" / "execution.md").write_text(plan, encoding="utf-8")
-        (feature / "testing" / "demo" / "plan-2026-11-04-001.md").write_text("---\ntest_plan_id: TP-X\n---\n\n# 计划\n", encoding="utf-8")
+        (feature / "testing" / "demo" / "plan-2026-11-04-001.md").write_text(
+            "---\ntest_plan_id: TP-X\n---\n\n# 用例库\n" + registry, encoding="utf-8")
         (feature / "testing" / "demo" / "run-2026-11-04-001.md").write_text(run, encoding="utf-8")
         if readme is not None:
             rd = feature / "reviews"
@@ -277,7 +335,7 @@ def _self_test() -> int:
     case("R3：plan 称全部完成 + run fail → error", lambda b, f: (mk(b, f, run=RUN_FAIL), shoot(b, f)), 1, "R3")
     case("R5：fail 行证据为空 → error", lambda b, f: (mk(b, f, run=RUN_FAIL), shoot(b, f)), 1, "R5")
     case("R5：fail 行证据文件不存在 → error", lambda b, f: mk(b, f, run=RUN_FAIL.replace("| — | 超时 |", "| ghost.png | 超时 |")), 1, "R5")
-    case("R6：ac_refs 与定义表不一致 → error", lambda b, f: (mk(b, f, plan=PLAN_PARTIAL), shoot(b, f)), 1, "R6")
+    case("R6：注册表来源列未覆盖全部 AC → error", lambda b, f: (mk(b, f, plan=PLAN_PARTIAL, registry=REGISTRY_ONE), shoot(b, f)), 1, "R6")
     case("干净批次 → 0 error", lambda b, f: (mk(b, f, plan=PLAN_DONE.replace("全部任务已完成（30/30）。", "进行中。")), shoot(b, f)), 0, "")
     case("R2：README 断言轮数 > 记录数 → warn（不影响退出码）", lambda b, f: (mk(b, f, plan=PLAN_DONE.replace("全部任务已完成", "进行中"), readme="需求评审 3 轮通过。"), shoot(b, f)), 0, "R2")
     case("R4：pending-test 残余无指向 → warn", lambda b, f: (mk(b, f, plan=PLAN_DONE.replace("全部任务已完成", "进行中"), pending="# 待验证\n\n## 未做与残余\n\n- 跨浏览器不测\n"), shoot(b, f)), 0, "R4")
