@@ -9,23 +9,18 @@
 | 场景 | 入口 |
 | --- | --- |
 | **第一次用 / 5 分钟上手** | `docs/quickstart.md`（先判断要不要用这套，再决定走哪条路） |
-| 日常两轨 | 小修与零星事项走 `docs/issues/`；成批 / 跨层工作立 `docs/features/<批次>/`；拍板与待验收分别看 `docs/PENDING-DECISIONS.md` 与 `docs/releases/pending-test.md` |
+| 日常两轨 | 小修与零星事项随会话结论落档；成批 / 跨层工作立 `docs/features/<批次>/`；拍板事项落到目标仓的拍板口文件 |
 | 改角色定义 | `agents/README.md`（<!-- count:agents -->10<!-- /count --> 个角色文件 + 工作链调度入口） |
 | 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）；仓库整体审核契约见 [`skills/agentflow/references/repo-audit.md`](skills/agentflow/references/repo-audit.md) |
 | 开工提问、设计压测 | [开工提问](skills/agentflow/references/intake.md)（六要素、红线、证据层级）· [压设计](skills/agentflow/references/grilling.md)（设计树、前沿、逐轮推荐）；**用户主动叫的直接入口**：[agentflow-intake](skills/agentflow-intake/SKILL.md) · [agentflow-grilling](skills/agentflow-grilling/SKILL.md) |
 | 画、改、评设计图 | [设计图](skills/design-diagram/SKILL.md)（时序/状态/架构/ER；三层选图、事件号、九列表、失败分支与安全红线）· [门禁报错对照](skills/design-diagram/references/gate-findings.md) |
 | 配宿主级全局规则 | `skills/agentflow/references/hosts.md`（三层分工、托管块、宿主矩阵）· `skills/agentflow/templates/host/global-rules.md`（规则正文） |
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md`（含目标仓工程基线的可复制骨架） |
-| 查批次与实施计划 | `docs/features/README.md`（活跃批次入口与状态）；具体任务状态只看各批次 `plan/` 看板 |
-| 查缺陷与事项 | `docs/issues/README.md`（`ISS-<YYYY-MM-DD>-<slug>`，含看板与归档规则） |
-| 查对外评审落点 | `reviews/README.md` |
-| 查发布与待验证清单 | `docs/releases/`：`todo.md`（发版待办，批次状态指针）· `pending-test.md`（待验收）；逐版本发布记录已停用，版本史见 `CHANGELOG.md`（0.22.1 及更早的历史条目归档于 [`docs/changelog-archive.md`](docs/changelog-archive.md)） |
+| 查计划形态与看板约定 | `docs/features/README.md`（批次目录结构、计划形态） |
 | 看设计、指南与事实 | `docs/`：`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
-| 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
-| 记录 | `docs/issues/`（缺陷与台账，「归档」在这是**被拒记录的移出面**，定义单点见 `docs/issues/README.md` 的归档规则节）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
-| 校验与评测工具 | `tools/lab/` |
-| 目标仓侧工具（init 安装 / 立项 / 评审快照 / 用例与批次校验） | `skills/agentflow/scripts/`：[init_workspace.py](skills/agentflow/scripts/init_workspace.py)（多宿主安全安装）· [new_feature.py](skills/agentflow/scripts/new_feature.py)（一键立项）· [review_snapshot.py](skills/agentflow/scripts/review_snapshot.py)（评审快照）· [check-testcases.py](skills/agentflow/scripts/check-testcases.py)（AC↔用例闭合）· [check_records.py](skills/agentflow/scripts/check_records.py)（批次跨文件一致性） |
-| 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/archive/2026-10-26/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
+| 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节 |
+| 目标仓侧工具（init 安装 / 立项 / 评审快照） | `skills/agentflow/scripts/`：[init_workspace.py](skills/agentflow/scripts/init_workspace.py)（多宿主安全安装）· [new_feature.py](skills/agentflow/scripts/new_feature.py)（一键立项）· [review_snapshot.py](skills/agentflow/scripts/review_snapshot.py)（评审快照） |
+| 看每个版本为何变更 | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## 维护纪律
 
@@ -35,40 +30,8 @@
 
 ## 非权威工作区（不纳入仓内结构）
 
-- `.workbuddy/`（已被 `.gitignore` 排除）：本机调试 / 复盘 / 记忆的**草料区**，内容不入版本库、不进入任何门禁与文档链、不构成本仓交付物；其中结论若可复用，应落回 `docs/evaluations/`、`episodes/` 或 `docs/issues/` 后才算现行记录。活文档面（索引、README、AGENTS）不引用其路径。
+- `.workbuddy/`（已被 `.gitignore` 排除）：本机调试 / 复盘 / 记忆的**草料区**，内容不入版本库、不进入任何交付物；其中结论若可复用，应落回 `docs/` 后才算现行记录。活文档面（索引、README、AGENTS）不引用其路径。
 
-## 迁移与清理记录
+## 版本与基线
 
-> 详细改动记录见 [`CHANGELOG.md`](CHANGELOG.md) 与 git 历史；本节只保留批次索引（按日期倒序），
-> 不再复述改动细节——索引只描述现行结构。2026-11-02 瘦身批删除了全部已完成批次目录，`docs/features/`
-> 现在只剩本文件；索引里的「见 `agentflows@c8ed0b2:docs/features/<批次>/`」是仓限定引用（rev 是删除前
-> 的最后一个提交），用 `git show` 取回原文，不是可点击的仓内链接。
-
-- 2026-11-02 自述一致性全量核对批（0.26.0）：两路只读审计 + 逐条对代码验真，扫出 13 处「文档/模板说的」与「门实际强制的」不一致（累计 17 处），全部按**代码为权威**改文档与模板侧（含 C18 记录归属表 `记录编号 | 任务号` 的列名接口、轻量降档标记行、C19 qa 轨声明豁免、拍板口五个生命周期列、run 记录 findings 字段）；门代码零改动；缺口是「没有机器对照文档点名的执法点」，属门变更待授权——详见 `docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md` 的「全量核对」节
-- 2026-11-02 归档口径统一批（0.25.1）：把「只有 `rejected` 进 `docs/issues/归档/`、`verified` 原地保留」收拢到 `docs/issues/README.md` 的归档规则节（含执法点两处分工、四义对照、可复现演练）；更正 hub 两份模板与本仓门相反的「关闭也归档」口径、撤掉 `episodes/README.md` 的虚假类比、CHANGELOG 附勘误；缺陷记录 `docs/issues/ISS-2026-11-02-归档口径的执法点与模板互相打架.md`
-- 2026-11-02 瘦身批（`0.25.0`，提交 `81463c7`）：删除全部 10 个已完成批次目录（175 文件 / 6.1 万行，原文 `agentflows@c8ed0b2:docs/features/<批次>/`）、`docs/features/README.md` 在途表收拢为指针、5 份早期评测件下沉 `docs/evaluations/archive/`、更正 1 条虚假归档自述（`ISS-2026-09-19-office计划采纳汇总`）；54 条 verified 缺陷记录按 `validate_bug_layout` 口径原地保留，未搬归档
-- 2026-10-31 整改（无批次目录，以门变更 + 表达面收口直接推进）：C27 模板骨架判据（用户批准的门变更）、门项数 11→12（`installed` 纳入 `all`）、交付面版本守卫、角色面 5 处矛盾/歧义收口、references 对齐代码事实、模板结构缺陷修复；原分两棵工作树（主树早期草稿、worktree `fix/remaining-2026-10-31` 后继版），2026-11-02 逐行比对确认无独有内容后合入 `main`（`bb56cb1`）——见 [`CHANGELOG.md`](CHANGELOG.md) 的 0.24.0 节与[待验收](docs/releases/pending-test.md)第 10、11 行
-- 2026-10-29 全面修正与瘦身批（议程归并 / 拍板口归口 / 四组门判据（引用存在性、伪降级、待决归口、字形单源）/ 必读面收敛 / 证据件与重复导航删除；**已随 0.23.0 发布**，提交 `f73a4e9`；批内任务已全部收口——23 ☑ / 0 ⚠ / 0 ☐ / 1 本期不做（T18）；两轮评审 findings 已修复，第三轮 delta 复审经独立委派 L2 `approved`，两个入口门关闭，结论由 `partial` 升为完整）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-29-全面修正与瘦身/`；**0.23.0** 发版记录见 [`CHANGELOG.md`](CHANGELOG.md)
-- 2026-10-28 关闭证据门批（verified/rejected 按状态强制关闭证据 / 非 open 必须有 `## 变更记录` / 负例回归钉住；实施与确定性门完成，两个评审门于 2026-10-29 经独立委派 L2 `approved` 闭环；已并入 `main`，随 0.22.0 发布并装入双端）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-关闭证据门/`
-- 2026-10-28 工程基线吸收批（工程基线模板与 Init 六项 / 后端数据与配置核对 / 原型可点性 / 测试设计三维 / 前端实现纪律；原四项已评审，FE 增量独立评审于 2026-10-29 经独立委派 L2 `approved`（T12 ☑）；0.22.0 已发布并装入双端）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-工程基线吸收/`
-- 2026-10-28 评审欠账清偿批（实施完成：T01–T09 全闭；五条缺陷均 verified；已推送 origin/main，已随 **0.24.0** 发布并三端重装（发布提交 `93d46c7`）；入口门 L2 approved（`review-2026-10-30-002.md`））——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-评审欠账清偿/`
-- 2026-10-28 表达面与角色治理批（已并入 2026-10-29 全面修正与瘦身批；PLAN-GOV-001 置 superseded，八项任务各有唯一承接号）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-表达面与角色治理/`
-- 2026-10-28 评测整改批（整改状态列 / 评审能力分级 L0–L2 / 表达面收敛 / 本地 `.venv` 门基线；版本号已并入 0.22.0，已发布）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-28-评测整改批/`、[评测报告](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)
-- 2026-10-26 L3 工作流增强批（十四项吸收、执行协议与证据工具、轻量档、pre-push 门禁修正；0.19.3 已发布并装入双端）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-26-L3工作流增强/`
-- 2026-10-25 总体评审吸收与修复批（实施完成：看板 30 ☑；Q-01 至 Q-05 已关闭；受保护路径门变更与 D8 决策台账已落地，独立评审 L2 approved（`review-2026-10-30-001.md`）；删除类 T18–T22 已执行）——见 `agentflows@c8ed0b2:docs/features/feature-2026-10-25-总体评审吸收与修复/`
-- 2026-10-25 测试链路 Ego Light 切换批 / 门与测试拆分批（0.15.0）
-- 2026-10-24 宿主接入批（Host Init：跨仓全局规则分发、托管块模板、0.14.0）
-- 2026-10-23 追溯闭环与证据在场批（门变更：文档链新增 C22 目标承接闭环与 C23 证据在场；记录契约补 `disposition`；拍板口八列化；八条文本缺陷收口）
-- 2026-10-22 文档面收尾批（角色计数口径、0.12.0 状态回写、门清单补齐、索引去重）
-- 2026-10-21 收尾批 / 跨仓吸收批 / 决策可追溯实施批
-- 2026-10-20 角色层收口批 / 评测修复批 / 评测归档批
-- 2026-10-19 门健全批 / 过期货清理批
-- 2026-10-18 合并批
-- 2026-10-13 文档面校正批
-- 2026-10-12 评测装置裁撤批 / 归档批 / 结构改造批四期 / 三期 / 瘦身批
-- 2026-10 结构改造迁移执行批次
-- 2026-10-09 彻底清理与防漂移批次
-
-## 执行证据
-
-工作流方法见 [执行与验证](skills/agentflow/references/execution.md)，工具接口见 [证据工具用法](skills/agentflow/references/workflow-tool.md)，轻量交付见 [单文件模板](skills/agentflow/templates/feature/lightweight.md)。
+版本只在 manifest（`plugin.json` / `marketplace.json` / 各宿主插件清单）与 [`CHANGELOG.md`](CHANGELOG.md) 中声明一次。本仓库的方法演进历史与每个版本的改动以 CHANGELOG 为准；自 2026-11-04 起以清理后的精简基线重新计数，不再回溯更早的批次目录与评测报告。

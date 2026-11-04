@@ -4,7 +4,7 @@
 
 用户可见功能的自动化测试证据：`test-planner` 写的用例库与 `test-executor` 产出的执行记录。
 行为变更按[执行与验证](execution.md)默认准备目标测试，也可独立请求测试或遗留补测；这里的记录喂给 bug 链，
-并充当评审门的端到端路径证据。
+并充当评审的端到端路径证据。
 
 | 产物 | 写入者 | 形态 | 用途 |
 | --- | --- | --- | --- |
@@ -15,7 +15,7 @@
 
 ## 契约
 
-schema：`schemas/test-plan.schema.json` 与 `schemas/test-run.schema.json`（frontmatter 信封；
+schema：`测试计划 schema（见测试计划模板）` 与 `测试运行 schema（见执行记录模板）`（frontmatter 信封；
 frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校验器在 schema 之外还强制以下交叉检查：
 
 - **布局**：两份记录都位于 `docs/features/<批次>/testing/<project>-<feature-slug>/`；文件名与
@@ -29,12 +29,12 @@ frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校�
   脚本 / 纯接口）；只测接口的用例写 `纯接口`，不许留空或写 `—`。
   **来源列指向该用例的验收出处**——proposal 的目标/AC 编号（如 `G2-AC-03`）或工单记录
   （`ISS-<YYYY-MM-DD>-<slug>`），没有对应出处时写 `无 — <理由>`，不许留空；该列存在时
-  `gate/testing.py` 会拒绝空值（T10）。`入口` 列引入前的存量计划不追溯；`recorded_at` 在
+  `记录校验` 会拒绝空值（T10）。`入口` 列引入前的存量计划不追溯；`recorded_at` 在
   2026-11-02 及之后的计划由门强制（`来源` 列自 T10 起已强制）。`case_count` 等于注册表行数。每个用例详情块带
   **测试功能**一行（被测功能点，如「登录-账号密码登录」）、**入口**、**证据层级**（`browser /
   api / file / manual`，见下条）、**断言依据**（期望值来自 spec 条文 / 用户确认 / 实现常量；
   写「实现常量」即循环自证，评审必须退回）、前置条件与步骤表（`操作 → 输入 → 预期可观察结果`）。
-  `## 边界覆盖` 与 `## 流程疑点` 是校验器强制的必需章节（`gate/testing.py` 的
+  `## 边界覆盖` 与 `## 流程疑点` 是校验器强制的必需章节（记录校验的
   `TEST_PLAN_REQUIRED_HEADINGS`）。入口不是「页面」的同义词：同一功能经弹窗、整页跳转、深链、
   回调页进入是不同入口，必须分别列用例；这是 ISS-2026-050「弹窗入口零覆盖却报登录通过」的直接
   教训。
@@ -58,7 +58,7 @@ frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校�
 - **计划解析**：执行记录的 `test_plan_id` 必须解析到同一 feature 目录下的一份计划记录，且
   `project` 匹配。当执行轮次钉住计划当前的 `test_version` 时，注册表中的每个用例都在结果表里
   有交代（针对旧版本的一次执行则记录它自己的覆盖情况）。
-- **Findings**：`findings` / `flow_findings` 列出必须存在于 `docs/issues/` 下的 `ISS-*` id
+- **Findings**：`findings` / `flow_findings` 列出必须存在于 `记录根` 下的 `ISS-*` id
   （本仓缺陷编号家族是 `ISS-<YYYY-MM-DD>-<slug>`，schema 以 `^ISS-\d{4}-\d{2}-\d{2}-[A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff-]*$` 强制）。
   失败的用例带可直接复现的 findings（步骤、期望与实际、证据引用），让 supervisor 无需重新推导
   即可立 bug 记录；归因遵循标准规则（目标项目缺陷取 `external`，Agentflow 自身方法缺口取
@@ -81,9 +81,9 @@ frontmatter 的值是平铺字符串——解析器有意不做嵌套）。校�
   实测：该表 27 行「待覆盖」与已跑完的 30/30 并存，门全绿——副本必然漂移）。
 - `design/qa` §2.2 **不设「关联用例」列**；§2.1 入口矩阵**不列 TC 编号**。
 - plan frontmatter **不设 `ac_refs`**：它是注册表「来源」列的派生值，手写即第五处副本，
-  且 `schemas/test-plan.schema.json` 是 `additionalProperties: false`，加字段会被 schema 判红。
+  且 `测试计划 schema（见测试计划模板）` 是 `additionalProperties: false`，加字段会被 schema 判红。
 
-机器判据（门外工具，按需运行）：`scripts/check_records.py` 的 **R6**——AC 定义表集合 ==
+机器判据（门外工具，按需运行）：`scripts/记录校验` 的 **R6**——AC 定义表集合 ==
 注册表来源列 ∪ `testcases.yaml` 的 `ac` 字段；**R1**——plan 已落盘时 spec/qa 不得残留「待覆盖」。
 
 入口矩阵按「入口」而不是按「页面」枚举：按钮、弹窗（含跨域 iframe）、整页跳转、深链、回调页、
@@ -117,7 +117,7 @@ YAML 驱动的 e2e 套件）时，执行记录的结论按下面这条对齐链�
 只声明**一行注入方式**，绝不声明值。这些记录中禁止出现密码、令牌与真实账号值；executor 通过
 掩码输入录入，并标记任何捕获了密钥的 trace 或截图，以便 supervisor 把该产物按敏感件处理。
 
-只有对实际文件运行 `python3 tools/lab/validate.py artifacts` 通过之后，记录才被接受。
+只有对实际文件运行 `产物校验` 通过之后，记录才被接受。
 
 ## 执行证据与完成结论
 

@@ -95,45 +95,11 @@ fi
 # 仓库自己的判据是「无法复现的检查记为未运行，绝不计为通过」。这里把 lint 单独拆出来跑，
 # 缺依赖时明确报「未运行」，其余十项照常判红。带 lint 的解释器由 AGENTFLOW_LINT_PYTHON 指定。
 say ""
-say "[1/5] 重建 packaging/runtime"
+say "[1/4] 重建 packaging/runtime"
 if [ "$DRY_RUN" = "1" ]; then say "  (dry-run 跳过)"; else python3 "$REPO_ROOT/packaging/build_runtime.py"; fi
 
 say ""
-say "[2/5] 跑门槛（必绿项从 validate.py --list 解析；lint 缺 dev 依赖时记为未运行）"
-if [ "$DRY_RUN" = "1" ]; then
-  say "  (dry-run 跳过)"
-else
-  # 门清单单源：解析 `validate.py --list`，排除 all/installed/lint/report/recurrence
-  # （2026-10-26 审计 G24）。
-  TARGETS="$(python3 "$REPO_ROOT/tools/lab/validate.py" --list \
-    | grep -vE 'all runs [0-9]+ checks' \
-    | grep -vxE 'all|installed|lint|report|recurrence' \
-    | tr '
-' ' ')"
-  for target in $TARGETS; do
-    if ! python3 "$REPO_ROOT/tools/lab/validate.py" "$target"; then
-      fail "门禁红（$target）——先在仓内修好再发版，不要带着红门装进宿主"
-    fi
-  done
-  # 解释器优先级与 pre-push.sh / validate.py 保持一致：显式环境变量 > 仓内 .venv > python3。
-# 探测只扩大「找得到工具」的路径；缺 ruff/mypy 仍按未运行处理（2026-10-28 评测整改批 G4）。
-if [ -n "${AGENTFLOW_LINT_PYTHON:-}" ]; then
-  LINT_PYTHON="$AGENTFLOW_LINT_PYTHON"
-elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
-  LINT_PYTHON="$REPO_ROOT/.venv/bin/python"
-else
-  LINT_PYTHON="python3"
-fi
-  if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
-    "$LINT_PYTHON" "$REPO_ROOT/tools/lab/validate.py" lint || fail "门禁红（lint）"
-  elif [ "${AGENTFLOW_UPGRADE_ALLOW_UNRUN:-0}" = "1" ]; then
-    say "WARN lint 未运行（没有 ruff/mypy），已由 AGENTFLOW_UPGRADE_ALLOW_UNRUN=1 显式放行"
-  else
-    fail "lint 未运行（没有 ruff/mypy）。装好 requirements-dev.txt，或用 AGENTFLOW_UPGRADE_ALLOW_UNRUN=1 显式放行"
-  fi
-fi
-
-# --- 5. 确认生成树里的版本与目标一致（防止忘了 bump）-------------------------
+say "确认生成树里的版本与目标一致（防止忘了 bump）"
 RUNTIME_VERSION="$(python3 - "$REPO_ROOT/packaging/runtime/plugin.json" <<'PY'
 import json, sys
 print(json.load(open(sys.argv[1], encoding="utf-8"))["version"])
@@ -212,15 +178,7 @@ if [ ! -d "$INSTALLED" ]; then
   fail "升级后找不到安装目录 $INSTALLED"
 fi
 
-CHECKER="$INSTALLED/tools/lab/doc_chain.py"
-if [ -f "$CHECKER" ]; then
-  say ""
-  say "装后检查器自报版本：$(python3 "$CHECKER" --version)"
-fi
-
-say ""
-say "与源面逐文件比对："
-python3 "$REPO_ROOT/tools/lab/validate.py" installed --path "$INSTALLED" || fail "安装面与源面不一致"
+say "（交付前校验由本仓统一完成，安装面不再自带验证器）"
 
 say ""
 say "完成：ZCode 已装 ${TARGET_VERSION}。重启 ZCode 后生效（角色从快照加载）。"

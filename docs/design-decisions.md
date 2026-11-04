@@ -18,13 +18,13 @@
 README、安装方式、版本与发布对象保持歧义。用户安装和使用的产品只有 Plugin；评测脚本、证据存储
 或 MCP 属于维护与治理控制面，不提供第二套聊天 CLI。
 
-**仓库边界**（现状）：运行时面 = `agents/` + `skills/` + `schemas/` + 各 manifest + 宿主包装 +
-`protected-paths.txt`，由 `packaging/build_runtime.py` 生成瘦快照；实验室面 = `tools/lab/`、`tests/`、
-`examples/`、`docs/`；记录面 = `docs/issues/`、`docs/features/`、`docs/releases/`、
-`episodes/`、`reviews/`（布局见 [`index.md`](../index.md)）。
+**仓库边界**（现状）：运行时面 = `agents/` + `skills/` + `记录 schema（见模板）` + 各 manifest + 宿主包装 +
+`受保护清单`，由 `packaging/build_runtime.py` 生成瘦快照；实验室面 = `tests/`、
+`docs/`；记录面 = `记录根`、`docs/features/`、`docs/releases/`、
+（布局见 [`index.md`](../index.md)）。
 
 **宿主职责划分**：Codex / Claude Code 负责模型、认证、代码工具、权限、对话与子 Agent 生命周期；
-Agentflow 负责角色、协作步骤、交接契约、评审门、自迭代规则与版本治理。
+Agentflow 负责角色、协作步骤、交接契约、评审、自迭代规则与版本治理。
 
 **旧 CLI 的处理**：不继续发展 TUI、Provider 和第二套 Agent loop。可抽象复用的思想只有
 `run_id + sequence` 追加事件与幂等重放、SQLite 原子投影、审批租约与幂等 resolve、Token 与成本
@@ -119,12 +119,12 @@ Supervisor 与技术决策与独立复核职责分离、重试有边界（连续
 - **改进环已整体裁撤**（2026-10-29 用户拍板 B）：`skills/improve`（Skill、证据与发布规则、
   candidate / release-record 两份 schema）与四个治理角色（feedback-analyst /
   candidate-engineer / evaluator / release-governor）一并删除；episode 契约迁至
-  `schemas/episode.schema.json`，`episodes/` 仍是现行记录根。方法改动改走
-  「明确反馈 + 有界候选 + 独立评审 + 人工授权」的批次流程。`isolation.py check-diff` 与
+  `episode schema（见 episode 模板）` 仍是现行记录根。方法改动改走
+  「明确反馈 + 有界候选 + 独立评审 + 人工授权」的批次流程。`隔离 diff 检查` 与
   `artifact_digest.py` 保留为通用工具；确定性 Policy Engine 已随评测装置裁撤。
   **恢复清单**：按本节 §3 的六个边界与下图重建 `skills/improve/`（SKILL + evidence-and-release +
-  candidate / release-record schema）、四个角色文件、`examples/improve/` 三份夹具、各 manifest
-  的 agents 条目、`protected-paths.txt` 与 `gate/common.py` 的必需条目、`gate/schema.py` 的
+  candidate / release-record schema）、四个角色文件、`示例库` 三份夹具、各 manifest
+  的 agents 条目、`受保护清单` 与 `gate/common.py` 的必需条目、`gate/schema.py` 的
   第二 schema 根、`gate/examples.py` 的 G10 校验，以及 `agents/README.md`、`roles.md`、README
   与产品链的角色计数。
 - **业务任务度量切片已裁撤**（用户拍板「保公开、裁业务」）；**改进三件套记录根与逐版本发布记录
@@ -186,8 +186,8 @@ adapter 扫描工具结果计数写入 `observed_permission_denials`（**缺失 
 
 **（四）恢复时需要重建的东西**：`evals/public`（15 例 + 脱敏输入）、三个 schema（用例结果 /
 评测结果 / 对照）、runner 与 adapter、policy（对照方向与容差的确定性判定）、`artifact_digest.py`
-（**仍在**——它是通用摘要工具）、`isolation.py check-diff`（**仍在**——候选 diff 禁区检查）、
-`examples/evaluation-results` 样例。恢复时落点由 Supervisor 显式指派并声明契约，并重新评估
+（**仍在**——它是通用摘要工具）、`隔离 diff 检查`（**仍在**——候选 diff 禁区检查）、
+示例库评估样例。恢复时落点由 Supervisor 显式指派并声明契约，并重新评估
 是否仍需 `measurement: none` 口径。
 
 ## §4 产品链结论（2026-10-30 并入，原 docs/product/）
@@ -205,10 +205,10 @@ git 历史 `40147df:docs/product/` 取回。自此产品链状态只有本节、
   plan 引用冻结后的 design。
 - **关键决策**：只做方法不做运行时；宿主插件载体；受治理的人工闭环；保护门单点声明；
   schema + 编译门；Markdown 融合计划；失败语义成文；瘦快照分发；manifest/CHANGELOG 是版本单点；
-  评测仪器 2026-10-12 整线裁撤，方法级改动 `measurement: none`；文档链吸收（D12）与门禁（D13）；
+  评测仪器 2026-10-12 整线裁撤，方法级改动 `measurement: none`；文档链吸收（D12）与校验（D13）；
   边界如实声明（D14）。
-- **评审门处置**：需求评审 REV-2026-10-19-003 `approved`（F1–F12 全关闭）；技术方案评审
-  `reviews/review-2026-09-19-001.md` 经独立委派 L2 `approved`（2026-10-29，Design 冻结）。
+- **评审处置**：需求评审 REV-2026-10-19-003 `approved`（F1–F12 全关闭）；技术方案评审
+  一条评审记录经独立委派 L2 `approved`（2026-10-29，Design 冻结）。
 - **计划处置**：PLAN-PRODUCT 8 ☑ / 6 本期不做；PLAN-LOOP 5 ☑ / 5 本期不做；T02 与 LOOP T09
   的对象已随评测装置/改进环裁撤注销，PRODUCT T09 的 Intake FTS5 再犯类检索已落。
 
@@ -216,7 +216,7 @@ git 历史 `40147df:docs/product/` 取回。自此产品链状态只有本节、
 
 ## 对外口径（版本号以 manifest 为准）
 
-已具备受治理的方法演进流程与数据契约（十条主工作流、<!-- count:agents -->10<!-- /count --> 角色能力库、14 条硬边界、独立评审门、
+已具备受治理的方法演进流程与数据契约（十条主工作流、<!-- count:agents -->10<!-- /count --> 角色能力库、14 条硬边界、独立评审、
 确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役；
 改进环本身于 2026-10-29 整体裁撤，方法改动走批次流程，方法级改动一律 `measurement: none`
 口径，不表述为已验证的自动学习系统。评测装置已整线裁撤（设计知识与恢复清单见 §3）；

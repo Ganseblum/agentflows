@@ -2,11 +2,9 @@
 """把可安装的插件面复制到 packaging/runtime。
 
 真源保持在仓库根（agents/、skills/、各 manifest）。本脚本把该面复制到一个生成目录，使
-local-directory marketplace 可以在不包含记录根（issues/、episodes/、plans/、improvements/、
-releases/、reviews/）、tests/、tools/、docs/、evals/、examples/ 的情况下对其进行快照。
+local-directory marketplace 可以在不包含仓库维护面（docs/、packaging/）的情况下对其进行快照。
 
-复制只涉及常规文件。符号链接一律拒绝，确保生成树不能指向声明的面之外
-（与 tools/lab/artifact_digest.py 同规则）。
+复制只涉及常规文件。符号链接一律拒绝，确保生成树不能指向声明的面之外。
 """
 
 from __future__ import annotations
@@ -24,39 +22,24 @@ DEFAULT_DEST = SCRIPT_DIR / "runtime"
 RUNTIME_DIRECTORIES = (
     "agents",
     "skills",
-    "schemas",
     ".zcode-plugin",
     ".claude-plugin",
     ".codex-plugin",
     ".qoder-plugin",
 )
-# 运行期检查器随插件交付（2026-10-26，安装面断裂修复）：SKILL 的「首次接入」要求目标仓运行
-# doc_chain.py，而此前 tools/ 被排除在运行时之外——装完插件的用户照抄命令只会得到
-# 「No such file or directory」。这里只发文档链检查器，不发整个 gate：目标仓需要的是链检查，
-# validate.py 校验的是本仓自己的记录（issues/features/episodes），对目标仓无意义。
-RUNTIME_SUBTREES = (
-    "tools/lab/doc_chain.py",
-    "tools/lab/docchain",
-)
+# 早期版本曾把文档链检查器（tools/lab/doc_chain.py）随插件交付，让目标仓能就地跑链检查。
+# 2026-11-04 门禁整体移除后，检查器不再随插件发布；目标仓的文档链检查改由本仓在交付前完成，
+# 不向目标仓注入工具。
+RUNTIME_SUBTREES = ()
 RUNTIME_FILES = (
     "plugin.json",
     "marketplace.json",
-    "protected-paths.txt",
 )
 FORBIDDEN_TOP_LEVEL = frozenset(
     {
-        "issues",
-        "episodes",
-        "plans",
-        "improvements",
-        "releases",
-        "reviews",
-        "tests",
         "docs",
-        "evals",
-        "examples",
-        ".git",
         "packaging",
+        ".git",
     }
 )
 

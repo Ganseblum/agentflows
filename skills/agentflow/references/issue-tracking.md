@@ -49,7 +49,7 @@ escape_stage: 需求 | 设计 | 实现 | 测试 | 评审
 
 - 若同一类问题再次出现，复用同一 `class_id`（纯 ASCII 小写，如 `doc-drift`、`curl-as-e2e`、`no-data-model`），`occurrence` 递增（第 2 次 = `2`）。
 - 台账落 `issues/recurrence/<class_id>.md`，每类一文件，记录：首次出现、各次 `ISS-*`、共性根因、是否已推动 agentflow 升级（PR / commit 链接）。
-- 检索：`python3 tools/lab/record_store.py index` 后 `query '<关键词>'`（默认覆盖 `docs/issues/` 与 `docs/issues/recurrence/`）。
+- 检索：`记录检索` 后 `query '<关键词>'`（默认覆盖 `记录根` 与 `再犯类记录根`）。
 
 ## 3. 闭环到升级
 

@@ -1,6 +1,7 @@
 ---
 name: agentflow
-description: 用于跨层功能、架构改动、并行调查、委派式实现、用户可见功能的自动化测试、文档交付链（某 feature 的需求提案 / 规格 / 设计 / 计划）、分支集成与冲突解决（需手工解决冲突的分支合并），或受益于显式评审门的工作；对委派只会徒增开销的琐碎单步工作可跳过。以宿主自身的 agent 应用 Agentflow 方法：supervisor、frontend / backend 工程师、technical director、独立 reviewer，以及测试设计 / 执行（test-planner / test-executor）角色。
+description: 用于跨前端与后端的功能、接口契约、数据模型、安全或权限边界改动，并行调查与委派实现，需要独立评审的改动，影响用户可见行为的自动化测试，反复出现或跨层的 Bug 排查 / 修复 / 回归闭环，以及规划、文档交付链与手工解冲突的分支合并。以宿主自身的 agent 应用 Agentflow 方法：supervisor、frontend/backend 工程师、technical director、独立 reviewer、test-planner/test-executor。琐碎单步工作可跳过。
+when_to_use: 跨前端后端的功能或契约改动、并行调查、委派实现、独立评审、影响用户可见行为的测试、反复出现或跨层的 Bug、需要手工解冲突的分支合并；或用户主动说「走 agentflow」「多智能体」「评审一下这个改动」。琐碎单步改动不用。
 ---
 
 # Agentflow
@@ -12,11 +13,10 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 ## 绑定宿主
 
 - 在 **Codex** 中，使用原生子代理。每个子代理只给一个角色和一份任务简报。以主任务作为 Supervisor。
-- 在 **Claude Code** 与 **ZCode** 中，仅当[路由表](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；**插件根目录 `agents/` 下的角色文件**是可选能力（`.zcode-plugin/plugin.json` 以 `"agents": "agents"` 声明；`skills/agentflow/agents/` 下只有宿主展示字段 `openai.yaml`，没有角色文件）。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。ZCode 从已安装的插件快照加载角色，因此源码编辑只有重装后才生效——运行 `python3 tools/lab/validate.py installed` 查看漂移。
-- 在 **Qoder** 中，插件按已安装快照加载，10 个角色以 `agentflow:<role>` 注册（2026-10-28 在 Qoder Desktop 实测 14 角色全部 ready、`reviewer` 实际派发完成只读任务，逐条现场值见插件仓 `docs/host-platform-facts.md` 的 Q1–Q6 行；改进环裁撤后源面为 10 个角色，安装快照重装后才同步）。本地目录安装用 `qoder plugins install <插件根> --scope user`，本仓的插件根是 `packaging/runtime`；源编辑需重建该生成树后重装，再用 `validate.py installed --path <安装根>` 查看漂移。角色 `tools` / `disallowedTools` 在该宿主是否被强制执行未验证，不得把提示词纪律当作宿主强制。
-- 安装树只随包 `tools/lab/doc_chain.py` 与 `tools/lab/docchain/`；本文其余 `python3 tools/lab/...` 命令（`validate.py`、`record_store.py` 等）需在插件源码检出中运行，目标仓没有这些工具。
+- 在 **Claude Code** 与 **ZCode** 中，仅当[角色路由](references/roles.md)表明能降低风险时才启动插件 agent。默认不加载完整角色列表；**插件根目录 `agents/` 下的角色文件**是可选能力（`plugin.json` 以 `"agents": "agents"` 声明；`skills/agentflow/agents/` 下只有宿主展示字段，没有角色文件）。选中的角色以 `agentflow:reviewer`（或对应的 `agents/<role>.md` 名称）调用。以主对话作为 Supervisor。
+- 在 **Qoder** 中，插件按已安装快照加载，角色以 `agentflow:<role>` 注册。本地目录安装用 `qoder plugins install <插件根> --scope user`，本仓的插件根是 `packaging/runtime`；源编辑需重建该生成树后重装。角色 `tools` / `disallowedTools` 在该宿主是否被强制执行未验证，不得把提示词纪律当作宿主强制。
 - 在其它兼容 Agent Skills 的宿主中，使用其内置委派机制。若不存在，则顺序执行同样的阶段，并说明独立执行不可用。
-- 插件安装只提供角色与工作流；**跨仓库的全局纪律不随插件安装自动生效**。需要它们在该宿主的每个会话默认生效时，按[宿主接入](references/hosts.md)做一次 Host Init，写进宿主自己的全局指令文件。宿主全局文件是跨项目写操作，与合并、推送同级，需要当次明确确认；写完要做 hosts.md 第 6 条的三项校验（块外内容、块内容、宿主复述首行），拿不到加载证据就记 `blocked`。
+- 跨仓库的全局纪律不随插件安装自动生效。需要它们在该宿主的每个会话默认生效时，按[宿主接入](references/hosts.md)做一次 Host Init，写进宿主自己的全局指令文件。宿主全局文件是跨项目写操作，与合并、推送同级，需要当次明确确认；写完要做 hosts.md 第 6 条的三项校验（块外内容、块内容、宿主复述首行），拿不到加载证据就记 `blocked`。
 
 ## 先读哪份规则
 
@@ -30,7 +30,7 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 | 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) · 用户主动叫入口：[agentflow-grilling](../agentflow-grilling/SKILL.md) |
 | 选择角色与交接 | [角色路由](references/roles.md) · [契约](references/contracts.md) |
 | 独立评审要加载哪几份深度清单、评审档位与交付前自检 | [评审清单](references/review-checklists.md) |
-| 功能文档与轻量/完整档位 | [文档交付链](references/document-chain.md) |
+| 功能文档的档位与必需骨架 | [文档交付链](references/document-chain.md) |
 | 测试计划、执行记录及 Bug 状态联动 | [测试记录](references/test-records.md) |
 | 工程内容标准（写代码时） | [服务端](references/standards/server-side.md) · [数据模型](references/standards/data-model.md) · [前端](references/standards/frontend.md) |
 | 问题闭环：发现 → 落账 → 复发台账 | [问题闭环](references/issue-tracking.md) |
@@ -45,7 +45,7 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 | --- | --- |
 | 画、改、评设计图（时序 / 状态 / 架构 / ER） | [设计图](../design-diagram/SKILL.md) |
 | 跨仓全局纪律、Host Init 协议、宿主矩阵 | [宿主接入](references/hosts.md) |
-| 用户行为事件与埋点评审门 | [埋点契约](references/telemetry.md) |
+| 用户行为事件与埋点评审 | [埋点契约](references/telemetry.md) |
 | 仓库整体审核 / 体检 / 复盘 | [审核契约](references/repo-audit.md) |
 | 证据工具 seal / verify / run 的命令语义 | [证据工具用法](references/workflow-tool.md) |
 | 载体归属（哪份规则落在哪个物理文件） | [载体地图](references/carrier-map.md) |
@@ -54,13 +54,13 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 
 ## 首次接入（Init）
 
-目标仓没有相关约定、记录结构或检查命令时，先做一次轻量接入再走正常流程。**执行细则见 [Init 细则](references/init.md)**（脚本先行 → 六问集中确认 → 写接入约定小节 → 已有批次先对齐基线），此处只留三条不变式：**脚本先行**（`python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run` 先出计划，确认后实跑；宿主既有文件只追加托管块，**绝不覆盖**，冲突与用户逐条裁决）；**接入必须带三道可执行门条款**（新批次当天跑 `doc_chain.py`、宣布完成前全仓批次再跑并贴原始输出、finding 要么修要么显式登记——只写「走主流程」等于没接；必产出载体是 [目标仓接入节模板](templates/hub/repo-rules.md)）；**工程基线只收实测事实**（查不到写缺口，不按通用默认推断，不搬运别的项目的业务数值与部署流程）。
+目标仓没有相关约定、记录结构或检查命令时，先做一次轻量接入再走正常流程。**执行细则见 [Init 细则](references/init.md)**（脚本先行 → 六问集中确认 → 写接入约定小节 → 已有批次先对齐基线），此处只留三条不变式：**脚本先行**（`python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run` 先出计划，确认后实跑；宿主既有文件只追加托管块，**绝不覆盖**，冲突与用户逐条裁决）；**接入必须带可执行的验收条款**（宣布完成前，对每个批次跑一次文档链检查、对每次实现跑一次仓库构建/测试，并把原始输出随结论给出——只写「走主流程」等于没接）；**工程基线只收实测事实**（查不到写缺口，不按通用默认推断，不搬运别的项目的业务数值与部署流程）。
 
 分派工作前阅读[角色档案](references/roles.md)，委派实现或评审前阅读[契约](references/contracts.md)。[硬边界](references/contracts.md#硬边界)在每一次委派中都成立；接受任何交付物前先检查它们。
 
-对于 material、不确定、反复出现、跨层或高风险的 Bug，使用完整的有界序列 `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`。Investigator 确立可复现的症状与归因——bug 有用户可见面时，复现步骤写成可直接照跑的 Ego Light 操作序列（`ego-browser`，本角色保持只读不执行）；Fixer 修前按该序列复现、修后重跑同一序列验证并留存修前/修后证据，且只在指派的候选工作区改动代码；Reviewer 检查修复（Ego 修前/修后证据属于端到端路径证据），Recorder 在验证后写下被接受的 Bug 记录；bug 回归用例（来源 `ISS-*`）的 run `pass` 承载 `regression_status` 证据，bug 状态回写由 supervisor/recorder 执行，回归 `fail` 不前进（联动规则见 `skills/agentflow/references/test-records.md`）。对于已有验证复现的小范围低风险 Bug，Supervisor 可合并 Investigator 或 Recorder 环节，但必须保留同样的诊断、回归、评审与状态证据。绝不让 Fixer 批准或关闭它自己的 Bug。
+对于 material、不确定、反复出现、跨层或高风险的 Bug，使用完整的有界序列 `bug-investigator` → `bug-fixer` → `reviewer` → `bug-recorder`。Investigator 确立可复现的症状与归因——bug 有用户可见面时，复现步骤写成可直接照跑的 Ego Light 操作序列（`ego-browser`，本角色保持只读不执行）；Fixer 修前按该序列复现、修后重跑同一序列验证并留存修前/修后证据，且只在指派的候选工作区改动代码；Reviewer 检查修复（Ego 修前/修后证据属于端到端路径证据），Recorder 在验证后写下被接受的 Bug 记录；bug 回归用例（来源 `ISS-*`）的 run `pass` 承载 `regression_status` 证据，bug 状态回写由 supervisor/recorder 执行，回归 `fail` 不前进（联动规则见 `references/test-records.md`）。对于已有验证复现的小范围低风险 Bug，Supervisor 可合并 Investigator 或 Recorder 环节，但必须保留同样的诊断、回归、评审与状态证据。绝不让 Fixer 批准或关闭它自己的 Bug。
 
-对于规划任务，并行运行所需的前端与后端专家，把它们的输出与 Technical Director 的接口决策交给 `plan-architect`，由它在显式的 `docs/features/<批次>/plan/` 路径下写出最终计划。Plan Architect 只写计划；计划是否获批由 Supervisor 决定，它还负责指派执行、集成结果，并拥有最终的停止或回滚决策。未来的 `execution-coordinator` 可负责持久队列、租约、依赖、重试与可恢复并行批次，但它不是当前角色——该角色当前不存在，不得作为委派对象、产物落点或任务归属写进任何简报；今天这些职责由 Supervisor 承担。计划必须承载进展看板与任务表（逐任务状态、依赖、证据回写）、它经过的接口与共享机制、其评审门，以及带回滚点的发布顺序——形态定义于 `docs/features/README.md`，机器校验。计划是执行合同，不是改动代码的授权。对 material 特性，计划还要承载来自[契约](references/contracts.md)的设计完备性产物：关键链路时序（以步骤表为基准）、每条关键路径一份异常矩阵，以及与回滚点配对的发布顺序。
+对于规划任务，并行运行所需的前端与后端专家，把它们的输出与 Technical Director 的接口决策交给 `plan-architect`，由它在显式的 `docs/features/<批次>/plan/` 路径下写出最终计划。Plan Architect 只写计划；计划是否获批由 Supervisor 决定，它还负责指派执行、集成结果，并拥有最终的停止或回滚决策。计划必须承载进展看板与任务表（逐任务状态、依赖、证据回写）、它经过的接口与共享机制，以及带回滚点的发布顺序——形态定义于 `docs/features/README.md`。计划是执行合同，不是改动代码的授权。对 material 特性，计划还要承载来自[契约](references/contracts.md)的设计完备性产物：关键链路时序（以步骤表为基准）、每条关键路径一份异常矩阵，以及与回滚点配对的发布顺序。
 
 ## 宿主级接入（Host Init）
 
@@ -72,15 +72,15 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 外部文档二次评审
 
-当用户要求评审在另一套系统规则下编写的文档（例如业务仓自有模板系统内产出的需求提案/spec/设计/计划）时，对这些文档运行独立 Reviewer，把证据落在本仓 `reviews/`，并按`provenance` 分流「目标系统模板缺口」与「本仓 review 契约缺口」两个升级回路。**四步桥工作流、归档快照与 `source_revision`、自包含引用要求、评审记录契约都以 [审核契约](references/repo-audit.md#外部文档二次评审另一套规则下产出的文档) 为唯一权威**，本文不复述。
+当用户要求评审在另一套系统规则下编写的文档（例如业务仓自有模板系统内产出的需求提案/spec/设计/计划）时，对这些文档运行独立 Reviewer，把评审证据与结论留存为评审记录，并按`provenance` 分流「目标系统模板缺口」与「本仓 review 契约缺口」两个升级回路。**四步桥工作流、归档快照与 `source_revision`、自包含引用要求、评审记录契约都以 [审核契约](references/repo-audit.md#外部文档二次评审另一套规则下产出的文档) 为唯一权威**，本文不复述。
 
 ## 仓库整体审核
 
-当用户要求对这个仓（或已接入的目标仓）做整体审核、体检、复盘，或版本发布前需要一次全面核查时，按 [references/repo-audit.md](references/repo-audit.md) 执行——档位划分、铁律、维度适配规则与单文件输出骨架都以那份契约为准（档位数与铁律数以该文件的实列为准，不在本文重复计数），本文不复述。本节只留三条只有主工作流才管的义务：① 与「外部文档二次评审」的分工——那条的对象是另一套规则下产出的文档、证据落本仓 `reviews/`，本条的对象是仓库自身的全部表面；② 审核发现按修复批次落到 `docs/issues/` 与 `docs/features/`，不在审核档案里立项，也不表述为已验证的改进（`measurement: none` 口径），审核未完成时出分必须标为阶段分并附实际覆盖比例；③ **审别人的东西时，自己的产物也在被审范围内**——审核产物要过所在仓的文档链门与全套检查，每轮 frontmatter 带 `recorded_at`（北京时间现取）、`source_revision` 与 `model`（拿不到可靠标签写 `unknown`，不填假精确的型号）。
+当用户要求对这个仓（或已接入的目标仓）做整体审核、体检、复盘，或版本发布前需要一次全面核查时，按 [references/repo-audit.md](references/repo-audit.md) 执行——档位划分、铁律、维度适配规则与单文件输出骨架都以那份契约为准（档位数与铁律数以该文件的实列为准，不在本文重复计数），本文不复述。本节只留三条只有主工作流才管的义务：① 与「外部文档二次评审」的分工——那条的对象是另一套规则下产出的文档、证据落评审记录，本条的对象是仓库自身的全部表面；② 审核发现按修复批次落到 `记录根` 与 `docs/features/`，不在审核档案里立项，也不表述为已验证的改进（`measurement: none` 口径），审核未完成时出分必须标为阶段分并附实际覆盖比例；③ **审别人的东西时，自己的产物也在被审范围内**——审核产物要过所在仓的文档质量与全套检查，每轮 frontmatter 带 `recorded_at`（北京时间现取）、`source_revision` 与 `model`（拿不到可靠标签写 `unknown`，不填假精确的型号）。
 
 ## 文档交付链
 
-当用户要求为某 feature **产出**文档集（需求提案/规格/技术方案/实施计划）、某 feature 先有文档尚无代码、**或在目标仓实施一个新 feature（代码工作随行）**时，走 [references/document-chain.md](references/document-chain.md) 的链契约：接入（Init）→ 采集访谈 → 提案 → spec → 设计 → 计划 → 实施，每阶段有必需骨架、可检查质量与阶段门。**档位判据、骨架逐节要求、门 1–10、原型形态 A/B、埋点三处贯通、视觉基线三档**都在[链契约](references/document-chain.md)里，机器判据与逐文档质量标准在[判据细则分册](references/document-chain-checks.md)里，本文不复述——复述正是它自己判为缺陷的「同一结论双源并存」。本文只承担三条只有主工作流才管的动作义务：① 立项当天打 `agentflow 目标承接` 标记就必须同时写目标承接表，缺表即红；宣布任何一步「已完成」时计划证据列必须留下门 8 定义的四种可复核载体之一（`/tmp` 里的东西不算）；② 产品语义的未决分支一律先交用户（一行问题带推荐，提问纪律见[契约](references/contracts.md)的「先问再假设」节），需用户抉择且尚未关闭的待决行必须带 `docs/PENDING-DECISIONS.md` 的条目编号——拍板口是唯一需要用户逐条回复的清单，链内的待决清单不替代它；③ 目标仓有自己的模板体系就保留它，在其上施加门与质量标准：链契约是不存在模板体系或用户要求采用本方法时的下限，绝不替代一套行之有效的约定。
+当用户要求为某 feature **产出**文档集（需求提案/规格/技术方案/实施计划）、某 feature 先有文档尚无代码、**或在目标仓实施一个新 feature（代码工作随行）**时，走 [references/document-chain.md](references/document-chain.md) 的链契约：接入（Init）→ 采集访谈 → 提案 → spec → 设计 → 计划 → 实施，每阶段有必需骨架与可检查质量。**档位判据、骨架逐节要求、原型形态 A/B、埋点三处贯通、视觉基线三档**都在[链契约](references/document-chain.md)里，本文不复述。本文只承担三条只有主工作流才管的动作义务：① 立项当天打 `agentflow 目标承接` 标记就必须同时写目标承接表，缺表即不完整；宣布任何一步「已完成」时计划证据列必须留下可复核的载体之一（`/tmp` 里的东西不算）；② 产品语义的未决分支一律先交用户（一行问题带推荐，提问纪律见[契约](references/contracts.md)的「先问再假设」节）；③ 目标仓有自己的模板体系就保留它，在其上施加质量标准：链契约是不存在模板体系或用户要求采用本方法时的下限，绝不替代一套行之有效的约定。
 
 ## 埋点
 
@@ -88,16 +88,16 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 运行工作流
 
-1. **Intake**：检查仓库指令、当前 diff、相关架构与测试。说明目标与可观察的验收标准。当你报告仓库**状态**——哪些已完成、下一步做什么、什么高优先级——先对照仓库的真实历史校准（`git fetch` 加 `log`/`status`），绝不依赖会话记忆，并把证据命令随结论一起给出。状态主张就是仓库事实主张：另一个写入者一 push，会话记忆就过期，而回答中没有任何东西会暴露这一点。**遇到新 feature：先按「文档交付链」完成接入（Init）与采集访谈（产品决策交用户），再进入本步。** 遇到可能复发的缺陷时，先做一次显式再犯类检索：`python3 tools/lab/record_store.py index` 后用 `query '<关键词>'` 查（默认索引覆盖 `docs/issues/` 与 `docs/issues/recurrence/`），把命中的 `ISS-*` / `class_id` 写进提案风险节；不得用向量 RAG 替代——当前记录量不足，且原始对话不是语料。**需求本身说不清时，先按[开工提问](references/intake.md)的六要素补全**（用户说不出要什么时，从最近 3 轮话题给 2～3 个具体选项让用户挑，不推「你是想要个方案吗」这类空问）；进入某类功能前，先按[范围维度](references/intake-scope-dimensions.md)主动穷举该领域的范围维度（认证方式 / 注册 / 验证防抖 / 格式 / 三方登录等），而非等用户想到再补：先查后问、一次最多 2 个选择题、假设写成「我按这些做」；方案已成形但边界不清时，先按[压设计](references/grilling.md)压一轮再进架构门。
-2. **架构门**：对于跨层或 risky work（见下文*判断词的可判定定义*），请 Technical Director 界定边界、接口契约、集成顺序与主要风险。不要把该角色当作仪式性的批准环节。对跨层/高风险设计，先用[压设计](references/grilling.md)把前沿问完，再让 Technical Director 出决策；未决问题进 `docs/PENDING-DECISIONS.md`，不另起清单。
-3. **计划**：只选任务所需的角色。纯前端的修复不需要后端 worker。小改动（见下文*判断词的可判定定义*）可留在 Supervisor 手里。**计划批准是显式的一步**（2026-10-26 审核 G27）：输入是 Plan architect 产出的 `status: proposed` 计划，输出是主审显式批准（置 `approved`）或退回（保持 `proposed` 并具名原因）——批准动作本身记入计划的 `## 变更记录`。十步表里没有这步，状态机的 `proposed→approved` 边就无落点。
+1. **Intake**：检查仓库指令、当前 diff、相关架构与测试。说明目标与可观察的验收标准。当你报告仓库**状态**——哪些已完成、下一步做什么、什么高优先级——先对照仓库的真实历史校准（`git fetch` 加 `log`/`status`），绝不依赖会话记忆，并把证据命令随结论一起给出。状态主张就是仓库事实主张：另一个写入者一 push，会话记忆就过期，而回答中没有任何东西会暴露这一点。**遇到新 feature：先按「文档交付链」完成接入（Init）与采集访谈（产品决策交用户），再进入本步。** 遇到可能复发的缺陷时，先做一次显式再犯类检索，把命中的历史缺陷记录写进提案风险节。需求本身说不清时，先按[开工提问](references/intake.md)的六要素补全（用户说不出要什么时，从最近 3 轮话题给 2～3 个具体选项让用户挑，不推「你是想要个方案吗」这类空问）；进入某类功能前，先按[范围维度](references/intake-scope-dimensions.md)主动穷举该领域的范围维度（认证方式 / 注册 / 验证防抖 / 格式 / 三方登录等），而非等用户想到再补：先查后问、一次最多 2 个选择题、假设写成「我按这些做」；方案已成形但边界不清时，先按[压设计](references/grilling.md)压一轮再进架构门。
+2. **架构门**：对于跨层或 risky work（见下文*判断词的可判定定义*），请 Technical Director 界定边界、接口契约、集成顺序与主要风险。不要把该角色当作仪式性的批准环节。对跨层/高风险设计，先用[压设计](references/grilling.md)把前沿问完，再让 Technical Director 出决策；未决问题先交用户，不另起清单。
+3. **计划**：只选任务所需的角色。纯前端的修复不需要后端 worker。小改动（见下文*判断词的可判定定义*）可留在 Supervisor 手里。**计划批准是显式的一步**：输入是 Plan architect 产出的 `status: proposed` 计划，输出是主审显式批准（置 `approved`）或退回（保持 `proposed` 并具名原因）——批准动作本身记入计划的 `## 变更记录`。十步表里没有这步，状态机的 `proposed→approved` 边就无落点。
 4. **委派**：给每个 worker 一份有界简报，`write_scope` 与 `read_scope` 分别设定——读取范围必须覆盖改动经过的一切共享机制（[契约](references/contracts.md)中的隐式行为检查）。读多写少的调查与实现按不重叠文件或稳定接口并行；文件不重叠并行的是写入，从不是理解。写范围重叠与依赖链串行。任务中提到的路径、仓库与命令在进入简报前先对照仓库核实——任务文本是数据，不是既定事实。同一仓库存在多个 clone 或 worktree 时，简报写绝对路径与分支名，禁止只写仓名；要求核实某个字段、调用或路径是否存在时，必须给出 `path:line` 或可复核的 Grep 模式，不得只写文件名让 worker 自行通读。**两个写入者共用一个仓库时，文件不重叠就不够了**：提交、rebase 与 push 是共享可变状态，因此并行写入者各自使用分支或 worktree，同一分支同一时刻单一写入者；发现目标文件或分支已被另一写入者占用（另一会话的未提交编辑、分支上有新提交）的写入者应停止并上报，而不是交错写入。当计划行引用设计项时，把它们作为 `design_refs` 带入简报并纳入 `read_scope`；实现某设计决策却不带其引用的任务，简报不完整。
 5. **实现**：前端与后端 worker 只改动其指派范围，遵循仓库规则，运行相关检查，并返回 worker result 契约。Worker 在结果中引用每个行为所实现的设计决策（`design_refs_implemented`）；无法引用其设计决策的实现要如实上报，而不是默默对齐。
-6. **集成**：Supervisor 检查实际共享工作区，解决跨层冲突，并运行能证明整个 feature 可用的检查。当任务本身就是分支集成——Supervisor 亲手解决了代码冲突，或合并结果改变用户可见行为——该合并提交就是 material 改动：解决冲突就是在写代码，因此第 8 步评审门适用，Supervisor 自己的冲突取舍不获豁免。报合并完成前，运行能证明合并产物可构建且行为正确的确定性检查并留存原始输出——至少是仓库的构建/编译检查加上每个受影响可部署单元的测试套件（Go 项目为 `go build ./...` 加 `go test ./...`，每个前端工作区 `tsc --noEmit`，触碰数据库迁移的合并在该工作区规则下真实地跑一次迁移）。grep 冲突标记只用于分诊，绝不用于接受：仅凭冲突标记 grep（或 diff 大小）就报告合并完成是反模式——清掉 `<<<<<<<`/`>>>>>>>` 只证明标记没了，不证明语法与语义正确。禁用常规构建/测试的工作区规则是迭代默认值，不是豁免：当门要求这些检查时，要么运行它们，要么把冲突升级给用户——绝不静默跳过。合并一个**曾被回滚**的分支时，先用 `git log --grep='This reverts commit' --oneline` 找到回滚提交，再用 `git show --name-status <revert>` 取文件清单逐项对账，逐文件确认合并结果；评审 diff 必须包含源分支一侧——源分支还在时用 `source_branch..merge_result`，源分支已删除时用 `merge_result^2..merge_result`；只给 `merge_result^1..merge_result`（第一父提交基线）的评审看不见「源分支有、合并结果没有」的漏项。测试失败时不得用跳过 pretest、`--ignore-scripts`、只跑子集或缩小 glob 的方式换成绿色——那与静默跳过同罪；要么修，要么把红作为阻塞升级给用户并保留原始输出。这组规则的宿主级副本载体与同步机制登记在[载体归属表](references/carrier-map.md)：改模板必须同时 bump 插件版本并重跑 Host Init，漂移由版本号判定，不靠「记得同步另一处」的人工记忆。
-7. **接受 worker 产物前先验证**：worker 的主张要等 Supervisor 编译过才算数——对实际写下的文件运行仓库的确定性检查（测试、linter、schema 校验器，本仓即 `tools/lab/validate.py`），而不是对着 worker 的摘要。检查失败按编译错误处理：退回修复，绝不在红灯检查上手工接受摘要。无法复现的检查主张记为未运行。同一次里，把工作区实际改动面对照简报的 `write_scope`（硬边界 14）：委派时记下基线 revision，然后列出真正改了什么——`git diff --name-only --no-renames <baseline>` 加未跟踪文件，或用随附的 `scripts/check-write-scope.sh`——任何落在 `write_scope` 之外的改动路径都退回，不论检查结果如何。产物所有权矩阵是声明的意图；这次对照才是执法。当工作对着 `docs/features/<批次>/plan/` 下的版本化计划运行时，在这个接受点把被接受任务的状态与证据回写进计划（最小 diff——只改那两列），不要留到会话结束：计划是恢复锚点，与已接受工作漂移的计划是虚假记录。
-8. **评审门**：material 改动之后，指派独立 Reviewer。当 Supervisor 自己写了部分改动时，此门强制且不可豁免——作者不是验证者。进入此门前先按[委派契约](references/contracts.md#评审能力分级)探测委派能力并记录 `review_tier`（L2 独立子代理 / L1 单角色 / L0 委派不可用）；能力不足时不得静默继续——L0 下由 Supervisor 自审并实跑全套确定性门，逐条留痕失败派发的原始错误，且**用户可见行为改动的最终放行要等能力恢复后补门**，补门之前结论上限是 `partial`。Reviewer 拟出确切的检查命令与预期结果，并基于原始输出工作；Supervisor 可执行它们，但不得替换它们。Reviewer 带具体证据报告 `approved`、`changes_requested` 或 `blocked`，且不静默修复它所评判的代码。此门关闭前，先按计划/`design/qa` 的入口矩阵逐条走真实用户入口——批准一个主用户可见路径从未执行过一次的构建，是在审代码而不是审行为。入口矩阵里的每个入口（按钮、弹窗含 iframe、整页跳转、深链、回调页、脚本）都要有执行记录；`e2e` 用例的通过证据必须是 `browser` 或 `manual`，`curl`/API 200 只能证明协议链，不能关闭用户可见路径。此后任何影响用户可见行为的改动都重新开门，不论作者是谁。重审**默认**按上次已审 revision 以来的 delta 范围进行：简报给出上轮 `review_id` 与本轮 diff，Reviewer 只核实本轮改动及其连带面；只有需要推翻上轮结论时才重新建立全场判断。被评审对象是未提交工作区时，先用 [scripts/review_snapshot.py](scripts/review_snapshot.py) 生成评审快照，把快照路径作为 `reviewed_revision` 与内联对象——简报缺[契约](references/contracts.md)「评审简报必填字段」五项之一（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）即被 reviewer 按 `blocked: 简报不合格` 退回。当宿主的**交互式浏览器**自动化是主对话专属（子代理无法加载它）时，由 Supervisor 亲自负责那次浏览器操作——任何被委派的 Reviewer 都跑不了——并把原始输出（截图、DOM 或文本断言）交给 Reviewer，作为用户可见前端主张的检查证据。
+6. **集成**：Supervisor 检查实际共享工作区，解决跨层冲突，并运行能证明整个 feature 可用的检查。当任务本身就是分支集成——Supervisor 亲手解决了代码冲突，或合并结果改变用户可见行为——该合并提交就是 material 改动：解决冲突就是在写代码，因此第 8 步评审适用，Supervisor 自己的冲突取舍不获豁免。报合并完成前，运行能证明合并产物可构建且行为正确的确定性检查并留存原始输出——至少是仓库的构建/编译检查加上每个受影响可部署单元的测试套件（Go 项目为 `go build ./...` 加 `go test ./...`，每个前端工作区 `tsc --noEmit`，触碰数据库迁移的合并在该工作区规则下真实地跑一次迁移）。grep 冲突标记只用于分诊，绝不用于接受：仅凭冲突标记 grep（或 diff 大小）就报告合并完成是反模式——清掉 `<<<<<<<`/`>>>>>>>` 只证明标记没了，不证明语法与语义正确。禁用常规构建/测试的工作区规则是迭代默认值，不是豁免：当要求这些检查时，要么运行它们，要么把冲突升级给用户——绝不静默跳过。合并一个**曾被回滚**的分支时，先用 `git log --grep='This reverts commit' --oneline` 找到回滚提交，再用 `git show --name-status <revert>` 取文件清单逐项对账，逐文件确认合并结果；评审 diff 必须包含源分支一侧——源分支还在时用 `source_branch..merge_result`，源分支已删除时用 `merge_result^2..merge_result`；只给 `merge_result^1..merge_result`（第一父提交基线）的评审看不见「源分支有、合并结果没有」的漏项。测试失败时不得用跳过 pretest、`--ignore-scripts`、只跑子集或缩小 glob 的方式换成绿色——那与静默跳过同罪；要么修，要么把红作为阻塞升级给用户并保留原始输出。这组规则的宿主级副本载体与同步机制登记在[载体归属表](references/carrier-map.md)：改模板必须同时 bump 插件版本并重跑 Host Init，漂移由版本号判定，不靠「记得同步另一处」的人工记忆。
+7. **接受 worker 产物前先验证**：worker 的主张要等 Supervisor 编译过才算数——对实际写下的文件运行仓库的确定性检查（测试、linter、schema 校验器），而不是对着 worker 的摘要。检查失败按编译错误处理：退回修复，绝不在红灯检查上手工接受摘要。无法复现的检查主张记为未运行。同一次里，把工作区实际改动面对照简报的 `write_scope`（硬边界 14）：委派时记下基线 revision，然后列出真正改了什么——`git diff --name-only --no-renames <baseline>` 加未跟踪文件，或用随附的 `scripts/check-write-scope.sh`——任何落在 `write_scope` 之外的改动路径都退回，不论检查结果如何。产物所有权矩阵是声明的意图；这次对照才是执法。当工作对着 `docs/features/<批次>/plan/` 下的版本化计划运行时，在这个接受点把被接受任务的状态与证据回写进计划（最小 diff——只改那两列），不要留到会话结束：计划是恢复锚点，与已接受工作漂移的计划是虚假记录。
+8. **评审**：material 改动之后，指派独立 Reviewer。当 Supervisor 自己写了部分改动时，此步强制且不可豁免——作者不是验证者。进入此步前先按[委派契约](references/contracts.md#评审能力分级)探测委派能力并记录 `review_tier`（L2 独立子代理 / L1 单角色 / L0 委派不可用）；能力不足时不得静默继续——L0 下由 Supervisor 自审并实跑全套确定性检查，逐条留痕失败派发的原始错误，且**用户可见行为改动的最终放行要等能力恢复后补审**，补审之前结论上限是 `partial`。Reviewer 拟出确切的检查命令与预期结果，并基于原始输出工作；Supervisor 可执行它们，但不得替换它们。Reviewer 带具体证据报告 `approved`、`changes_requested` 或 `blocked`，且不静默修复它所评判的代码。此步关闭前，先按计划/`design/qa` 的入口矩阵逐条走真实用户入口——批准一个主用户可见路径从未执行过一次的构建，是在审代码而不是审行为。入口矩阵里的每个入口（按钮、弹窗含 iframe、整页跳转、深链、回调页、脚本）都要有执行记录；`e2e` 用例的通过证据必须是 `browser` 或 `manual`，`curl`/API 200 只能证明协议链，不能关闭用户可见路径。此后任何影响用户可见行为的改动都重新评审，不论作者是谁。重审**默认**按上次已审 revision 以来的 delta 范围进行：简报给出上轮 `review_id` 与本轮 diff，Reviewer 只核实本轮改动及其连带面；只有需要推翻上轮结论时才重新建立全场判断。被评审对象是未提交工作区时，先用 [scripts/review_snapshot.py](scripts/review_snapshot.py) 生成评审快照，把快照路径作为 `reviewed_revision` 与内联对象——简报缺[契约](references/contracts.md)「评审简报必填字段」五项之一（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）即被 reviewer 按 `blocked: 简报不合格` 退回。当宿主的**交互式浏览器**自动化是主对话专属（子代理无法加载它）时，由 Supervisor 亲自负责那次浏览器操作——任何被委派的 Reviewer 都跑不了——并把原始输出（截图、DOM 或文本断言）交给 Reviewer，作为用户可见前端主张的检查证据。
 9. **只修一次**：评审要求改动时，指派一轮聚焦修复，并再次评审。保持循环有界。重审是 delta 评审，不是重放；机械改名、加过滤、调整列序这类可由确定性检查判定的修改，跑完检查即可，不必再开一轮模型评审。
-10. **决策**：Supervisor 依据[契约](references/contracts.md)产出最终决策记录，含实现、验证、评审结果与残余风险。记录承载断言清单：每条用户可见断言映射到若为假会失败的检查；只有代码阅读支撑的断言记为 `unverified`，任何未验证的用户可见断言使结论降为 `partial` 而非 `complete`。在会话结束前把决策记录落成 `episodes/<YYYY-MM-DD>/<EP-id>.json` 下的 episode（契约：`schemas/episode.schema.json`——复用，绝不另设平行载体），因为对话一旦消失，episode 不可恢复，也没人会记得去收集它。（适用范围：本条指**在插件仓中进行的方法开发与反馈会话**；在目标仓里工作的会话不读写插件仓的内部记录，其决策记录落目标仓文档枢纽——运行的证据需要时，由插件仓一侧在反馈与复盘的环节补记。）这对每一个 **material** 改动都是强制的——凡开过独立评审门的改动（该义务自引入起持续生效，版本史见根 `CHANGELOG.md`，本文不写版本号）。每个 Reviewer 轮次都记入 episode 的 `review_roundtrips` 字段（at、reviewer、decision、finding、resolution）：返回 `changes_requested` 的轮次、分歧是什么、如何收场——让中途评审分歧在对话消失后仍可审计，而不只留最终判定。episode 同等收录负向结果（`changes_requested`/`partial`/失败轮）；方法级改动没有仪器化证据时标 `measurement: none`，不得表述为已验证提效。对任何未产出结果的 worker 按[契约](references/contracts.md)中的 worker 失败语义分类（崩溃 → `blocked` 并带原因，超时 → `partial`，空/非法返回 → 退回一次后记录）——Supervisor 依据证据分类，崩溃的 worker 不会自我分类。
+10. **决策**：Supervisor 依据[契约](references/contracts.md)产出最终决策记录，含实现、验证、评审结果与残余风险。记录承载断言清单：每条用户可见断言映射到若为假会失败的检查；只有代码阅读支撑的断言记为 `unverified`，任何未验证的用户可见断言使结论降为 `partial` 而非 `complete`。在会话结束前把决策记录落成可复查的产物（落目标仓或本仓均可，按约定）。这对每一个 **material** 改动都是强制的——凡开过独立评审的改动，其决策记录必须可追溯。每个 Reviewer 轮次都记入决策记录的 `review_roundtrips` 字段（at、reviewer、decision、finding、resolution）：返回 `changes_requested` 的轮次、分歧是什么、如何收场——让中途评审分歧在对话消失后仍可审计，而不只留最终判定。决策记录同等收录负向结果（`changes_requested`/`partial`/失败轮）；方法级改动没有仪器化证据时标 `measurement: none`，不得表述为已验证提效。对任何未产出结果的 worker 按[契约](references/contracts.md)中的 worker 失败语义分类（崩溃 → `blocked` 并带原因，超时 → `partial`，空/非法返回 → 退回一次后记录）——Supervisor 依据证据分类，崩溃的 worker 不会自我分类。
 
 ## 分档默认值
 
@@ -105,7 +105,7 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 评审简报的定位义务
 
-Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质量决定：只给文件名的简报会让它把大量轮次花在「找这句话在哪」，而不是「判断对不对」——实测这类检索轮次占评审轮次的四成以上（70 份简报里 0 份内联 diff，10% 给了 diff 范围表达式，27% 甚至要求 reviewer 自己跑 `git diff`，而它没有 Bash）。因此：
+Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质量决定：只给文件名的简报会让它把大量轮次花在「找这句话在哪」，而不是「判断对不对」。因此：
 
 - **能由一条命令判定真假的断言，Supervisor 先跑，把逐字输出带进简报。** 「某配置键是否存在」「某函数是否被调用」「是否还有别处引用」「改完能否编译」「测试是否覆盖该分支」不需要 reviewer 读源码推断——读源码推断既慢又不构成证据（硬边界 12）。已被命令答掉的断言不再要求它重验。
 - **其余断言给出可定位的核实点**：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、已跑完的确定性检查的原始输出。给不出定位时写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜。
@@ -114,10 +114,10 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 
 ## 判断词的可判定定义
 
-三个词决定门是否适用。定义写在这里，为的是同一情形每次得到同样处理，且事后可核对而不是靠争论。**应用顺序固定：先判 risky work——命中任一条即触发架构门，不再降级问「是否小改动」；未命中 risky 时再判小改动——须同时满足其全部条件，任一条不满足即属 material**。三者都只限定或触发门；绝不豁免「作者不是验证者」这条规则。
+三个词决定评审是否适用。定义写在这里，为的是同一情形每次得到同样处理，且事后可核对而不是靠争论。**应用顺序固定：先判 risky work——命中任一条即触发架构评审，不再降级问「是否小改动」；未命中 risky 时再判小改动——须同时满足其全部条件，任一条不满足即属 material**。三者都只限定或触发评审；绝不豁免「作者不是验证者」这条规则。
 
-- **小改动**——不需要 worker 角色，也不需要架构门。须**同时**满足：单文件单层；不改契约（schema、API 形状、CLI 参数、配置键、记录格式）；不改持久化或数据模型；不触碰共享横切机制（拦截器、全局错误处理、路由守卫、监听器、中间件）；覆盖它的确定性检查在实际文件上通过；且所修缺陷有已验证的复现。任一条不满足即属 **material**。本类不影响评审门：当 Supervisor 写下部分改动——不论小还是 material——该改动的独立评审门强制且不可豁免（硬边界 1）。
-- **risky work**——满足**任一**即触发架构门（Technical Director）：改动被其它层或其它仓库消费的接口或契约；改持久化或数据模型；改安全、授权或权限边界；改共享流程的时序或幂等语义；或改动难以回退（迁移、发布顺序、已公开的 schema 或记录格式）。
+- **小改动**——不需要 worker 角色，也不需要架构评审。须**同时**满足：单文件单层；不改契约（schema、API 形状、CLI 参数、配置键、记录格式）；不改持久化或数据模型；不触碰共享横切机制（拦截器、全局错误处理、路由守卫、监听器、中间件）；覆盖它的确定性检查在实际文件上通过；且所修缺陷有已验证的复现。任一条不满足即属 **material**。本类不影响评审：当 Supervisor 写下部分改动——不论小还是 material——该改动的独立评审强制且不可豁免（硬边界 1）。
+- **risky work**——满足**任一**即触发架构评审（Technical Director）：改动被其它层或其它仓库消费的接口或契约；改持久化或数据模型；改安全、授权或权限边界；改共享流程的时序或幂等语义；或改动难以回退（迁移、发布顺序、已公开的 schema 或记录格式）。
 - **相同原因**——同一条检查以同一规范化签名失败：检查 id 或命令相同，且剥掉时间戳与绝对路径后的错误文本或 `error_kind` 相同，即为连续两次失败同一原因。签名不同但怀疑同根因时，写明你准备改掉的假设并记录你比较了什么，不得静默重试。
 
 ## 从停滞的工作中恢复
@@ -130,17 +130,17 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 
 若有界重试后修复/评审循环仍无法通过，带证据上报阻塞，并给出需要用户做的最小决策。不要让 Agent 在不变的输入上持续空转。
 
-编排中途中断的会话从 `docs/features/<批次>/plan/` 下的版本化计划恢复（Markdown 看板：每个任务行带有状态与证据，状态可重新推导），而不是靠记忆：重新下简报前，先从工作区重新推导每个工作包的状态（对委派基线的 diff、检查、评审决策），没有观察到证据的包视为未开始。持久队列、租约与可恢复并行批次属于 `execution-coordinator` 的职责范围（该角色的可用状态见上文「对于规划任务」一段，此处不重复声明）；今天计划文件加仓库状态就是唯一的 checkpoint。
+编排中途中断的会话从 `docs/features/<批次>/plan/` 下的版本化计划恢复（Markdown 看板：每个任务行带有状态与证据，状态可重新推导），而不是靠记忆：重新下简报前，先从工作区重新推导每个工作包的状态（对委派基线的 diff、检查、评审决策），没有观察到证据的包视为未开始。今天计划文件加仓库状态就是唯一的 checkpoint。
 
 ## 工程内容标准与问题闭环
 
-本 skill 是**流程门禁**；写代码与收口另需四条纪律，reviewer 在 `approved` 前逐条套用：**工程内容**——[server-side](references/standards/server-side.md)（幂等 / 鲁棒 / 分层 / 稳定性，含按规模分级）、[data-model](references/standards/data-model.md)（字段级冻结，无库也给等效结构契约）、[frontend](references/standards/frontend.md)（受控状态 / 同步锁防连点 / 三态 / 错误边界）；**问题闭环**——确认且需改代码的缺陷必须落账（ISS 或评审缺陷表二选一，带 `defect_class`），低风险同轮修复留评审记录，收口前汇总台账（[issue-tracking](references/issue-tracking.md)）；**验证分级**——`curl` 仅 smoke，用户可见路径必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）；**测试用例**——AC 权威在 plan 注册表「来源」列（[testcases](references/testcases.md)），开工前按领域逐维确认范围（[intake-scope-dimensions](references/intake-scope-dimensions.md)），不等用户想到。
+写代码与收口需四条纪律，reviewer 在 `approved` 前逐条套用：**工程内容**——[server-side](references/standards/server-side.md)（幂等 / 鲁棒 / 分层 / 稳定性，含按规模分级）、[data-model](references/standards/data-model.md)（字段级冻结，无库也给等效结构契约）、[frontend](references/standards/frontend.md)（受控状态 / 同步锁防连点 / 三态 / 错误边界）；**问题闭环**——确认且需改代码的缺陷必须落账（ISS 或评审缺陷表二选一，带 `defect_class`），低风险同轮修复留评审记录，收口前汇总台账（[issue-tracking](references/issue-tracking.md)）；**验证分级**——`curl` 仅 smoke，用户可见路径必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）；**测试用例**——AC 权威在 plan 注册表「来源」列（[testcases](references/testcases.md)），开工前按领域逐维确认范围（[intake-scope-dimensions](references/intake-scope-dimensions.md)），不等用户想到。
 
 ## 保持控制与可追溯性
 
 - 遵循宿主的权限与沙箱规则。委派绝不扩大权限。
 - 无会话内既有授权的 push、部署、发布、远端数据删除或对外发消息一律不做。**集成他人改动与改写历史是同一类动作**：`git merge`、`rebase`、`cherry-pick`，或把远端改动拉进共享分支，都需要当次用户授权，不得从先前的指令推断。推送被拒时，默认动作是只读汇报——`git fetch` 加 `log`/`diff` 列出远程新增了哪些提交与文件、重叠面在哪——由用户选择集成方式；不要自行选 merge 或 rebase、解冲突并推送。
-- **目标仓会话不读写插件仓的内部记录**：skill 与 references 里提到的 `docs/issues/`、`docs/features/`、`docs/releases/`、`episodes/`、`reviews/` 等记录根，是 **Agentflow 插件自身仓库**（方法开发仓）的记录；在目标仓里工作时不要到插件仓里检索或写入它们——方法契约在 skill 文本内自包含。目标仓的文档与记录落 Init 确认的文档枢纽（feature 目录、`issues/`、`releases/`）；角色档案里的记录根与产物路径（如 `docs/features/<批次>/plan/`、`docs/features/<批次>/testing/`）属插件仓约定，写进委派简报前映射为该枢纽下的确切路径。
+- **目标仓会话不读写插件仓的内部记录**：skill 与 references 里提到的 `记录根`、`docs/features/`、`docs/releases/` 等记录根，是 **Agentflow 插件自身仓库**（方法开发仓）的记录；在目标仓里工作时不要到插件仓里检索或写入它们——方法契约在 skill 文本内自包含。目标仓的文档与记录落 Init 确认的文档枢纽（feature 目录、`issues/`、`releases/`）；角色档案里的记录根与产物路径（如 `docs/features/<批次>/plan/`、`docs/features/<批次>/testing/`）属插件仓约定，写进委派简报前映射为该枢纽下的确切路径。
 - 使用稳定的任务名，并把父目标带入每一份委派简报。
 - 记录决策与证据，而不是隐藏的思维链。默认以宿主的任务与对话历史作为留痕。仅当用户要求持久的项目产物时才创建仓库留痕文件。
 - 让 Supervisor 保持有用：它应解决冲突并作最终裁决，而不只是汇总 worker 消息。

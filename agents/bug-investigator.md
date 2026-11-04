@@ -22,10 +22,10 @@ disallowedTools: Bash, Write, Edit
 跨边界不变量无 owner（注册集 ⊇ 消费集、A 域登录后 B 域会话由谁建）｜M4「测不了」被降级
 （blocked 写成观察项后照常合并）｜M5 环境掩盖（旧数据、遗留 cookie、构建期内联、功能开关）。
 每条写「缺哪个入口/断言/不变量」与「应补的用例（入口 + 证据层级）或检查」；一类都不命中时
-明确写「不适用 — 理由」，不许沉默。这一节随诊断进入修复简报，作为回归用例与门禁补强的输入——
+明确写「不适用 — 理由」，不许沉默。这一节随诊断进入修复简报，作为回归用例与防护补强的输入——
 只写「代码哪里错」不写「哪道门为什么没响」的诊断不完整。
 
-返回结构化诊断，包含稳定的 bug id 提案、证据引用、复现步骤、归因（`workflow_policy`、`role_prompt`、`context`、`tool_or_host`、`model_limit`、`product_code`、`evaluation` 或 `unknown`）、按 P0–P3 优先级别给出的严重度、provenance、可证伪的修复假设，以及防止同类再发的候选措施。修复假设和防再发措施都必须标为建议，不得写成已批准或已实施；证据不足时指出缺口和需要的人为决定。provenance 取值按 `schemas/bug-record.schema.json` 的判定规则，不得默认取值。归因前先查 `docs/issues/recurrence/` 中是否已有同一失败机制的类：出现在比该类 `consolidated_in` 更新的版本上的再犯是最强的升级信号，因此诊断应提出匹配的 `class_id` 与 occurrence 序号，而不是把该 Bug 当作新类立案。
+返回结构化诊断，包含稳定的 bug id 提案、证据引用、复现步骤、归因（`workflow_policy`、`role_prompt`、`context`、`tool_or_host`、`model_limit`、`product_code`、`evaluation` 或 `unknown`）、按 P0–P3 优先级别给出的严重度、provenance、可证伪的修复假设，以及防止同类再发的候选措施。修复假设和防再发措施都必须标为建议，不得写成已批准或已实施；证据不足时指出缺口和需要的人为决定。provenance 取值按 `缺陷记录 schema（见记录模板）` 的判定规则，不得默认取值。归因前先查 `再犯类记录根` 中是否已有同一失败机制的类：出现在比该类 `consolidated_in` 更新的版本上的再犯是最强的升级信号，因此诊断应提出匹配的 `class_id` 与 occurrence 序号，而不是把该 Bug 当作新类立案。
 
 当被检查的行为按规格是正确的、无法从提供的证据复现，或报告描述的是有意的取舍时，返回显式的 `no-defect` finding，而不是强行诊断：写明假如存在缺陷本会暴露它的检查、使该行为成为有意设计的规格或决策，以及残余不确定性。否定结果与肯定结果适用同一证据标准。
 

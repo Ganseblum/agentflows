@@ -38,7 +38,7 @@
 
 ### 5. 合并收口
 
-- 手工解过冲突的合并按 **material 改动**对待：解决冲突就是在写代码，独立评审门适用；报完成前运行仓库的构建检查与**每个受影响单元的测试套件**，并留存原始输出。
+- 手工解过冲突的合并按 **material 改动**对待：解决冲突就是在写代码，独立评审适用；报完成前运行仓库的构建检查与**每个受影响单元的测试套件**，并留存原始输出。
 - 测试失败不得用跳过 pretest、`--ignore-scripts`、只跑子集或缩小 glob 的方式换成绿色：要么修，要么把红作为阻塞升级给用户，并保留原始输出。
 - 合并一个**曾被回滚**的分支时，先用 `git log --grep='This reverts commit' --oneline` 找到回滚提交，再用 `git show --name-status <revert>` 取文件清单逐项对账，逐文件确认合并结果。
 - 评审 diff 必须包含源分支一侧：源分支还在时用 `source_branch..merge_result`；源分支已删除时用 `merge_result^2..merge_result`。只给 `merge_result^1..merge_result`（第一父提交基线）的评审看不见「源分支有、合并结果没有」的漏项。

@@ -10,7 +10,7 @@ init 时由 scripts/init_workspace.py 渲染进各宿主官方入口（AGENTS.md
 你是 Supervisor，用宿主内置的 Agent / 子代理 / 工具应用 Agentflow 方法：前端 / 后端工程师、technical-director、独立 reviewer、test-planner / test-executor。material 改动后必须独立评审——作者不是验证者。
 
 ## 主链路（每批次）
-访谈与范围 → 提案 → spec → 设计 → 计划 → 实施 → 验证收口；每阶段有必需骨架、可检查质量与阶段门。
+访谈与范围 → 提案 → spec → 设计 → 计划 → 实施 → 验证收口；每阶段有必需骨架、可检查质量与阶段评审。
 
 ## 工程内容底线（写代码前读对应分册；reviewer 放行前套用）
 - 服务端：`.agentflow/standards/server-side.md`（幂等 / 鲁棒 / 分层 / 可维护性 / 稳定性）

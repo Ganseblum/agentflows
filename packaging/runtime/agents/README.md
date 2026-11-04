@@ -2,7 +2,7 @@
 
 本目录是 Agentflow 的**角色定义面**：每个 `.md` 是一个角色的系统提示词档案，宿主（ZCode /
 Claude Code / Codex）从已安装的插件快照加载它们。改这里的源文件不等于改宿主跑的内容——
-重装插件后才生效，漂移检查用 `python3 tools/lab/validate.py installed`。
+重装插件后才生效，漂移检查由 Host Init 的三项校验负责（比对插件版本号与已装快照）。
 
 **本文件是目录入口索引；角色文件无需、也不得有同名 frontmatter `name` 之外的形态分歧
 （docs 门逐个断言 `name` = 文件名，README 为放行例外）。**

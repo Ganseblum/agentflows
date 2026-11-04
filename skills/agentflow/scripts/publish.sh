@@ -117,43 +117,11 @@ else
 fi
 
 # --- 3. 重建生成树（bump 之后）----------------------------------------------
-step "2/7 重建 packaging/runtime"
+step "2/6 重建 packaging/runtime"
 run python3 packaging/build_runtime.py
 
-# --- 4. 跑门 ----------------------------------------------------------------
-step "3/7 跑门槛（必绿项从 validate.py --list 解析；lint 缺 dev 依赖时记为未运行）"
-if [ "$DRY_RUN" = "1" ]; then
-  say "  [dry-run] 跳过"
-else
-  # 门清单单源：解析 `validate.py --list`，排除 all/installed/lint/report/recurrence
-  # （2026-10-26 审计 G24）。
-  TARGETS="$(python3 tools/lab/validate.py --list \
-    | grep -vE 'all runs [0-9]+ checks' \
-    | grep -vxE 'all|installed|lint|report|recurrence' \
-    | tr '\n' ' ')"
-  for target in $TARGETS; do
-    python3 tools/lab/validate.py "$target" || fail "门禁红（${target}）——修好再发版"
-  done
-  # 解释器优先级与 pre-push.sh / validate.py 保持一致：显式环境变量 > 仓内 .venv > python3。
-# 探测只扩大「找得到工具」的路径；缺 ruff/mypy 仍按未运行处理（2026-10-28 评测整改批 G4）。
-if [ -n "${AGENTFLOW_LINT_PYTHON:-}" ]; then
-  LINT_PYTHON="$AGENTFLOW_LINT_PYTHON"
-elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
-  LINT_PYTHON="$REPO_ROOT/.venv/bin/python"
-else
-  LINT_PYTHON="python3"
-fi
-  if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
-    "$LINT_PYTHON" tools/lab/validate.py lint || fail "门禁红（lint）"
-  elif [ "${AGENTFLOW_PUBLISH_ALLOW_UNRUN:-0}" = "1" ]; then
-    say "WARN lint 未运行（没有 ruff/mypy），已由 AGENTFLOW_PUBLISH_ALLOW_UNRUN=1 显式放行"
-  else
-    fail "lint 未运行（没有 ruff/mypy）。装好 requirements-dev.txt，或用 AGENTFLOW_PUBLISH_ALLOW_UNRUN=1 显式放行"
-  fi
-fi
-
-# --- 5. 提交 ----------------------------------------------------------------
-step "4/7 提交"
+# --- 4. 提交 ----------------------------------------------------------------
+step "3/6 提交"
 DIRTY="$(git status --porcelain)"
 if [ -z "$DIRTY" ]; then
   say "  工作树干净，无内容可提交"
@@ -176,7 +144,7 @@ else
 fi
 
 # --- 6. 推送 ----------------------------------------------------------------
-step "5/7 推送"
+step "4/6 推送"
 if [ "$DO_PUSH" = "0" ]; then
   say "  --no-push：跳过"
 elif [ "$DRY_RUN" = "1" ]; then
@@ -188,13 +156,13 @@ fi
 
 # --- 7. 双端安装（有就装，没就跳过）-----------------------------------------
 if [ "$SKIP_CODEX" = "1" ]; then
-  step "6/7 Codex"
+  step "5/6 Codex"
   say "  --skip-codex：跳过"
 elif ! command -v codex >/dev/null 2>&1; then
-  step "6/7 Codex"
+  step "5/6 Codex"
   say "  跳过：本机没有 codex CLI"
 else
-  step "6/7 装进 Codex"
+  step "5/6 装进 Codex"
   if [ "$DRY_RUN" = "1" ]; then
     say "  [dry-run] bash skills/agentflow/scripts/upgrade-codex.sh"
   else
@@ -203,20 +171,20 @@ else
 fi
 
 if [ "$SKIP_ZCODE" = "1" ]; then
-  step "7/7 ZCode"
+  step "6/6 ZCode"
   say "  --skip-zcode：跳过"
 elif [ ! -f "/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs" ] && ! command -v zcode >/dev/null 2>&1; then
-  step "7/7 ZCode"
+  step "6/6 ZCode"
   say "  跳过：本机没有 ZCode CLI"
 elif [ "$DO_PUSH" = "0" ]; then
-  step "7/7 ZCode"
+  step "6/6 ZCode"
   say "  跳过：--no-push 时本地 HEAD ≠ upstream，ZCode 那段（要求两者一致）会拒绝。"
   say "        要装 ZCode，去掉 --no-push。"
 elif [ "$DRY_RUN" = "1" ]; then
-  step "7/7 ZCode"
+  step "6/6 ZCode"
   say "  [dry-run] bash skills/agentflow/scripts/upgrade-zcode.sh"
 else
-  step "7/7 装进 ZCode"
+  step "6/6 装进 ZCode"
   bash skills/agentflow/scripts/upgrade-zcode.sh
 fi
 

@@ -1,6 +1,6 @@
 # 服务端工程内容标准（agentflow 通用底线）
 
-> **定位**：agentflow 的 `document-chain` / `review-checklists` 是**流程门禁**（查「文档齐不齐、门过没过、表达守不守纪」）；本册是**工程内容底线**（查「写出来的服务端代码专不专业」）。两者互补——Reviewer 在给 `approved` 前同时套用。
+> **定位**：agentflow 的 `document-chain` / `review-checklists` 是**流程校验**（查「文档齐不齐、门过没过、表达守不守纪」）；本册是**工程内容底线**（查「写出来的服务端代码专不专业」）。两者互补——Reviewer 在给 `approved` 前同时套用。
 >
 > **来源**：吸收 youc《服务端工程规范》的硬判据（BE-10 幂等、BE-15 稳定性、BE-02 反过度分层）重写为与 agentflow 评审链对齐的通用底线。项目有更强规范时以项目为准；本项目规范缺失时用本册。
 >

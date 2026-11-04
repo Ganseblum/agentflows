@@ -69,6 +69,6 @@
 
 作者不能批准自己的实现；摘要不是证据。行为与回归实际通过后再独立评审，未运行项不算通过。必要时用 `workflow.py` 绑定计划、快照和原生报告，说明 JSON 仅作已有记录的证据。
 
-在本仓接受产物前跑 `python3 tools/lab/validate.py all`；文档链完成前跑 `python3 tools/lab/doc_chain.py <feature-dir>`。目标仓使用自己的检查命令，跨仓文档检查从插件根调用并带 `--root <目标仓根>`，不能将插件仓的检查范围套到业务项目。
+产物交付前，由本仓在源码侧完成文档链自检（按 `skills/agentflow/references/document-chain.md` 的档位与骨架）与测试复跑；目标仓使用自己的检查命令，不把插件仓的检查范围套到业务项目。
 
 接着查[体系指南](system-guide.md)、[模板入口](../skills/agentflow/templates/README.md)和全仓[index.md](../index.md)。

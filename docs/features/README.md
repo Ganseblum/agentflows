@@ -11,8 +11,7 @@ docs/features/
     spec/          # 规格：验收口径与契约
     design/        # 方案：怎么做（异常矩阵、时序图、状态图随需要）
     plan/          # 计划：任务表与执行契约
-    reviews/       # 评审落点（可选）
-    testing/       # 测试计划与运行记录（可选）
+        testing/       # 测试计划与运行记录（可选）
 ```
 
 段落可为空但必须在批次 README 的「段落映射」表里写明落点。
@@ -41,27 +40,24 @@ docs/features/
 - 回写不止计划两列：计划任务行的状态与证据两列之外，`spec/qa/acceptance.md` 的验收点状态列同样
   要在验收发生时更新——「计划已闭而验收表还写待覆盖」是假记录的一种（2026-10-22 走查实证）。
 - 立项与收尾同日更新四处索引：本文件「在途批次」表、`index.md` 的批次索引节、
-  `docs/evaluations/README.md` 的收存清单（若产出评测/审核报告）、
+  评测/审核报告的收存清单（若产出评测/审核报告）、
   `docs/releases/pending-test.md`（若有未验收的发布动作）。漏一处即「自述与实现面不同步」——
   2026-10-28 批实测漏了这三处索引外加一个脚本消费点，已立为
-  `docs/issues/ISS-2026-10-28-整改批自述与实现面不同步.md`。
+  `记录根ISS-2026-10-28-整改批自述与实现面不同步.md`。
 - 改动一个机制时先枚举它的**全部消费点**再动手：2026-10-28 批把 `.venv` 解释器探测只加进了
-  `pre-push.sh`，另外三个同样消费 lint 的脚本（`publish.sh`、`upgrade-*.sh`）被漏下，
+  发布与升级脚本，同样消费 lint 的脚本被漏下，
   正是本仓反复出现的「同一规则多处维护、改一处漏三处」形态。
 - 目录由「首次接入 / 批次立项」创建；对实际目录跑
-  `python3 tools/lab/doc_chain.py <feature-dir>` 接受文档链，全绿才算链完成。该命令是独立命令：
-  结构检查 C1–C11，文本形态检查 C12–C14。同一 linter 另由 `python3 tools/lab/validate.py doc_chain_live`
-  以 `--file` 模式扫描 `docs/features/` 下全部 `.md`（覆盖面单点：`tools/lab/gate/checks.py` 的
-`DOC_CHAIN_LIVE_ROOTS = ("docs/features",)`；已接入 `validate.py all`），任一发现即门红。
+  文档链由本仓在交付前统一检查（结构检查 C1–C11，文本形态检查 C12–C14；覆盖面以 `docs/features/` 为主），全绿才算链完成，任一发现即判红。
 `docs/product/` 已随「产品线完善」批退役、结论并入 `docs/design-decisions.md` §4，不在扫描面内。
 - 批次内的 `plan/<plan_id>.md` 受计划契约校验（文件名 = `plan_id`、固定状态枚举、任务表
   依赖图无环——完整断言见下节）；其他段落由文档链 linter 管。
 - 完成批次不长期留存：结论写进 `CHANGELOG.md` 与 episode 后随瘦身批删除，git 历史
   即归档（2026-10-12 起本仓不保留**批次归档桶**，即 `docs/features/归档/` 这一类目录）。
-  注意仓内另有三处也叫「归档」而同名不同义：`docs/issues/归档/` 只覆盖被拒记录
-  （定义单点见 `../issues/README.md` 的归档规则节）、`episodes/归档/` 按月下沉、
-  `reviews/**/archive/<轮次>/` 按评审轮次封存——三者都与批次留存规则无关。
-- 开放事项：缺陷走 `docs/issues/`，跨批次待拍板走 `docs/PENDING-DECISIONS.md`。
+  注意仓内另有三处也叫「归档」而同名不同义：`记录根归档/` 只覆盖被拒记录
+  （定义单点见 issue 归档规则节）、`记录根归档/` 按月下沉、
+  评审归档按评审轮次封存——三者都与批次留存规则无关。
+- 开放事项：缺陷走 `记录根`，跨批次待拍板走 `决策记录`。
 
 ## 计划形态（原 `docs/plans/README.md`，随 2026-10-12 归位并入）
 
@@ -79,7 +75,7 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
 ## 进展概览            # 一行进度 + 三视角概览表 + 我们在哪/下一步/阻塞
 ## 分支策略            # 工作分支与依据（文档链 C9 要求计划声明分支策略）
 ## 任务清单            # T01… 任务表：优先级/代码落点/依赖/状态/证据回写 + ### 未决项
-## 接口与共享机制       # 契约表 + 异常矩阵 + 发布顺序×回滚点 + 评审门
+## 接口与共享机制       # 契约表 + 异常矩阵 + 发布顺序×回滚点 + 评审
 ## 验证命令            # 验收命令与预期
 ```
 
@@ -94,7 +90,7 @@ objective / recorded_at / updated_at   (+ superseded_by when superseded)
 
 ## 升格与登记
 
-- **issue → feature 升格**：中/大问题经用户确认后升格为批次，在 `docs/issues/README.md` 的
+- **issue → feature 升格**：中/大问题经用户确认后升格为批次，在 `记录根README.md` 的
   升级通道处置，并在**两处**登记：原 issue 记录的状态节写「已升格并入 `<批次目录>`」，
   批次 README 的「元信息」节写「升格来源：ISS-YYYY-MM-DD-slug（原由）」。升格即留痕，不靠记忆。
 - **批次完成**：结论入 `CHANGELOG.md` 与 episode，批次目录删除（git 历史即归档）。

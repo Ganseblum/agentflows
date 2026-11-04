@@ -24,7 +24,7 @@ updated_at: "<RFC 3339 含时区，≥ recorded_at>"
 > [`references/testcases.md`](../../references/testcases.md)；样例 `templates/testing/testcases.yaml.example`），
 > 本 Markdown 是人读渲染面——两者并存时以 yaml 为准：改用例先改 yaml，再同步本文件，
 > 禁止两边各自演化（双写漂移按状态漂移处理）。覆盖校验：
-> `python3 <skill>/scripts/check-testcases.py <feature-dir>`（AC 定义表 × yaml 用例双向闭合）。
+> `python3 <skill>/scripts/用例校验 <feature-dir>`（AC 定义表 × yaml 用例双向闭合）。
 
 ## 验证准备
 
@@ -47,7 +47,7 @@ updated_at: "<RFC 3339 含时区，≥ recorded_at>"
 
 > **入口与层级**：用例按「入口」拆，不按「页面」拆——同一功能经弹窗（含跨域 iframe）、整页跳转、
 > 深链、回调页进入是不同用例；只测接口的写「纯接口」。`e2e` 用例必须能在浏览器里从真实入口走通，
-> 执行记录的层级只能是 `browser` 或 `manual`；用 `api` 证据关闭 e2e 用例会被 `gate/testing.py`
+> 执行记录的层级只能是 `browser` 或 `manual`；用 `api` 证据关闭 e2e 用例会被 `记录校验`
 > 判红。入口矩阵的完整枚举在 `design/qa/testing.md` §2.1，本计划只逐条绑定。
 
 | 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |

@@ -39,7 +39,7 @@ disallowedTools: Edit
 
 先跑共享 smoke/环境预检；共同构建失败停止全部依赖任务，不在坏构建上跑全集。独立模块的局部失败只阻塞其真实依赖，其他已授权任务继续；按执行协议分类，不把部分阻塞作为提前结束全部工作的理由。
 
-写执行记录（契约：`schemas/test-run.schema.json`、`skills/agentflow/references/test-records.md`）。
+写执行记录（契约：`测试运行 schema（见执行记录模板）`、`skills/agentflow/references/test-records.md`）。
 frontmatter 必填（字段以 schema required 为准）：`test_run_id`、`title`、`project`、
 `test_plan_id`、`test_plan_version`、`target_revision`、`environment`、`credentials`、
 `summary_pass`、`summary_fail`、`summary_blocked`、`summary_not_run`、`decision`、

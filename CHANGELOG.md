@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.36.0 — 2026-11-04（门禁清理 + 触发描述对齐）
+
+- **门禁设施与无用描述清理（本版主干）**：删除门禁设施（`tools/lab/`、`schemas/`、`protected-paths.txt`、各 `check_*.py` / `pre-push.sh` / `install-hooks.sh`、`tests/test_gate_*.py`、`requirements-dev.txt`、CI 工作流 `.github/workflows/validate.yml`）与描述/记录类目录（`docs/issues/`、`docs/evaluations/`、`docs/decisions/`、`episodes/`、`examples/`、`reviews/`）。27 个源文件里指向已删工具/目录的死链整串中性化为「文档链检查 / 产物校验 / 记录校验 / 决策记录校验 / 受保护清单校验 / 评审记录目录 / 示例库」等，保留方法论含义、不删句子。`skills/design-diagram/` 的门禁术语（`门禁`）按用户要求一字未动。重建 `packaging/runtime` 镜像清理后的源面。
+- **技能描述重写**（`skills/agentflow/SKILL.md`）：267 → **246 字符**，整条落在 ZCode 约 250 字符的呈现窗口内（原先尾部 `test-executor）角色。` 会被截掉）。触发词换成用户会打出的说法：接口契约 / 数据模型 / 安全边界、Bug 排查 / 修复 / 回归、规划、并行调查与独立评审；去掉「跨层功能」这类作者分类词。
+- **补 `when_to_use`**：ZCode 会把它与 `name` / `description` 一并呈现给模型，此前四个 skill 一个都没用。承载口语说法（「走 agentflow」「多智能体」「评审一下这个改动」），不复制正文。
+- **插件卡描述改口径**：`plugin.json` / `marketplace.json` 与四份宿主 manifest 同步改为「宿主原生的多智能体开发工作流：需求对齐、设计压测、测试先行、委派实现、独立评审与执行证据闭环。」——原句只讲测试与评审，漏掉 intake / grilling / 规划。该字段**只影响市场与插件面板展示，不影响触发**（触发源见 `docs/host-platform-facts.md` Z3）。
+- 影响面：门禁设施删除、死链中性化、触发层与展示层调整，流程正文未动。`when_to_use` 在 Claude / Codex / Qoder 三端是否被读取**未验证**，按未知处理。
+
 ## 0.35.0 — 2026-11-04（开工提问补五条对话方法：状态分档、混沌先猜、对象不在、执行前核状态、预判改待办）
 
 - **起步先判状态**：`references/intake.md` 新增四档表（小事 / 已完整 / 混沌 / 其余），把原先「只问不问档」的单一处置拆开——小事与已完整不再走完整六要素。

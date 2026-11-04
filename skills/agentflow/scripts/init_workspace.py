@@ -53,7 +53,7 @@ MANIFEST_EXCLUDED = {str(BASELINE_REL)}
 
 CURSOR_FRONTMATTER = (
     "---\n"
-    "description: Agentflow 项目规则（工程底线 / 主链路 / 门禁派遣）\n"
+    "description: Agentflow 项目规则（工程底线 / 主链路 / 质量校验）\n"
     "alwaysApply: true\n"
     "---\n\n"
 )

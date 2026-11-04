@@ -7,20 +7,12 @@
 python3 packaging/build_runtime.py
 ```
 
-门会核对这棵生成树的新鲜度：`python3 tools/lab/validate.py manifests` 在 `packaging/runtime`
-存在时把它与源面逐字节对照（manifest 名字/版本 + 白名单内每个文件），漂移即门红并提示重建——
-因为 marketplace 装的就是这棵树，过期快照会静默装出旧角色。项数以
-`python3 tools/lab/validate.py --list` 自报为准，文档不手写计数。
-改过 `agents/`、`skills/`、`schemas/` 或任何 manifest 之后重建它，再复跑该检查。
+该脚本把可安装面（运行时面）复制到 `packaging/runtime`：只含 `agents/`、`skills/`、四个宿主插件目录
+（`.zcode-plugin/`、`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`），以及 `plugin.json`、
+`marketplace.json`。除此之外的一切（记录、实验、源码检查器、文档、测试）都不复制——它们不是
+插件的运行时内容。
 
-该副本只复制一份白名单：`agents/`、`skills/`、`schemas/`、四个宿主插件目录（`.zcode-plugin/`、
-`.claude-plugin/`、`.codex-plugin/`、`.qoder-plugin/`），以及 `plugin.json`、`marketplace.json`、`protected-paths.txt`；
-除此之外的一切都不复制。生成后 `verify` 还会拒绝在顶层出现以下名称（它们是记录、实验或源码树）：
-`issues`、`episodes`、`plans`、`improvements`、`releases`、`reviews`、`tests`、`tools`、`docs`、`evals`、
-`examples`、`.git`、`packaging`。
-
-生成后刷新本地 marketplace 并重新安装。`python3 tools/lab/validate.py
-installed` 仍把那些运行时文件与仓库根比较，而不是与本目录比较。Claude 的
-`--plugin-dir .` 与 Codex 继续使用源码树。
+重建后刷新本地 marketplace 并重新安装，让宿主加载最新面。仓库根的 `agents/`、`skills/` 与生成树
+应保持一致：每次发布都先重建再安装。Claude 的 `--plugin-dir .` 与 Codex 继续使用源码树。
 
 从 skills 指向记录根的相对链接只在源码检出中可解析。

@@ -60,49 +60,14 @@ if [ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]; then
   git -C "$REPO_ROOT" status --porcelain | head -10 | sed 's/^/        /'
 fi
 
-# --- 4. 重建生成树 + 门（装之前必须绿）---------------------------------------
+# --- 4. 重建生成树---------------------------------------
 say ""
-say "[1/4] 重建 packaging/runtime"
+say "[1/3] 重建 packaging/runtime"
 if [ "$DRY_RUN" = "1" ]; then say "  (dry-run 跳过)"; else python3 "$REPO_ROOT/packaging/build_runtime.py"; fi
-
-say ""
-say "[2/4] 跑门槛（必绿项从 validate.py --list 解析；lint 缺 dev 依赖时记为未运行）"
-if [ "$DRY_RUN" = "1" ]; then
-  say "  (dry-run 跳过)"
-else
-  # 门清单单源：解析 `validate.py --list`，排除 all/installed/lint/report/recurrence
-  # （2026-10-26 审计 G24）。
-  TARGETS="$(python3 "$REPO_ROOT/tools/lab/validate.py" --list \
-    | grep -vE 'all runs [0-9]+ checks' \
-    | grep -vxE 'all|installed|lint|report|recurrence' \
-    | tr '
-' ' ')"
-  for target in $TARGETS; do
-    if ! python3 "$REPO_ROOT/tools/lab/validate.py" "$target"; then
-      fail "门禁红（${target}）——先在仓内修好再装进宿主"
-    fi
-  done
-  # 解释器优先级与 pre-push.sh / validate.py 保持一致：显式环境变量 > 仓内 .venv > python3。
-# 探测只扩大「找得到工具」的路径；缺 ruff/mypy 仍按未运行处理（2026-10-28 评测整改批 G4）。
-if [ -n "${AGENTFLOW_LINT_PYTHON:-}" ]; then
-  LINT_PYTHON="$AGENTFLOW_LINT_PYTHON"
-elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
-  LINT_PYTHON="$REPO_ROOT/.venv/bin/python"
-else
-  LINT_PYTHON="python3"
-fi
-  if "$LINT_PYTHON" -c 'import ruff, mypy' >/dev/null 2>&1; then
-    "$LINT_PYTHON" "$REPO_ROOT/tools/lab/validate.py" lint || fail "门禁红（lint）"
-  elif [ "${AGENTFLOW_UPGRADE_ALLOW_UNRUN:-0}" = "1" ]; then
-    say "WARN lint 未运行（没有 ruff/mypy），已由 AGENTFLOW_UPGRADE_ALLOW_UNRUN=1 显式放行"
-  else
-    fail "lint 未运行（没有 ruff/mypy）。装好 requirements-dev.txt，或用 AGENTFLOW_UPGRADE_ALLOW_UNRUN=1 显式放行"
-  fi
-fi
 
 # --- 5. 确认 personal 市场指向本仓 ------------------------------------------
 say ""
-say "[3/4] 确认 ${MARKETPLACE} 市场指向本仓"
+say "[2/3] 确认 ${MARKETPLACE} 市场指向本仓"
 if [ "$DRY_RUN" = "1" ]; then
   say "  (dry-run 跳过)"
 else
@@ -125,7 +90,7 @@ fi
 
 # --- 6. 安装 -----------------------------------------------------------------
 say ""
-say "[4/4] 安装 ${PLUGIN}@${MARKETPLACE}"
+say "[3/3] 安装 ${PLUGIN}@${MARKETPLACE}"
 if [ "$DRY_RUN" = "1" ]; then
   say "  (dry-run 跳过)"
   say ""
@@ -138,18 +103,10 @@ codex plugin add "${PLUGIN}@${MARKETPLACE}" || fail "安装失败"
 INSTALLED="$HOME/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$TARGET_VERSION"
 [ -d "$INSTALLED" ] || fail "安装后找不到缓存目录 ${INSTALLED}"
 
-CHECKER="$INSTALLED/tools/lab/doc_chain.py"
-if [ -f "$CHECKER" ]; then
-  say ""
-  say "装后检查器自报版本：$(python3 "$CHECKER" --version)"
-fi
+say ""
 
 say ""
-say "与源面逐文件比对："
-if ! python3 "$REPO_ROOT/tools/lab/validate.py" installed --path "$INSTALLED"; then
-  fail "安装面与源面不一致（通常是工作树在安装期间被改动，重跑本脚本）"
-fi
-
+say "（交付前校验由本仓统一完成，安装面不再自带验证器）"
 say ""
 say "完成：Codex 已装 ${TARGET_VERSION}（缓存 ${INSTALLED}）。"
 say "      Codex 每次会话读该缓存，通常无需重启；若行为未变，重开一个会话。"

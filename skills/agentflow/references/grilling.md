@@ -48,11 +48,11 @@
 
 ## 与 AgentFlow 产物的衔接
 
-- 未决问题进 `docs/PENDING-DECISIONS.md`（唯一需要用户逐条回复的清单），不另起一份。
+- 未决问题进 `决策记录`（唯一需要用户逐条回复的清单），不另起一份。
 - 难回退的决策落[决策记录模板](../templates/decision/decision-record.md)；grilling 只负责问出来，拍板与记录由 Supervisor / 用户完成。
 - 跨边界不变量是必问分支：注册集 ⊇ 消费集、A 域登录后 B 域会话由谁建、失败分支谁负责。问不到就说明树没画全。
 - 设计冻结前，把「已定决策」回写进 design 的契约节；不要只在对话里达成共识。
 
 ---
 
-方法改编自 [mattpocock/skills 的 grilling](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling)（MIT，Copyright (c) 2026 Matt Pocock）。本版去掉了个人档案与复盘，补了「与 PENDING-DECISIONS / 决策记录的衔接」。
+方法改编自 [mattpocock/skills 的 grilling](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling)（MIT，Copyright (c) 2026 Matt Pocock）。本版去掉了个人档案与复盘，补了「与决策记录的衔接」。

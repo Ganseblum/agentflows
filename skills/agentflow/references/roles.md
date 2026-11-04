@@ -14,7 +14,7 @@
 | --- | --- | --- | --- |
 | proposal | Supervisor（采集访谈）+ owner 决策 | `proposal/proposal.md` | — |
 | spec | Supervisor 起草或各角色 | `spec/{be,fe,qa,ui}/` | Spec 反审门（spec §0 反审 proposal） |
-| design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审门 → Design 评审门（Reviewer 独立） |
+| design | Technical director（接口）+ 各角色 | `design/{be,fe,qa,ui}/` | 需求评审 → Design 评审（Reviewer 独立） |
 | plan | Plan architect | `plan/<plan_id>.md`（本仓约定，文件名 = `plan_id`；目标仓无自有约定时用 `plan/execution.md`） | Plan 前置条件（plan 引用已冻结的 design 结论） |
 
 三轨职责一句话：**Backend engineer** 定对象模型、状态机、接口契约、DDL；**Frontend engineer**
@@ -33,7 +33,7 @@
 
 | 链 | 默认序列 | 默认可省 | 不可省的一步（硬边界，跳过即改变结论效力） |
 | --- | --- | --- | --- |
-| 实现 | 工程师（frontend / backend，按层选一或并行）→ Reviewer | 单层小修可只留 Supervisor | 独立评审门：Supervisor 亲写的改动也强制，不得自免 |
+| 实现 | 工程师（frontend / backend，按层选一或并行）→ Reviewer | 单层小修可只留 Supervisor | 独立评审：Supervisor 亲写的改动也强制，不得自免 |
 | 缺陷 | Bug investigator → Bug fixer → Reviewer → Bug recorder | 已复现的小 bug 可合并诊断与记录环节 | Fixer 不得批准或关闭自己的修复；Recorder 不得凭 Fixer 摘要标 `verified` |
 | 测试 | Test planner → Test executor → Reviewer（流程合理性模式） | 无计划的少量手工核对可不立案 | Executor 不改被测对象；失败先分离真 red 与 flaky，再立案 |
 | 规划 | Technical director → Plan architect | 无跨层或契约决策时可跳过 TD | 计划只由 Plan architect 写；批准、指派执行与回滚决定归 Supervisor |
@@ -41,7 +41,7 @@
 
 选链的顺序与判据：
 
-1. **先判 material**（定义见 [`../SKILL.md`](../SKILL.md) 的判断词可判定定义节）。小改动仍只留在 Supervisor 手里，但独立评审门不因此豁免。
+1. **先判 material**（定义见 [`../SKILL.md`](../SKILL.md) 的判断词可判定定义节）。小改动仍只留在 Supervisor 手里，但独立评审不因此豁免。
 2. **需要诊断还是需要决策**：要"哪里坏了、为什么"走缺陷链，要"边界怎么划、接口谁定"走规划链。
 3. **跨链串联**：测试执行出现失败或覆盖缺口，从测试链转入缺陷链；实现过程中出现契约冲突，先从实现链升到规划链取 TD 决策，再回到实现链——升级是一次指派，不是在实现里顺手决定。
 4. **只取链上真正有工作的角色**：链是默认序列，不是必须全员到场的仪式；省掉哪一步要能说出它为什么没有工作，而不是因为它麻烦。
@@ -68,11 +68,11 @@
 
 ## Supervisor
 
-当前宿主的主任务就是 supervisor。它负责接案、分解、权限、集成、最终验证和最终决策。它可以实现小的粘合改动，但必须检查委派出去的工作而不是信任摘要，并且不得豁免自己亲写代码的独立评审门。
+当前宿主的主任务就是 supervisor。它负责接案、分解、权限、集成、最终验证和最终决策。它可以实现小的粘合改动，但必须检查委派出去的工作而不是信任摘要，并且不得豁免自己亲写代码的独立评审。
 
 supervisor 决定是否委派，保持范围不重叠，并停止不再产出新证据的循环。
 
-会话中交给用户的独立书面交付物（分析报告、状态报告——任何文档链之外的东西）遵循 document-chain.md 表达纪律（术语）条款——包括代号裸用与模式词分域两种形态：先对照该条款做交付前自检，并跑机器检查 `python3 tools/lab/doc_chain.py --file <路径>`，之后才交付；交付物带重要结论，或用户明确在盯措辞质量时，指派独立 reviewer。
+会话中交给用户的独立书面交付物（分析报告、状态报告——任何文档链之外的东西）遵循 document-chain.md 表达纪律（术语）条款——包括代号裸用与模式词分域两种形态：先对照该条款做交付前自检，并跑文档链机器检查，之后才交付；交付物带重要结论，或用户明确在盯措辞质量时，指派独立 reviewer。
 
 ### 收敛注记
 
@@ -105,9 +105,9 @@ bug investigator 与 technical director 与 reviewer 画像同构（只读、证
 
 本表只导航，不再复制角色提示词。产物所有权、工具限制、专项深度和预算以实际文件为准；实现方法统一读取[执行与验证](execution.md)。
 
-**记录根清单**（单点定义，角色文件只引用此处）：现行记录根为 `docs/issues/`（含
-`recurrence/` 台账与 `docs/issues/归档/`）、`episodes/`、`docs/features/<批次>/plan/`（各批次
-计划在该批次 `plan/` 下）、`docs/releases/`（在途批次索引与待验收）与 `reviews/`。Supervisor
+**记录根清单**（单点定义，角色文件只引用此处）：现行记录根为 `记录根`（含
+`recurrence/` 台账与 `记录根归档/`）、`docs/features/<批次>/plan/`（各批次
+计划在该批次 `plan/` 下）、`docs/releases/`（在途批次索引与待验收）。Supervisor
 为每一条记录显式指派路径；这些根归 Recorder 与 Plan Architect 所有，实现角色不写入。
 
 | 角色 | 何时读取 |
