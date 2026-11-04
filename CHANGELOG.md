@@ -3,6 +3,12 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.38.0 — 2026-11-05（评审轮末机械立案：record_findings.py）
+
+- **新增 `scripts/record_findings.py`**：读 reviewer 返回的 findings YAML，逐条生成 ISS 记录（对照 issue-template.md 形态自检）、追加台账行（替换 hub 模板占位行）、输出 finding→ISS 映射回填评审记录，并把 reviewer 原始 YAML 归档进评审记录。默认下限 P1（`--all` 全量）；`--project` 必填、`--claimed-by` 标承接（缺省 `disposition: deferred`）；dry-run 全程不写盘；同批次 slug 冲突加序号不覆盖；顶格列表/缺 severity 等非法输入报错不猜。自测 6/6。
+- **contracts.md** 评审结果节新增「评审轮末机械立案」：`changes_requested` 或含 P0/P1 的 `approved`，supervisor 派修复前先立案（与「只修一次」并行不冲突；落账分级口径不变）；**issue-tracking.md** 补推荐载体段——两种立案载体都必须与 issue-template.md 同形，脚本产物只是其机械生成形态。
+- 评审：首轮 `changes_requested`（P1×2、P2×5：顶格列表静默丢失、批次内 slug 冲突覆盖、占位行形态错位、模板字段偏差、title YAML 注入、缺文件退出码、续行窃改）全部修入；delta 复核抓到 1 条修复回归（dry-run 归档写盘）+ 1 条弱自测 → 修入；spot 复核 `approved`，findings 全闭环。
+
 ## 0.37.0 — 2026-11-05（评审证据链补强：退出码 / diff / 复用声明 / 快照校验 / 批准后冻结）
 
 - **gen_review_brief.py**：`--checks` 支持 `命令 :: exit=N :: 输出`（旧两段式渲染「退出码未验证」，不得引用为已通过）；新增 `--diff-base`（§1.1 逐文件 diff，delta 变化面以 diff 为准，全文只作上下文）与 `--reuse-round N`（≥2、须与 `--prev-findings` 同给，渲染 reviewer_reuse 复用声明）；`DEFAULT_STOP_RULE` 补收口口径——文档/计数类 P2/P3 走 residual_risks 不另开 delta 轮，P0/P1 与证据有效性类仍阻塞。自测 6/6。

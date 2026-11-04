@@ -21,6 +21,12 @@
 
 同根因合并：同一根因的多个 finding 立一条记录，保留复现与影响面，`occurrence` 递增。
 
+**推荐载体（机械立案）**：评审轮末用插件脚本 `scripts/record_findings.py` 立案——读 reviewer
+返回的 findings YAML，逐条生成 ISS 记录（含模板合法性自检）、追加台账行、输出 finding→ISS
+映射（回填评审记录），并把 reviewer 原始 YAML 归档进评审记录；同根因合并决策仍由 supervisor
+在映射表上执行（脚本不自动合并）。手写立案仍然合法——两种载体的记录都必须与
+`templates/issue/issue-template.md` 同形，脚本产物只是该模板的机械生成形态。
+
 ## 1. defect_class 维度（核心新增）
 
 在 `issue-template.md` frontmatter 中**新增**字段（模板见 §4）：

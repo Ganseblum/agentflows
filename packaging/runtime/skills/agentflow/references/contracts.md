@@ -180,6 +180,13 @@ findings 总数注明计数口径（跟进项是否另算），使「逐轮编�
 的原始返回（YAML 全文）追加进评审记录文件（或 `reviews/raw/` 目录），评审记录作索引与汇总，
 不以摘要替代原文——只读记录目录即应能还原每轮的判断与证据。
 
+**评审轮末机械立案。** 评审轮返回 `changes_requested`，或返回 `approved` 但 findings 含 P0/P1
+时，supervisor 在派修复**之前**用 [scripts/record_findings.py](../scripts/record_findings.py) 立案：
+逐条生成 ISS 记录（默认下限 P1，`--all` 全量；过程/规范类发现用 `--defect-class 流程` 等
+组合）、追加台账行、输出 finding→ISS 映射回填评审记录，并把 reviewer 原始 YAML 归档进
+评审记录。落账分级口径不变（[issue-tracking](issue-tracking.md)）：低风险细节仍留评审记录，
+不入永久台账；立案是记账，与「只修一次」的修复并行不冲突。
+
 ```yaml
 reviewed_revision: revision whose supplied raw diff and evidence were reviewed
 status: complete | partial | blocked
