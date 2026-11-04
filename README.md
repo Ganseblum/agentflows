@@ -100,7 +100,35 @@ Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现�
 看各目录自己的 `README.md`（`tools/lab/`、`schemas/`、`docs/features/`、`docs/issues/`、
 `reviews/`、`episodes/`、`packaging/` 各有一份）。
 
-粗线条，按面记：
+**先分清你是哪类使用者**——同一个仓库装着两件东西，它们平时不该互相干扰：
+
+### A. 产品面（装进宿主、给目标仓用的）
+
+| 路径 | 是什么 |
+| --- | --- |
+| `agents/` | 10 个角色档案（reviewer、backend-engineer…） |
+| `skills/agentflow/` | 主方法：`SKILL.md` + `references/` + `templates/` + `scripts/` |
+| `skills/agentflow-intake/`、`skills/agentflow-grilling/` | 两条方法的**直接调用入口**（用户主动叫时用） |
+| `skills/design-diagram/` | 设计图能力 |
+| `packaging/runtime/` | 上面这些的**生成副本**，`marketplace.json` 装的就是它 |
+
+### B. 实验室面（维护这套方法自己用的，目标仓看不到）
+
+| 路径 | 是什么 |
+| --- | --- |
+| `tools/lab/` | 门本体：`validate.py` + `gate/` + `docchain/` + `isolation.py` 等 |
+| `tests/` | 门工具的回归测试（8 个，钉住门自己不被改坏） |
+| `schemas/` | 记录契约（issue / plan / run / episode / review / recurrence） |
+| `examples/` | 校验器的正反例 |
+| `episodes/`、`reviews/`、`docs/` | 本仓自己的决策记录、评审落点、设计文档与历史评测 |
+| `protected-paths.txt` | 上面多数路径在它里面——改动即门变更，需人工评审 |
+
+**这份清单就是原来「product/ 与 lab/ 物理分家」想要的效果，只是用清单而不是搬目录实现。**
+为什么不搬：`packaging/runtime` 是 marketplace 的实际安装物，`validate.py installed` 靠与源面
+逐字节比对来防「静默装出旧角色」；把源头目录改名会让两个白名单（`build_runtime.py` 的复制表与
+`protected-paths.txt`）同时失效，代价远大于「目录看起来更整齐」。
+
+### 粗线条，按面记
 
 - **交付给宿主的面**：`agents/`（角色档案）、`skills/`（`agentflow` 开发工作流），以及各
   manifest（`plugin.json`、`marketplace.json`、

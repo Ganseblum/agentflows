@@ -78,7 +78,7 @@
       "pattern": "^\\d+$"
     },
     "decision": {
-      "description": "pass requires zero fail and zero blocked in the summary; the checker enforces this.",
+      "description": "pass requires zero fail, zero blocked and zero not-run in the summary; the checker enforces this. Contract v2 (recorded_at >= 2026-11-02) also requires a 层级 column and browser/manual evidence for passing e2e cases.",
       "enum": ["pass", "partial", "fail"]
     },
     "findings": {

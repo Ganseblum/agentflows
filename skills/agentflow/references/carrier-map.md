@@ -23,8 +23,12 @@
 | 文档链 C 判据的逐条口径（执行体一侧） | `tools/lab/docchain/checks.py` | def batch_traceability_findings | 人读口径同上，不复述代码；`tools/lab/` 不随插件全量交付，只发链检查器（`packaging/build_runtime.py` 的 `RUNTIME_SUBTREES`） |
 | 测试计划与运行记录形态、bug 状态联动 | `skills/agentflow/references/test-records.md` | ## 契约 与 ## Bug 回归用例与状态联动 | SKILL 的自动化测试节只指路径，不重复联动表 |
 | 开工预检、选测、证据复用与失败分流 | `skills/agentflow/references/execution.md` | ## 环境预检与选测 与 ## 三种结论分开 | 契约与 SKILL 只引用该节，不再列一份测试纪律 |
+| 开工提问（六要素、红线、证据层级、任务简报） | `skills/agentflow/references/intake.md` | ## 六要素 | SKILL 的 Intake 步骤只写指针；角色文件不复述六要素，验收层级以本文件与 `test-records.md` 为准；`templates/host/global-rules.md` §7 是不可指针化的安装态副本，改模板后 bump 版本并重跑 Host Init |
+| 设计压测（设计树、前沿、逐轮推荐、收尾门） | `skills/agentflow/references/grilling.md` | ## 设计树与前沿 | SKILL 的架构门与 `technical-director.md` 只写指针；`design/be` §1.2.9 与 `design/fe` §1.2.9 是它的**固定落点**（内嵌核对表，确保每次设计都过一遍前沿，不再依赖「模型自己想起来读」） |
+| 首次接入细则（脚本先行、六问、接入约定、基线对齐） | `skills/agentflow/references/init.md` | ## 0. 脚本先行，AI 只填项目事实 | SKILL 的 Init 节只留三条不变式与本文件指针；接入约定正文以 `templates/hub/repo-rules.md` 为准、工程基线以 `templates/engineering/baseline.md` 为准（2026-11-04 从 SKILL 搬出，降低常驻体积约 4.5KB） |
 | 证据工具 seal / verify / run 的接口 | `skills/agentflow/references/workflow-tool.md` | ## 命令 | 批次 `testing/` 写用法实例，不重定义命令语义 |
 | 埋点评审清单 | `skills/agentflow/references/telemetry.md` | ## 评审门检查清单 | SKILL 的埋点节明写「本文不复述那十条」，只指路径 |
+| 设计图画法（三层选图、事件号、怎么读、九列表） | `skills/design-diagram/SKILL.md` | ## 三条铁律 | **要哪些图**仍归文档链（形态判据不在此复述）；本 skill 只定画成什么样算合格。时间序/状态/ER 的骨架在 `skills/design-diagram/templates/`，报错处置在 `references/gate-findings.md`，`skills/agentflow/SKILL.md` 的入口表只留指针 |
 | 仓库整体审核档位与铁律 | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 审核节只留指针，档位与铁律以 repo-audit.md 为准（档位数与铁律数不在此计数，以该文件实列为准），不抄铁律正文 |
 | 检索纪律（存在性结论不用裸 grep、先打印命中原文再判 PASS/FAIL） | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 的 Init 节已指针化（指向 repo-rules 模板第 4 节与本铁律清单）；`templates/hub/repo-rules.md` 第 4 节是写进目标仓的安装态固定块（同步机制随版本标记重跑 Init 刷新），`templates/host/global-rules.md` 第 11 节同理 |
 | 宿主托管块协议（dry-run、只改块内、三项校验） | `skills/agentflow/references/hosts.md` | ## 托管块协议 与 ## 版本与漂移 | SKILL 的宿主级接入节只保留三条硬约束与指针 |

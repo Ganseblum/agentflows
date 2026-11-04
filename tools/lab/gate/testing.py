@@ -43,6 +43,15 @@ TEST_CASE_PRIORITIES = ("P0", "P1", "P2", "P3")
 
 TEST_RESULT_STATUSES = ("pass", "fail", "blocked", "not-run")
 
+# 本轮实际证据的测量层级。层级不是计划的意图，是执行记录里观察到的事实：
+# browser=真实浏览器里的用户入口，api=命令行/协议链，file=文件/产物检查，manual=人工目视。
+TEST_RESULT_LEVELS = ("browser", "api", "file", "manual")
+
+# 契约 v2（2026-11-02，ISS-2026-050 类事故）：入口列、层级列与「e2e 必须浏览器证据」只对
+# recorded_at 在该日期及之后的记录强制。存量记录不追溯——本仓不回改历史，且一个把全部历史
+# 记录判红的门会在第一次使用时被关掉。
+TEST_CONTRACT_V2_FROM = "2026-11-02"
+
 
 TEST_PLAN_REQUIRED_HEADINGS = ("## 用例", "## 边界覆盖", "## 流程疑点")
 
@@ -67,15 +76,33 @@ def _int_version(value: Any) -> int | None:
     return None
 
 
+def _contract_v2(frontmatter: dict[str, Any]) -> bool:
+    """Whether this record is governed by the entry/level contract (recorded_at >= 2026-11-02).
+
+    A malformed or missing recorded_at is already rejected by the schema; treating it as legacy
+    here keeps the error message about the real defect instead of a second, derivative one.
+    """
+    recorded_at = frontmatter.get("recorded_at")
+    if not isinstance(recorded_at, str):
+        return False
+    return recorded_at[:10] >= TEST_CONTRACT_V2_FROM
+
+
 def parse_test_case_registry(
-    body: str, path: Path
+    body: str, path: Path, require_entry: bool = False
 ) -> tuple[list[dict[str, str]], list[ValidationError]]:
-    """Parse the 用例 registry table: rows whose first cell is a TC id carry ID/级别/优先级/标题."""
+    """Parse the 用例 registry table: rows whose first cell is a TC id carry ID/级别/优先级/标题.
+
+    When require_entry is set (contract v2), the registry must carry an 入口 column and every
+    case must name its user-visible entry — the ISS-2026-050 failure was a case library that
+    covered "登录" but never the popup entry the user actually clicks.
+    """
     cases: list[dict[str, str]] = []
     errors: list[ValidationError] = []
     lines = body.splitlines()
     seen: dict[str, int] = {}
     columns: dict[str, int] | None = None
+    entry_column_missing = False
     for index, line in enumerate(lines):
         lineno = index + 1
         row = parse_plan_task_row(line)
@@ -86,6 +113,16 @@ def parse_test_case_registry(
             continue
         if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
             columns = header_columns(line)
+            # Only the 用例 registry header is the contract surface; the per-case step tables
+            # further down also have header rows and must not be read as a missing 入口 column.
+            if require_entry and columns is not None and "用例 ID" in columns and "入口" not in columns:
+                entry_column_missing = True
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"line {lineno}: 用例注册表缺少「入口」列（契约 v2 要求逐用例写用户可见入口）",
+                    )
+                )
             continue  # header row
         cells = row["cells"]
         if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
@@ -116,6 +153,15 @@ def parse_test_case_registry(
                     f"line {lineno}: case {case_id} priority {priority!r} must be one of {TEST_CASE_PRIORITIES}",
                 )
             )
+        entry = _cell(cells, columns, "入口", -1)
+        if require_entry and not entry_column_missing and (not entry or entry in ("无", "—", "-")):
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} 入口 must name a user-visible entry "
+                    "(按钮/弹窗（含 iframe）/整页跳转/深链/回调页/脚本/纯接口)",
+                )
+            )
         source = _cell(cells, columns, "来源", -1)
         if columns is not None and "来源" in columns and (not source or source in ("无", "—", "-")):
             errors.append(
@@ -131,6 +177,7 @@ def parse_test_case_registry(
                 "level": level,
                 "priority": priority,
                 "title": _cell(cells, columns, "标题", 3),
+                "entry": entry,
             }
         )
     return cases, errors
@@ -185,7 +232,9 @@ def validate_test_plan_markdown(
     for heading in TEST_PLAN_REQUIRED_HEADINGS:
         if not heading_present(body, heading):
             errors.append(ValidationError(str(path), f"body section {heading!r} is required"))
-    cases, registry_errors = parse_test_case_registry(body, path)
+    cases, registry_errors = parse_test_case_registry(
+        body, path, require_entry=_contract_v2(frontmatter)
+    )
     errors.extend(registry_errors)
     declared_count = frontmatter.get("case_count")
     if isinstance(declared_count, str) and declared_count.isdigit() and int(declared_count) != len(cases):
@@ -219,6 +268,7 @@ def validate_test_plan_markdown(
         "path": path,
         "frontmatter": frontmatter,
         "cases": [case["case_id"] for case in cases],
+        "levels": {case["case_id"]: case["level"] for case in cases},
     }
     return errors, entry
 
@@ -234,8 +284,10 @@ def validate_test_run_markdown(
 
     Body contract: the 结果 table (unique case ids from the referenced plan's registry, fixed
     result enum, evidence required on fail/blocked rows), summary counts equal to the table,
-    decision pass requires zero fail/blocked, and — when the run pins the plan's current
-    test_version — every case in the registry is accounted for.
+    decision pass requires zero fail/blocked/not-run, and — when the run pins the plan's current
+    test_version — every case in the registry is accounted for. Contract v2 (recorded_at >=
+    2026-11-02) additionally requires a 层级 column, a blocker on every not-run row, and
+    browser/manual evidence for any passing e2e case.
     """
     frontmatter, body, errors = load_record_markdown(path)
     if errors or frontmatter is None:
@@ -293,8 +345,11 @@ def validate_test_run_markdown(
                 ValidationError(str(path), "run project must match the referenced plan's project")
             )
 
-    results: dict[str, tuple[int, str]] = {}
+    results: dict[str, tuple[int, str, str]] = {}
     counts = {"pass": 0, "fail": 0, "blocked": 0, "not-run": 0}
+    v2 = _contract_v2(frontmatter)
+    level_column_missing = False
+    level_column_checked = False
     in_results = False
     columns: dict[str, int] | None = None
     lines = body.splitlines()
@@ -313,12 +368,25 @@ def validate_test_run_markdown(
             continue
         if index + 1 < len(lines) and is_separator_row(lines[index + 1]):
             columns = header_columns(line)
+            # Only the first table under ## 结果 is the result table; a later note table must not
+            # be read as a second, malformed result table.
+            if v2 and not level_column_checked:
+                level_column_checked = True
+                if columns is not None and "层级" not in columns:
+                    level_column_missing = True
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"line {lineno}: 结果表缺少「层级」列（契约 v2 要求逐用例写实际证据层级）",
+                        )
+                    )
             continue  # header row
         cells = row["cells"]
         if len(cells) < 4 or not TEST_CASE_ID_PATTERN.match(cells[0]):
             continue
         case_id = cells[0]
         status_cell = _cell(cells, columns, "状态", 1)
+        level = _cell(cells, columns, "层级", -1)
         evidence = _cell(cells, columns, "证据", 2)
         if case_id in results:
             errors.append(
@@ -337,7 +405,25 @@ def validate_test_run_markdown(
                 )
             )
             continue
-        results[case_id] = (lineno, status_cell)
+        if v2 and not level_column_missing and level not in TEST_RESULT_LEVELS:
+            errors.append(
+                ValidationError(
+                    str(path),
+                    f"line {lineno}: case {case_id} 层级 {level!r} must be one of "
+                    f"{TEST_RESULT_LEVELS} (实际证据层级，不是计划的意图)",
+                )
+            )
+        if v2 and status_cell == "not-run":
+            note = _cell(cells, columns, "说明", -1)
+            if not note or note in NO_EVIDENCE_CELLS:
+                errors.append(
+                    ValidationError(
+                        str(path),
+                        f"line {lineno}: not-run row for {case_id} must state what it blocks "
+                        "in 说明 (a not-run without a blocker is an unreported gap)",
+                    )
+                )
+        results[case_id] = (lineno, status_cell, level)
         counts[status_cell] += 1
         if status_cell in ("fail", "blocked") and evidence in NO_EVIDENCE_CELLS:
             errors.append(
@@ -374,9 +460,15 @@ def validate_test_run_markdown(
                     f"summary_{key} {declared} does not match the 结果 table ({observed})",
                 )
             )
-    if frontmatter.get("decision") == "pass" and (counts["fail"] or counts["blocked"]):
+    if frontmatter.get("decision") == "pass" and (
+        counts["fail"] or counts["blocked"] or counts["not-run"]
+    ):
         errors.append(
-            ValidationError(str(path), "decision 'pass' requires zero fail and zero blocked rows")
+            ValidationError(
+                str(path),
+                "decision 'pass' requires zero fail and zero blocked and zero not-run rows "
+                "(a run with untested cases is not a pass)",
+            )
         )
     # T06: a run whose 结果 table is empty used to be exempt — the case-accounting check only ran
     # when the run pinned the plan's *current* version, so a zero-case run declaring `pass` was
@@ -397,6 +489,23 @@ def validate_test_run_markdown(
                         f"result row {case_id!r} is not in plan {plan_id!r}'s case registry",
                     )
                 )
+        # 契约 v2：e2e 用例的 pass 只能是浏览器或人工目视证据。api 证据（curl/协议链）证明
+        # 接口可用，不证明用户从真实入口走通——ISS-2026-050 就是拿 api 证据关了登录用例。
+        if v2:
+            levels = plan.get("levels") or {}
+            for case_id, (lineno, status_cell, level) in results.items():
+                if (
+                    status_cell == "pass"
+                    and levels.get(case_id) == "e2e"
+                    and level not in ("browser", "manual")
+                ):
+                    errors.append(
+                        ValidationError(
+                            str(path),
+                            f"line {lineno}: e2e case {case_id} passed with {level!r} evidence; "
+                            "e2e requires browser or manual (API 200 cannot close a user-visible flow)",
+                        )
+                    )
         version = frontmatter.get("test_plan_version")
         current = (plan["frontmatter"] or {}).get("test_version")
         pinned = _int_version(version)

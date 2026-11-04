@@ -631,9 +631,18 @@ def lint(feature_dir: Path, repo_root: Path = REPO_ROOT) -> list[str]:
         if "flowchart" not in kinds:
             errors.append("C4 design/be: 缺少架构/流程 flowchart")
         spec_kinds = mermaid_kinds("\n".join(all_text[f] for f in spec_files) if spec_files else "")
+        # G2 (2026-11-04, user-authorized gate change): an entity FIELD TABLE now satisfies the
+        # data-model requirement alongside ER / state diagrams. Rationale: for batches with no
+        # database, forcing an ER diagram produced either a fake diagram or a one-line
+        # 「N/A: 无数据库」 — the latter passed the gate while leaving User/Session field types to be
+        # reverse-engineered from code. A ten-column field table is strictly more informative than
+        # a two-box erDiagram, so it counts; requiring ALL THREE would be the tightening, not this.
+        has_entity_table = bool(re.search(
+            r"\|\s*实体\s*\|.*\|", be_text)) and bool(re.search(r"字段", be_text))
         if not (kinds.get("erDiagram") or kinds.get("stateDiagram")
-                or spec_kinds.get("erDiagram") or spec_kinds.get("stateDiagram")):
-            errors.append("C4 design/be: 缺少 ER 图或状态机图（design/be 或 spec）")
+                or spec_kinds.get("erDiagram") or spec_kinds.get("stateDiagram")
+                or has_entity_table):
+            errors.append("C4 design/be: 缺少 ER 图、状态机图或实体字段表（三者任一，见 §1.3.2）")
         if not re.search(r"\|\s*#?\s*接口.*\|.*请求字段.*响应字段|\|.*请求字段.*\|.*响应字段", be_text):
             errors.append("C4 design/be: 缺少字段级 API 契约表（请求字段/响应字段列表头）")
         # C5: ids declared in the CONTRACT TABLE's first column must appear in design/fe.
@@ -1655,7 +1664,7 @@ def goal_traceability_findings(feature_dir: Path, repo_root: Path) -> list[str]:
 
 
 def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
-    """C22 + C23 for one batch directory; the single entry both modes call.
+    """C22 + C23 + C28 for one batch directory; the single entry both modes call.
 
     The plan glob is recursive on purpose: batches put plans under `plan/` and sometimes one level
     deeper (`plan/be/`), and a non-recursive read silently reports "no evidence problems" for every
@@ -1663,14 +1672,192 @@ def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
     """
     errors = goal_traceability_findings(batch_dir, repo_root)
     plan_dir = batch_dir / "plan"
-    if not plan_dir.is_dir():
-        return errors
-    for f in sorted(plan_dir.rglob("*.md")):
-        if f.name == ".gitkeep":
-            continue
-        rel = f.relative_to(repo_root).as_posix() if f.is_relative_to(repo_root) else f.name
-        errors.extend(evidence_presence_findings(rel, read(f), repo_root, batch_dir))
+    if plan_dir.is_dir():
+        for f in sorted(plan_dir.rglob("*.md")):
+            if f.name == ".gitkeep":
+                continue
+            rel = f.relative_to(repo_root).as_posix() if f.is_relative_to(repo_root) else f.name
+            errors.extend(evidence_presence_findings(rel, read(f), repo_root, batch_dir))
+    errors.extend(ac_coverage_findings(batch_dir, repo_root))
+    errors.extend(batch_deviation_findings(batch_dir))
     return errors
+
+
+# --- C29 / C30 / C31 — HARD checks (2026-11-04 gate change, user-authorized; promoted from the
+# soft channel at the user's instruction after the soft form was verified to print correctly).
+#
+# C29  execution-time deviation must be registered: a ☑ task whose evidence cell describes a
+#      defect ("发现并修复" / "修后复测") but issues/ has no corresponding ISS-* record.
+# C30  status single-point drift: batch state words counted per document must agree with the
+#      plan task table's aggregate; change-log lines are excluded by the STALE allow-list.
+# C31  candidate-set section: a proposal that declares scope but carries no §1.4 范围穷举 table
+#      (or an emptied one) — the exact gap that let QQ/微信/验证码 stay at 0 mentions.
+
+DEVIATION_WORDS = ("发现并修复", "修后复测", "修复后复测", "执行中发现", "实测发现缺陷")
+STATUS_WORDS = ("已完成", "进行中", "待验收", "已验收", "待评审", "已通过评审")
+
+
+def batch_deviation_findings(batch_dir: Path) -> list[str]:
+    """C29 + C30 + C31 — hard findings (promoted from the 2026-11-04 adoption-period soft channel).
+
+    History: these shipped as warnings first because their judges read *wording*, and this
+    repo's precedent (`check-write-scope.sh`) is a check that never reached CI over an
+    unmeasured false-positive surface. They are promoted now on the user's instruction; the
+    self-tests pin both directions (violation trips, clean stays green)."""
+    warnings: list[str] = []
+
+    # C29 — ☑ rows whose evidence talks about a defect, with no ISS id anywhere in the batch.
+    plan_dir = batch_dir / "plan"
+    iss_ids: set[str] = set()
+    for p in batch_dir.rglob("*.md"):
+        iss_ids |= set(re.findall(r"ISS-\d{4}-\d{2}-\d{2}-[^\s|`）)]+", read(p)))
+    for plan in sorted(plan_dir.rglob("*.md")) if plan_dir.is_dir() else []:
+        for line in read(plan).splitlines():
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) < 3 or not any(g in cells[-2] or g in cells[-1] for g in ("☑",)):
+                continue
+            row = " ".join(cells)
+            if any(w in row for w in DEVIATION_WORDS) and not re.search(r"ISS-\d{4}", row):
+                warnings.append(
+                    f"C29 执行期偏差: {plan.relative_to(batch_dir)}: 「{cells[1][:40]}」"
+                    f"证据称发现并修复了缺陷，但本批 issues/ 无对应 ISS-* 记录"
+                )
+
+    # C30 — status words must not disagree between the plan table and other batch documents.
+    if plan_dir.is_dir():
+        plan_text = "\n".join(read(p) for p in sorted(plan_dir.rglob("*.md")))
+        for word in STATUS_WORDS:
+            if word not in plan_text:
+                continue
+            for doc in sorted(batch_dir.glob("*.md")):
+                if doc.name == "README.md":
+                    continue
+                text = read(doc)
+                if any(other in text for other in STATUS_WORDS if other != word):
+                    # both this word and a conflicting one appear in a non-plan doc
+                    conflicting = [o for o in STATUS_WORDS if o != word and o in text]
+                    if conflicting:
+                        warnings.append(
+                            f"C30 状态单点: {doc.name} 同时出现「{word}」与"
+                            f"「{'、'.join(conflicting[:2])}」——状态词应只在计划看板维护一处"
+                        )
+
+    # C31 — proposal declares scope but has no §1.4 candidate-set table.
+    proposal = batch_dir / "proposal" / "proposal.md"
+    if proposal.is_file():
+        text = read(proposal)
+        has_scope = "本期范围" in text or "不包含" in text
+        has_candidates = "范围穷举" in text
+        if has_scope and not has_candidates:
+            warnings.append(
+                "C31 候选集: proposal 声明了范围，但没有 §1.4「范围穷举」节——"
+                "本类功能的惯例维度未逐项决策（QQ/微信/验证码这类漏问就出在这里）"
+            )
+    return warnings
+
+
+# --- C28 AC coverage closure (2026-11-04 gate change, user-authorized).
+# Why: a real batch shipped with 27 rows of 「待覆盖」 in spec/qa while its 30 test cases had all
+# run 30/30, and every gate stayed green — the AC→case chain was only readable by eye. The
+# mapping's single authority is the testing plan registry's 「来源」 column (enforced non-empty by
+# gate/testing.py since T10); spec/qa and design/qa must NOT keep a second copy of it.
+# This check only bites once a testing plan exists: before that, an unfilled mapping is a stage
+# that has not happened yet, not a defect.
+
+def ac_coverage_findings(batch_dir: Path, repo_root: Path) -> list[str]:
+    """C28: AC↔case closure. AC set from spec/qa definition table ≡ registry 「来源」 ∪ testcases.yaml."""
+    errors: list[str] = []
+    acceptance = batch_dir / "spec" / "qa" / "acceptance.md"
+    test_plans = sorted(batch_dir.glob("testing/**/plan-*.md"))
+    if not acceptance.is_file() or not test_plans:
+        return errors  # no testing stage yet — nothing to close
+
+    defined = defined_ac_ids(read(acceptance))
+    if not defined:
+        return errors  # batch has no AC system; nothing to check
+
+    plan = test_plans[-1]
+    rel = plan.relative_to(repo_root).as_posix() if plan.is_relative_to(repo_root) else plan.name
+    covered = registry_source_acs(read(plan))
+    for yf in sorted((batch_dir / "testing").rglob("testcases.yaml")):
+        if "/reviews/snapshot-" in yf.as_posix():
+            continue  # historical snapshot copies must not mask a current gap
+        covered |= yaml_ac_ids(read(yf))
+
+    missing = sorted(defined - covered)
+    if missing:
+        errors.append(
+            f"C28 AC 覆盖: {rel} 未覆盖 spec/qa 定义的验收点 {'、'.join(missing)}"
+            f"（权威＝注册表「来源」列 ∪ testcases.yaml）"
+        )
+    orphan = sorted(covered - defined)
+    if orphan:
+        errors.append(
+            f"C28 AC 覆盖: {rel} 引用了 spec/qa 定义表里不存在的验收点 {'、'.join(orphan)}"
+        )
+
+    # A stale mapping table in spec/qa is the exact rot this check exists for.
+    residue = [ln.strip() for ln in read(acceptance).splitlines()
+               if "待覆盖" in ln and ln.lstrip().startswith("|")]
+    if residue:
+        errors.append(
+            f"C28 AC 覆盖: spec/qa/acceptance.md 仍保留 {len(residue)} 行「待覆盖」映射，"
+            f"而 {rel} 已落盘——覆盖状态唯一权威是注册表「来源」列，不维护第二份映射表"
+        )
+    return errors
+
+
+def defined_ac_ids(text: str) -> set[str]:
+    """AC definition = the first contiguous table block whose rows start with an AC id."""
+    block: list[str] = []
+    for line in text.splitlines() + [""]:
+        if line.lstrip().startswith("|"):
+            block.append(line)
+            continue
+        if block:
+            ids = {m.group(1) for row in block
+                   if (m := re.match(r"\s*\|\s*((?:G\d+|M\d+)-AC-\d+)\s*\|", row))}
+            if ids:
+                return ids
+            block = []
+    return set()
+
+
+def registry_source_acs(text: str) -> set[str]:
+    """AC ids declared in a testing plan registry's 「来源」 column (the single authority)."""
+    found: set[str] = set()
+    in_registry = False
+    header: list[str] = []
+    src_idx = -1
+    for line in text.splitlines():
+        if line.startswith("## "):
+            in_registry = line.strip() == "## 用例"
+            header, src_idx = [], -1
+            continue
+        if not in_registry or not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not header:
+            header = cells
+            src_idx = next((i for i, h in enumerate(cells) if h == "来源"), -1)
+            continue
+        if set("".join(cells)) <= set("-: "):
+            continue
+        if src_idx == -1 or src_idx >= len(cells) or not cells[0].startswith("TC-"):
+            continue
+        found |= {m.group(0) for m in AC_ID_RE.finditer(cells[src_idx])}
+    return found
+
+
+def yaml_ac_ids(text: str) -> set[str]:
+    """AC ids from a testcases.yaml (`ac:` lines), tolerant of the flat documented format."""
+    found: set[str] = set()
+    for line in text.splitlines():
+        if re.match(r"^\s*-?\s*ac\s*:", line):
+            found |= {m.group(0) for m in AC_ID_RE.finditer(line)}
+    return found
 
 
 def repo_policy_findings(repo_root: Path) -> list[str]:

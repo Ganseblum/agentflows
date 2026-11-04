@@ -72,6 +72,31 @@ dependencies: inputs that must exist before this work starts
 
 Supervisor 负责执行状态的记账：执行期间，它是计划状态与证据回写的唯一写入者。Plan Architect 可以在执行前创建或修订计划，但 worker 必须把证据交回 Supervisor，而不是编辑计划状态或证据列。Supervisor 还负责规范记录路由，只在显式指派的路径上接受记录文件；角色的产物矩阵只授予它那一条狭窄的记录写入例外。
 
+## 评审简报必填字段（缺一 reviewer 可直接判 blocked）
+
+评审简报是 worker 简报的特化。除 `task_id` / `baseline_revision` 外，以下字段必填——缺失或
+填了无法校验的替身时，reviewer 返回 `blocked: 简报不合格` 并列缺失项，不得凭通读补偿：
+
+```yaml
+review_scope: full | delta | spot
+  # full=首轮或全新文档（无 diff 基线时把文档快照当新增 diff）；delta=只读变化文件与其上游引用面；
+  # spot=只核上轮未关闭项
+reviewed_revision: commit 号、评审快照目录（reviews/snapshot-<n>/，由 review_snapshot.py 生成）
+  或显式 unverified-boundary；只给一串 sha256 不算绑定——无 Bash 的评审者无法校验哈希，
+  转述它们只会消耗简报
+inline_objects: 被评审文件逐字内容或原始 diff 的落点（路径必须存在）；简报不含任何内联对象即不合格
+stop_rule: 本轮何时停——如「delta 复审最多 1 轮；剩余非阻塞项写入 residual_risks 后收口」；
+  非阻塞建议默认不阻塞收口，修不修由 supervisor 按改动面决定，不再自动升一轮模型评审
+output_budget: findings 上限（默认 12）与报告正文上限（默认 6000 字符）；超限按严重度截断并声明截断
+```
+
+两条禁令：
+
+- 「必须全部读取」与「只看本轮改动」不得同时出现——前者属于 `review_scope: full`，后者属于
+  `delta` / `spot`，二者择一。简报同时写两者时，reviewer 按 blocked 退回。
+- 引用义务只落在 finding 上（引不出原文的 finding 按未评审处理）；通过的检查项报
+  `PASS <检查编号>` 一行即可，不逐条引用原文。
+
 ## Worker 结果
 
 每个**产出交付物的 worker**（实现、修复、测试执行与计划类角色）都回显 `task_id` 与 `baseline_revision`；只读角色（`reviewer`、`technical-director`、`bug-investigator`）的结论改用简报的 `task_id` 标注来源，其返回形态见下文「评审结果」与各角色文件。当预算或环境在目标完成前中止工作时，还报告 `status: partial`。只有当所分配的交付物及其可复现检查存在于工作区时，才允许报 `complete`。
@@ -126,7 +151,9 @@ Supervisor 验证共享工作区，因为 worker 摘要可能过期、不完整�
 
 ## 评审结果
 
-Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
+Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。被评审对象是未提交工作区时，用 `skills/agentflow/scripts/review_snapshot.py` 生成评审快照目录（含 MANIFEST），把快照路径作为 `reviewed_revision` 与 `read_scope` 的对象——快照在修复后不失效，delta 轮不必逐文件重算哈希。
+
+**跨阶段不复用。** 需求 → 设计 → 代码跨阶段评审时优先派发**新的** reviewer 子代理：复用同一子代理跨多阶段会让上下文持续累积、独立性逐轮递减（实测一轮登录批次复用同一 reviewer 八轮，其单轮输入从约 70 万 token 涨到 446 万，且「自己审自己上轮的判断」）。确需复用（如宿主并发额度受限）时，简报必须写明累计轮次与上轮结论锚点，reviewer 报告须声明「本结论部分依赖上轮判断」。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
 
 ```yaml
 reviewed_revision: revision whose supplied raw diff and evidence were reviewed

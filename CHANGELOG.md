@@ -3,6 +3,82 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.33.0 — 2026-11-04（门禁增删平衡批：C29–C31 转硬 + G1/G2 松绑 + 宿主加载实证）
+
+- **C29/C30/C31 从软警告转硬判据**（用户授权）：执行期偏差未立案 / 状态单点漂移 / 候选集缺失三条件现在计入 findings。自测改为断言硬红方向（违规退出 1、干净批次仍绿），164 → **165/165**（含 G2 正例）。
+- **G1 松绑：生成树新鲜度可跳过**。`validate_runtime_freshness` 是每次迭代最贵的一步（必须先跑完整 `build_runtime.py` 才能过 `manifests`），但它只在**发版时**才有意义（marketplace 装的是那棵快照）。新增 `AGENTFLOW_SKIP_RUNTIME_FRESHNESS=1` 供日常迭代只查版本一致性；发版链（`publish.sh` / `upgrade-zcode.sh` / `pre-push.sh`）不设该变量，陈旧快照仍无法发布。双向实测：SKIP=1 PASS、SKIP=0 抓到真实漂移。
+- **G2 松绑：C4 数据模型要求三选一**。原先「ER 图 **或** 状态机图」二选一，导致无数据库批次要么画假图、要么写一句 `N/A: 无数据库` 就过门（后者实际把 User/Session 字段类型留给了读代码猜）。现在**实体字段表**是第三种合格形态——十列字段表信息量严格大于两框 ER 图，所以是放宽而非收紧。新增判别自测 G2-01（移除 ER 图 + 加字段表 → 仍 PASS）。
+- **Z10 宿主加载实证**（`docs/host-platform-facts.md`）：首次拿到「`<repo>/AGENTS.md` 确实被宿主自动加载」的直接证据——临时仓写唯一探针 `PROBE-20261104-ZK7Q`，`zcode -p` 新会话无需任何 Read 即逐字复述探针所在行。这是 `init_workspace.py` 把 lean 规则写进 AGENTS.md 托管块这一设计的依据。**`.cursor/rules/*.mdc`、`CLAUDE.md`、`.github/copilot-instructions.md` 三份如实记为「加载未验证」**（本机无对应 CLI，不做无证据主张）。
+- **D1 澄清「不新建平行套件」的真实语义**：被禁的是**并行 runner**，不是 Playwright 本身。改为按目标仓现状三档：无 runner → Ego Light；已有 Playwright/Cypress → 用既有 runner 写 spec；部分覆盖 → 先 Ego 跑通再迁移。`testcases.yaml` 的 `automation` 字段统一写 `<runner>::<用例ID>`，让「改一行要重跑哪些」是一次查询。
+- **C2 用清单替代物理分家**：`README.md` 的仓库布局节新增「产品面（A）/ 实验室面（B）」两张表——这就是原「product/ 与 lab/ 物理分家」想要的效果。不搬目录的理由已写进该节：`packaging/runtime` 是安装物，`validate.py installed` 靠与源面逐字节比对防「静默装出旧角色」，改名会让 `build_runtime.py` 复制表与 `protected-paths.txt` 两个白名单同时失效。
+- 验证：11 项门 PASS、`doc_chain` 自测 165/165、`lint` PASS、260 单测 OK。
+
+## 0.32.0 — 2026-11-04（intake / grilling 双触发 + C29–C31 软警告 + 简报生成器）
+
+- **`intake` / `grilling` 从 references 升为独立 skill（双触发）**：新增 `skills/agentflow-intake/`、`skills/agentflow-grilling/`。它们**不复制正文**——只写触发条件与硬约束，方法契约仍单点在 `references/intake.md` / `references/grilling.md`。为什么两条路径都要：**模板内嵌**（`design/be` §1.2.9、`design/fe` §1.2.9、`proposal` §1.4）覆盖「该做但模型想不起来」的自动触发；**独立 skill** 覆盖「用户主动说『压一下这个设计』」的手动触发。此前 `grilling.md` 在本仓 90 份 docs + 49 份 episodes + reviews + examples 里路径引用**命中 0 次**——单靠路由表等于从不触发。
+- **C29 / C30 / C31 以软警告形态进 doc_chain**（门变更，用户授权「全做，起始软」）：C29 执行期偏差必须立案（☑ 行证据称「发现并修复」而 issues/ 无 ISS）；C30 状态单点漂移（非计划文档同时出现互斥状态词）；C31 候选集缺失（proposal 声明范围但无 §1.4 范围穷举）。**走独立软通道，只打印不计 finding、不影响退出码**——仓库前车之鉴是 `check-write-scope.sh` 因误报面未评估至今未接 CI。四条判别自测（含「软警告不影响退出码」这一半），自测 161 → **164/164**。
+- **`scripts/gen_review_brief.py`**：评审简报生成器，强制内联被评审文件逐字内容、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出五个必填字段。手写简报的两个典型缺陷（给路径不给内容、给 sha256 但无法校验）在生成器里不可能发生：文件不存在直接失败，sha256 只作参考不做绑定。自测 3/3。
+- **浏览器操作序列可重放**：`design/qa` §6 与 `test-records.md` 新增 `testing/<项目>-<功能>/scripts/ego-<用例ID>.mjs` —— 与 `scratch/`（一次性草稿、可丢弃）明确分开。解决「21 条浏览器用例只留 JSON 证据、脚本没进仓，下次改一行前端要现场重写一遍」。
+- **试过并回滚**：把 6 份低频 references 物理迁入 `references/packs/`——实测产生 **46 处断链**（相对链接是 `validate.py docs` 的硬门），收益仅是目录整齐，已改回原地 + 路由表逻辑分组（上一批已完成）。这条留给后来者：`packs/` 分层只做逻辑分组，不做物理移动。
+- 验证：11 项门 PASS、`doc_chain` 自测 164/164、`lint` PASS、260 单测 OK、各脚本自测 3/3 + 8/8 + 4/4 + 5/5 + 8/8。
+
+## 0.31.0 — 2026-11-04（清理与收口批：C28 落门、SKILL 减重、grilling 内嵌）
+
+- **C28 AC 覆盖闭合进 doc_chain**（门变更，全 8 份复盘文档一致推荐）：AC 定义表集合 ≡ testing plan 注册表「来源」列 ∪ `testcases.yaml` 的 `ac` 字段；plan 已落盘而 spec/qa 残留「待覆盖」映射行即红。四条判别自测（缺口 / 残留映射表 / 完整闭合 / 尚无 testing 阶段不误红），linter 自测 157 → **161/161**。同时补 `constants.py` docstring 的 C25/C26 声明（此前两编号只在代码里，自查清单看不见）。
+- **SKILL.md 减重**：Init 五步细则（脚本先行 / 六问 / 接入约定 / 基线对齐）搬入新 `references/init.md`，常驻正文 44,967 → 40,480 字节（-4.5KB）；路由表拆成「主干 14 条 + 按需包 6 条」，低频资料（设计图 / 宿主接入 / 埋点 / 仓库审核 / 证据工具 / 载体地图）退出一级路由，模型不再每次扫全表。
+- **grilling 内嵌进 design 模板**：`design/be` §1.2.9 与 `design/fe` §1.2.9 新增「设计前沿核对」固定表（消费方全集 / 跨边界不变量 / 失败分支归属 / 生命周期 / 不可逆点 / 未决问题）。此前 `grilling.md` 在本仓 `docs/`、`episodes/`、`reviews/`、`examples/` 里路径引用**命中 0 次**——靠「模型自己想起来读」等于从不触发；内嵌后每次设计必过一遍前沿。
+- **清理**：删除宿主机 5 份 `~/.zcode/AGENTS.md.agentflow-backup-*` 残留（约 86KB，`.gitignore` 早已忽略该模式但本机持续积累）。经核查**未删除**任何仓库文件：references 全部有 4–6 处引用、`workflow_lib/`（1,646 行）有 `tests/test_workflow.py` 覆盖、`docs/evaluations/archive`（428K）有 7 处引用且移无收益、`packaging/runtime` 是 `validate.py installed` 的保护面。
+- 验证：11 项门 PASS、`doc_chain` 自测 161/161、`check_records` 8/8、`init_workspace` 8/8、`new_feature` 4/4、`review_snapshot` 5/5、260 单测 OK；`installed` 红（0.31.0 未重装）。
+
+## 0.30.1 — 2026-11-04（AC↔用例映射单点化）
+
+- **起因**：0.30.0 引入的 `plan` frontmatter `ac_refs` 字段与 `schemas/test-plan.schema.json` 的 `additionalProperties: false` 冲突——任何按模板新建的 plan 都会被 schema 判红（`validate.py` 抓不到，因为模板本身不是记录）。该字段本身也是冗余：AC↔用例的映射已经写在注册表「来源」列，且该列自 T10 起由 `gate/testing.py` 强制非空。
+- **单点化**：AC↔用例映射的唯一权威收归 **plan 注册表「来源」列**（+ `testcases.yaml` 的 `ac` 字段）。三处副本删除：`spec/qa` §4 的 AC×用例覆盖映射表（改为「覆盖状态查询方式 + 机器判据」，不再维护表）、`design/qa` §2.2 的「关联用例」列、plan frontmatter 的 `ac_refs`。`design/qa` §2.1 入口矩阵保留（它判穷举，是策略），但「覆盖用例」改为「覆盖判据（最低要求）」，不列 TC 编号——避免与注册表反向重复。
+- **机器判据**：`check_records.py` R6 改为从注册表来源列 ∪ yaml `ac` 字段派生，与 spec/qa 定义表比对；新增 `latest_test_plan()`，修正「从 plan/execution.md 取 AC」的取值错误。自测 8/8（含「删掉一条用例的 AC 覆盖 → 精确报出那条 AC」反例）。
+- **权威定义**：`references/test-records.md` 的「策略、用例与执行的分工」表新增「明确不写什么」列，把三处禁止写入项写成规则。
+- 验证：新模板形态构造的完整批次在真门上 0 error（正例）/ 精确报 R6（反例）；11 项门 PASS、260 单测 OK。
+
+## 0.30.0 — 2026-11-04（可用性批：init 安全化、评审分档与缺陷落账）
+
+- init 脚本化先行：`scripts/init_workspace.py` 重写为安全安装器（`--dry-run` 计划先行、托管块只追加/替换不覆盖既有文件、载体改为官方入口 AGENTS.md / `.cursor/rules` mdc / `CLAUDE.md` 指针 / copilot，移除不在官方清单的 `.zcode/rules/`，`.agentflow/manifest.json` + `--check` 漂移校验，自测 8/8）；`templates/host/maker.md` 引用全部改为目标仓可解析路径。
+- 评审改革：`references/contracts.md` 新增「评审简报必填字段」（review_scope 三态 / 内联对象 / stop_rule / output_budget），reviewer 对不合格简报回 `blocked`；通过项只报 `PASS <检查编号>`，引用义务收窄到 finding；新增 `scripts/review_snapshot.py`（快照钉修订替代 sha256 清单，自测 5/5）。
+- `SKILL.md` 新增「分档默认值」节（S/M/L 评审与测试档位、browser 自检前移、缺陷落账分级、收口用户验收）；Init 第 0 步改「脚本先行，AI 只填项目事实」。
+- 工程底线接线：backend / frontend / reviewer 角色各加 standards 分册判定行；`issue-tracking.md` 改分级落账并新增 `escape_stage`；proposal 加 §1.4 范围穷举与存量面处置；design/be §1.3.2 堵「N/A 免责」改「DDL 或等效结构契约」必填；testing plan 加必选边界清单与 `ac_refs`；`releases/todo.md` 删批次索引、「状态单点」「缺陷落账」「用户演示收口」三条门条款进 repo-rules；`templates/README.md` 加落地映射表。
+- 门内三项检查（C28/C29/C30）按 protected 面规则以 `DEC-2026-002/003/004` 提案登记拍板口，本批未动 `tools/lab/`。
+- 根 `AGENTS.md` 新增「规范改动没有重装等于没改」发布链纪律；`check-testcases.py` 修 AC 定义识别（定义表行首匹配，引用不计入定义）并加 `--self-test`（4/4）。
+- 验证：`validate.py docs` / `decision_gate` PASS、`unittest discover` 260 OK、三脚本自测合计 17/17；`installed` 待 push 后重装转绿。
+- 第二轮八份复盘文档全量对账补齐：design/be 字段表固定十列（补规范化 / 生命周期 / 存储载体 / 代码落点）；standards 增「按规模分级」（单进程批次声明即放行，防 demo 照字面即红）；`releases/todo.md` 改发布队列（状态列只许引用）、hub/index 批次清单删状态列、feature README 进度总览改指针；testing plan 接 `testcases.yaml` 机读权威、run 实际结果按步骤号对齐；契约增「跨阶段不复用 reviewer」；SKILL 增「原型前置」义务；门提案扩至七条（DEC-2026-002…007：AC 闭合 / 实体字段表+C4 松绑 / 状态单点 / 执行期立案 / 候选集门 / 门清单声明补齐）。
+
+## 0.29.0 — 2026-11-02（设计图能力独立成 skill）
+
+- 新增第二个 skill [`skills/design-diagram/`](skills/design-diagram/SKILL.md)：时序图、流程图、状态图、架构图、ER 图的画、改、评。此前「要哪些图」已由文档链的形态要求覆盖，但「画成什么样算合格」散落在各目标仓的图示规范里，每接一个新仓就要重写一遍。
+- 内容取舍按**不新增图种、不改形态判据**：三条铁律（主干化 ≤15 节点、事件号/状态号锚点、同一主题只画一次）、四步顺序（选层 → 画 → 验 → 登记回链）、反例四条（均有真实事故出处）、交付前自检按「门禁项 / 人工项」分开——门禁绿不等于图合格，这是最容易误判的一条。
+- 模板三份：[时序图](skills/design-diagram/templates/sequence.md)（含 `par` / `critical` / `break` 的选用判据）、[状态图](skills/design-diagram/templates/state.md)（九列明细表逐行填满，含裸 `S01 -->` 会被判未命名的坑）、[ER 图](skills/design-diagram/templates/er.md)（基数、多对多中间表、逻辑关联与物理外键的区分）。三份都带无障碍字段与主题块——这两项是多数门禁的强制项，缺了模板复制出去必然红。
+- [`references/gate-findings.md`](skills/design-diagram/references/gate-findings.md)：报错原文、原因、修法三段对照，含两类实战经验——SSRF 网段表会被误判成真实内网地址（不要为消警告删网段表），以及「硬提示」类告警改不了级（严格模式也不变红，必须人工判断）。
+- 登记：`skills/agentflow/SKILL.md` 入口表与 `references/carrier-map.md` 各加一行指针；`index.md` 加「画、改、评设计图」一行。**要哪些图仍归文档链**，本 skill 不复述形态判据。
+- 验证：`validate.py all` 全 PASS（docs 对象数 206 → 211，即新增 5 份文档被纳入扫描），`packaging/runtime` 已重建。
+
+
+## 0.28.0 — 2026-11-02（开工提问与设计压测内化）
+
+- 把原先独立的个人级 `ask` / `grilling` 能力收进插件，作为 Intake 与架构门的正式方法，而不是另一套用户级 skill：新增 [`references/intake.md`](skills/agentflow/references/intake.md)（六要素、红线、证据层级、提问预算、任务简报输出）与 [`references/grilling.md`](skills/agentflow/references/grilling.md)（设计树、前沿、逐轮推荐、收尾门）。
+- `SKILL.md`：规则表加「需求不清」「方案压漏洞」两行；运行工作流第 1 步（Intake）与第 2 步（架构门）各加一句指针——需求不清先按 intake 六要素补全，方案边界不清先按 grilling 压一轮再让 TD 出决策。
+- `technical-director.md`：输入不足时要求 Supervisor 先压设计，TD 只做决策，不替用户回答，也不把「按推荐默认」写成已拍板。
+- `index.md` 与 `carrier-map.md` 登记两份新载体；`grilling.md` 标注改编自 mattpocock/skills（MIT，Copyright (c) 2026 Matt Pocock），去掉个人档案/复盘，补了与 `PENDING-DECISIONS.md`、决策记录的衔接。
+- 规则落点：`templates/host/global-rules.md` §7 补「先查后问 / 一次最多 2 问 / 红线原样保留 / 验收证据层级」，`templates/hub/repo-rules.md` §4 补验收层级，根 `AGENTS.md` 加指针；宿主安装态是托管块副本，改模板后需 bump 版本并重跑 Host Init 才更新。
+- 与 0.27.0 的 QA 契约咬合：intake 的验收要素要求写证据层级（`api/browser/file/manual`），用户可见入口只接受 `browser`/`manual`；计划与执行记录的入口/层级列仍是机器强制点。
+- 验证：`validate.py` 的 schemas / examples / artifacts / protected / manifests / docs / tests / doc_chain / doc_chain_live / decision_gate / lint 全 PASS，`unittest discover -s tests` 260 OK；`packaging/runtime` 已重建。未重装宿主快照，`installed` 在重装前如实报漂移。
+
+## 0.27.0 — 2026-11-02（QA 入口与证据层级契约）
+
+- 起因是 ISS-2026-050 类事故：登录弹窗入口从上线到被发现一次端到端都没验过，而执行记录仍报「登录 PASS」——用 `curl` 协议链 200 顶替了浏览器里的用户入口。本版把「入口」与「证据层级」写进测试契约，让门能判「这条用例到底从哪进、用什么层级测的」。
+- 测试契约 v2（`recorded_at >= 2026-11-02` 起强制，存量不追溯）：计划注册表加 `入口` 列并逐条非空；执行结果表加 `层级` 列（`browser / api / file / manual`）；`e2e` 用例的 `pass` 只接受 `browser` / `manual`；`decision: pass` 从「零 fail 零 blocked」收紧为「零 fail、零 blocked、零 not-run」；`not-run` 行必须写清阻塞什么。
+- QA 策略层补齐（`templates/feature/design/qa/testing.md`）：新增 §2.1 入口矩阵（按钮 / 弹窗含 iframe / 整页跳转 / 深链 / 回调页 / 脚本 / 纯接口）、§2.2 证据层级与断言独立性、§2.3 掩盖条件（旧数据 / 遗留 cookie 或缓存 / 构建期内联 / 功能开关），发布判断加「P0/P1 的 not-run 为 0」。
+- 角色增强：`test-planner` 产出入口矩阵与逐用例断言依据；`test-executor` 记录实际层级、`blocked` 必须写已尝试的替代路径、不得降级为观察项；`reviewer` 与 `review-checklists` 的 Test depth 加入口/层级/循环自证三项固定检查；`bug-investigator` 增加 M1–M5 验证缺口归因；`bug-fixer` 要求「红→绿」与同构多端逐端验；`technical-director` 增加跨域会话契约（接收方义务）；`plan-architect` 要求用户可见任务写验收层级。
+- 缺陷模板加 `## 验证缺口`（`attribution: product_code` 必填），把「为什么没被拦住」随诊断带进修复简报。
+- **门变更（受保护面，人工评审）**：`tools/lab/gate/testing.py` 的上述四条判据；`schemas/` 未改（新列在正文，不在 frontmatter）。负向验证在 `/tmp` 一次性样本上实跑：`pass + not-run`、`e2e + api`、缺 `层级` 列、缺 `入口` 列、`not-run` 无阻塞说明五例均判红，正例零 error。
+- 验证：`validate.py` 的 schemas / examples / artifacts / docs / doc_chain / doc_chain_live / decision_gate / lint 全 PASS，`unittest discover -s tests` 260 OK；`packaging/runtime` 已重建。未重装宿主快照，`validate.py installed` 在重装前会如实报漂移。
+
 ## 0.26.0 — 2026-11-02（自述一致性全量核对批）
 
 - 两路只读审计 + 主代理逐条对着代码验真，把「文档说的执法点 / 模板教的写法」与「门实际强制的东西」全量对了一遍：**新出 13 处对不上**（加上归档口径那 4 处，累计 17 处），**没有一处是门代码写错**——全是散文与模板漂移。修法一律以代码为权威，不动门。

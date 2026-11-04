@@ -7,6 +7,8 @@ severity: P2
 error_kind: <ai-ignored-doc | ai-ignored-code | missing-constraint | hallucination | logic-error | host-compat | environment | other>
 attribution: <workflow_policy | role_prompt | context | tool_or_host | model_limit | product_code | evaluation | unknown>
 provenance: <agentflow | session-artifact | user-input | external | undetermined>
+defect_class: <规范 | 模板 | 流程 | 代码>
+escape_stage: <缺陷在哪一阶段逃逸被发现：需求 | 设计 | 实现 | 测试 | 评审>
 project: <项目 slug>
 files:
   - <在盘路径，或 仓库@revision:路径>
@@ -28,7 +30,7 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不�
 
 <!-- 填写说明（复制本文件到 `issues/ISS-<YYYY-MM-DD>-<slug>.md` 后：文件名 stem 与 `bug_id` 完全一致，日期取 `recorded_at` 的日期部分（slug 用中文短语，无中文译法的技术词保留原文，如 `ISS-2026-09-14-claude-json-schema-被拒.md`）；替换全部占位符；不适用或未满足条件的行整行删除；完成后删掉本注释，并在**插件源码检出**里运行 `python3 tools/lab/validate.py artifacts` 校验；安装树只随包 `doc_chain.py` 与 `docchain/`，目标仓没有这个校验器，此时按本节判据自检并写明「校验器未运行」）：
 
-- 固定标题不得改名。`## 现象`、`## 根因`、`## 修复方案` 与 `## 变更记录` 都要填写；open 阶段先记录待审核建议，并标明审核状态，证据不足时写清缺什么。`## 修复` 只记实际改动；open 可省略。当前校验器对所有非 open 状态都要求 `## 修复`，因此 rejected 记录在该节写明“未实施”并指向拒绝原因。`verified` 还需 `## 审查`。
+- 固定标题不得改名。`## 现象`、`## 根因`、`## 修复方案` 与 `## 变更记录` 都要填写；`## 验证缺口` 对 `attribution: product_code` 必填（五类失效模式逐条判定）；open 阶段先记录待审核建议，并标明审核状态，证据不足时写清缺什么。`## 修复` 只记实际改动；open 可省略。当前校验器对所有非 open 状态都要求 `## 修复`，因此 rejected 记录在该节写明“未实施”并指向拒绝原因。`verified` 还需 `## 审查`。
 - `## 回归检查` 在修复已落地时填写命令、结果和原始证据；未运行时说明原因。优先引用承载回归用例 pass 的执行记录（`docs/features/<批次>/testing/…/run-*.md` 的 `TR-*` id）——UI 类缺陷的回归证据即 Ego 操作序列（ego-browser）重跑通过的输出；回归 pass 支撑 `regression_status: pass` 与状态前进，回归 fail 时 bug 不前进。`## 问题代码` 仅在有决定性代码片段时保留；`## 前后对比` 在修复前后有可复核证据时保留；其余情况删除整节，不留空标题。
 - `## 怎么避免` 要区分候选建议与已落实措施：open 写建议状态；修复后写实际增加的规则、检查或其它控制及证据。若没有可行措施，说明原因，不把愿望写成已落实机制。
 - 「为什么出现」要在 `## 根因` 里人话点破属于哪一类：`error_kind: ai-ignored-doc` = 文档写明了但没照做；`ai-ignored-code` = 代码写明了但没照做；`missing-constraint` = 文档/契约压根没说清（缺约束）；`hallucination` = 无中生有；`logic-error` = 推理/逻辑错。归因要有依据，不能只贴一个标签。
@@ -44,6 +46,16 @@ agentflow_version: <归因到 Agentflow 或需判断复发版本时填写；不�
 ## 根因
 
 <根因；归因要有依据——引用覆盖它的条款（`path:line`），或写明无条款覆盖及理由>
+
+## 验证缺口
+
+<产品缺陷（`attribution: product_code`）必填：这次为什么没在合并前暴露？逐条对照五类，命中
+哪类写哪类，一类都不命中写「不适用 — 理由」：M1 入口未覆盖（测了接口或页面，没测用户真实
+入口）｜M2 断言与实现同源（期望值抄自实现常量，测试与实现共享盲区）｜M3 跨边界不变量无
+owner（注册集 ⊇ 消费集、A 域登录后 B 域会话由谁建）｜M4「测不了」被降级（blocked 写成
+观察项后照常合并）｜M5 环境掩盖（旧数据、遗留 cookie、构建期内联、功能开关）。每条写清
+「缺哪个入口/断言/不变量」与「应补的用例（入口 + 证据层级）或检查」；本节随修复简报进入
+回归与门禁补强。>
 
 ## 修复方案
 

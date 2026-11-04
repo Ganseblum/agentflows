@@ -146,7 +146,7 @@ def self_test() -> int:
     run_case("08 C4 missing flowchart trips C4", 1, ["缺少架构/流程 flowchart"],
              lambda f: rep(f, "design/be/b.md", "```mermaid\nflowchart TB\n    A --> B\n```\n", ""),
              results)
-    run_case("09 C4 missing ER/state trips C4", 1, ["缺少 ER 图或状态机图"],
+    run_case("09 C4 missing ER/state/entity-table trips C4", 1, ["缺少 ER 图、状态机图或实体字段表"],
              lambda f: rep(f, "design/be/b.md", "```mermaid\nerDiagram\n    t1 ||--o{ t2 : has\n```\n", ""),
              results)
     run_case("10 C7 single wireframe trips C7", 1, ["C7 design/fe: 工程线框不足 2 张（现 1）"],
@@ -1230,6 +1230,100 @@ def self_test() -> int:
         return f
     run_case("C27-03 template-shaped headings with real content stay green", 0, ["PASS doc-chain"],
              mutate=m_c27_filled, results=results)
+
+    # C28 AC coverage closure (2026-11-04 gate change, user-authorized). A real batch shipped 27
+    # rows of 「待覆盖」 in spec/qa while its 30 cases had run 30/30 and every gate stayed green:
+    # the AC→case chain was only readable by eye. These pin that a gap turns red, a stale mapping
+    # table turns red, and full closure stays green.
+    C28_ACCEPTANCE = (
+        "# qa\n\n## 3. 模块验收点\n\n"
+        "| 验收点 | 验收目标 |\n| --- | --- |\n"
+        "| M01-AC-01 | 登录成功 |\n| M01-AC-02 | 登录失败 |\n"
+    )
+    C28_PLAN = (
+        "# 用例库\n\n## 用例\n\n"
+        "| 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |\n| --- | --- | --- | --- | --- | --- |\n"
+        "| TC-01-01 | e2e | P0 | 登录成功 | 按钮 | M01-AC-01 |\n"
+        "{rows}"
+        "\n## 边界覆盖\n\n| 边界类 | 覆盖用例 | 说明 |\n| --- | --- | --- |\n| 空值 | TC-01-01 | x |\n\n"
+        "## 流程疑点\n\n- Q1：无\n"
+    )
+
+    def m_c28_gap(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(rows="")
+        return f
+    run_case("C28-01 an AC with no case trips the closure gate", 1, ["C28 AC 覆盖"],
+             mutate=m_c28_gap, results=results)
+
+    def m_c28_stale(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE + (
+            "\n## 4. 覆盖映射\n\n| 验收点 AC | 关联用例 | 状态 |\n| --- | --- | --- |\n"
+            "| M01-AC-01 | TC-01-01 | 待覆盖 |\n")
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(
+            rows="| TC-01-02 | e2e | P1 | 登录失败 | 按钮 | M01-AC-02 |\n")
+        return f
+    run_case("C28-02 a stale 待覆盖 mapping table trips even when cases cover both", 1,
+             ["C28 AC 覆盖"], mutate=m_c28_stale, results=results)
+
+    def m_c28_closed(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(
+            rows="| TC-01-02 | e2e | P1 | 登录失败 | 按钮 | M01-AC-02 |\n")
+        return f
+    run_case("C28-03 full coverage with no mapping copy stays green", 0, ["PASS doc-chain"],
+             mutate=m_c28_closed, results=results)
+
+    def m_c28_no_plan(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        return f
+    run_case("C28-04 spec/qa alone (no testing plan yet) stays green", 0, ["PASS doc-chain"],
+             mutate=m_c28_no_plan, results=results)
+
+    # C29/C30/C31 (2026-11-04, user-authorized). Shipped soft first to measure the false-positive
+    # surface, then promoted to hard findings at the user's instruction. The cases now assert the
+    # hard direction: the violation trips (exit 1) and a clean batch stays green.
+    SOFT_PROPOSAL = (
+        "# 提案\n\n## 1.3 本期范围\n\n| 类型 | 内容 | 理由 |\n| --- | --- | --- |\n"
+        "| 包含 | 登录 | 需求 |\n| 不包含 | 注册 | 演示 |\n"
+    )
+
+    def m_c31_no_candidates(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL
+        return f
+    run_case("C31-01 scope without a candidate-set section now fails hard", 1, ["C31 候选集"],
+             mutate=m_c31_no_candidates, results=results)
+
+    def m_c31_with_candidates(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL + (
+            "\n### 1.4 范围穷举与存量面处置\n\n"
+            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n| 三方登录 | 不做 | 无 OAuth 后端 |\n")
+        return f
+    run_case("C31-02 a filled candidate set stays clean", 0, ["PASS doc-chain"],
+             mutate=m_c31_with_candidates, results=results)
+
+    def m_c29_deviation(f):
+        # Mutate the already-green base fixture's plan row instead of replacing the whole plan:
+        # a soft-warning case must isolate the warning, not introduce other hard failures.
+        # Keep the resolvable evidence carrier (C23 needs one) AND add the defect phrasing C29 reads.
+        return rep(f, "plan/be/p.md",
+                   "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 | `migrations/x.sql` |",
+                   "| T01 | 迁移 | `migrations/x.sql` | — | ☑ 已完成 | `migrations/x.sql`；执行中发现连点双请求并修复 |")
+    run_case("C29-01 a ☑ row claiming an on-the-fly fix now fails hard", 1, ["C29 执行期偏差"],
+             mutate=m_c29_deviation, results=results)
+
+    def m_g2_entity_table_only(f):
+        # G2: a ten-column entity field table satisfies the data-model requirement on its own.
+        # Remove both diagrams and add the table, so only the new third path can keep this green.
+        rep(f, "design/be/b.md", "```mermaid\nerDiagram\n    t1 ||--o{ t2 : has\n```\n", "")
+        f["design/be/b.md"] += (
+            "\n### 实体与字段\n\n"
+            "| 实体 | 字段 | 类型与单位 | 空值/默认 | 唯一性 | 规范化规则 | 敏感性 | 生命周期 | 存储载体 | 代码落点 |\n"
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+            "| User | id | string(uuid) | 否 | PK | — | 否 | 永久 | 内存 Map | `server/users.mjs:3` |\n")
+        return f
+    run_case("G2-01 an entity field table alone satisfies C4's data-model requirement", 0,
+             ["PASS doc-chain"], mutate=m_g2_entity_table_only, results=results)
 
     ok = all(passed for _, passed in results)
     for name, passed in results:

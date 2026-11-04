@@ -82,6 +82,14 @@ this is the quick-reference summary the linter enforces.
                        table. Purely additive: a batch that also has README.md is NOT in this mode
                        (README governs unchanged; any HISTORY.md present is treated as an ordinary
                        stage document, not a ledger).
+  C25 closure-claim residue  opt-in (batch README carries 「agentflow 链路收口」): every stage
+                       document must be free of stale-time claims (STALE_WORDS) whose target
+                       already exists on disk — the machine-checkable half of chain-closure gate 6.
+                       Implementation: checks.py `closure_claim_findings`.
+  C26 compact profile  opt-in (a document declares the compact profile): the declaration is valid
+                       only with explicit eligibility, substantive acceptance/tasks and completed
+                       evidence; it cannot hide a missing stage or an unfilled skeleton.
+                       Implementation: checks.py `lightweight_findings`.
   C27 template fingerprint  a stage document that is (near-)verbatim the shipped template is an
                        unfilled skeleton, not a deliverable: every structural gate reads shape —
                        headings, table columns, diagram kinds — so a copied skeleton satisfied all
