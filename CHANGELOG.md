@@ -11,7 +11,7 @@
 - **SKILL.md 减重（R-04）**：192 行 / 41.4KB → **146 行 / 37.1KB**。分档表与四条纪律移入 `execution.md`，外部文档二次评审四步流程移入 `repo-audit.md`，主文件只留指针与两条不可让渡（原型前置、收口用户验收）。载体归属表同批加两行。
 - **决策台账纠偏（R-02）**：DEC-2026-003/004/005/006 四条标「未决」实则已实施（会诱发重复决策），改为「已拍板 + 实现位置」。`decisions.py view` 此前只按终态过滤，已拍板的 7 条照样列进「待办视图」——现按状态词过滤，视图真的只剩未决项。
 - **init 补口（R-06 + #6）**：收尾提示让回填 `engineering-baseline.md` 但脚本从不创建它。现在落骨架到 `.agentflow/engineering-baseline.md`，且**不进 manifest**（用户回填的事实不应被报成漂移）。真实仓 `test-login` dry-run 实测 5 项计划、零写入。
-- **browser 证据可回归（R-05）**：新增 `templates/testing/playwright/`（config + 含连点/超时/过期/退出失败四类边界的 spec 骨架），**只在新项目铺、老项目不动**，避免制造两套并行 e2e 套件。
+- **R-05 更正（同日撤销）**：曾新增 `templates/testing/playwright/` 作为 browser 证据载体，用户指出与既有决定冲突后**整目录删除**——`changelog-archive.md` 的 0.15.0 发布批已逐字拍板「全部升级为不用 Playwright，改用 Ego Light」，而本仓 `execution.md` 也只把「目标仓本来就有 runner」列为使用 Playwright 的合法情形。四类边界用例（连点 / 超时 / 过期 / 退出失败）改写进 `templates/testing/testcases.yaml.example`，以 Ego Light 的 `steps` + `expect` 表达；`verification-grading.md` §4 同步改为 Ego Light 口径。不为纯 Ego Light 项目新起第二套 runner。
 - **三端载体形态实证（R-11）**：`docs/host-platform-facts.md` 新增 H5–H8——cursor `.mdc` / claude `CLAUDE.md` 指针 / copilot 指令文件的生成物形态与版本标记实测；**加载仍未验证**，如实标注。
 - 验证：12 项门 PASS、`doc_chain` 自测 170/170、`init_workspace` 自测 8/8、单测全套 OK。
 - **有意不做并登记理由**：R-07 历史文档下沉（会撞不可改写的评审归档与已闭合 ISS 里的 15 条引用）、R-09 独立 `agentflow-init` skill（脚本已是独立入口）——两条均落 `docs/PENDING-DECISIONS.md`（DEC-2026-008/009），非静默跳过。

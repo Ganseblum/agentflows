@@ -35,7 +35,6 @@
 | [feature/prototype/index.html](feature/prototype/index.html) · [README](feature/prototype/README.md) | 双形态可直开原型骨架：形态 A 只留入口页链接块（删 sections，指到库内正文 + `path@revision`），形态 B 复制到 `<feature 目录>/prototype/index.html` 按真实视觉基线改造；四态可切换、页签自动生成、零依赖 |
 | [decision/decision-record.md](decision/decision-record.md) · [decision-brief.md](decision/decision-brief.md) | 决策记录九列表（八个决策字段 + 生命周期状态列；拍板口逐条占行，C16 机器可判）与决策简报骨架（出处/选项/影响/关闭条件）：记录落 `docs/PENDING-DECISIONS.md` 等拍板口，检查由 `validate.py decision_gate` 承载 |
 | [testing/plan.md](testing/plan.md) · [testing/run.md](testing/run.md) | 测试用例库 / 执行记录骨架（frontmatter 信封固定字段）：复制到 `docs/features/<批次>/testing/<project>-<feature>/plan-<YYYY-MM-DD>-<NNN>.md` 与 `run-<YYYY-MM-DD>-<NNN>.md` |
-| [testing/playwright/](testing/playwright/README.md)（config + `tests/smoke.spec.ts`） | browser 证据的可回归载体：把「现场点一次」固化成一条可重跑命令。**只在新项目铺，老项目不动**（避免制造两套并行 e2e 套件）；用例设计仍归 `testing/plan.md`，本目录只提供执行骨架 |
 | [host/README.md](host/README.md) · [host/global-rules.md](host/global-rules.md) | 宿主级全局规则（跨仓）：托管块正文 + 操作清单（协议权威是 [`references/hosts.md`](../references/hosts.md)）。只在用户明确确认后写入宿主全局指令文件，不随仓库 Init 自动写 |
 | [engineering/baseline.md](engineering/baseline.md) | 目标仓工程基线骨架：技术栈与运行环境、目录与文件职责、命名与类型、禁止的平行方案、新增模块必做清单、测试栈、质量门顺序、配置与边界、规范入口与规则写法。已有工程规范时只登记入口，没有时与用户确认后落一份最小基线 |
 | [hub/README.md](hub/README.md) · [index.md](hub/index.md) · [issues-README.md](hub/issues-README.md) | 文档枢纽仓骨架（`<project>-workflow-ai/` 的 README、index、issues 看板） |

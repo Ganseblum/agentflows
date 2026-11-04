@@ -40,5 +40,60 @@
   automated: server/test/logout.test.mjs
   evidence: run-2026-11-02-001.md#TR-11
 
+# ---- 边界清单：四类必选（连点 / 超时 / 竞态 / 空值 / 过期 / 退出失败），不适用逐项写理由 ----
+# 全部用 Ego Light 操作序列（steps）+ 预期结果（expect）表达，不引入第二套 e2e runner。
+# 宿主浏览器为主对话专属时：执行者编译这套步骤，主对话按序操作并回传截图/DOM/网络原始证据。
+
+- ac: M01-AC-03
+  title: 连点提交只发一次请求
+  priority: P0
+  source: 边界清单·连点
+  type: browser
+  steps:
+    - 打开登录页，填入正确账号与密码
+    - 连续两次点击提交（间隔 < 300ms）
+    - 查看网络面板的登录请求条数与按钮状态
+  expect: 仅 1 次登录请求；请求期间提交按钮禁用；不产生重复会话
+  automated: ego-browser 操作序列
+  evidence: run-<date>-<NNN>.md#TR-<连点>
+
+- ac: M01-AC-04
+  title: 后端不可达/超时给出可重试提示
+  priority: P0
+  source: 边界清单·超时
+  type: browser
+  steps:
+    - 让登录接口不响应（按目标仓既有方式拦截）
+    - 填入账号密码并点击提交
+    - 观察 15 秒内的页面状态与错误提示
+  expect: 出现固定错误文案、提交按钮恢复可用、不无限转圈
+  automated: ego-browser 操作序列
+  evidence: run-<date>-<NNN>.md#TR-<超时>
+
+- ac: M01-AC-05
+  title: 会话过期后受保护页面回到登录
+  priority: P1
+  source: 边界清单·过期
+  type: browser
+  steps:
+    - 在已登录状态让会话失效（清 cookie 或等过期）
+    - 直接打开受保护页面
+  expect: 跳回登录页而不是空白页或半渲染页面
+  automated: ego-browser 操作序列
+  evidence: run-<date>-<NNN>.md#TR-<过期>
+
+- ac: M02-AC-02
+  title: 退出接口失败仍清本地会话态
+  priority: P0
+  source: 边界清单·退出失败
+  type: browser
+  steps:
+    - 登录后让退出接口返回失败
+    - 点击退出
+    - 查看页面与本地存储
+  expect: 回到登录页、本地 token 与用户态清空，刷新不回到已登录态
+  automated: ego-browser 操作序列
+  evidence: run-<date>-<NNN>.md#TR-<退出失败>
+
 # 注意：本文件只是样例骨架，真实批次按 spec/qa 的 AC 表逐条生成。
 # 不要把 curl 四步写成「登录成功」的 e2e 证据——curl 仅 smoke（见 references/verification-grading.md）。

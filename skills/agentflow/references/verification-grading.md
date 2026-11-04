@@ -29,6 +29,10 @@
 - [ ] 每个 M 系列 AC 是否有 browser/manual 原始证据
 - [ ] 证据是否落 `run-*.md` + `evidence/`，而非只在会话里说「测过了」
 
-## 4. 让 browser 证据可重跑
+## 4. browser 证据的形态：Ego Light 操作序列
 
-`browser` 证据若只在会话里点一次，下一次改动就没人重跑，等于把「链路通没通」退回给记忆力。新项目在首次铺测试栈时把那次点击固化成脚本：[`templates/testing/playwright/`](../templates/testing/playwright/README.md) 给了 config 与含边界用例（连点 / 超时 / 过期 / 退出失败）的测试骨架，`npm run test:e2e` 的逐字输出就是 `run-*.md` 的证据列内容。**老项目不动**——硬塞第二套 runner 会制造两套并行 e2e 套件，那是 `execution.md` 明确反对的形态。脚本通过不替代 manual 目视验收，也不证明 api 契约。
+本工作流的用户可见路径证据走 **Ego Light**（`ego-browser`）——不为它另起一套 Playwright / Cypress runner。可复跑性靠**用例形态**保证，不靠新 runner：[`templates/testing/testcases.yaml.example`](../templates/testing/testcases.yaml.example) 每条 `type: browser` 用例都带 `steps`（可直接照做的操作序列）与 `expect`（预期结果），执行时把逐字输出、截图、DOM、网络证据贴进 `run-*.md` 的证据列。改一行代码要重跑哪些用例，就是查 `testcases.yaml` 的 `source` / `ac` 一次查询，而不是回忆上次点过哪里。
+
+四类边界（连点 / 超时 / 过期 / 退出失败）已在该样例里逐条写成 Ego Light 序列；边界清单在测试计划中必选，不适用也要逐项写理由（见 [`execution.md`](execution.md)）。需要重复执行的序列从一次性草稿提升为 `testing/<项目>-<功能>/scripts/` 下的进仓脚本——仍是同一套 Ego Light 路线。
+
+脚本通过不替代 `manual` 目视验收（视觉与文案判不了），也不证明 api 契约；反过来 `api` 通过只许表述为「api 层通过」。目标仓**本来就有** Playwright / Cypress 时按 [`execution.md`](execution.md) 的 D1 口径用既有 runner，不新起平行套件；为一个纯 Ego Light 项目新增 runner 才是被禁的形态。
