@@ -1,5 +1,7 @@
 # 首次接入（Init）执行细则
 
+> **加载者**：`skills/agentflow/SKILL.md` 首次接入节（Init）；执行体是 `scripts/init_workspace.py`（脚本先行），本文件是它之后的人工步骤。接一个新项目时读。
+
 > 本文件是 Init 的**操作细则**单点。SKILL.md 只留三行指针——Init 不属于「每次会话都要在场」的内容，它是「接一个新项目时才读」的一次性流程。
 > 判据与规则正文：`templates/hub/repo-rules.md`（目标仓接入节模板）、`templates/engineering/baseline.md`（工程基线模板）、`templates/host/global-rules.md`（宿主级规则正文）。
 

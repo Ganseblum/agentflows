@@ -1,5 +1,7 @@
 # 问题闭环机制：发现 → ISSUE → 复发台账 → 反哺升级
 
+> **加载者**：`skills/agentflow/SKILL.md` 路由「问题闭环」行与工程内容标准节；`execution.md` 与 `templates/host/maker.md` 指向它。缺陷落账、复发台账与按层归因时读。
+
 > **解决什么**：痛点 5d / 6——评审、代码评审、测试执行发现的 F/B/N/P 系列问题，**只进 changelog 与评审文件，从不登记 ISSUE**，导致「同样的坑反复踩、无法归纳成 agentflow 升级项」。本册把「发现」强制闭环到 `issues/`，并接上既有的 `class_id` / `occurrence` 复发台账。
 >
 > **与既有体系的关系**：`templates/issue/issue-template.md`（bug 记录，带 `error_kind` / `attribution` / `provenance` / `class_id` / `occurrence`）已存在；本册是**强制触发协议**——把评审 / 测试发现也转化为该模板的 ISSUE 记录，并新增 `defect_class` 维度（规范 / 模板 / 流程 / 代码）。

@@ -1,5 +1,7 @@
 # 测试用例结构化：testcases.yaml
 
+> **加载者**：`skills/agentflow/SKILL.md` 工程内容标准节；`agents/test-planner.md` 与 `templates/feature/plan/execution.md` 写用例时读。AC 权威口径（plan 注册表「来源」列）在这里。
+
 > **解决什么**：痛点 12——验收标准（AC 表 M01-AC-*）是 markdown 散文，改动用例时无法机械校验「是否破坏了某条 AC 的覆盖」。引入以 AC 为键的结构化用例文件，让 design 必须表述操作过程 + 预期结果，并可用 `scripts/check-testcases.py` 机械校验覆盖。**口径如实**：该校验是目标仓侧的按需独立脚本（门外工具），本插件未把它接入 `validate.py` 或 CI——是否接入由各仓自己的门配置决定，不得宣称已默认门校验。
 
 ## 0. 文件位置与形态

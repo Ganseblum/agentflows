@@ -1,5 +1,7 @@
 # 测试记录
 
+> **加载者**：`skills/agentflow/SKILL.md` 自动化测试节；`agents/test-planner.md` / `test-executor.md` 写计划与运行记录时读；`plan-architect.md` 写计划骨架时引用。
+
 用户可见功能的自动化测试证据：`test-planner` 写的用例库与 `test-executor` 产出的执行记录。
 行为变更按[执行与验证](execution.md)默认准备目标测试，也可独立请求测试或遗留补测；这里的记录喂给 bug 链，
 并充当评审门的端到端路径证据。

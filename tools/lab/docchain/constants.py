@@ -143,6 +143,15 @@ CLOSURE_MARKER = "agentflow 链路收口"
 ROLE_WORD_RE = re.compile(r"supervisor|coordinator", re.IGNORECASE)
 ROLE_PHRASES = ("TD 开放问题", "本轮评审", "本次会话", "本轮会话", "本会话")
 
+# Soft tier (2026-11-04, user-authorized gate reduction): C13 and C14 judge WORDING, not
+# structure — whether a clause reads as a session-bound process word or uses a bare code as its
+# subject is a human editorial call, and both routinely flagged text a reviewer had already
+# accepted. They keep running on every pass but report as `WARN …` lines: visible in the same
+# output, invisible to the exit code. `doc_chain.py --strict` (used by the repo's own
+# doc_chain_live gate) promotes them back to failures, so the plugin's own corpus stays clean
+# while a target repo's brand-new batch is not blocked over one word.
+SOFT_PREFIX = "WARN "
+
 # C13 exemptions are per FILE, never per prefix. A listed file either defines the process role
 # names it uses (the defined term is its own subject) or is an immutable review record (verbatim
 # history; 硬边界 8 forbids rewriting it). Every other file is checked. Adding an entry needs the

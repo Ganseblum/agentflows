@@ -1,5 +1,7 @@
 # 评审深度清单（专项模式与文档评审模式）
 
+> **加载者**：`agents/reviewer.md` 的检查协议（清单选择依据 + 派发前自检）；`skills/agentflow/SKILL.md` 路由「评审清单」行；`templates/host/maker.md` 派发评审时指向它。
+
 > 权威载体：本文件是「按 diff 形状加载哪几份清单」的清单正文。选择规则与判定口径留在
 > `agents/reviewer.md`，本文件不复述那些规则——一条事实一个权威载体（归属表见
 > `skills/agentflow/references/carrier-map.md`）。

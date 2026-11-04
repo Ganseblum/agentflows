@@ -1,13 +1,17 @@
 """Command-line entry point for the doc-chain linter.
 
 Usage:
-    python3 tools/lab/doc_chain.py [--root <repo-dir>] <feature-dir>
-    python3 tools/lab/doc_chain.py --file <single-markdown-path>
+    python3 tools/lab/doc_chain.py [--root <repo-dir>] [--strict] <feature-dir>
+    python3 tools/lab/doc_chain.py --file <single-markdown-path> [--strict]
     python3 tools/lab/doc_chain.py --repo <repo-dir>
     python3 tools/lab/doc_chain.py --self-test
     python3 tools/lab/doc_chain.py --version
 
-Exit code 0 = all checks pass; 1 = findings; 2 = usage error. --file runs only the text-form
+Exit code 0 = all checks pass; 1 = findings; 2 = usage error. `--strict` also fails on the
+soft tier (`C13` session role words / `C14` bare code subjects): those judge wording rather
+than structure, so by default they print as `WARN …` lines and leave the exit code alone —
+the target repo's fresh batch is not blocked over an editorial call, while the plugin's own
+doc_chain_live gate runs `--strict` to keep its corpus clean. --file runs only the text-form
 checks (C12/C13/C14) against one standalone markdown file — a session deliverable handed to
 the user (analysis report, status report) has no feature-directory shape, so every structure
 check (C1–C11) is skipped by design; --file and a positional feature dir are mutually exclusive.
@@ -26,6 +30,7 @@ from .checks import (
     lint,
     read,
     repo_policy_findings,
+    split_soft,
     text_form_findings,
 )
 from .constants import CLOSURE_MARKER, REPO_ROOT
@@ -49,7 +54,32 @@ def plugin_version() -> str:
     return str(version) if version else f"unknown ({manifest} has no version)"
 
 
-def lint_file(path: Path) -> int:
+def report(label: str, findings: list[str], strict: bool = False) -> int:
+    """Print one run's findings and return its exit code (soft tier fails only under --strict).
+
+    Soft findings are never dropped from the output: a run that passes with three `WARN` lines
+    still shows them, so the reviewer sees the editorial notes the exit code no longer enforces.
+    """
+    hard, soft = split_soft(findings)
+    if strict:
+        hard, soft = hard + soft, []
+    if hard:
+        print(f"FAIL {label} ({len(hard)} findings)")
+        for item in hard:
+            print(f"  - {item}")
+        for item in soft:
+            print(f"  WARN {item}")
+        return 1
+    for item in soft:
+        print(f"WARN {item}")
+    if soft:
+        print(f"PASS {label} ({len(soft)} warnings)")
+    else:
+        print(f"PASS {label}")
+    return 0
+
+
+def lint_file(path: Path, strict: bool = False) -> int:
     """--file mode: text-form checks (C12/C13/C14) and the opt-in closure claim (C25).
 
     C25 stays opt-in here too: the single file is judged `marked` by whether it itself carries
@@ -64,13 +94,7 @@ def lint_file(path: Path) -> int:
     text = read(path)
     errors = text_form_findings(str(path), text, [path.parent])
     errors.extend(closure_claim_findings(str(path), text, [path.parent], marked=CLOSURE_MARKER in text))
-    if errors:
-        print(f"FAIL doc-chain --file {path} ({len(errors)} findings)")
-        for e in errors:
-            print(f"  - {e}")
-        return 1
-    print(f"PASS doc-chain --file {path}")
-    return 0
+    return report(f"doc-chain --file {path}", errors, strict)
 
 
 def main(argv: list[str]) -> int:
@@ -83,6 +107,8 @@ def main(argv: list[str]) -> int:
     if len(argv) == 1 and argv[0] == "--self-test":
         return self_test()
     root = REPO_ROOT
+    strict = "--strict" in argv
+    argv = [a for a in argv if a != "--strict"]
     if argv[:1] == ["--root"]:
         if len(argv) < 2 or argv[2:3] == ["--file"]:
             print(__doc__)
@@ -92,7 +118,7 @@ def main(argv: list[str]) -> int:
         if len(argv) != 2:
             print(__doc__)
             return 2
-        return lint_file(Path(argv[1]))
+        return lint_file(Path(argv[1]), strict)
     if argv and argv[0] == "--repo":
         if len(argv) != 2:
             print(__doc__)
@@ -112,14 +138,7 @@ def main(argv: list[str]) -> int:
     if len(argv) != 1:
         print(__doc__)
         return 2
-    errors = lint(Path(argv[0]), root)
-    if errors:
-        print(f"FAIL doc-chain ({len(errors)} findings)")
-        for e in errors:
-            print(f"  - {e}")
-        return 1
-    print(f"PASS doc-chain {argv[0]}")
-    return 0
+    return report(f"doc-chain {argv[0]}", lint(Path(argv[0]), root), strict)
 
 
 if __name__ == "__main__":

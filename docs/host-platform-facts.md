@@ -79,6 +79,18 @@
 | H3 | Claude Code 的用户级指令文件为 `~/.claude/CLAUDE.md`；本仓未做过加载实验。 | `doc`（Claude Code 项目/用户记忆文件约定），未现场验证 | Claude Code | 同 H2：写入后必须验证加载，不得声称已生效。 |
 | H4 | Cursor 的规则载体与加载行为未验证：项目级候选为 `.cursor/rules/*.mdc`，全局规则位置未知；是否读取 `AGENTS.md` 亦未验证。 | 未实际触发——本仓未做过 Cursor 安装或加载实验 | Cursor | 在完成「写一条最小规则 → 新会话复述」的实验前，不提供 Cursor 适配器、不声称支持。 |
 
+## 三端载体的生成物形态（2026-11-04 实证，加载仍待验证）
+
+本轮回答的是「init 有没有把规则写到三端认得的位置、写成了什么形状」，**不是**「三端真的加载了」。
+证据是一次性探针仓（`/tmp`，零副作用）：`init_workspace.py /tmp/probe-hosts --hosts zcode,codex,cursor,claude,copilot`。
+
+| # | 事实 | 证据 | 适用范围 | 后果 |
+| --- | --- | --- | --- | --- |
+| H5 | Cursor 载体落在 `.cursor/rules/agentflow.mdc`，带 `description` / `alwaysApply: true` 的 frontmatter 与 `<!-- agentflow:begin v<ver> -->` 托管块；同一托管块内容与 `AGENTS.md` 逐字一致。 | Observed 2026-11-04：探针仓 9 个文件，`.cursor/rules/agentflow.mdc` 头 4 行为 mdc frontmatter，第 6 行为版本标记；`--check` 报「无漂移（7 个文件）」。 | Cursor（生成物形态） | 位置与形状符合 Cursor 规则文件的公开约定；**是否被 Cursor 加载仍未验证**（H4 的复述实验未做）。 |
+| H6 | Claude Code 载体是一个 `CLAUDE.md`，内容只有两行：版本标记 + `@AGENTS.md` 指针，不复制规则正文。 | 同上探针：`cat CLAUDE.md` 输出 `<!-- agentflow:claude-pointer v0.33.0 … -->` 与 `@AGENTS.md`。 | Claude Code（生成物形态） | 单一真源留在 `AGENTS.md`；指针是否被 Claude Code 展开未验证——拿不到证据不得声称已生效（H3）。 |
+| H7 | Copilot 载体落在 `.github/copilot-instructions.md`，与 `AGENTS.md` 同一份托管块正文。 | 同上探针：该文件第 1 行即版本标记，正文与 `AGENTS.md` 相同。 | GitHub Copilot（生成物形态） | 位置符合 Copilot 仓库指令文件的公开约定；加载未验证。 |
+| H8 | Codex 与 ZCode 共用 `AGENTS.md`，init 去重后只处理一次。 | 同上探针：`--hosts zcode,codex,…` 只产生一份 `AGENTS.md`。 | Codex / ZCode | 两端不会因重复写入产生冲突。 |
+
 ## 重新验证
 
 - C1/C4：重跑一次 `claude --print --output-format json --json-schema <schema>` 调用，看带 `$schema`/`$id` 的 schema 是否仍被拒，以及受约束对象是否仍包在 `.result` 里返回（原适配器冒烟已随装置裁撤，改用一次直接 CLI 调用）。

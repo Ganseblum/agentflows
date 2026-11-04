@@ -324,6 +324,11 @@ def validate_doc_chain_live(root: Path = ROOT) -> list[ValidationError]:
         for path, full in targets:
             relative = path.relative_to(root).as_posix()
             args = ["--root", str(root), relative] if full else ["--file", relative]
+            # --strict: the soft tier (C13 会话角色词 / C14 代号裸用) is non-fatal by default so a
+            # target repo's fresh batch is not blocked over an editorial call, but this repo's own
+            # corpus is held to it — otherwise 降软 would quietly retire a standard the corpus
+            # already meets. See docchain/constants.py SOFT_PREFIX.
+            args.append("--strict")
             completed = subprocess.run(
                 [sys.executable, str(linter), *args],
                 cwd=str(root),

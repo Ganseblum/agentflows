@@ -310,19 +310,39 @@ class DecisionLedgerTests(unittest.TestCase):
         self.assertEqual(decisions.check(root), [])
 
     def test_non_false_positive_view_excludes_terminal(self):
+        # Contract since 2026-11-04: the pending view shows only rows that still need the user.
+        # It used to filter on the terminal column alone, so a row the user had already ruled on
+        # (「已拍板」, no terminal state) stayed in the view — the ledger then claimed to be the
+        # one list needing a reply while listing decisions that were already implemented.
         ledger = (
             "# 待拍板事项\n\n"
             "| # | 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 | 状态 | DEC编号 | 修订 | 撤回 | 等价 | 终态 |\n"
             "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
             "| 1 | `a` | A B | 2026-10-29 `x` | A | c | P2 | 多模块(m) | N | 已拍板 | DEC-2026-001 | r4 | r2 | r1 |  |\n"
             "| 2 | `b` | A B | 2026-10-29 `x` | A | c | P2 | 多模块(m) | N | 已撤回 | DEC-2026-002 | r1 |  |  | withdrawn |\n"
+            "| 3 | `c` | A B | 2026-10-29 `x` | A | c | P2 | 多模块(m) | N | 未决 | DEC-2026-003 | r1 |  |  |  |\n"
         )
         root = Path(tempfile.mkdtemp())
         (root / "docs").mkdir()
         (root / "docs" / "PENDING-DECISIONS.md").write_text(ledger, encoding="utf-8")
         out = decisions.view(root)
-        self.assertIn("DEC-2026-001", out)
-        self.assertNotIn("DEC-2026-002", out)
+        self.assertNotIn("DEC-2026-001", out)  # 已拍板：不再等回复
+        self.assertNotIn("DEC-2026-002", out)  # 终态
+        self.assertIn("DEC-2026-003", out)     # 真未决仍在
+        self.assertIn("另有 2 条已拍板/终态", out)
+
+    def test_view_reports_empty_state_when_everything_is_decided(self):
+        ledger = (
+            "# 待拍板事项\n\n"
+            "| # | 来源 | 待决问题 | 现状核验 | 推荐 | 关闭条件 | 优先级 | 影响范围 | 自动决策 | 状态 | DEC编号 | 修订 | 撤回 | 等价 | 终态 |\n"
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+            "| 1 | `a` | A B | 2026-10-29 `x` | A | c | P2 | 多模块(m) | N | 已拍板 | DEC-2026-001 | r2 |  |  |  |\n"
+        )
+        root = Path(tempfile.mkdtemp())
+        (root / "docs").mkdir()
+        (root / "docs" / "PENDING-DECISIONS.md").write_text(ledger, encoding="utf-8")
+        out = decisions.view(root)
+        self.assertIn("当前无未决决策", out)
 
     def test_positive_terminal_decision_with_registered_exemption_stays_green(self):
         # The terminal gate still honours stale_reason + a future review_date.

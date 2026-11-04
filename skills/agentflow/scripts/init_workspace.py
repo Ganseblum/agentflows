@@ -45,6 +45,12 @@ CARRIERS = {
     "copilot": ("agents", Path(".github/copilot-instructions.md")),
 }
 
+# 工程基线骨架的落点。收尾提示一直让 AI「回填 engineering-baseline.md」，但脚本从不创建它，
+# 照提示做的人会去找一个不存在的文件（2026-11-04 核对发现）。现在脚本建骨架，用户填事实，
+# 脚本永不接管：这是目标仓的实测记录，不是托管资产。
+BASELINE_REL = Path(".agentflow") / "engineering-baseline.md"
+MANIFEST_EXCLUDED = {str(BASELINE_REL)}
+
 CURSOR_FRONTMATTER = (
     "---\n"
     "description: Agentflow 项目规则（工程底线 / 主链路 / 门禁派遣）\n"
@@ -173,6 +179,17 @@ def build_plan(target: Path, skill_root: Path, hosts: list[str], version: str,
                 reason = "存在无来源头的同名文件"
             plan.add("conflict", dst, f"{reason}；确认后用 --refresh-assets 接管或手工合并")
 
+    # 1b) 工程基线骨架：建一次就不管了。它是**目标仓的实测事实**，用户回填后任何自动刷新都会
+    #     抹掉查证结果，所以既不接管也不进 manifest（否则 --check 会把正常回填写成漂移）。
+    baseline_src = skill_root / "templates" / "engineering" / "baseline.md"
+    baseline_dst = target / BASELINE_REL
+    if baseline_src.is_file():
+        if baseline_dst.exists():
+            plan.add("noop", baseline_dst, "已有工程基线，不覆盖")
+        else:
+            plan.add("create", baseline_dst, "工程基线骨架（待按目标仓实测回填）")
+            writes[baseline_dst] = baseline_src.read_text(encoding="utf-8").encode("utf-8")
+
     # 2) 宿主载体（去重：zcode/codex 共用 AGENTS.md）
     seen_paths: set[Path] = set()
     for host in hosts:
@@ -269,6 +286,8 @@ def write_manifest(target: Path, version: str, hosts: list[str], plan: Plan) -> 
     scopes: dict[str, str] = {}
     for it in plan.items:
         p = Path(it["path"])
+        if str(p.relative_to(target)) in MANIFEST_EXCLUDED:
+            continue  # 用户回填面：钉了 sha 就会把正常回填写成漂移
         if p.is_file() and (it["action"] in {"create", "refresh-block", "refresh-asset", "append-block", "noop"}):
             rel = str(p.relative_to(target))
             text = p.read_text(encoding="utf-8", errors="replace")
@@ -520,7 +539,8 @@ def main() -> int:
         print(f"\n[ok] manifest -> {mpath}")
     if conflicts:
         print(f"\n[注意] {conflicts} 项 conflict 待人工处理（其余已按计划落盘）")
-    print("后续：让 AI 读目标仓现状，回填 AGENTS.md 的项目事实段与 engineering-baseline.md（探测命令必须带超时）。")
+    print(f"后续：让 AI 读目标仓现状，回填 AGENTS.md 的项目事实段与 {BASELINE_REL.as_posix()}"
+          "（骨架已生成；探测命令必须带超时）。")
     return 0
 
 

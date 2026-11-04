@@ -90,7 +90,8 @@ def self_test() -> int:
         files[rel] = files[rel].replace(old, new)
         return files
 
-    def run_case(name: str, expect_rc: int, want: list[str], mutate=None, results=None) -> None:
+    def run_case(name: str, expect_rc: int, want: list[str], mutate=None, results=None,
+                 extra: list[str] | None = None) -> None:
         files = dict(base)
         if mutate:
             files = mutate(dict(base))
@@ -100,7 +101,7 @@ def self_test() -> int:
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(text, encoding="utf-8")
         r = subprocess.run(
-            [sys.executable, str(linter), "--root", str(d.parent), str(d)],
+            [sys.executable, str(linter), *(extra or []), "--root", str(d.parent), str(d)],
             capture_output=True, text=True, check=False,
         )
         out = r.stdout + r.stderr
@@ -261,16 +262,16 @@ def self_test() -> int:
     def add_role_word(f):
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n按 supervisor 的本轮评审意见执行\n")
-    run_case("23 C13 session role word trips C13 (both the name and the session phrase)", 1,
-             ["C13 会话角色词: proposal/p.md", "supervisor", "本轮评审"],
+    run_case("23 C13 session role word reports as WARN, exit stays 0 (soft since 0.34)", 0,
+             ["WARN C13 会话角色词: proposal/p.md", "supervisor", "本轮评审"],
              add_role_word, results)
 
     def add_formal_role_name(f):
         # formal role names outside the closed word list never trip C13
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n由独立评审人与技术负责人收口\n")
-    run_case("24 C13 formal role names do NOT trip", 0, ["PASS doc-chain"],
-             add_formal_role_name, results)
+    run_case("24 C13 formal role names do NOT trip (strict: no WARN either)", 0, ["PASS doc-chain"],
+             add_formal_role_name, results, extra=["--strict"])
 
     def add_stale_backtick_path(f):
         # claim word + backtick code path to a target that exists (the corpus's other form)
@@ -324,55 +325,55 @@ def self_test() -> int:
     def add_bare_bucket(f):
         return rep(f, "design/be/b.md", "### 1.3 待核实清单\n",
                    "### 1.3 待核实清单\n\nD 桶积分中断时对账回滚\n")
-    run_case("27 C14 bare code subject in prose trips (D 桶)", 1,
-             ["C14 代号裸用: design/be/b.md", "D 桶"], add_bare_bucket, results)
+    run_case("27 C14 bare code subject reports as WARN (D 桶), exit stays 0", 0,
+             ["WARN C14 代号裸用: design/be/b.md", "D 桶"], add_bare_bucket, results)
 
     def add_bare_bucket_heading(f):
         return rep(f, "proposal/p.md", "# proposal\n", "# proposal\n\n### A 桶：36 会话\n")
-    run_case("28 C14 bare code subject as a heading trips (A 桶：36 会话)", 1,
-             ["C14 代号裸用: proposal/p.md", "A 桶"], add_bare_bucket_heading, results)
+    run_case("28 C14 bare code subject as a heading reports as WARN (A 桶：36 会话)", 0,
+             ["WARN C14 代号裸用: proposal/p.md", "A 桶"], add_bare_bucket_heading, results)
 
     def add_bold_definition_row(f):
         return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
                    "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n| **A** 交付 .pptx |\n")
     run_case("29 C14 bold-code definition row (口径表 form) never matches", 0,
-             ["PASS doc-chain"], add_bold_definition_row, results)
+             ["PASS doc-chain"], add_bold_definition_row, results, extra=["--strict"])
 
     def add_paired_forms(f):
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n交付桶（A 桶）承接演示物；A 桶（交付 .pptx）已就绪\n")
     run_case("30 C14 sanctioned paired forms 白话（代号）/代号（白话） do NOT trip", 0,
-             ["PASS doc-chain"], add_paired_forms, results)
+             ["PASS doc-chain"], add_paired_forms, results, extra=["--strict"])
 
     def add_backtick_bucket(f):
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n跑批脚本按 `A 桶` 过滤，日志另记\n")
     run_case("31 C14 inside an inline code span does NOT trip", 0,
-             ["PASS doc-chain"], add_backtick_bucket, results)
+             ["PASS doc-chain"], add_backtick_bucket, results, extra=["--strict"])
 
     def add_glossary_row(f):
         return rep(f, "spec/s.md", "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n",
                    "| B-2 | y | 非阻塞 | ☐ 待评审确认 |\n\n| A 桶 | 交付 .pptx 的会话集合 |\n| --- | --- |\n")
     run_case("32 C14 glossary table rows are the sanctioned definition site", 0,
-             ["PASS doc-chain"], add_glossary_row, results)
+             ["PASS doc-chain"], add_glossary_row, results, extra=["--strict"])
 
     def add_ip_bucket(f):
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n限流口径：验证码与找回共用同一个 IP 桶\n")
     run_case("33 C14 real-corpus near-miss IP 桶 (letter run, not a lone code) does NOT trip", 0,
-             ["PASS doc-chain"], add_ip_bucket, results)
+             ["PASS doc-chain"], add_ip_bucket, results, extra=["--strict"])
 
     def add_schema_word(f):
         return rep(f, "proposal/p.md", "# proposal\n",
                    "# proposal\n\n单次执行积分按 prepared 会话口径统计\n")
     run_case("34 schema-word prose (prepared 会话) stays clause-governed — C15 deliberately "
              "not implemented (closed-set heuristic flooded a real chain's legend rows)", 0,
-             ["PASS doc-chain"], add_schema_word, results)
+             ["PASS doc-chain"], add_schema_word, results, extra=["--strict"])
 
     def run_file_case(name: str, expect_rc: int, want: list[str] | None, text: str,
                       argv: list[str] | None = None, sub: str = "deliverable.md",
                       extra_files: dict[str, str] | None = None,
-                      forbid: list[str] | None = None) -> None:
+                      forbid: list[str] | None = None, strict: bool = False) -> None:
         d = Path(tempfile.mkdtemp()) / sub
         d.parent.mkdir(parents=True, exist_ok=True)
         d.write_text(text, encoding="utf-8")
@@ -381,6 +382,8 @@ def self_test() -> int:
         for rel, content in (extra_files or {}).items():
             (d.parent / rel).write_text(content, encoding="utf-8")
         cmd = [sys.executable, str(linter)] + (argv if argv is not None else ["--file", str(d)])
+        if strict:
+            cmd.append("--strict")
         r = subprocess.run(cmd, capture_output=True, text=True, check=False)
         out = r.stdout + r.stderr
         ok = r.returncode == expect_rc and all(w in out for w in (want or []))
@@ -392,8 +395,8 @@ def self_test() -> int:
         if not ok:
             print(f"  wanted {want}, forbid={forbid}, exit={r.returncode}, got:\n{out}")
 
-    run_file_case("35 --file mode: session deliverable hitting C13+C14 exits 1", 1,
-                  ["C14 代号裸用", "C13 会话角色词", "D 桶"],
+    run_file_case("35 --file mode: C13+C14 report as WARN and exit 0 (soft since 0.34)", 0,
+                  ["WARN C14 代号裸用", "WARN C13 会话角色词", "D 桶"],
                   "# 数据分析报告\n\n## 口径表\n\n| 代号 | 白话 |\n| --- | --- |\n| D | 中断桶 |\n\n"
                   "## 结论\n\nD 桶积分中断最多，本轮评审已确认。\n")
     run_file_case("36 --file mode: clean deliverable exits 0", 0, ["PASS doc-chain --file"],
@@ -425,22 +428,33 @@ def self_test() -> int:
     run_file_case("39 C13 role word passes in an exempt defining file (product-design.md)",
                   0, ["PASS doc-chain --file"],
                   "# product design\n\n| Supervisor（主会话） | 收口、委派 |\n",
-                  sub="docs/design-decisions.md")
+                  sub="docs/design-decisions.md", strict=True)
     run_file_case("40 C13 exempt file may quote the session words it defines as forbidden", 0,
                   ["PASS doc-chain --file"],
                   "# product design\n\n表达纪律禁止 supervisor、TD、本轮评审 一类会话词。\n",
-                  sub="docs/design-decisions.md")
+                  sub="docs/design-decisions.md", strict=True)
     run_file_case("41 Execution Coordinator is a planned role name, not a session word", 0,
                   ["PASS doc-chain --file"],
-                  "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n")
+                  "# 计划\n\n未来的 Execution Coordinator 负责持久队列，本期不做。\n",
+                  strict=True)
     run_file_case("42 C13 exemption is per file: an unlisted skills/ file with a role word trips",
                   1, ["C13 会话角色词"],
                   "# 说明\n\n按 supervisor 的指示执行。\n",
-                  sub="skills/agentflow/references/unlisted.md")
+                  sub="skills/agentflow/references/unlisted.md", strict=True)
     run_file_case("43 C13 exemption is per file: a non-exempt feature stage doc trips",
                   1, ["C13 会话角色词", "method-spec.md"],
                   "# method spec\n\nspec 由 supervisor 起草。\n",
-                  sub="docs/features/x/spec/method-spec.md")
+                  sub="docs/features/x/spec/method-spec.md", strict=True)
+
+    run_file_case("44 --strict promotes the same C13+C14 findings back to a hard failure", 1,
+                  ["C14 代号裸用", "C13 会话角色词"],
+                  "# 数据分析报告\n\n## 结论\n\nD 桶积分中断最多，本轮评审已确认。\n",
+                  strict=True)
+
+    run_file_case("45 a hard finding still fails while soft ones only warn", 1,
+                  ["C12 时效性引用", "WARN C13 会话角色词"],
+                  "# 报告\n\n附录见 `exists.md`，待补充。\n\n本节由 supervisor 收口。\n",
+                  extra_files={"exists.md": "# 已有\n"})
 
     # --- C4/C5/C8 applicability (cases 60–62): a role's checks apply when spec/<role>/ or
     # design/<role>/ holds a document, so an empty design/<role>/ cannot skip them.
@@ -1297,10 +1311,41 @@ def self_test() -> int:
     def m_c31_with_candidates(f):
         f["proposal/proposal.md"] = SOFT_PROPOSAL + (
             "\n### 1.4 范围穷举与存量面处置\n\n"
-            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n| 三方登录 | 不做 | 无 OAuth 后端 |\n")
+            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n"
+            "| 三方登录 | 不做 | 无 OAuth 后端，本批只做自造账号 |\n"
+            "| 注册 | 不做 | 演示账号固定，注册留到下一批 |\n"
+            "| 验证码防抖 | 做 | 401 后 5 秒内重试直接拒绝 |\n")
         return f
-    run_case("C31-02 a filled candidate set stays clean", 0, ["PASS doc-chain"],
+    run_case("C31-02 a candidate set with three decided rows stays clean", 0, ["PASS doc-chain"],
              mutate=m_c31_with_candidates, results=results)
+
+    def m_c31_heading_only(f):
+        # The 0.33 form: keep the heading, delete the table. Used to be green.
+        f["proposal/proposal.md"] = SOFT_PROPOSAL + "\n### 1.4 范围穷举与存量面处置\n\n待补。\n"
+        return f
+    run_case("C31-03 heading without the table no longer counts as a candidate set", 1,
+             ["C31 候选集"], mutate=m_c31_heading_only, results=results)
+
+    def m_c31_too_few_rows(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL + (
+            "\n### 1.4 范围穷举与存量面处置\n\n"
+            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n"
+            "| 三方登录 | 不做 | 无 OAuth 后端 |\n"
+            "| 注册 | 不做 | 演示账号固定 |\n")
+        return f
+    run_case("C31-04 deleting dimension rows down to two trips the row floor", 1,
+             ["少于 3 行"], mutate=m_c31_too_few_rows, results=results)
+
+    def m_c31_no_reason(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL + (
+            "\n### 1.4 范围穷举与存量面处置\n\n"
+            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n"
+            "| 三方登录 | 不做 | 无 |\n"
+            "| 注册 | 不做 | 演示账号固定 |\n"
+            "| 验证码防抖 | 做 | 401 后 5 秒内重试直接拒绝 |\n")
+        return f
+    run_case("C31-05 「不做」with an empty reason trips (没想到 vs 决定不做)", 1,
+             ["理由不成立"], mutate=m_c31_no_reason, results=results)
 
     def m_c29_deviation(f):
         # Mutate the already-green base fixture's plan row instead of replacing the whole plan:

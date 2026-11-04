@@ -1,5 +1,7 @@
 # 证据工具用法
 
+> **加载者**：`skills/agentflow/SKILL.md` 按需包「证据工具用法」行；`execution.md` 的执行证据工具节；`hosts.md` 提到 seal / verify 时指向它。
+
 入口为插件根下的 `skills/agentflow/scripts/workflow.py`，需要 Python 3.10 或更高版本及 Git；工具本身只用标准库。它不提供模型运行时、沙箱、批准或任务状态系统。执行原则以[执行与验证](execution.md)为准。
 
 ## 命令与结果

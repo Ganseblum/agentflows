@@ -54,14 +54,7 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 
 ## 首次接入（Init）
 
-目标仓没有相关约定、记录结构或检查命令时，先做一次轻量接入再走正常流程。**执行细则见 [Init 细则](references/init.md)**（脚本先行 → 六问集中确认 → 写接入约定小节 → 已有批次先对齐基线），此处只留三条不变式：
-
-- **脚本先行**：`python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run` 先出计划，确认后实跑；
-  宿主既有文件只追加托管块，**绝不覆盖**，冲突与用户逐条裁决。
-- **接入必须带三道可执行门条款**：新批次当天跑 `doc_chain.py`、宣布完成前全仓批次再跑并贴原始输出、
-  finding 要么修要么显式登记——只写「走主流程」等于没接。接入约定的必产出载体是
-  [目标仓接入节模板](templates/hub/repo-rules.md)（固定硬判据 + 仓事实槽位 + begin/end 标记）。
-- **工程基线只收实测事实**：查不到写缺口，不按通用默认推断，不搬运别的项目的业务数值与部署流程。
+目标仓没有相关约定、记录结构或检查命令时，先做一次轻量接入再走正常流程。**执行细则见 [Init 细则](references/init.md)**（脚本先行 → 六问集中确认 → 写接入约定小节 → 已有批次先对齐基线），此处只留三条不变式：**脚本先行**（`python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run` 先出计划，确认后实跑；宿主既有文件只追加托管块，**绝不覆盖**，冲突与用户逐条裁决）；**接入必须带三道可执行门条款**（新批次当天跑 `doc_chain.py`、宣布完成前全仓批次再跑并贴原始输出、finding 要么修要么显式登记——只写「走主流程」等于没接；必产出载体是 [目标仓接入节模板](templates/hub/repo-rules.md)）；**工程基线只收实测事实**（查不到写缺口，不按通用默认推断，不搬运别的项目的业务数值与部署流程）。
 
 分派工作前阅读[角色档案](references/roles.md)，委派实现或评审前阅读[契约](references/contracts.md)。[硬边界](references/contracts.md#硬边界)在每一次委派中都成立；接受任何交付物前先检查它们。
 
@@ -75,26 +68,11 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 自动化测试
 
-当用户要求对用户可见功能做自动化测试，或计划包含测试设计任务时，使用测试链路：
-
-- `test-planner` 在明确指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 路径编写用例库。
-- `test-executor` 执行已确认的计划，在同一目录新建每轮 `run-*.md` 及原始证据，不修改被测对象或缺陷状态。
-- `reviewer` 独立复核覆盖与流程合理性；产品缺陷经缺陷链处理。
-
-测试先行、环境预检、Ego Light/API 路线、真实数据与凭据规则统一遵守[执行与验证](references/execution.md)；计划和运行记录形态及 Bug 状态联动遵守[测试记录](references/test-records.md)。共享 smoke 或共同环境失败时停止其依赖任务；独立模块失败按真实依赖分流，不终止其他已授权工作。
-
-宿主浏览器或本机交互若仅主对话可用，由 Supervisor 按执行者给出的步骤操作，回传截图、DOM、网络等原始证据，由执行者判定结果；不把该兜底路线当作默认自动化入口。
+用户要求对用户可见功能做自动化测试、或计划含测试设计任务时，走测试链路：`test-planner` 在明确指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 编写用例库；`test-executor` 执行已确认的计划，在同一目录新建每轮 `run-*.md` 及原始证据，不修改被测对象或缺陷状态；`reviewer` 独立复核覆盖与流程合理性，产品缺陷经缺陷链处理。测试先行、环境预检、Ego Light/API 路线、真实数据与凭据规则统一遵守[执行与验证](references/execution.md)；计划与运行记录的形态及 Bug 状态联动遵守[测试记录](references/test-records.md)。共享 smoke 或共同环境失败时停止其依赖任务；独立模块失败按真实依赖分流，不终止其他已授权工作。宿主浏览器或本机交互若仅主对话可用，由 Supervisor 按执行者给出的步骤操作并回传截图、DOM、网络等原始证据，由执行者判定结果——不把该兜底路线当作默认自动化入口。
 
 ## 外部文档二次评审
 
-当用户要求评审在另一套系统规则下编写的文档（例如业务仓自有模板系统内产出的需求提案/spec/设计/计划）时，对这些文档运行独立 Reviewer 角色，并把证据落在本仓：
-
-1. 定位或创建以 feature 为锚的目录 `reviews/<project>-<feature-slug>/`。目录锚在被评审的 feature 而不是日期：同一 feature 可反复评审（今天、明天、修完再评），每轮是同一目录下多出的一个 `review-<YYYY-MM-DD>-<NNN>.md` 文件。把该轮文档的**逐字副本**归档到 `archive/<date>-<NNN>/` 下——每轮一个快照子目录，同名文档永不冲突——并把目标仓当时的 commit 记为 `source_revision`：此后目标仓的编辑不得追溯改变被评审的对象。再评审聚焦上一轮 review_id 以来的 delta。
-2. Reviewer 把本仓的 review 契约应用到快照：reviewer 档案的检查协议、与被评审文档类型匹配的 **文档模式**（需求提案、spec、设计——每一条都需要引用原文），以及视情形加上上述设计完备性产物。
-3. 每条发现都作为 Bug 记录归入 `issues/`，`project` 设为目标仓。归因分流两个升级回路：`provenance: external` + `attribution: product_code` 标记目标系统的模板/规则缺口——升级该系统模板的证据池；`provenance: agentflow` 表示本仓 review 契约本该抓住它。目标系统的升级落地后，回填 `fix_revision` 为其 commit。引用必须自包含：`files` 条目要么在本仓内可解析，要么带仓限定（`<repo>@<revision>:<path>`）——裸外部路径校验失败，因为对没有那个仓的人是悬空引用——且正文内嵌决定性片段或引用原句，使记录在另一仓缺席时仍可读。
-4. 写 `review-<date>-<NNN>.md`（契约：`schemas/review.schema.json`；frontmatter 的 `review_id` 形如 `REV-<YYYY-MM-DD>-<NNN>`，与文件名各自成形、不要求同名），含决策、findings 列表与归档文档引用，然后运行 `python3 tools/lab/validate.py artifacts`——它交叉校验每份归档文档与每条被引用的 finding 确实存在。
-
-完整的桥工作流、归因表与已知边界（跨仓再犯类档位不能自动推导）见仓库 `reviews/README.md`（不在本插件安装树内，需回到插件仓查阅）。
+当用户要求评审在另一套系统规则下编写的文档（例如业务仓自有模板系统内产出的需求提案/spec/设计/计划）时，对这些文档运行独立 Reviewer，把证据落在本仓 `reviews/`，并按`provenance` 分流「目标系统模板缺口」与「本仓 review 契约缺口」两个升级回路。**四步桥工作流、归档快照与 `source_revision`、自包含引用要求、评审记录契约都以 [审核契约](references/repo-audit.md#外部文档二次评审另一套规则下产出的文档) 为唯一权威**，本文不复述。
 
 ## 仓库整体审核
 
@@ -106,9 +84,7 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 埋点
 
-当改动新增、修改或删除用户行为事件，或触及事件采集端点、事件表结构、看板聚合口径时，按 [埋点契约](references/telemetry.md) 评审。它是检查清单的唯一真源——本文不复述那十条，也不断章摘句：一次具体评审该走的，就是那份文件里的十条。
-
-走文档交付链的项目，埋点在三处连成一线：`proposal` 的埋点决策 → `spec/fe` 的口径 → `design/fe` 的事件契约，验收落在 QA；三处互相矛盾、或任一处缺席，按缺口处理而不是可选装饰。事件手册不与档案链重复：沿档链工作的项目，`design/fe` 的契约节就是它的事件手册；目标仓本就既有手册时以后者为准，契约节只登记本期的差异与出处。
+改动新增、修改或删除用户行为事件，或触及事件采集端点、事件表结构、看板聚合口径时，按 [埋点契约](references/telemetry.md) 评审——它是检查清单的唯一真源，本文不复述那十条，也不断章摘句。走文档交付链的项目，埋点在三处连成一线：`proposal` 的埋点决策 → `spec/fe` 的口径 → `design/fe` 的事件契约，验收落在 QA；三处互相矛盾、或任一处缺席，按缺口处理而不是可选装饰。事件手册不与档案链重复：沿档链工作的项目，`design/fe` 的契约节就是它的事件手册；目标仓本就既有手册时以后者为准，契约节只登记本期的差异与出处。
 
 ## 运行工作流
 
@@ -123,35 +99,18 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 9. **只修一次**：评审要求改动时，指派一轮聚焦修复，并再次评审。保持循环有界。重审是 delta 评审，不是重放；机械改名、加过滤、调整列序这类可由确定性检查判定的修改，跑完检查即可，不必再开一轮模型评审。
 10. **决策**：Supervisor 依据[契约](references/contracts.md)产出最终决策记录，含实现、验证、评审结果与残余风险。记录承载断言清单：每条用户可见断言映射到若为假会失败的检查；只有代码阅读支撑的断言记为 `unverified`，任何未验证的用户可见断言使结论降为 `partial` 而非 `complete`。在会话结束前把决策记录落成 `episodes/<YYYY-MM-DD>/<EP-id>.json` 下的 episode（契约：`schemas/episode.schema.json`——复用，绝不另设平行载体），因为对话一旦消失，episode 不可恢复，也没人会记得去收集它。（适用范围：本条指**在插件仓中进行的方法开发与反馈会话**；在目标仓里工作的会话不读写插件仓的内部记录，其决策记录落目标仓文档枢纽——运行的证据需要时，由插件仓一侧在反馈与复盘的环节补记。）这对每一个 **material** 改动都是强制的——凡开过独立评审门的改动（该义务自引入起持续生效，版本史见根 `CHANGELOG.md`，本文不写版本号）。每个 Reviewer 轮次都记入 episode 的 `review_roundtrips` 字段（at、reviewer、decision、finding、resolution）：返回 `changes_requested` 的轮次、分歧是什么、如何收场——让中途评审分歧在对话消失后仍可审计，而不只留最终判定。episode 同等收录负向结果（`changes_requested`/`partial`/失败轮）；方法级改动没有仪器化证据时标 `measurement: none`，不得表述为已验证提效。对任何未产出结果的 worker 按[契约](references/contracts.md)中的 worker 失败语义分类（崩溃 → `blocked` 并带原因，超时 → `partial`，空/非法返回 → 退回一次后记录）——Supervisor 依据证据分类，崩溃的 worker 不会自我分类。
 
-## 分档默认值（按改动量定成本，不按轮次惯性）
+## 分档默认值
 
-评审与测试的成本档位按改动量分档；偏离默认值时在批次记录写明理由。
-
-| 档位 | 判据 | 评审默认 | 测试默认 |
-| --- | --- | --- | --- |
-| S 小功能 | 被评文档 <1000 行且实现 <1000 行 | 需求+方案合并 1 轮、代码 1 轮；出现分歧才加 delta 轮（≤1 轮） | 关键路径 browser 用例 + 边界清单勾选 |
-| M 常规 | 其余多数改动 | 每阶段 1 轮 full + delta ≤1 轮 | 分层覆盖（browser / api / file） |
-| L 大改动 | 跨层契约、迁移、安全边界 | 维持全档（每阶段 full + delta + 收口核对） | 全矩阵 + 回归 |
-
-配套四条默认纪律：
-
-- **stop_rule 与输出预算**：每轮评审简报必含 `stop_rule` 与 `output_budget`（形态见[契约](references/contracts.md)的「评审简报必填字段」）；非阻塞建议默认写入 residual_risks 收口，不再自动升一轮模型评审——只有阻塞项或语义级非阻塞项触发 delta 轮。同一原因两轮无进展即停并交代（判据见下文「判断词的可判定定义」的相同原因条款）。
-- **实现自检的 browser 前移**：UI 行为改动的实现自检必须含 browser 级证据，api 通过只许表述为「api 层通过」；边界用例清单（连点 / 超时 / 竞态 / 空值 / 过期 / 退出失败）在测试计划中必选，不适用也要逐项写理由（[验证分级](references/verification-grading.md)、[测试用例](references/testcases.md)）。
-- **原型前置**：涉及用户可见界面的批次，可交互原型（形态 A/B，判据见 [prototype/README](templates/feature/prototype/README.md)）在 **spec 落盘前**产出并请用户逐项确认，需求评审在原型确认之后进行——用户看图比看文档快，且原型的每一屏都是范围候选问题（「这个入口为什么在这 / 为什么是占位」必须在原型上回答）。纯后端 / 无 UI 批次写 `N/A: 无 UI`；「结构尚未收敛的临时草稿」可标「结构稿」先行，但产品视觉确认不得晚于 design 冻结。
-- **缺陷落账分级**：确认且需改代码的缺陷强制落账——ISS 记录或评审记录缺陷表二选一；同轮立即修复且无外部影响的低风险细节留在评审记录，不升级为永久记录；批次收口前汇总缺陷台账（[问题闭环](references/issue-tracking.md)）。
-- **收口用户验收**：批次宣布 complete 前，向用户做一次实操演示（浏览器走关键路径）并记录用户确认原文；未演示或未确认时结论上限是 partial。
+评审与测试的成本按改动量分档（S 小功能 / M 常规 / L 大改动），偏离默认值时在批次记录写明理由。**分档表与配套纪律（`stop_rule` 与输出预算、实现自检的 browser 前移、缺陷落账分级）见[执行与验证](references/execution.md#评审与测试的成本分档按改动量定成本不按轮次惯性)**，本文不复述。两条不可让渡：涉及用户可见界面的批次，**可交互原型在 spec 落盘前产出并经用户逐项确认**，需求评审在原型确认之后（判据见 [prototype/README](templates/feature/prototype/README.md)）；批次宣布 complete 前必须做一次实操演示并记录用户确认原文，未演示或未确认时结论上限是 `partial`。
 
 ## 评审简报的定位义务
 
-Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质量决定：一份只给文件名的简报会让它把大量轮次花在「找这句话在哪」，而不是「判断对不对」——实测这类检索轮次占评审轮次的四成以上（70 份简报里 0 份内联 diff，10% 给了 diff 范围表达式，27% 甚至要求 reviewer 自己跑 `git diff`，而它没有 Bash）。因此：
+Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质量决定：只给文件名的简报会让它把大量轮次花在「找这句话在哪」，而不是「判断对不对」——实测这类检索轮次占评审轮次的四成以上（70 份简报里 0 份内联 diff，10% 给了 diff 范围表达式，27% 甚至要求 reviewer 自己跑 `git diff`，而它没有 Bash）。因此：
 
-**能由一条命令判定真假的断言，Supervisor 先跑，把原始输出带进简报。** 「某配置键是否存在」「某函数是否被调用」「是否还有别处引用」「改完能否编译」「测试是否覆盖该分支」这类问题不需要 reviewer 去读源码推断——读源码推断既慢又不构成证据（硬边界 12）。Supervisor 有 Bash，跑完把逐字输出贴进简报，reviewer 的轮次才真的花在判断上。同一份简报里，已被命令答掉的断言不再要求 reviewer 重验。
-
-**其余断言给出可定位的核实点。** 每份评审简报在可行时都要给出：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条待核实断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、以及已跑完的确定性检查的原始输出。给不出定位时在简报里写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜从哪里开始。
-
-**不要要求 reviewer 执行命令。** reviewer 的工具集是 `Read, Glob, Grep`，`Bash` 在 `disallowedTools` 里。简报里写「用 `git diff` 看全部改动」这类要求物理上做不到，只会让它绕行重建 diff。需要 diff 时把 diff 正文或 `.diff` 文件路径给出来。
-
-**简报用脚本生成，不接受手写。** `python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出[契约](references/contracts.md)规定的五个必填字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）。手写简报最常见的两个缺陷——给了路径却没内联内容、给了一串 sha256 却无法校验——在生成器里不可能发生（文件不存在直接失败，sha256 只作参考不做绑定）。
+- **能由一条命令判定真假的断言，Supervisor 先跑，把逐字输出带进简报。** 「某配置键是否存在」「某函数是否被调用」「是否还有别处引用」「改完能否编译」「测试是否覆盖该分支」不需要 reviewer 读源码推断——读源码推断既慢又不构成证据（硬边界 12）。已被命令答掉的断言不再要求它重验。
+- **其余断言给出可定位的核实点**：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、已跑完的确定性检查的原始输出。给不出定位时写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜。
+- **不要要求 reviewer 执行命令**（工具集是 `Read, Glob, Grep`，`Bash` 在 `disallowedTools` 里）；需要 diff 时给 diff 正文或 `.diff` 文件路径。
+- **简报用脚本生成，不接受手写**：`python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出[契约](references/contracts.md)规定的五个必填字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）。手写简报最常见的两个缺陷（给了路径却没内联内容、给了一串 sha256 却无法校验）在生成器里不可能发生。
 
 ## 判断词的可判定定义
 
@@ -175,12 +134,7 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 
 ## 工程内容标准与问题闭环
 
-本 skill 是**流程门禁**；写代码与收口另需三条纪律（reviewer 在 `approved` 前套用）：
-
-- **工程内容**：[server-side](references/standards/server-side.md)（幂等 / 鲁棒 / 分层 / 稳定性，含按规模分级）、[data-model](references/standards/data-model.md)（字段级冻结——无库也给等效结构契约）、[frontend](references/standards/frontend.md)（受控状态 / 同步锁防连点 / 三态 / 错误边界）。
-- **问题闭环**：确认且需改代码的缺陷必须落账（ISS 或评审缺陷表二选一，带 `defect_class`）；低风险同轮修复留评审记录；收口前汇总台账（[issue-tracking](references/issue-tracking.md)）。
-- **验证分级**：`curl` 仅 smoke；用户可见路径必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）。
-- **测试用例**：AC 权威在 plan 注册表「来源」列（[testcases](references/testcases.md)）；**范围穷举**：开工前按领域逐维确认（[intake-scope-dimensions](references/intake-scope-dimensions.md)），不等用户想到。
+本 skill 是**流程门禁**；写代码与收口另需四条纪律，reviewer 在 `approved` 前逐条套用：**工程内容**——[server-side](references/standards/server-side.md)（幂等 / 鲁棒 / 分层 / 稳定性，含按规模分级）、[data-model](references/standards/data-model.md)（字段级冻结，无库也给等效结构契约）、[frontend](references/standards/frontend.md)（受控状态 / 同步锁防连点 / 三态 / 错误边界）；**问题闭环**——确认且需改代码的缺陷必须落账（ISS 或评审缺陷表二选一，带 `defect_class`），低风险同轮修复留评审记录，收口前汇总台账（[issue-tracking](references/issue-tracking.md)）；**验证分级**——`curl` 仅 smoke，用户可见路径必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）；**测试用例**——AC 权威在 plan 注册表「来源」列（[testcases](references/testcases.md)），开工前按领域逐维确认范围（[intake-scope-dimensions](references/intake-scope-dimensions.md)），不等用户想到。
 
 ## 保持控制与可追溯性
 

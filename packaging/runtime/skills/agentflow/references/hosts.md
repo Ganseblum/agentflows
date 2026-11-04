@@ -1,5 +1,7 @@
 # 宿主接入（Host Init）
 
+> **加载者**：`skills/agentflow/SKILL.md` 宿主级接入节与按需包「宿主接入」行；做 Host Init（写宿主全局指令文件）之前必读；`templates/host/global-rules.md` 是它的规则正文。
+
 > 本文只解决一件事：让**跨仓库**的 Agentflow 纪律在每个会话默认在场。
 > 插件安装、仓库接入是另外两件事，别混在一起。本文是 Host Init 协议的**唯一权威**；
 > [templates/host/README.md](../templates/host/README.md) 只是操作清单，冲突时以本文为准。

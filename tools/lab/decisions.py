@@ -400,24 +400,46 @@ def _parse_flat_frontmatter(text: str) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # view
 # --------------------------------------------------------------------------- #
+# Status cells that mean "the user already ruled on this". Kept in sync with docchain C18's
+# PENDING_CLOSED_WORDS — two lists, one meaning: a row with any of these is not pending.
+CLOSED_STATUS_WORDS = ("已拍板", "已关闭", "已确认", "无需编号", "事实已闭合")
+
+
+def _status_closed(status: str) -> bool:
+    return any(word in status for word in CLOSED_STATUS_WORDS)
+
+
 def view(root: Path = ROOT) -> str:
-    """Render the pending view: decisions that are still active (no terminal state)."""
+    """Render the pending view: decisions still waiting for the user.
+
+    Before 2026-11-04 this filtered on the terminal column alone, so every row the user had
+    already ruled on (`已拍板 …`) stayed in the view. The ledger then claimed to be "唯一需要
+    逐条回复的清单" while listing 7 rows of which 4 were closed — the user was being asked to
+    re-decide what was already decided, and 4 of those were even already implemented in code.
+    A decision counts as closed when its 状态 cell says so; the terminal column is a second,
+    narrower way to close (superseded / withdrawn / deferred).
+    """
     ledger = load_ledger(root)
     active = [
         rec
         for rec in ledger.values()
-        if not rec["terminal"]
+        if not rec["terminal"] and not _status_closed(rec["status"])
     ]
     active.sort(key=lambda r: r["id"])
+    closed = len(ledger) - len(active)
     out: list[str] = []
     out.append("# 决策待办视图（由 decisions.py view 生成，禁止手改）")
     out.append("")
-    out.append("> 本视图只列出尚未进入终态（superseded / withdrawn / deferred）的决策；")
-    out.append("> 终态条目保留在台账 `docs/PENDING-DECISIONS.md` 中，按「只追加、永不移出」规则不移除。")
+    out.append("> 本视图只列出**仍需你拍板**的决策；已拍板与已进终态")
+    out.append("> （superseded / withdrawn / deferred）的条目都不在此列，但保留在台账")
+    out.append("> `docs/PENDING-DECISIONS.md` 中，按「只追加、永不移出」规则不移除。")
     out.append("")
     if not active:
         out.append("_当前无未决决策。_")
         out.append("")
+        if closed:
+            out.append(f"> 另有 {closed} 条已拍板/终态，见台账。")
+            out.append("")
         return "\n".join(out)
     out.append("| DEC 编号 | 修订 | 状态 | 待决问题（摘要） |")
     out.append("| --- | --- | --- | --- |")
@@ -426,6 +448,9 @@ def view(root: Path = ROOT) -> str:
         problem = (problem[:40] + "…") if len(problem) > 41 else problem
         out.append(f"| {rec['id']} | r{rec['rev']} | {rec['status']} | {problem} |")
     out.append("")
+    if closed:
+        out.append(f"> 另有 {closed} 条已拍板/终态，不在本视图；完整台账见 `docs/PENDING-DECISIONS.md`。")
+        out.append("")
     return "\n".join(out)
 
 

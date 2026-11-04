@@ -1,5 +1,7 @@
 # 载体归属表 — 每条跨载体规则的唯一权威载体
 
+> **加载者**：`skills/agentflow/SKILL.md` 按需包「载体归属」行；改任何跨载体规则之前先查这张表——`validate.py docs` 逐行核验权威路径、锚点与副本处置。
+
 > 用途：回答「这条规则以哪份文件为准，其它地方出现时应该是指针还是副本」。
 > 这张表不是第二条规则正文：它只登记归属，不复述条款内容。
 > 机器核验：`python3 tools/lab/validate.py docs`（`gate/docs.py` 的 `validate_carrier_map`）
@@ -29,11 +31,13 @@
 | 证据工具 seal / verify / run 的接口 | `skills/agentflow/references/workflow-tool.md` | ## 命令 | 批次 `testing/` 写用法实例，不重定义命令语义 |
 | 埋点评审清单 | `skills/agentflow/references/telemetry.md` | ## 评审门检查清单 | SKILL 的埋点节明写「本文不复述那十条」，只指路径 |
 | 设计图画法（三层选图、事件号、怎么读、九列表） | `skills/design-diagram/SKILL.md` | ## 三条铁律 | **要哪些图**仍归文档链（形态判据不在此复述）；本 skill 只定画成什么样算合格。时间序/状态/ER 的骨架在 `skills/design-diagram/templates/`，报错处置在 `references/gate-findings.md`，`skills/agentflow/SKILL.md` 的入口表只留指针 |
+| 评审与测试的成本分档（S/M/L 判据与配套默认纪律） | `skills/agentflow/references/execution.md` | ## 评审与测试的成本分档（按改动量定成本，不按轮次惯性） | SKILL 的分档节只留两条不可让渡（原型前置、收口用户验收）与指针，不复制分档表（2026-11-04 从 SKILL 搬出，主文件 192→146 行） |
+| 外部文档二次评审的桥工作流（快照、`source_revision`、`provenance` 分流、记录契约） | `skills/agentflow/references/repo-audit.md` | ## 外部文档二次评审（另一套规则下产出的文档） | SKILL 的该节只留触发条件、两个升级回路与指针；四步流程不出现第二份 |
 | 仓库整体审核档位与铁律 | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 审核节只留指针，档位与铁律以 repo-audit.md 为准（档位数与铁律数不在此计数，以该文件实列为准），不抄铁律正文 |
 | 检索纪律（存在性结论不用裸 grep、先打印命中原文再判 PASS/FAIL） | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 的 Init 节已指针化（指向 repo-rules 模板第 4 节与本铁律清单）；`templates/hub/repo-rules.md` 第 4 节是写进目标仓的安装态固定块（同步机制随版本标记重跑 Init 刷新），`templates/host/global-rules.md` 第 11 节同理 |
 | 宿主托管块协议（dry-run、只改块内、三项校验） | `skills/agentflow/references/hosts.md` | ## 托管块协议 与 ## 版本与漂移 | SKILL 的宿主级接入节只保留三条硬约束与指针 |
 | 合并收口纪律（material 合并的构建/测试/对账义务） | `skills/agentflow/SKILL.md` | ## 运行工作流 | 与 `skills/agentflow/templates/host/global-rules.md` §3/§5/§6 是同一组规则的宿主级安装态副本：SKILL 第 6 步是权威正文，模板承载跨会话安装态，同步机制 = bump 插件版本后重跑 Host Init（见 `skills/agentflow/references/hosts.md`「版本与漂移」节），不靠人工逐句比对 |
-| 宿主级全局规则正文（跨仓纪律的文本） | `skills/agentflow/templates/host/global-rules.md` | `<!-- agentflow:begin v{{version}} -->` | 目标仓的托管块是该文件的安装态副本：改模板必须同时 bump 插件版本并重跑 Host Init，**不靠「改一处就改另一处」的人工记忆**（同一内容有两个物理载体且无法指针化，同步机制是版本号，见 `skills/agentflow/references/hosts.md` 的漂移判定） |
+| 宿主级全局规则正文（跨仓纪律的文本） | `skills/agentflow/templates/host/global-rules.md` | `<!-- agentflow:begin v{{version}} -->` | 目标仓的托管块是该文件的安装态副本：改模板必须同时 bump 插件版本并重跑 Host Init，**不靠「改一处就改另一处」的人工记忆**。与 `templates/hub/repo-rules.md` 的关系**不是同一份内容的两份拷贝**（前者管宿主全部工作区，后者管单个目标仓的实例与槽位），重叠的 3 处条款已于 2026-11-04 指针化：repo-rules 只留本仓可执行形态并指向本文件的 §1/§3/§4/§11，宿主未接入（无托管块）时 repo-rules 自身即为完整要求 |
 | 本仓质量门命令与接受产物前置 | `AGENTS.md` | ## 接受任何产物之前 | `tools/lab/README.md` 写各门项职责，不重复命令清单；README 与 index 不复述门项数 |
 | 本仓记录根、命名与落点 | `AGENTS.md` | ## 在本仓库工作 | `docs/issues/README.md`、`docs/features/README.md` 等各写本域的形态细节，顶层归属只在 AGENTS |
 | 计划形态与机器断言（看板、任务枚举、分支策略） | `docs/features/README.md` | ## 计划形态 | `skills/agentflow/templates/feature/plan/execution.md` 是可复制骨架，不另写一份断言表 |

@@ -18,6 +18,24 @@ def read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def split_soft(findings: list[str]) -> tuple[list[str], list[str]]:
+    """Split findings into (hard, soft); soft ones are the wording-level C13/C14 tier.
+
+    The prefix is the only channel: every producer that returns a plain ``list[str]`` keeps
+    working, and the caller decides whether the tier fails the run (``--strict``) or only
+    prints. Keeping the severity in the finding text rather than in a parallel return value
+    means no call site can silently drop the soft findings.
+    """
+    hard: list[str] = []
+    soft: list[str] = []
+    for item in findings:
+        if item.startswith(SOFT_PREFIX):
+            soft.append(item[len(SOFT_PREFIX):])
+        else:
+            hard.append(item)
+    return hard, soft
+
+
 def fenced_lines(text: str) -> set[int]:
     """Line numbers inside or on a ``` fence (the toggle lines themselves included)."""
     inside, out = False, set()
@@ -93,7 +111,7 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
                 role_line = re.sub(re.escape(phrase), " ", role_line, flags=re.IGNORECASE)
             hits = [w for w in ROLE_PHRASES if w in line] + ROLE_WORD_RE.findall(role_line)
             for w in sorted(set(hits)):
-                errors.append(f"C13 会话角色词: {label}:{i} {w}")
+                errors.append(f"{SOFT_PREFIX}C13 会话角色词: {label}:{i} {w}")
         # C14 bare code subjects: codes pair with the plain word in prose; the definition
         # site, code spans/fences, and the two paired forms are exempt (see CODE_SUBJECT_RE).
         if i not in fences and not line.lstrip().startswith("|"):
@@ -102,7 +120,7 @@ def text_form_findings(label: str, text: str, resolve_roots: list[Path]) -> list
                 glossed = prose[m.end():].lstrip(" \u3000").startswith(("（", "("))
                 if glossed or inside_parens(prose, m.start()):
                     continue
-                errors.append(f"C14 代号裸用: {label}:{i} {m.group(0)}")
+                errors.append(f"{SOFT_PREFIX}C14 代号裸用: {label}:{i} {m.group(0)}")
     return errors
 
 
@@ -1690,11 +1708,97 @@ def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
 #      defect ("发现并修复" / "修后复测") but issues/ has no corresponding ISS-* record.
 # C30  status single-point drift: batch state words counted per document must agree with the
 #      plan task table's aggregate; change-log lines are excluded by the STALE allow-list.
-# C31  candidate-set section: a proposal that declares scope but carries no §1.4 范围穷举 table
-#      (or an emptied one) — the exact gap that let QQ/微信/验证码 stay at 0 mentions.
+# C31  candidate-set section: a proposal that declares scope must carry a §1.4 范围穷举 table
+#      whose rows are actually decided. Reading the heading alone was the 0.33 form and it
+#      passed everything the incident was about: delete the table, keep the heading, stay green.
+#      The 2026-11-02 login batch had QQ / 微信 / 验证码 / 手机 / 短信防抖 at 0 mentions across
+#      20 documents — the failure was "no enumerable obligation", not "no heading".
 
 DEVIATION_WORDS = ("发现并修复", "修后复测", "修复后复测", "执行中发现", "实测发现缺陷")
 STATUS_WORDS = ("已完成", "进行中", "待验收", "已验收", "待评审", "已通过评审")
+
+SCOPE_HEADING_RE = re.compile(r"^#{2,4}\s*1\.4[^\n]*$", re.MULTILINE)
+# A decision cell is decided when it carries one of these; 「没想」looks like an empty cell.
+SCOPE_DECISION_WORDS = ("做", "不适用", "延后", "沿用", "已具备", "保留", "移除", "隐藏", "本期不动")
+SCOPE_NEGATIVE_WORDS = ("不做", "不适用", "延后", "本期不", "暂不")
+# 「不做」without a reason is the exact shape that let "没想到" pass as "决定不做".
+SCOPE_REASON_MIN_CHARS = 4
+SCOPE_REASON_PLACEHOLDERS = frozenset({"无", "—", "-", "——", "略", "同上", "n/a", "na", "待定", "暂无"})
+SCOPE_MIN_DIMENSION_ROWS = 3
+
+
+def _heading_body(text: str, match: re.Match[str]) -> str:
+    """Lines under a heading, up to the next heading of the same or a higher level."""
+    lines = text.splitlines()
+    start = text[: match.start()].count("\n")
+    level = len(lines[start]) - len(lines[start].lstrip("#"))
+    body: list[str] = []
+    for line in lines[start + 1:]:
+        head = re.match(r"^(#{1,6})\s", line)
+        if head and len(head.group(1)) <= level:
+            break
+        body.append(line)
+    return "\n".join(body)
+
+
+def _is_placeholder_row(cells: list[str]) -> bool:
+    joined = " ".join(cells)
+    return "（填写）" in joined or "按维度清单逐行复制" in joined or not joined.strip()
+
+
+def scope_candidate_findings(text: str) -> list[str]:
+    """C31 — §1.4 must exist *and* its dimension table must be decided row by row."""
+    match = SCOPE_HEADING_RE.search(text)
+    if not match:
+        return [
+            (
+                "C31 候选集: proposal 声明了范围但没有 §1.4「范围穷举与存量面处置」节——"
+                "本类功能的惯例维度未逐项决策（QQ/微信/验证码这类漏问就出在这里）"
+            )
+        ]
+    tables = md_tables(_heading_body(text, match))
+    dimension = next(
+        (
+            (header, rows)
+            for header, rows in tables
+            if any("维度" in cell for cell in header) or any("决策" in cell for cell in header)
+        ),
+        None,
+    )
+    if dimension is None:
+        return [
+            (
+                "C31 候选集: §1.4 下没有「维度 | 决策 | 理由」表——只留小节标题、"
+                "把表整体删掉，在 0.33 的判据下是绿的"
+            )
+        ]
+    header, rows = dimension
+    decided_rows = [row for row in rows if not _is_placeholder_row(row)]
+    findings: list[str] = []
+    if len(decided_rows) < SCOPE_MIN_DIMENSION_ROWS:
+        findings.append(
+            f"C31 候选集: §1.4 维度表只有 {len(decided_rows)} 行，"
+            f"少于 {SCOPE_MIN_DIMENSION_ROWS} 行——维度被删行凑干净了（不适用也要留行写理由）"
+        )
+    decision_col = next((i for i, cell in enumerate(header) if "决策" in cell), 1)
+    reason_col = next((i for i, cell in enumerate(header) if "理由" in cell), 2)
+    for row in decided_rows:
+        dimension_name = (row[0] if row else "").strip("`* ") or "（未命名维度）"
+        decision = row[decision_col].strip() if decision_col < len(row) else ""
+        reason = row[reason_col].strip() if reason_col < len(row) else ""
+        if not any(word in decision for word in SCOPE_DECISION_WORDS):
+            findings.append(
+                f"C31 候选集: 维度「{dimension_name}」没有决策（做 / 不做 / 不适用 / 延后 任一）"
+            )
+            continue
+        if any(word in decision for word in SCOPE_NEGATIVE_WORDS):
+            bare = re.sub(r"[`*\s（()）~]", "", reason)
+            if len(bare) < SCOPE_REASON_MIN_CHARS or bare.lower() in SCOPE_REASON_PLACEHOLDERS:
+                findings.append(
+                    f"C31 候选集: 维度「{dimension_name}」判为「{decision}」但理由不成立（「{reason or '空'}」）"
+                    f"——「没想到」与「决定不做」必须在文档上长得不一样"
+                )
+    return findings
 
 
 def batch_deviation_findings(batch_dir: Path) -> list[str]:
@@ -1744,17 +1848,12 @@ def batch_deviation_findings(batch_dir: Path) -> list[str]:
                             f"「{'、'.join(conflicting[:2])}」——状态词应只在计划看板维护一处"
                         )
 
-    # C31 — proposal declares scope but has no §1.4 candidate-set table.
+    # C31 — §1.4 must exist and be decided row by row (see scope_candidate_findings).
     proposal = batch_dir / "proposal" / "proposal.md"
     if proposal.is_file():
         text = read(proposal)
-        has_scope = "本期范围" in text or "不包含" in text
-        has_candidates = "范围穷举" in text
-        if has_scope and not has_candidates:
-            warnings.append(
-                "C31 候选集: proposal 声明了范围，但没有 §1.4「范围穷举」节——"
-                "本类功能的惯例维度未逐项决策（QQ/微信/验证码这类漏问就出在这里）"
-            )
+        if "本期范围" in text or "不包含" in text:
+            warnings.extend(scope_candidate_findings(text))
     return warnings
 
 
