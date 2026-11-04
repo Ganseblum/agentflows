@@ -24,6 +24,7 @@
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节与 [`tools/lab/README.md`](tools/lab/README.md)（手写的目录树已删除，避免与真实结构漂移） |
 | 记录 | `docs/issues/`（缺陷与台账，「归档」在这是**被拒记录的移出面**，定义单点见 `docs/issues/README.md` 的归档规则节）、`docs/features/`（批次与计划）、`episodes/`（决策记录）、`docs/releases/`（在途与待验收）、`reviews/`（对外评审落点）、`docs/decisions/`（决策台账索引 `index.md` 与发放见证 `issued.txt`）；改进环与改进三件套已停用 |
 | 校验与评测工具 | `tools/lab/` |
+| 目标仓侧工具（init 安装 / 立项 / 评审快照 / 用例与批次校验） | `skills/agentflow/scripts/`：[init_workspace.py](skills/agentflow/scripts/init_workspace.py)（多宿主安全安装）· [new_feature.py](skills/agentflow/scripts/new_feature.py)（一键立项）· [review_snapshot.py](skills/agentflow/scripts/review_snapshot.py)（评审快照）· [check-testcases.py](skills/agentflow/scripts/check-testcases.py)（AC↔用例闭合）· [check_records.py](skills/agentflow/scripts/check_records.py)（批次跨文件一致性） |
 | 查本仓自评（评测报告 / 缺口清单 / 拍板项） | `docs/evaluations/`；最新见 [2026-10-28 全面评测](docs/evaluations/AGENTFLOW-EVAL-2026-10-28.md)（综合 7.9，含五批整改方案与其落地批次）、[评审耗时基线 2026-10-28](docs/evaluations/AGENTFLOW-REVIEW-COST-BASELINE-2026-10-28.md)（改动前快照与复测判据）；上一轮 [2026-10-26 整体审核](docs/evaluations/archive/2026-10-26/AGENTFLOW-AUDIT-2026-10-26.md)（12 维 · 25 变异实证 · 发现总表带整改状态列）；历史报告按文件日期查阅 |
 
 ## 维护纪律
