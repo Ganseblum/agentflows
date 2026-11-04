@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.31.0 — 2026-11-04（清理与收口批：C28 落门、SKILL 减重、grilling 内嵌）
+
+- **C28 AC 覆盖闭合进 doc_chain**（门变更，全 8 份复盘文档一致推荐）：AC 定义表集合 ≡ testing plan 注册表「来源」列 ∪ `testcases.yaml` 的 `ac` 字段；plan 已落盘而 spec/qa 残留「待覆盖」映射行即红。四条判别自测（缺口 / 残留映射表 / 完整闭合 / 尚无 testing 阶段不误红），linter 自测 157 → **161/161**。同时补 `constants.py` docstring 的 C25/C26 声明（此前两编号只在代码里，自查清单看不见）。
+- **SKILL.md 减重**：Init 五步细则（脚本先行 / 六问 / 接入约定 / 基线对齐）搬入新 `references/init.md`，常驻正文 44,967 → 40,480 字节（-4.5KB）；路由表拆成「主干 14 条 + 按需包 6 条」，低频资料（设计图 / 宿主接入 / 埋点 / 仓库审核 / 证据工具 / 载体地图）退出一级路由，模型不再每次扫全表。
+- **grilling 内嵌进 design 模板**：`design/be` §1.2.9 与 `design/fe` §1.2.9 新增「设计前沿核对」固定表（消费方全集 / 跨边界不变量 / 失败分支归属 / 生命周期 / 不可逆点 / 未决问题）。此前 `grilling.md` 在本仓 `docs/`、`episodes/`、`reviews/`、`examples/` 里路径引用**命中 0 次**——靠「模型自己想起来读」等于从不触发；内嵌后每次设计必过一遍前沿。
+- **清理**：删除宿主机 5 份 `~/.zcode/AGENTS.md.agentflow-backup-*` 残留（约 86KB，`.gitignore` 早已忽略该模式但本机持续积累）。经核查**未删除**任何仓库文件：references 全部有 4–6 处引用、`workflow_lib/`（1,646 行）有 `tests/test_workflow.py` 覆盖、`docs/evaluations/archive`（428K）有 7 处引用且移无收益、`packaging/runtime` 是 `validate.py installed` 的保护面。
+- 验证：11 项门 PASS、`doc_chain` 自测 161/161、`check_records` 8/8、`init_workspace` 8/8、`new_feature` 4/4、`review_snapshot` 5/5、260 单测 OK；`installed` 红（0.31.0 未重装）。
+
 ## 0.30.1 — 2026-11-04（AC↔用例映射单点化）
 
 - **起因**：0.30.0 引入的 `plan` frontmatter `ac_refs` 字段与 `schemas/test-plan.schema.json` 的 `additionalProperties: false` 冲突——任何按模板新建的 plan 都会被 schema 判红（`validate.py` 抓不到，因为模板本身不是记录）。该字段本身也是冗余：AC↔用例的映射已经写在注册表「来源」列，且该列自 T10 起由 `gate/testing.py` 强制非空。

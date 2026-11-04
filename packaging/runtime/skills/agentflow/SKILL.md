@@ -20,47 +20,48 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 
 ## 先读哪份规则
 
+**主干**（每个批次几乎必然用到）：
+
 | 当前工作 | 权威入口 |
 | --- | --- |
 | 开工、测试先行、预检、选测、证据复用、补测、失败分流 | [执行与验证](references/execution.md) |
 | 需求不清、开工前对齐、任务简报 | [开工提问](references/intake.md) |
+| 接一个新项目（六问、接入约定、基线对齐） | [Init 细则](references/init.md) |
 | 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) |
-| 画、改、评设计图（时序/状态/架构/ER） | [设计图](../design-diagram/SKILL.md) |
 | 选择角色与交接 | [角色路由](references/roles.md) · [契约](references/contracts.md) |
 | 独立评审要加载哪几份深度清单、评审档位与交付前自检 | [评审清单](references/review-checklists.md) |
 | 功能文档与轻量/完整档位 | [文档交付链](references/document-chain.md) |
-| 产品决策简报（分类头 + 九段） | [决策简报模板](templates/decision/decision-brief.md) |
 | 测试计划、执行记录及 Bug 状态联动 | [测试记录](references/test-records.md) |
-| 跨仓全局纪律 | [宿主接入](references/hosts.md) |
-| 用户行为事件 | [埋点契约](references/telemetry.md) |
-| 仓库整体审核 | [审核契约](references/repo-audit.md) |
 | 工程内容标准（写代码时） | [服务端](references/standards/server-side.md) · [数据模型](references/standards/data-model.md) · [前端](references/standards/frontend.md) |
-| 问题闭环：发现 → ISSUE + 复发台账 | [问题闭环](references/issue-tracking.md) |
+| 问题闭环：发现 → 落账 → 复发台账 | [问题闭环](references/issue-tracking.md) |
 | 验证分级：curl 仅 smoke，e2e 必须 browser+证据 | [验证分级](references/verification-grading.md) |
-| 测试用例结构化（testcases.yaml） | [测试用例](references/testcases.md) |
+| 测试用例结构化（AC 权威在 plan 注册表） | [测试用例](references/testcases.md) |
 | 开工范围维度主动确认 | [范围维度](references/intake-scope-dimensions.md) |
+| 产品决策简报（分类头 + 九段） | [决策简报模板](templates/decision/decision-brief.md) |
+
+**按需包**（低频，命中具体场景才读；不在主路由里，读到这一行就够了）：
+
+| 场景 | 入口 |
+| --- | --- |
+| 画、改、评设计图（时序 / 状态 / 架构 / ER） | [设计图](../design-diagram/SKILL.md) |
+| 跨仓全局纪律、Host Init 协议、宿主矩阵 | [宿主接入](references/hosts.md) |
+| 用户行为事件与埋点评审门 | [埋点契约](references/telemetry.md) |
+| 仓库整体审核 / 体检 / 复盘 | [审核契约](references/repo-audit.md) |
+| 证据工具 seal / verify / run 的命令语义 | [证据工具用法](references/workflow-tool.md) |
+| 载体归属（哪份规则落在哪个物理文件） | [载体地图](references/carrier-map.md) |
 
 同一任务可以命中多项，但只读取实际适用的内容。规则、状态和行为正文各维持一个权威来源，不复制第二套流程或记录。
 
 ## 首次接入（Init）
 
-在一个尚未接入 Agentflow 的项目里第一次工作时（目标仓没有相关约定、记录结构或检查命令），先做一次轻量接入，再走正常流程：
+目标仓没有相关约定、记录结构或检查命令时，先做一次轻量接入再走正常流程。**执行细则见 [Init 细则](references/init.md)**（脚本先行 → 六问集中确认 → 写接入约定小节 → 已有批次先对齐基线），此处只留三条不变式：
 
-0. **脚本先行，AI 只填项目事实**：先跑 `python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run`——它扫描目标仓并打印 `[create]/[refresh]/[append]/[skip]/[conflict]` 计划（AGENTS.md 托管块、`.cursor/rules/agentflow.mdc`、`CLAUDE.md` 指针、copilot 入口、`.agentflow/standards/` 工程内容底线）。用户确认计划后去掉 `--dry-run` 实跑；宿主既有文件只追加托管块或跳过，绝不覆盖，冲突项与用户逐条裁决。随后 AI 只做脚本做不了的事：探测项目事实（技术栈 / 目录 / 检查命令——探测命令必须带超时，禁止把可能长跑的命令丢进后台再靠 TaskStop 收尾）并回填工程基线。只有脚本报冲突或用户明确要求时才退回「AI 逐文件生成」，并在接入报告里写明退回原因。
-1. 与用户确认六项（有默认值的按默认走、一次集中确认差异；其中工程规范一项：目标仓已有规范登记其入口，没有时用 `.agentflow/standards/` 通用底线并标注项目可覆盖）：交付语言与读者（默认中文；面向用户时白话优先）、术语约定（用户反复纠正过的词、内部自造词的替代说法，例如「台账」→「清单 / 记录」）、分支与合并纪律、仓库自带的检查命令（构建 / 测试 / lint）、**文档与记录落点**——目标仓已有自己的文档体系则用其体系；否则在链契约的两种形态中二选一（无既有约定时默认推荐①文档枢纽仓 `<repo>/<name>-workflow-ai/`：`features/` + `issues/` + `releases/` + `index.md`，骨架见 [templates/hub/](templates/hub/README.md)）。**不得自创第三种落点**（例如 `records/plans/`）、**工程基线**——目标仓已有工程规范时登记其入口路径；没有时与用户确认后用[工程基线模板](templates/engineering/baseline.md)落一份最小基线（技术栈与运行环境、禁止的平行方案、目录与命名、新增模块必做清单、测试栈与运行方式、质量门顺序、配置与边界）。工程基线只收目标仓的实测事实：查不到写缺口，不按通用默认推断，也不搬运其它项目的业务数值与部署流程。
-2. 按[目标仓接入节模板](templates/hub/repo-rules.md)把结果写成「Agentflow 接入约定」小节——模板是必产出载体，不是可选参考：固定块写死硬判据，槽位由第 1 步的六问填充，整节用模板规定的 begin / end 注释标记包住，重跑只替换标记内内容。经用户确认后追加进目标仓的 `AGENTS.md`（或用户指定的等效规则文件）；没有该文件时先征得同意再创建；选枢纽仓形态时，同时建立枢纽骨架（README、index、features、issues、releases）。小节必须包含三句可执行的门条款——只写「走主流程」而不写「跑门」，接入等于没接（2026-10-21 跨仓复盘实证：接入约定只写了主流程的仓里，三个实际干活的会话门禁调用为零）：
-   - 新批次建好当天，运行一次文档链检查器（已随插件交付，装在插件根 `tools/lab/` 下；引入版本见 `CHANGELOG.md`，不在本文写版本号）；
-     在目标仓根目录运行 `python3 <插件根>/tools/lab/doc_chain.py --root <目标仓根> <feature-dir>`——
-     位置参数相对**当前目录**解析（不相对 `--root`），`--root` 只决定落点与路径核验的基准；
-     不带 `--root` 时落点按插件仓根解析；
-   - 宣布任何批次完成前，对该仓全部批次跑一遍 linter 并贴原始输出；
-   - 输出里出现 finding 不许口头绕过——要么修复，要么显式登记放行。
-
-   小节还要写明**工程基线入口**：目标仓已有规范写其路径，本次落下写新文件路径。它是接入要件之一，不改变上面三道门的口径；工程师在实现前读它，基线与任务冲突或缺失时按「先问再假设」停下，不按通用默认推进。写入后按模板末尾的确认单核对：七节都有值或 `N/A: 理由`，三句门齐全，分支前缀与记录编号形态是本仓实测事实而不是通用默认；缺项在接入报告里如实列出，不写成已完成。
-3. 接入**已有**批次的目标仓时，先做一次基线对齐再立项：① 对既有批次全量跑一遍 linter，把「真缺口」与「口径噪声」分开——常见噪声有两类：代码落点按批次目录或枢纽仓根书写而解析基准是目标仓根（先在批次 README 元信息声明「落点基准」再跑）、裸文件名（无目录前缀）本就无法解析；② 与用户拍板口径（改存量文档还是改门），拍板前不得按噪声立项；③ 历史批次不回改——基线只登记，不触发整改。同时把两条检索纪律写进小节——正文以 [repo-rules 模板](templates/hub/repo-rules.md) 第 4 节的固定块为准（判据出处见[审核契约](references/repo-audit.md)的铁律清单），此处不复述第二份：写进目标仓小节的是硬判据，不是建议。
-4. 此后以该小节为准；约定变化时就地更新它，不另开平行文件。
-
-Init 只配置项目侧约定，不把 Agentflow 的内部机制名词搬进目标仓——需要说明时用白话。
+- **脚本先行**：`python3 <skill>/scripts/init_workspace.py <目标仓根> --dry-run` 先出计划，确认后实跑；
+  宿主既有文件只追加托管块，**绝不覆盖**，冲突与用户逐条裁决。
+- **接入必须带三道可执行门条款**：新批次当天跑 `doc_chain.py`、宣布完成前全仓批次再跑并贴原始输出、
+  finding 要么修要么显式登记——只写「走主流程」等于没接。接入约定的必产出载体是
+  [目标仓接入节模板](templates/hub/repo-rules.md)（固定硬判据 + 仓事实槽位 + begin/end 标记）。
+- **工程基线只收实测事实**：查不到写缺口，不按通用默认推断，不搬运别的项目的业务数值与部署流程。
 
 分派工作前阅读[角色档案](references/roles.md)，委派实现或评审前阅读[契约](references/contracts.md)。[硬边界](references/contracts.md#硬边界)在每一次委派中都成立；接受任何交付物前先检查它们。
 
@@ -172,13 +173,12 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 
 ## 工程内容标准与问题闭环
 
-本 skill 给的是**流程门禁**；写代码与收口还需「内容标准」与「问题沉淀」两条纪律，详见各自 reference，reviewer 在给 `approved` 前套用：
+本 skill 是**流程门禁**；写代码与收口另需三条纪律（reviewer 在 `approved` 前套用）：
 
-- **工程内容标准（强制）**：服务端写代码对齐 [server-side](references/standards/server-side.md)（幂等 / 鲁棒 / OOP / 可维护性 / 稳定性）、[data-model](references/standards/data-model.md)（字段级冻结、索引、幂等键）、[frontend](references/standards/frontend.md)（受控状态、防抖、错误边界、三方登录 UI）。模板已内嵌其自检清单。
-- **问题闭环（强制）**：确认且需改代码的缺陷必须落账——ISS 记录或评审记录缺陷表二选一（[issue-tracking](references/issue-tracking.md)，`defect_class: 规范|模板|流程|代码`），同轮立即修复且无外部影响的低风险细节留在评审记录；批次收口前汇总缺陷台账，不允许「零记录收口」而评审出现过 changes_requested。规范 / 模板 / 流程类在 verified 后必须回填 agentflow 自身改进 commit，否则只修目标仓、根因仍留。
-- **验证分级（强制）**：`curl` 仅 smoke；端到端验收必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）。把 curl 当「会话闭环 / 登录成功」通过即 `changes_requested`。
-- **测试用例结构化**：以 AC 为键的 `testcases.yaml`（[testcases](references/testcases.md)），design 必须表述操作过程 + 预期结果，CI 校验每条 AC 至少 1 用例。
-- **intake 范围维度**：开工前按领域主动穷举范围（[intake-scope-dimensions](references/intake-scope-dimensions.md)），而非被动等用户想到再补。
+- **工程内容**：[server-side](references/standards/server-side.md)（幂等 / 鲁棒 / 分层 / 稳定性，含按规模分级）、[data-model](references/standards/data-model.md)（字段级冻结——无库也给等效结构契约）、[frontend](references/standards/frontend.md)（受控状态 / 同步锁防连点 / 三态 / 错误边界）。
+- **问题闭环**：确认且需改代码的缺陷必须落账（ISS 或评审缺陷表二选一，带 `defect_class`）；低风险同轮修复留评审记录；收口前汇总台账（[issue-tracking](references/issue-tracking.md)）。
+- **验证分级**：`curl` 仅 smoke；用户可见路径必须 browser/manual + 原始证据（[verification-grading](references/verification-grading.md)）。
+- **测试用例**：AC 权威在 plan 注册表「来源」列（[testcases](references/testcases.md)）；**范围穷举**：开工前按领域逐维确认（[intake-scope-dimensions](references/intake-scope-dimensions.md)），不等用户想到。
 
 ## 保持控制与可追溯性
 

@@ -1231,6 +1231,55 @@ def self_test() -> int:
     run_case("C27-03 template-shaped headings with real content stay green", 0, ["PASS doc-chain"],
              mutate=m_c27_filled, results=results)
 
+    # C28 AC coverage closure (2026-11-04 gate change, user-authorized). A real batch shipped 27
+    # rows of 「待覆盖」 in spec/qa while its 30 cases had run 30/30 and every gate stayed green:
+    # the AC→case chain was only readable by eye. These pin that a gap turns red, a stale mapping
+    # table turns red, and full closure stays green.
+    C28_ACCEPTANCE = (
+        "# qa\n\n## 3. 模块验收点\n\n"
+        "| 验收点 | 验收目标 |\n| --- | --- |\n"
+        "| M01-AC-01 | 登录成功 |\n| M01-AC-02 | 登录失败 |\n"
+    )
+    C28_PLAN = (
+        "# 用例库\n\n## 用例\n\n"
+        "| 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |\n| --- | --- | --- | --- | --- | --- |\n"
+        "| TC-01-01 | e2e | P0 | 登录成功 | 按钮 | M01-AC-01 |\n"
+        "{rows}"
+        "\n## 边界覆盖\n\n| 边界类 | 覆盖用例 | 说明 |\n| --- | --- | --- |\n| 空值 | TC-01-01 | x |\n\n"
+        "## 流程疑点\n\n- Q1：无\n"
+    )
+
+    def m_c28_gap(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(rows="")
+        return f
+    run_case("C28-01 an AC with no case trips the closure gate", 1, ["C28 AC 覆盖"],
+             mutate=m_c28_gap, results=results)
+
+    def m_c28_stale(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE + (
+            "\n## 4. 覆盖映射\n\n| 验收点 AC | 关联用例 | 状态 |\n| --- | --- | --- |\n"
+            "| M01-AC-01 | TC-01-01 | 待覆盖 |\n")
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(
+            rows="| TC-01-02 | e2e | P1 | 登录失败 | 按钮 | M01-AC-02 |\n")
+        return f
+    run_case("C28-02 a stale 待覆盖 mapping table trips even when cases cover both", 1,
+             ["C28 AC 覆盖"], mutate=m_c28_stale, results=results)
+
+    def m_c28_closed(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        f["testing/demo/plan-2026-11-04-001.md"] = C28_PLAN.format(
+            rows="| TC-01-02 | e2e | P1 | 登录失败 | 按钮 | M01-AC-02 |\n")
+        return f
+    run_case("C28-03 full coverage with no mapping copy stays green", 0, ["PASS doc-chain"],
+             mutate=m_c28_closed, results=results)
+
+    def m_c28_no_plan(f):
+        f["spec/qa/acceptance.md"] = C28_ACCEPTANCE
+        return f
+    run_case("C28-04 spec/qa alone (no testing plan yet) stays green", 0, ["PASS doc-chain"],
+             mutate=m_c28_no_plan, results=results)
+
     ok = all(passed for _, passed in results)
     for name, passed in results:
         print(("PASS " if passed else "FAIL ") + name)
