@@ -3,6 +3,15 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.32.0 — 2026-11-04（intake / grilling 双触发 + C29–C31 软警告 + 简报生成器）
+
+- **`intake` / `grilling` 从 references 升为独立 skill（双触发）**：新增 `skills/agentflow-intake/`、`skills/agentflow-grilling/`。它们**不复制正文**——只写触发条件与硬约束，方法契约仍单点在 `references/intake.md` / `references/grilling.md`。为什么两条路径都要：**模板内嵌**（`design/be` §1.2.9、`design/fe` §1.2.9、`proposal` §1.4）覆盖「该做但模型想不起来」的自动触发；**独立 skill** 覆盖「用户主动说『压一下这个设计』」的手动触发。此前 `grilling.md` 在本仓 90 份 docs + 49 份 episodes + reviews + examples 里路径引用**命中 0 次**——单靠路由表等于从不触发。
+- **C29 / C30 / C31 以软警告形态进 doc_chain**（门变更，用户授权「全做，起始软」）：C29 执行期偏差必须立案（☑ 行证据称「发现并修复」而 issues/ 无 ISS）；C30 状态单点漂移（非计划文档同时出现互斥状态词）；C31 候选集缺失（proposal 声明范围但无 §1.4 范围穷举）。**走独立软通道，只打印不计 finding、不影响退出码**——仓库前车之鉴是 `check-write-scope.sh` 因误报面未评估至今未接 CI。四条判别自测（含「软警告不影响退出码」这一半），自测 161 → **164/164**。
+- **`scripts/gen_review_brief.py`**：评审简报生成器，强制内联被评审文件逐字内容、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出五个必填字段。手写简报的两个典型缺陷（给路径不给内容、给 sha256 但无法校验）在生成器里不可能发生：文件不存在直接失败，sha256 只作参考不做绑定。自测 3/3。
+- **浏览器操作序列可重放**：`design/qa` §6 与 `test-records.md` 新增 `testing/<项目>-<功能>/scripts/ego-<用例ID>.mjs` —— 与 `scratch/`（一次性草稿、可丢弃）明确分开。解决「21 条浏览器用例只留 JSON 证据、脚本没进仓，下次改一行前端要现场重写一遍」。
+- **试过并回滚**：把 6 份低频 references 物理迁入 `references/packs/`——实测产生 **46 处断链**（相对链接是 `validate.py docs` 的硬门），收益仅是目录整齐，已改回原地 + 路由表逻辑分组（上一批已完成）。这条留给后来者：`packs/` 分层只做逻辑分组，不做物理移动。
+- 验证：11 项门 PASS、`doc_chain` 自测 164/164、`lint` PASS、260 单测 OK、各脚本自测 3/3 + 8/8 + 4/4 + 5/5 + 8/8。
+
 ## 0.31.0 — 2026-11-04（清理与收口批：C28 落门、SKILL 减重、grilling 内嵌）
 
 - **C28 AC 覆盖闭合进 doc_chain**（门变更，全 8 份复盘文档一致推荐）：AC 定义表集合 ≡ testing plan 注册表「来源」列 ∪ `testcases.yaml` 的 `ac` 字段；plan 已落盘而 spec/qa 残留「待覆盖」映射行即红。四条判别自测（缺口 / 残留映射表 / 完整闭合 / 尚无 testing 阶段不误红），linter 自测 157 → **161/161**。同时补 `constants.py` docstring 的 C25/C26 声明（此前两编号只在代码里，自查清单看不见）。

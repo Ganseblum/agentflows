@@ -1280,6 +1280,39 @@ def self_test() -> int:
     run_case("C28-04 spec/qa alone (no testing plan yet) stays green", 0, ["PASS doc-chain"],
              mutate=m_c28_no_plan, results=results)
 
+    # C29/C30/C31 soft channel (2026-11-04, user-authorized "make them all, start soft"). These
+    # must PRINT and must NOT change the exit code — the whole point of the adoption window is that
+    # an unmeasured false-positive surface cannot block legitimate work. Each case asserts both
+    # halves: the warning text appears, and the run still exits 0.
+    SOFT_PROPOSAL = (
+        "# 提案\n\n## 1.3 本期范围\n\n| 类型 | 内容 | 理由 |\n| --- | --- | --- |\n"
+        "| 包含 | 登录 | 需求 |\n| 不包含 | 注册 | 演示 |\n"
+    )
+
+    def m_c31_no_candidates(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL
+        return f
+    run_case("C31-01 scope without a candidate-set section warns and stays green", 0, ["C31 候选集"],
+             mutate=m_c31_no_candidates, results=results)
+
+    def m_c31_with_candidates(f):
+        f["proposal/proposal.md"] = SOFT_PROPOSAL + (
+            "\n### 1.4 范围穷举与存量面处置\n\n"
+            "| 维度 | 决策 | 理由 |\n| --- | --- | --- |\n| 三方登录 | 不做 | 无 OAuth 后端 |\n")
+        return f
+    run_case("C31-02 a filled candidate set stays clean", 0, ["PASS doc-chain"],
+             mutate=m_c31_with_candidates, results=results)
+
+    def m_c29_deviation(f):
+        # Mutate the already-green base fixture's plan row instead of replacing the whole plan:
+        # a soft-warning case must isolate the warning, not introduce other hard failures.
+        # Keep the resolvable evidence carrier (C23 needs one) AND add the defect phrasing C29 reads.
+        return rep(f, "plan/be/p.md",
+                   "| T01 | 迁移 | `migrations/x.sql` | — | ☐ 未开始 | `migrations/x.sql` |",
+                   "| T01 | 迁移 | `migrations/x.sql` | — | ☑ 已完成 | `migrations/x.sql`；执行中发现连点双请求并修复 |")
+    run_case("C29-01 a ☑ row claiming an on-the-fly fix warns and stays green", 0, ["C29 执行期偏差"],
+             mutate=m_c29_deviation, results=results)
+
     ok = all(passed for _, passed in results)
     for name, passed in results:
         print(("PASS " if passed else "FAIL ") + name)

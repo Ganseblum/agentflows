@@ -1673,6 +1673,79 @@ def batch_traceability_findings(batch_dir: Path, repo_root: Path) -> list[str]:
     return errors
 
 
+# --- C29 / C30 / C31 — adoption-period SOFT warnings (2026-11-04 gate change, user-authorized
+# as "make them all, start soft"). These are reported through a separate channel so they never
+# fail the gate during the first batches: the repos' own precedent is `check-write-scope.sh`,
+# which stayed out of CI precisely because its false-positive surface was never measured.
+# Promote one to a hard C-number only after a batch of real data shows the false-positive rate.
+#
+# C29  execution-time deviation must be registered: a ☑ task whose evidence cell describes a
+#      defect ("发现并修复" / "修后复测") but issues/ has no corresponding ISS-* record.
+# C30  status single-point drift: batch state words counted per document must agree with the
+#      plan task table's aggregate; change-log lines are excluded by the STALE allow-list.
+# C31  candidate-set section: a proposal that declares scope but carries no §1.4 范围穷举 table
+#      (or an emptied one) — the exact gap that let QQ/微信/验证码 stay at 0 mentions.
+
+DEVIATION_WORDS = ("发现并修复", "修后复测", "修复后复测", "执行中发现", "实测发现缺陷")
+STATUS_WORDS = ("已完成", "进行中", "待验收", "已验收", "待评审", "已通过评审")
+
+
+def batch_soft_warnings(batch_dir: Path) -> list[str]:
+    """C29/C30/C31 adoption-period soft warnings — never fail the gate."""
+    warnings: list[str] = []
+
+    # C29 — ☑ rows whose evidence talks about a defect, with no ISS id anywhere in the batch.
+    plan_dir = batch_dir / "plan"
+    iss_ids: set[str] = set()
+    for p in batch_dir.rglob("*.md"):
+        iss_ids |= set(re.findall(r"ISS-\d{4}-\d{2}-\d{2}-[^\s|`）)]+", read(p)))
+    for plan in sorted(plan_dir.rglob("*.md")) if plan_dir.is_dir() else []:
+        for line in read(plan).splitlines():
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) < 3 or not any(g in cells[-2] or g in cells[-1] for g in ("☑",)):
+                continue
+            row = " ".join(cells)
+            if any(w in row for w in DEVIATION_WORDS) and not re.search(r"ISS-\d{4}", row):
+                warnings.append(
+                    f"C29 执行期偏差（软）: {plan.relative_to(batch_dir)}: 「{cells[1][:40]}」"
+                    f"证据称发现并修复了缺陷，但本批 issues/ 无对应 ISS-* 记录"
+                )
+
+    # C30 — status words must not disagree between the plan table and other batch documents.
+    if plan_dir.is_dir():
+        plan_text = "\n".join(read(p) for p in sorted(plan_dir.rglob("*.md")))
+        for word in STATUS_WORDS:
+            if word not in plan_text:
+                continue
+            for doc in sorted(batch_dir.glob("*.md")):
+                if doc.name == "README.md":
+                    continue
+                text = read(doc)
+                if any(other in text for other in STATUS_WORDS if other != word):
+                    # both this word and a conflicting one appear in a non-plan doc
+                    conflicting = [o for o in STATUS_WORDS if o != word and o in text]
+                    if conflicting:
+                        warnings.append(
+                            f"C30 状态单点（软）: {doc.name} 同时出现「{word}」与"
+                            f"「{'、'.join(conflicting[:2])}」——状态词应只在计划看板维护一处"
+                        )
+
+    # C31 — proposal declares scope but has no §1.4 candidate-set table.
+    proposal = batch_dir / "proposal" / "proposal.md"
+    if proposal.is_file():
+        text = read(proposal)
+        has_scope = "本期范围" in text or "不包含" in text
+        has_candidates = "范围穷举" in text
+        if has_scope and not has_candidates:
+            warnings.append(
+                "C31 候选集（软）: proposal 声明了范围，但没有 §1.4「范围穷举」节——"
+                "本类功能的惯例维度未逐项决策（QQ/微信/验证码这类漏问就出在这里）"
+            )
+    return warnings
+
+
 # --- C28 AC coverage closure (2026-11-04 gate change, user-authorized).
 # Why: a real batch shipped with 27 rows of 「待覆盖」 in spec/qa while its 30 test cases had all
 # run 30/30, and every gate stayed green — the AC→case chain was only readable by eye. The

@@ -97,7 +97,7 @@ def main() -> int:
     print(f"[计划] 复制 {len(files)} 个模板文件 -> {target}")
     for p in files:
         print(f"  - {p.relative_to(template_dir).as_posix()}")
-    print(f"[计划] 建 testing/ 占位；登记 index.md 批次清单一行")
+    print("[计划] 建 testing/ 占位；登记 index.md 批次清单一行")
     if args.dry_run:
         print("\n[dry-run] 未写入任何文件。")
         return 0
@@ -143,7 +143,8 @@ def _self_test() -> int:
         finally:
             sys.argv = orig
 
-    import io, contextlib
+    import contextlib
+    import io
 
     def case(name: str, fn) -> None:
         base = Path(tempfile.mkdtemp(prefix="af-newfeat-selftest-"))

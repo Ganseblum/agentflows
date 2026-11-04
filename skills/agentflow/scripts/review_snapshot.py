@@ -23,7 +23,7 @@ import hashlib
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 MANIFEST_NAME = "MANIFEST.txt"
@@ -84,8 +84,8 @@ def make_snapshot(repo: Path, feature: Path, round_no: int, files: list[str],
         raise
 
     lines = [
-        f"# review snapshot manifest",
-        f"created_at: {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
+        "# review snapshot manifest",
+        f"created_at: {datetime.now(UTC).isoformat(timespec='seconds')}",
         f"reviewed_revision: snapshot {snap.name} @ {git_head(repo)}",
         f"repo: {repo.resolve()}",
         f"files: {len(copied)}",

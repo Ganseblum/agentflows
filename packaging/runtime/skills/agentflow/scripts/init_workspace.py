@@ -27,7 +27,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 END_MARK = "<!-- agentflow:end -->"
@@ -285,7 +285,7 @@ def write_manifest(target: Path, version: str, hosts: list[str], plan: Plan) -> 
     mpath.write_text(json.dumps({
         "tool": "agentflow-init",
         "version": version,
-        "installed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "installed_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "hosts": hosts,
         "files": files,
         "scopes": scopes,
@@ -424,7 +424,8 @@ def _self_test() -> int:
         std = work / ".agentflow" / "standards"
         std.mkdir(parents=True)
         (std / "server-side.md").write_text("# 团队自有规范，勿覆盖\n", encoding="utf-8")
-        import io, contextlib
+        import contextlib
+        import io
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             install(work)
@@ -436,7 +437,8 @@ def _self_test() -> int:
         install(work)
         p = work / ".agentflow" / "standards" / "server-side.md"
         p.write_text(p.read_text(encoding="utf-8") + "\n<!-- 人工补充 -->\n", encoding="utf-8")
-        import io, contextlib
+        import contextlib
+        import io
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             install(work)
@@ -454,7 +456,8 @@ def _self_test() -> int:
 
     @scenario("--check：未装报错、装后通过、块外追加不算漂移、块内与资产篡改检出")
     def _(work: Path) -> None:
-        import io, contextlib
+        import contextlib
+        import io
         with contextlib.redirect_stdout(io.StringIO()):
             assert run_check(work) == 1, "未安装时 --check 应失败"
             install(work)

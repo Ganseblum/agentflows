@@ -25,9 +25,9 @@ description: 用于跨层功能、架构改动、并行调查、委派式实现�
 | 当前工作 | 权威入口 |
 | --- | --- |
 | 开工、测试先行、预检、选测、证据复用、补测、失败分流 | [执行与验证](references/execution.md) |
-| 需求不清、开工前对齐、任务简报 | [开工提问](references/intake.md) |
+| 需求不清、开工前对齐、任务简报 | [开工提问](references/intake.md) · 用户主动叫入口：[agentflow-intake](../agentflow-intake/SKILL.md) |
 | 接一个新项目（六问、接入约定、基线对齐） | [Init 细则](references/init.md) |
-| 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) |
+| 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) · 用户主动叫入口：[agentflow-grilling](../agentflow-grilling/SKILL.md) |
 | 选择角色与交接 | [角色路由](references/roles.md) · [契约](references/contracts.md) |
 | 独立评审要加载哪几份深度清单、评审档位与交付前自检 | [评审清单](references/review-checklists.md) |
 | 功能文档与轻量/完整档位 | [文档交付链](references/document-chain.md) |
@@ -150,6 +150,8 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 **其余断言给出可定位的核实点。** 每份评审简报在可行时都要给出：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条待核实断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、以及已跑完的确定性检查的原始输出。给不出定位时在简报里写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜从哪里开始。
 
 **不要要求 reviewer 执行命令。** reviewer 的工具集是 `Read, Glob, Grep`，`Bash` 在 `disallowedTools` 里。简报里写「用 `git diff` 看全部改动」这类要求物理上做不到，只会让它绕行重建 diff。需要 diff 时把 diff 正文或 `.diff` 文件路径给出来。
+
+**简报用脚本生成，不接受手写。** `python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出[契约](references/contracts.md)规定的五个必填字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）。手写简报最常见的两个缺陷——给了路径却没内联内容、给了一串 sha256 却无法校验——在生成器里不可能发生（文件不存在直接失败，sha256 只作参考不做绑定）。
 
 ## 判断词的可判定定义
 

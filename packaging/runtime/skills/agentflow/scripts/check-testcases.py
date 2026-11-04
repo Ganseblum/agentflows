@@ -20,6 +20,7 @@ AC 定义的识别口径：取 acceptance.md 中**第一个含行首 AC 编号�
 退出码：0 通过 / 1 发现问题 / 2 参数或解析错误
 """
 from __future__ import annotations
+
 import re
 import sys
 from pathlib import Path
@@ -165,7 +166,8 @@ def _self_test() -> int:
                 p = base / rel
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text(content, encoding="utf-8")
-            import io, contextlib
+            import contextlib
+            import io
             buf_out, buf_err = io.StringIO(), io.StringIO()
             argv = sys.argv
             sys.argv = ["check-testcases.py", str(base)]
