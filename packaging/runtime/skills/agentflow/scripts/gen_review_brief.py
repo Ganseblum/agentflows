@@ -24,12 +24,19 @@
       断言 | 判据 | 核实点
       例：退出失败后刷新会恢复登录态 | 与 G3 冲突 | design/be/backend.md:181
 
-  --checks 文件格式：每条一行，`命令 :: 逐字输出`（或 `命令 :: @路径`）
+  --checks 文件格式：每条一行，`命令 :: exit=N :: 逐字输出`（或 `命令 :: exit=N :: @路径`）；
+      旧两段式 `命令 :: 逐字输出` / `命令 :: @路径` 仍接受，但渲染为「退出码未验证」
+  --diff-base 目录：按仓库相对路径与该目录（评审快照）逐文件生成 unified diff，内联为 §1.1；
+      delta 轮的变化面以 §1.1 为准，§1 全文用于核对上下文（reviewer 无 Bash，diff 必须内联）
+  --reuse-round N：复用同一 reviewer 的累计轮次（N ≥ 2）；必须与 --prev-findings 同时给出，
+      元信息块渲染 reviewer_reuse 声明（契约：contracts.md「跨阶段不复用」）
 """
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
+import re
 import subprocess
 import sys
 from datetime import date
@@ -37,7 +44,9 @@ from pathlib import Path
 
 DEFAULT_STOP_RULE = (
     "本轮 full 评审；阻塞项修复后最多 1 轮 delta；非阻塞建议写入 residual_risks 后收口，"
-    "不自动开第 3 轮。同一原因两轮无进展即停并交代。"
+    "不自动开第 3 轮。同一原因两轮无进展即停并交代。收口口径：P0/P1 与证据有效性类 finding"
+    "（如假绿断言）阻塞收口；文档措辞/计数类 P2/P3 默认写入 residual_risks 收口，"
+    "不为其另开 delta 轮。"
 )
 
 
@@ -65,25 +74,33 @@ def parse_assertions(path: Path | None) -> list[tuple[str, str, str]]:
     return rows
 
 
-def parse_checks(path: Path | None) -> list[tuple[str, str]]:
+def parse_checks(path: Path | None) -> list[tuple[str, str, int | None]]:
     if not path or not path.is_file():
         return []
-    out: list[tuple[str, str]] = []
+    out: list[tuple[str, str, int | None]] = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         if "::" not in raw:
             continue
-        cmd, _, body = raw.partition("::")
+        cmd, _, rest = raw.partition("::")
+        exit_code: int | None = None
+        body = rest.strip()
+        # 三段式：`命令 :: exit=N :: 输出`；两段式旧格式仍接受（exit 记 None）。
+        m = re.match(r"^exit=(-?\d+)\s*::\s*(.*)$", body, re.DOTALL)
+        if m:
+            exit_code = int(m.group(1))
+            body = m.group(2)
         body = body.strip()
         if body.startswith("@"):
             p = Path(body[1:].strip())
             body = p.read_text(encoding="utf-8") if p.is_file() else f"<文件不存在：{p}>"
-        out.append((cmd.strip(), body))
+        out.append((cmd.strip(), body, exit_code))
     return out
 
 
 def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
-                assertions: list[tuple[str, str, str]], checks: list[tuple[str, str]],
-                prev: str, budget: int, stop_rule: str) -> str:
+                assertions: list[tuple[str, str, str]], checks: list[tuple[str, str, int | None]],
+                prev: str, budget: int, stop_rule: str,
+                diff_base: Path | None = None, reuse_round: int | None = None) -> str:
     head = git_head(repo)
     L: list[str] = []
     L.append(f"# 评审简报（{date.today().isoformat()} 生成）\n")
@@ -95,6 +112,18 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
     L.append(f"- `reviewed_revision`: {head}（工作区快照；未提交内容以本简报 §1 的内联正文为准）")
     L.append(f"- `inline_objects`: 下方 §1 逐文件内联（{len(files)} 个文件，逐字）")
     L.append(f"- `stop_rule`: {stop_rule}")
+    if reuse_round is not None and prev.strip():
+        L.append(
+            f"- `reviewer_reuse`: 本轮为同一 reviewer 的第 {reuse_round} 轮（累计）；"
+            "上轮结论锚点见 §4。报告须声明「本结论部分依赖上轮判断」。")
+    elif reuse_round is not None:
+        L.append(
+            "- `reviewer_reuse`: 未附上轮锚点——简报不合格：--reuse-round 必须与 --prev-findings "
+            "同时给出，复用声明没有上轮结论锚点不成立。")
+    elif prev.strip():
+        L.append(
+            "- `reviewer_reuse`: 未声明累计轮次（--reuse-round 缺失）；复用同一 reviewer 时契约要求"
+            "写明累计轮次与上轮锚点，报告须声明「本结论部分依赖上轮判断」。")
     L.append(f"- `output_budget`: findings ≤{budget} 条，报告正文 ≤6000 字符；超限按严重度截断并声明\n")
 
     L.append("## 目标\n")
@@ -112,6 +141,60 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
         L.append(body.rstrip())
         L.append("```\n")
 
+    if diff_base is not None:
+        L.append(f"## §1.1 逐文件 diff（相对 `{diff_base}`；delta 轮的变化面以本节为准，§1 全文用于核对上下文）\n")
+        files_rels: list[tuple[Path, Path]] = []
+        for f in files:
+            try:
+                rel = f.resolve().relative_to(repo.resolve())
+            except ValueError:
+                rel = Path(f.name)
+            files_rels.append((f, rel))
+        listed: set[str] = set()
+        rel_values = [rel for _, rel in files_rels]
+        dup_rels = {r for r in rel_values if rel_values.count(r) > 1}
+        if dup_rels:
+            L.append(
+                "> 警告：本轮清单含仓外同名文件（"
+                + "、".join(sorted(r.as_posix() for r in dup_rels))
+                + "），基线配对不可靠，以下文件的 diff 仅作参考。\n")
+        for f, rel in files_rels:
+            listed.add(rel.as_posix())
+            if rel in dup_rels:
+                L.append(f"### `{rel.as_posix()}` — **基线配对不可靠（仓外同名文件）**\n")
+                continue
+            base = diff_base / rel
+            if not base.is_file():
+                L.append(f"### `{rel.as_posix()}` — **新增（基线无此文件）**\n")
+                continue
+            base_lines = base.read_text(encoding="utf-8", errors="replace").splitlines()
+            cur_lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+            if base_lines == cur_lines:
+                L.append(f"### `{rel.as_posix()}` — 与基线一致（无 diff）\n")
+                continue
+            patch = "\n".join(difflib.unified_diff(
+                base_lines, cur_lines,
+                fromfile=f"base/{rel.as_posix()}", tofile=f"current/{rel.as_posix()}",
+                lineterm=""))
+            L.append(f"### `{rel.as_posix()}`（{len(patch.splitlines())} 行 diff）\n")
+            L.append("```text")
+            L.append(patch)
+            L.append("```\n")
+        extras = sorted(
+            p.relative_to(diff_base.resolve()).as_posix()
+            for p in diff_base.resolve().rglob("*")
+            if p.is_file()
+            and p.name != "MANIFEST.txt"
+            and p.relative_to(diff_base.resolve()).as_posix() not in listed
+        )
+        if extras:
+            L.append(f"> 基线存在但本轮清单未列的文件（{len(extras)} 个）；若属删除/移出评审面，须显式处置：")
+            for rel in extras:
+                L.append(f"> - `{rel}`")
+            L.append("")
+        if not listed:
+            L.append("> 本轮清单为空。\n")
+
     L.append("## §2 断言表（逐条判断，不要通读全文找）\n")
     if assertions:
         L.append("| # | 断言 | 判据 | 核实点 |")
@@ -126,12 +209,14 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
 
     L.append("## §3 已执行的检查（原始输出，不必重跑）\n")
     if checks:
-        for cmd, body in checks:
-            L.append(f"**`{cmd}`**\n")
+        for cmd, body, exit_code in checks:
+            stamp = f"（exit {exit_code}）" if exit_code is not None else "（退出码未验证）"
+            L.append(f"**`{cmd}`**{stamp}\n")
             L.append("```text")
             L.append(body.rstrip())
             L.append("```\n")
-        L.append("> 这些检查已由 supervisor 跑过。你不必重跑，也不必采信摘要——正文就是逐字输出。\n")
+        L.append("> 这些检查已由 supervisor 跑过。你不必重跑，也不必采信摘要——正文就是逐字输出；")
+        L.append("> 标注「退出码未验证」的检查不得引用为「已通过」，要么补退出码重跑，要么按未运行处理。\n")
     else:
         L.append("> 未附检查输出。涉及「跑过没跑过」的断言按 `unverified` 处理。\n")
 
@@ -164,6 +249,10 @@ def main() -> int:
     ap.add_argument("--prev-findings", default=None, help="上轮未关闭项文件")
     ap.add_argument("--budget", type=int, default=12, help="findings 上限（默认 12）")
     ap.add_argument("--stop-rule", default=DEFAULT_STOP_RULE)
+    ap.add_argument("--diff-base", default=None,
+                    help="基线目录（如评审快照）；给出时生成 §1.1 逐文件 diff")
+    ap.add_argument("--reuse-round", type=int, default=None,
+                    help="复用同一 reviewer 的累计轮次（--prev-findings 存在时渲染 reviewer_reuse 声明）")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -180,6 +269,19 @@ def main() -> int:
         print("       内联对象缺失的简报会被 reviewer 判 blocked，故此处直接失败。", file=sys.stderr)
         return 1
 
+    diff_base = Path(args.diff_base).resolve() if args.diff_base else None
+    if diff_base is not None and not diff_base.is_dir():
+        print(f"[错误] --diff-base 不是目录：{diff_base}", file=sys.stderr)
+        return 1
+    if args.reuse_round is not None:
+        if args.reuse_round < 2:
+            print("[错误] --reuse-round 是复用轮次，首轮没有复用；最小值 2", file=sys.stderr)
+            return 1
+        if not args.prev_findings:
+            print("[错误] --reuse-round 必须与 --prev-findings 同时给出（复用声明需要上轮结论锚点）",
+                  file=sys.stderr)
+            return 1
+
     brief = build_brief(
         objective=args.objective, files=files, repo=repo, scope=args.scope,
         assertions=parse_assertions(Path(args.assertions) if args.assertions else None),
@@ -187,6 +289,7 @@ def main() -> int:
         prev=(Path(args.prev_findings).read_text(encoding="utf-8") if args.prev_findings
               and Path(args.prev_findings).is_file() else ""),
         budget=args.budget, stop_rule=args.stop_rule,
+        diff_base=diff_base, reuse_round=args.reuse_round,
     )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -238,9 +341,69 @@ def _self_test() -> int:
         rows = parse_checks(base / "ck.txt")
         assert rows and "逐字输出内容" in rows[0][1], rows
 
+    def t_exit_code_checks(base: Path) -> None:
+        (base / "a.md").write_text("# 文档 A\n内容行\n", encoding="utf-8")
+        (base / "out.txt").write_text("3 passed\n", encoding="utf-8")
+        (base / "ck.txt").write_text(
+            f"npm test :: exit=0 :: @{base / 'out.txt'}\nnpm run lint :: eslint .\n",
+            encoding="utf-8")
+        rows = parse_checks(base / "ck.txt")
+        assert rows[0][0] == "npm test" and rows[0][1].rstrip() == "3 passed" and rows[0][2] == 0, rows[0]
+        assert rows[1][0] == "npm run lint" and rows[1][1] == "eslint ." and rows[1][2] is None, rows[1]
+        brief = build_brief(objective="确认退出码", files=[base / "a.md"], repo=base, scope="full",
+                            assertions=[], checks=rows, prev="", budget=3, stop_rule="1 轮")
+        assert "**`npm test`**（exit 0）" in brief, "缺 exit 0 标注"
+        assert "**`npm run lint`**（退出码未验证）" in brief, "缺退出码未验证标注"
+        assert "不得引用为「已通过」" in brief, "缺未验证处置说明"
+
+    def t_diff_base(base: Path) -> None:
+        (base / "cur").mkdir()
+        (base / "base").mkdir()
+        (base / "base" / "a.md").write_text("# 文档 A\n旧行\n", encoding="utf-8")
+        (base / "cur" / "a.md").write_text("# 文档 A\n新行\n", encoding="utf-8")
+        (base / "cur" / "b.md").write_text("# 新增\n", encoding="utf-8")
+        (base / "base" / "gone.md").write_text("# 将删\n", encoding="utf-8")
+        brief = build_brief(objective="delta 评审", files=[base / "cur" / "a.md", base / "cur" / "b.md"],
+                            repo=base / "cur", scope="delta", assertions=[], checks=[],
+                            prev="", budget=3, stop_rule="1 轮", diff_base=base / "base")
+        assert "## §1.1" in brief, "缺 §1.1 diff 节"
+        assert "-旧行" in brief and "+新行" in brief, "缺 diff 正文"
+        assert "**新增（基线无此文件）**" in brief, "缺新增标注"
+        assert "gone.md" in brief, "缺基线未列文件提示"
+
+    def t_reuse_round(base: Path) -> None:
+        (base / "a.md").write_text("# 文档 A\n", encoding="utf-8")
+        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="delta",
+                  assertions=[], checks=[], budget=3, stop_rule="1 轮")
+        brief1 = build_brief(prev="上轮遗留", reuse_round=4, **kw)
+        assert "第 4 轮（累计）" in brief1 and "部分依赖上轮判断" in brief1, "reuse_round=4 未渲染"
+        brief2 = build_brief(prev="上轮遗留", **kw)
+        assert "未声明累计轮次" in brief2, "缺未声明标记"
+        brief3 = build_brief(prev="", **kw)
+        assert "reviewer_reuse" not in brief3, "首轮不应渲染 reviewer_reuse"
+        brief4 = build_brief(prev="", reuse_round=4, **kw)
+        assert "未附上轮锚点——简报不合格" in brief4, "reuse_round 缺 prev 应判简报不合格"
+        assert "第 4 轮（累计）" not in brief4, "无锚点时不得渲染累计声明"
+
+    def t_diff_base_name_collision(base: Path) -> None:
+        (base / "x").mkdir()
+        (base / "y").mkdir()
+        (base / "bd").mkdir()
+        (base / "x" / "same.md").write_text("一\n", encoding="utf-8")
+        (base / "y" / "same.md").write_text("二\n", encoding="utf-8")
+        (base / "bd" / "same.md").write_text("基线\n", encoding="utf-8")
+        brief = build_brief(objective="o", files=[base / "x" / "same.md", base / "y" / "same.md"],
+                            repo=base / "x", scope="full", assertions=[], checks=[],
+                            prev="", budget=3, stop_rule="1 轮", diff_base=base / "bd")
+        assert "基线配对不可靠（仓外同名文件）" in brief, "缺同名告警"
+        assert "-基线" not in brief.split("**基线配对不可靠（仓外同名文件）**")[-1], "不可靠文件不应生成 diff"
+
     for name, fn in [("五个必填字段与内联正文齐备", t_basic),
                      ("断言表解析（注释/缺列容错）", t_assertion_parsing),
-                     ("检查输出支持 @文件引用", t_check_file_ref)]:
+                     ("检查输出支持 @文件引用", t_check_file_ref),
+                     ("检查输出退出码三段式与未验证标注", t_exit_code_checks),
+                     ("diff-base 生成 §1.1 与新增/基线未列标注", t_diff_base),
+                     ("reuse-round 渲染与首轮不渲染", t_reuse_round)]:
         case(name, fn)
 
     failed = [r for r in results if not r[1]]

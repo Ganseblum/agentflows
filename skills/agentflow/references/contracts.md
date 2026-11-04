@@ -88,9 +88,22 @@ reviewed_revision: commit 号、评审快照目录（由 review_snapshot.py 生�
   转述它们只会消耗简报
 inline_objects: 被评审文件逐字内容或原始 diff 的落点（路径必须存在）；简报不含任何内联对象即不合格
 stop_rule: 本轮何时停——如「delta 复审最多 1 轮；剩余非阻塞项写入 residual_risks 后收口」；
-  非阻塞建议默认不阻塞收口，修不修由 supervisor 按改动面决定，不再自动升一轮模型评审
+  非阻塞建议默认不阻塞收口（P0/P1 与证据有效性类 finding 如假绿断言仍阻塞），修不修由
+  supervisor 按改动面决定，不再自动升一轮模型评审
+reviewer_reuse: 复用同一 reviewer 子代理时必填（首轮省略）——累计轮次与上轮结论锚点；
+  生成用 `gen_review_brief.py --reuse-round N`；reviewer 报告须声明「本结论部分依赖上轮判断」
 output_budget: findings 上限（默认 12）与报告正文上限（默认 6000 字符）；超限按严重度截断并声明截断
 ```
+
+**delta 轮的证据形态**（由 `gen_review_brief.py --diff-base <基线快照>` 承载）：
+
+- **变化面用 diff，不用全文凑**：delta 简报必须内联相对基线的逐文件 diff（生成器 §1.1），
+  全文内联只作上下文核对——修复说明与新哈希不能替代 diff，reviewer 要能看出同一文件内
+  是否夹带其它改动。
+- **检查输出带退出码**：checks 行写 `命令 :: exit=N :: @日志`；渲染为「退出码未验证」的检查
+  不得引用为「已通过」，要么补退出码重跑，要么按未运行处理。
+- **delta 轮的证据范围要声明**：只重跑受本轮改动影响的检查；沿用前轮检查时在简报写明沿用项
+  与理由，评审记录按实际重跑范围书写，不把沿用写成同轮验证。
 
 两条禁令：
 
@@ -156,6 +169,16 @@ Supervisor 验证共享工作区，因为 worker 摘要可能过期、不完整�
 Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。被评审对象是未提交工作区时，用 `skills/agentflow/scripts/review_snapshot.py` 生成评审快照目录（含 MANIFEST），把快照路径作为 `reviewed_revision` 与 `read_scope` 的对象——快照在修复后不失效，delta 轮不必逐文件重算哈希。
 
 **跨阶段不复用。** 需求 → 设计 → 代码跨阶段评审时优先派发**新的** reviewer 子代理：复用同一子代理跨多阶段会让上下文持续累积、独立性逐轮递减（实测一轮登录批次复用同一 reviewer 八轮，其单轮输入从约 70 万 token 涨到 446 万，且「自己审自己上轮的判断」）。确需复用（如宿主并发额度受限）时，简报必须写明累计轮次与上轮结论锚点，reviewer 报告须声明「本结论部分依赖上轮判断」。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
+
+**批准后冻结。** approved 之后至提交之前，被评审文件不得改动；批次收口（提交前）用
+`review_snapshot.py --verify <快照目录>` 对当前树逐文件核对一次，把「绑定仍成立」变成可复核
+输出。确需改动（回填、勘误）时重新快照并重开一轮 spot 评审，或在评审记录中显式登记改动内容
+与「非语义改动」判定——静默改动使绑定承诺字面失效（ISS-2026-11-04-批准后评审冻结缺失）。
+
+**编号唯一与记录可回放。** 同源缺陷的后续轮次写 `F7b` / `N3-2`，不重用已关闭编号；评审记录的
+findings 总数注明计数口径（跟进项是否另算），使「逐轮编号 ↔ 总计数」可机械核对。每轮 reviewer
+的原始返回（YAML 全文）追加进评审记录文件（或 `reviews/raw/` 目录），评审记录作索引与汇总，
+不以摘要替代原文——只读记录目录即应能还原每轮的判断与证据。
 
 ```yaml
 reviewed_revision: revision whose supplied raw diff and evidence were reviewed

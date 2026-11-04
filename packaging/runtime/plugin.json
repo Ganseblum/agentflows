@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "agentflow",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "description": "宿主原生的多智能体开发工作流：需求对齐、设计压测、测试先行、委派实现、独立评审与执行证据闭环。"
 }

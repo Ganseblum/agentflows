@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.37.0 — 2026-11-05（评审证据链补强：退出码 / diff / 复用声明 / 快照校验 / 批准后冻结）
+
+- **gen_review_brief.py**：`--checks` 支持 `命令 :: exit=N :: 输出`（旧两段式渲染「退出码未验证」，不得引用为已通过）；新增 `--diff-base`（§1.1 逐文件 diff，delta 变化面以 diff 为准，全文只作上下文）与 `--reuse-round N`（≥2、须与 `--prev-findings` 同给，渲染 reviewer_reuse 复用声明）；`DEFAULT_STOP_RULE` 补收口口径——文档/计数类 P2/P3 走 residual_risks 不另开 delta 轮，P0/P1 与证据有效性类仍阻塞。自测 6/6。
+- **review_snapshot.py**：新增 `--verify <快照目录>`——按 MANIFEST 对当前树逐文件重算 sha256，漂移退出 1，破损或与 `files: N` 不一致的清单拒绝核对退出 2；实测抓到 test-login snapshot-11 批准后 README 漂移（4/5 一致，exit 1）。自测 8/8。
+- **contracts.md** 新增三段：「delta 轮证据形态」（diff / 退出码 / 沿用项声明）、「批准后冻结」（approved→提交间不得改被评审文件，收口跑 `--verify`）、「编号唯一与记录可回放」（followup 写 F7b/N3-2、原始 YAML 归档）。
+- **agents**：backend-engineer 增「关键行为断言敏感性自检（删实现看红，限一次性副本或可逐字还原的最小编辑）+ 修复按 cost 场景闭合自检」；test-planner 关键行为用例补敏感性判据自检。
+- 来源：test-login 登录批次评审链审计（test-login-workflow-ai ISS-2026-11-04-* 三条）；独立评审 approved（P2×3、P3×1 已按评审给出的最小修法修入；spot 复核因宿主限流两次未运行，如实记缺，不冒充已复核）。
+
 ## 0.36.0 — 2026-11-04（门禁清理 + 触发描述对齐）
 
 - **门禁设施与无用描述清理（本版主干）**：删除门禁设施（`tools/lab/`、`schemas/`、`protected-paths.txt`、各 `check_*.py` / `pre-push.sh` / `install-hooks.sh`、`tests/test_gate_*.py`、`requirements-dev.txt`、CI 工作流 `.github/workflows/validate.yml`）与描述/记录类目录（`docs/issues/`、`docs/evaluations/`、`docs/decisions/`、`episodes/`、`examples/`、`reviews/`）。27 个源文件里指向已删工具/目录的死链整串中性化为「文档链检查 / 产物校验 / 记录校验 / 决策记录校验 / 受保护清单校验 / 评审记录目录 / 示例库」等，保留方法论含义、不删句子。`skills/design-diagram/` 的门禁术语（`门禁`）按用户要求一字未动。重建 `packaging/runtime` 镜像清理后的源面。
