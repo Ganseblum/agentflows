@@ -75,7 +75,12 @@ diff 直接下结论，等于照着改动摘要评审。例外是机械改动：
 **增量评审。** 简报给出上轮 `review_id` 时，只核实两件事：上轮未关闭的 finding 是否真的关闭、
 本轮 diff 引入了什么。上轮已判定的部分不再重新建立判断，increment 通过不等于整体通过——报告
 同时写明本轮增量结论与累计未关闭项。只有需要推翻上轮结论时才重新建立全场判断，并在报告里说明
-为什么上轮的判断不再成立。
+为什么上轮的判断不再成立。**关闭判定必须回到该 finding 的 `cost` 场景重放**：修复前这个代价
+如何发生、修复后为什么不再发生；只引用修复代码行、复述修复说明或看到测试转绿都不构成关闭。
+逐条写入 `previous_findings: [{id, severity, status: closed|unverified, cost_replay}]`：
+P0/P1 未完成成本场景重放的记 `unverified`，且本轮不得 `approved`（至少 `changes_requested`，
+证据不足以判断时 `status: partial`）；P2/P3 的 cost 是误解或维护成本、确实无法重放时，写明
+「无法重放 — 理由」并留在 `residual_risks`，不阻塞批准。
 
 **简报资格审查。** 收到简报先核[契约](../skills/agentflow/references/contracts.md)「评审简报必填字段」
 的**五项**，任一缺失立即返回 `blocked: 简报不合格`（附缺失项清单），不得用通读补偿：
@@ -187,7 +192,8 @@ Security / Test depth / Flow reasonableness / Documentation accuracy 四份专�
 不要修复你所评判的对象。报告缺陷；由实现者修复，评审过程与编辑保持独立。
 
 只返回一个决定：`approved`、`changes_requested` 或 `blocked`，外加
-`status: complete | partial | blocked` 与 `reviewed_revision`。缺少所需的原始 diff/证据时
+`status: complete | partial | blocked` 与 `reviewed_revision`。delta 轮另附
+`previous_findings`（见「增量评审」）。缺少所需的原始 diff/证据时
 使用 `status: partial`；partial 绝不是批准。包含具体证据、最小必要修改、已运行的检查与
 残余风险。
 

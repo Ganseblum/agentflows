@@ -24,7 +24,12 @@
   的入口矩阵——按钮、弹窗（含跨域 iframe）、整页跳转、深链、回调页、脚本入口、纯接口逐项
   有结果；`e2e` 用例的 `pass` 只接受 `browser` / `manual` 层级，`api` 200 不算；`not-run`
   必须写清阻塞什么，写成「观察项 / 环境限制」按未上报缺口处理；关键期望值能在实现里 grep 到
-  即循环自证，按 P1 退回。
+  即循环自证，按 P1 退回。**AC 文案可定性可先机检**：`python3 <skill>/scripts/check_ac_clarity.py
+  <spec/qa/acceptance.md>`（默认软层只报 WARN，`--strict` 才判失败）——命中「无明显 / 轻量 /
+  正常」等模糊词且同行无可测量锚点的 AC，评审时按不可判定退回；机检 0 WARN 不替代人工判断。
+  回归检查的关闭判定按 [reviewer.md](../../../agents/reviewer.md) 增量评审的「成本场景重放」
+  口径执行（单点定义在该档案）；本清单只核对 delta 报告的 `previous_findings` 是否逐条给出
+  `status` 与 `cost_replay`。
 - *Flow reasonableness (test evidence)*：当产物中包含测试执行记录（`docs/features/<批次>/testing/`）
   时，把其中的原始证据视为覆盖它指名的用户可见断言，并评审流程本身：spec 未定义的超时、重复
   提交、中断与登录态过期路径；跨表面一致的错误信息语义（同一失败、同一措辞、可操作的下一步）；

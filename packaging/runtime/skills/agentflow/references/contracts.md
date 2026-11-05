@@ -92,6 +92,8 @@ stop_rule: 本轮何时停——如「delta 复审最多 1 轮；剩余非阻塞
   supervisor 按改动面决定，不再自动升一轮模型评审
 reviewer_reuse: 复用同一 reviewer 子代理时必填（首轮省略）——累计轮次与上轮结论锚点；
   生成用 `gen_review_brief.py --reuse-round N`；reviewer 报告须声明「本结论部分依赖上轮判断」
+review_budget: 可选——本轮评审轮次与成本档位（`--review-round N --tier S|M|L`）；超出档位默认
+  上限（S/M 2 轮、L 3 轮）时简报标记「偏离分档默认」，须在批次记录写明超出理由与停止条件
 output_budget: findings 上限（默认 12）与报告正文上限（默认 6000 字符）；超限按严重度截断并声明截断
 ```
 
@@ -191,6 +193,8 @@ findings 总数注明计数口径（跟进项是否另算），使「逐轮编�
 reviewed_revision: revision whose supplied raw diff and evidence were reviewed
 status: complete | partial | blocked
 decision: approved | changes_requested | blocked
+previous_findings: delta 轮必填——每条 = id + severity + status(closed|unverified) + cost_replay；
+  P0/P1 未完成 cost 场景重放记 unverified 且不得 approved；P2/P3 无法重放的写理由并留 residual_risks
 evidence: concrete findings tied to supplied diff or raw output
 required_changes: minimal changes needed for approval
 residual_risks: limits that remain even if approved

@@ -110,7 +110,7 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 - **能由一条命令判定真假的断言，Supervisor 先跑，把逐字输出带进简报。** 「某配置键是否存在」「某函数是否被调用」「是否还有别处引用」「改完能否编译」「测试是否覆盖该分支」不需要 reviewer 读源码推断——读源码推断既慢又不构成证据（硬边界 12）。已被命令答掉的断言不再要求它重验。
 - **其余断言给出可定位的核实点**：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、已跑完的确定性检查的原始输出。给不出定位时写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜。
 - **不要要求 reviewer 执行命令**（工具集是 `Read, Glob, Grep`，`Bash` 在 `disallowedTools` 里）；需要 diff 时给 diff 正文或 `.diff` 文件路径。
-- **简报用脚本生成，不接受手写**：`python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3，并写出[契约](references/contracts.md)规定的五个必填字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`）。手写简报最常见的两个缺陷（给了路径却没内联内容、给了一串 sha256 却无法校验）在生成器里不可能发生。
+- **简报用脚本生成，不接受手写**：`python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt] [--diff-base <基线快照>] [--reuse-round N] [--review-round N --tier S|M|L]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3（三段式 checks 带退出码；两段式渲染「退出码未验证」）、delta 轮按 `--diff-base` 内联逐文件 diff，并写出[契约](references/contracts.md)规定的字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`，可选的 `reviewer_reuse` 与 `review_budget`）。`--review-round` 超出本档上限（S/M 2 轮、L 3 轮）时在简报里标「偏离分档默认」，须在批次记录写明理由。手写简报最常见的两个缺陷（给了路径却没内联内容、给了一串 sha256 却无法校验）在生成器里不可能发生。
 
 ## 判断词的可判定定义
 

@@ -43,8 +43,9 @@ from datetime import date
 from pathlib import Path
 
 DEFAULT_STOP_RULE = (
-    "本轮 full 评审；阻塞项修复后最多 1 轮 delta；非阻塞建议写入 residual_risks 后收口，"
-    "不自动开第 3 轮。同一原因两轮无进展即停并交代。收口口径：P0/P1 与证据有效性类 finding"
+    "本轮 full 评审；阻塞项修复后最多 1 轮 delta，且不得超过本档上限"
+    "（S/M = 2 轮、L = 3 轮）；非阻塞建议写入 residual_risks 后收口，"
+    "同一原因两轮无进展即停并交代。收口口径：P0/P1 与证据有效性类 finding"
     "（如假绿断言）阻塞收口；文档措辞/计数类 P2/P3 默认写入 residual_risks 收口，"
     "不为其另开 delta 轮。"
 )
@@ -100,7 +101,8 @@ def parse_checks(path: Path | None) -> list[tuple[str, str, int | None]]:
 def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
                 assertions: list[tuple[str, str, str]], checks: list[tuple[str, str, int | None]],
                 prev: str, budget: int, stop_rule: str,
-                diff_base: Path | None = None, reuse_round: int | None = None) -> str:
+                diff_base: Path | None = None, reuse_round: int | None = None,
+                review_round: int | None = None, tier: str = "M") -> str:
     head = git_head(repo)
     L: list[str] = []
     L.append(f"# 评审简报（{date.today().isoformat()} 生成）\n")
@@ -124,7 +126,17 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
         L.append(
             "- `reviewer_reuse`: 未声明累计轮次（--reuse-round 缺失）；复用同一 reviewer 时契约要求"
             "写明累计轮次与上轮锚点，报告须声明「本结论部分依赖上轮判断」。")
-    L.append(f"- `output_budget`: findings ≤{budget} 条，报告正文 ≤6000 字符；超限按严重度截断并声明\n")
+    L.append(f"- `output_budget`: findings ≤{budget} 条，报告正文 ≤6000 字符；超限按严重度截断并声明")
+    if review_round is not None:
+        max_rounds = {"S": 2, "M": 2, "L": 3}[tier]
+        if review_round > max_rounds:
+            L.append(
+                f"- `review_budget`: 本轮为第 {review_round} 轮，超出 {tier} 档默认上限 {max_rounds} 轮"
+                "（S/M = full 1 + delta ≤1；L = full 1 + delta 1 + 收口核对 1）——**偏离分档默认**，"
+                "须在批次记录写明超出理由与停止条件，否则按流程缺陷记入评审记录。")
+        else:
+            L.append(f"- `review_budget`: 第 {review_round} 轮 / {tier} 档默认上限 {max_rounds} 轮，在档内。")
+    L.append("")
 
     L.append("## 目标\n")
     L.append(objective.strip() + "\n")
@@ -231,6 +243,7 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
     L.append("decision: approved | changes_requested | blocked")
     L.append("status: complete | partial")
     L.append("findings: 每条 = 严重度 + 位置(path:line) / 原因 / 代价 / 建议修法")
+    L.append("previous_findings: 每条 = id + severity + status(closed|unverified) + cost_replay（delta 轮必填）")
     L.append("passed: PASS A1, PASS A3 …（一行一条）")
     L.append("residual_risks: 未覆盖面与建议")
     L.append("```")
@@ -253,6 +266,10 @@ def main() -> int:
                     help="基线目录（如评审快照）；给出时生成 §1.1 逐文件 diff")
     ap.add_argument("--reuse-round", type=int, default=None,
                     help="复用同一 reviewer 的累计轮次（--prev-findings 存在时渲染 reviewer_reuse 声明）")
+    ap.add_argument("--review-round", type=int, default=None,
+                    help="本轮在该阶段的评审轮次（≥1）；给出时渲染 review_budget 并检查分档上限")
+    ap.add_argument("--tier", default="M", choices=["S", "M", "L"],
+                    help="评审成本档位（默认 M）；S/M 默认上限 2 轮、L 3 轮")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -281,6 +298,9 @@ def main() -> int:
             print("[错误] --reuse-round 必须与 --prev-findings 同时给出（复用声明需要上轮结论锚点）",
                   file=sys.stderr)
             return 1
+    if args.review_round is not None and args.review_round < 1:
+        print("[错误] --review-round 从 1 开始计数，不能小于 1", file=sys.stderr)
+        return 1
 
     brief = build_brief(
         objective=args.objective, files=files, repo=repo, scope=args.scope,
@@ -290,6 +310,7 @@ def main() -> int:
               and Path(args.prev_findings).is_file() else ""),
         budget=args.budget, stop_rule=args.stop_rule,
         diff_base=diff_base, reuse_round=args.reuse_round,
+        review_round=args.review_round, tier=args.tier,
     )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -398,12 +419,48 @@ def _self_test() -> int:
         assert "基线配对不可靠（仓外同名文件）" in brief, "缺同名告警"
         assert "-基线" not in brief.split("**基线配对不可靠（仓外同名文件）**")[-1], "不可靠文件不应生成 diff"
 
+    def t_review_budget(base: Path) -> None:
+        (base / "a.md").write_text("# 文档 A\n", encoding="utf-8")
+        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="delta",
+                  assertions=[], checks=[], prev="", budget=3, stop_rule="1 轮")
+        brief_m2 = build_brief(review_round=2, tier="M", **kw)
+        assert "第 2 轮 / M 档默认上限 2 轮，在档内" in brief_m2, "M 档第 2 轮应判在档内"
+        brief_m3 = build_brief(review_round=3, tier="M", **kw)
+        assert "超出 M 档默认上限 2 轮" in brief_m3 and "偏离分档默认" in brief_m3, "M 档第 3 轮应判偏离"
+        brief_l3 = build_brief(review_round=3, tier="L", **kw)
+        assert "在档内" in brief_l3, "L 档第 3 轮应判在档内"
+        brief_s2 = build_brief(review_round=2, tier="S", **kw)
+        assert "S 档默认上限 2 轮，在档内" in brief_s2, "S 档第 2 轮应判在档内"
+        brief_s3 = build_brief(review_round=3, tier="S", **kw)
+        assert "超出 S 档默认上限 2 轮" in brief_s3, "S 档第 3 轮应判偏离"
+        brief_l4 = build_brief(review_round=4, tier="L", **kw)
+        assert "超出 L 档默认上限 3 轮" in brief_l4, "L 档第 4 轮应判偏离"
+        brief_none = build_brief(**kw)
+        assert "review_budget" not in brief_none, "未给轮次不应渲染 review_budget"
+
+    def t_invalid_round_cli(base: Path) -> None:
+        import contextlib
+        import io
+        (base / "a.md").write_text("# 文档 A\n", encoding="utf-8")
+        out = base / "brief.md"
+        for bad in ("0", "-1"):
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+                sys.argv = ["gen_review_brief.py", "--out", str(out), "--objective", "o",
+                            "--files", str(base / "a.md"), "--repo", str(base),
+                            "--review-round", bad]
+                code = main()
+            assert code == 1, f"--review-round {bad} 应退出 1，实际 {code}"
+            assert not out.exists(), f"--review-round {bad} 不应写简报"
+
     for name, fn in [("五个必填字段与内联正文齐备", t_basic),
                      ("断言表解析（注释/缺列容错）", t_assertion_parsing),
                      ("检查输出支持 @文件引用", t_check_file_ref),
                      ("检查输出退出码三段式与未验证标注", t_exit_code_checks),
                      ("diff-base 生成 §1.1 与新增/基线未列标注", t_diff_base),
-                     ("reuse-round 渲染与首轮不渲染", t_reuse_round)]:
+                     ("reuse-round 渲染与首轮不渲染", t_reuse_round),
+                     ("review_budget 分档上限与偏离标记", t_review_budget),
+                     ("review-round 非法值拒绝且不写简报", t_invalid_round_cli)]:
         case(name, fn)
 
     failed = [r for r in results if not r[1]]

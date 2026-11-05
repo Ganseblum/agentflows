@@ -3,6 +3,15 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.39.0 — 2026-11-05（评审关闭判定 + 分档护栏 + AC 可定性机检 + 计划测试链任务）
+
+- **reviewer.md**：delta 轮新增 `previous_findings: [{id, severity, status: closed|unverified, cost_replay}]`——关闭判定必须回到 finding 的 cost 场景重放；P0/P1 未重放记 `unverified` 且本轮不得 `approved`，P2/P3 无法重放的写理由留 residual_risks。输出形态与 contracts.md 同步。
+- **gen_review_brief.py**：新增 `--review-round N --tier S|M|L`，S/M 上限 2 轮、L 3 轮，超限渲染「偏离分档默认」；修正 `DEFAULT_STOP_RULE` 与 L 档「不自动开第 3 轮」的自相矛盾；`--review-round < 1` 拒绝；交付形态补 `previous_findings`；自测 8/8。
+- **check_ac_clarity.py（新增）**：按验收表逐行软检「模糊词 + 无量纲」，默认 WARN 不阻塞、`--strict` 失败；表头兼容模板的「可观察结果（断言什么）」、目录两种布局取并集、无验收表/无 AC 行/缺列行退出 2 不报假 PASS、裸名词不再当锚点、引号内模糊词仍报警（仅否定语境的引号豁免）；自测 8/8，真实 acceptance 54 条 AC 行 0 WARN。
+- **计划模板**：任务清单强制测试记录链任务（plan/run 各一行，S 档可合并；不适用写「— 本期不做」+ 证据列理由），自检项同步；review-checklists 改为指向 reviewer.md 单点定义，避免双源。
+- **版本收口**：plugin.json / marketplace.json 与 .zcode-plugin / .claude-plugin / .codex-plugin / .qoder-plugin 四份宿主 manifest 统一 0.39.0；`build_runtime.py` 重建生成树，`diff -r` 源面与 runtime 一致。
+- 评审链：首轮 `changes_requested`（P1×2、P2×6）→ 修入；delta 复核 approved 但 F3/F8 记 unverified + 2 条新 P2 → 再修；L 档第 3 轮 spot：F3/Q1/Q2/R1 closed；F8 的 S 档合并例外按确定性检查删除（合并例外残留 0、run 依赖 plan+实现任务在文），未再开模型轮。残余：`has_anchor` 仍以整格具体引号为弱锚点（同一格另有引号外模糊词会漏报），软层可接受，记入 residual。
+
 ## 0.38.0 — 2026-11-05（评审轮末机械立案：record_findings.py）
 
 - **新增 `scripts/record_findings.py`**：读 reviewer 返回的 findings YAML，逐条生成 ISS 记录（对照 issue-template.md 形态自检）、追加台账行（替换 hub 模板占位行）、输出 finding→ISS 映射回填评审记录，并把 reviewer 原始 YAML 归档进评审记录。默认下限 P1（`--all` 全量）；`--project` 必填、`--claimed-by` 标承接（缺省 `disposition: deferred`）；dry-run 全程不写盘；同批次 slug 冲突加序号不覆盖；顶格列表/缺 severity 等非法输入报错不猜。自测 6/6。
