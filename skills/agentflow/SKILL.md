@@ -101,7 +101,7 @@ Init 管目标仓，Host Init 管跨仓。目标仓的 `AGENTS.md` 只在该仓�
 
 ## 分档默认值
 
-评审与测试的成本按改动量分档（S 小功能 / M 常规 / L 大改动），偏离默认值时在批次记录写明理由。**分档表与配套纪律（`stop_rule` 与输出预算、实现自检的 browser 前移、缺陷落账分级）见[执行与验证](references/execution.md#评审与测试的成本分档按改动量定成本不按轮次惯性)**，本文不复述。两条不可让渡：涉及用户可见界面的批次，**可交互原型在 spec 落盘前产出并经用户逐项确认**，需求评审在原型确认之后（判据见 [prototype/README](templates/feature/prototype/README.md)）；批次宣布 complete 前必须做一次实操演示并记录用户确认原文，未演示或未确认时结论上限是 `partial`。
+评审与测试的成本按改动量分档（S 小功能 / M 常规 / L 大改动），偏离默认值时在批次记录写明理由。**分档表与配套纪律（`stop_rule` 与输出预算、实现自检的 browser 前移、缺陷落账分级）见[执行与验证](references/execution.md#评审与测试的成本分档按改动量定证据深度不按轮次惯性)**，本文不复述。分档决定证据深度与入口/出口门槛，不决定轮次；评审轮次只记录，不设固定上限。两条不可让渡：涉及用户可见界面的批次，**可交互原型在 spec 落盘前产出并经用户逐项确认**，需求评审在原型确认之后（判据见 [prototype/README](templates/feature/prototype/README.md)）；批次宣布 complete 前必须做一次实操演示并记录用户确认原文，未演示或未确认时结论上限是 `partial`。
 
 ## 评审简报的定位义务
 
@@ -110,7 +110,7 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 - **能由一条命令判定真假的断言，Supervisor 先跑，把逐字输出带进简报。** 「某配置键是否存在」「某函数是否被调用」「是否还有别处引用」「改完能否编译」「测试是否覆盖该分支」不需要 reviewer 读源码推断——读源码推断既慢又不构成证据（硬边界 12）。已被命令答掉的断言不再要求它重验。
 - **其余断言给出可定位的核实点**：被评审 diff 的确切范围（`source_branch..merge_result`，或源分支已删时的 `merge_result^2..merge_result`）、每条断言对应的 `path:line` 或可复核的 Grep 模式、上轮 `review_id` 与未关闭 finding 清单（重审时）、已跑完的确定性检查的原始输出。给不出定位时写明「该断言无定位，需 reviewer 自行检索」，不要让它去猜。
 - **不要要求 reviewer 执行命令**（工具集是 `Read, Glob, Grep`，`Bash` 在 `disallowedTools` 里）；需要 diff 时给 diff 正文或 `.diff` 文件路径。
-- **简报用脚本生成，不接受手写**：`python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt] [--diff-base <基线快照>] [--reuse-round N] [--review-round N --tier S|M|L]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3（三段式 checks 带退出码；两段式渲染「退出码未验证」）、delta 轮按 `--diff-base` 内联逐文件 diff，并写出[契约](references/contracts.md)规定的字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`，可选的 `reviewer_reuse` 与 `review_budget`）。`--review-round` 超出本档上限（S/M 2 轮、L 3 轮）时在简报里标「偏离分档默认」，须在批次记录写明理由。手写简报最常见的两个缺陷（给了路径却没内联内容、给了一串 sha256 却无法校验）在生成器里不可能发生。
+- **简报用脚本生成，不接受手写**：`python3 <skill>/scripts/gen_review_brief.py --out brief.md --objective <目标> --files <被评审文件...> --task-status <任务状态文件> [--reviewed-revision <快照目录或提交>] [--assertions a.txt] [--checks c.txt] [--prev-findings p.txt] [--diff-base <基线快照>] [--reuse-round N] [--review-round N]`——它强制把被评审文件逐字内联、断言渲染成「断言 / 判据 / 核实点」三列、已跑检查的逐字输出贴进 §3（三段式 checks 带退出码；两段式渲染「退出码未验证」）、delta 轮按 `--diff-base` 内联逐文件 diff，并写出[契约](references/contracts.md)规定的字段（`review_scope` / `reviewed_revision` / `inline_objects` / `stop_rule` / `output_budget`，以及 `review_gate` 入口/出口条件、可选的 `reviewer_reuse`）。未提交工作区先用 `scripts/review_snapshot.py` 生成快照并把路径传给 `--reviewed-revision`；未给快照时渲染 `unverified-boundary`，material 评审不得据此 approved。`--review-round` 只记录第几轮，不设固定上限——评审何时开始由入口条件决定、何时结束由出口条件决定。手写简报最常见的两个缺陷（给了路径却没内联内容、给了一串 sha256 却无法校验）在生成器里不可能发生。
 
 ## 判断词的可判定定义
 

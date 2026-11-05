@@ -87,13 +87,15 @@ reviewed_revision: commit 号、评审快照目录（由 review_snapshot.py 生�
   或显式 unverified-boundary；只给一串 sha256 不算绑定——无 Bash 的评审者无法校验哈希，
   转述它们只会消耗简报
 inline_objects: 被评审文件逐字内容或原始 diff 的落点（路径必须存在）；简报不含任何内联对象即不合格
-stop_rule: 本轮何时停——如「delta 复审最多 1 轮；剩余非阻塞项写入 residual_risks 后收口」；
-  非阻塞建议默认不阻塞收口（P0/P1 与证据有效性类 finding 如假绿断言仍阻塞），修不修由
-  supervisor 按改动面决定，不再自动升一轮模型评审
+stop_rule: 本轮何时停——按入口/出口条件，如「入口不满足不开始（blocked）；出口无未关闭 P0/P1、
+  本轮 finding 已修入 required_changes 或已立案、上轮 finding 有 cost_replay 或 residual 理由
+  即收口；同一原因两次失败或一轮无进展即停」；非阻塞建议默认写入 residual_risks 后收口
 reviewer_reuse: 复用同一 reviewer 子代理时必填（首轮省略）——累计轮次与上轮结论锚点；
   生成用 `gen_review_brief.py --reuse-round N`；reviewer 报告须声明「本结论部分依赖上轮判断」
-review_budget: 可选——本轮评审轮次与成本档位（`--review-round N --tier S|M|L`）；超出档位默认
-  上限（S/M 2 轮、L 3 轮）时简报标记「偏离分档默认」，须在批次记录写明超出理由与停止条件
+review_gate: 生成器默认渲染（脚本生成的简报必含）——入口条件（对象冻结为快照/提交、简报 §0 任务
+  状态全部终态、必需检查带退出码、五字段与内联对象齐备）与出口条件（本轮 finding 已修/立案、
+  上轮 finding 有 cost_replay 或 residual 理由、无未关闭 P0/P1、用户可见断言有检查或 unverified
+  ≤ partial、同因两次失败/一轮无进展即停）；入口不满足 reviewer 返回 blocked；轮次仅记录，不设固定上限
 output_budget: findings 上限（默认 12）与报告正文上限（默认 6000 字符）；超限按严重度截断并声明截断
 ```
 
@@ -168,9 +170,13 @@ Supervisor 验证共享工作区，因为 worker 摘要可能过期、不完整�
 
 ## 评审结果
 
+评审按**入口/出口条件**开始与结束，不设固定轮数。入口条件：被评审对象已冻结为快照或提交（material 评审不得用 `unverified-boundary`）、简报 §0 任务状态全部终态、必需检查的原始输出带退出码、简报五字段与内联对象齐备；任一不满足，reviewer 返回 `blocked`，不评审半成品。出口条件：本轮 finding 已修入 `required_changes` 或已立案、上轮 finding 为 `closed` 且 cost_replay 成立（或 residual_risks 写明无法关闭的理由）、无未关闭 P0/P1、用户可见断言有「若为假会失败」的检查或标 unverified（此时结论 ≤ partial）；同一原因连续两次失败或一轮无进展即停并升级。轮次只记录，不作为预算或停止条件。
+
+**状态矩阵。** 入口不满足 → `decision: blocked`，不开始评审；已开始评审但某个具体断言缺原始证据 → `status: partial`（`decision` 只能是 `changes_requested` 或 `blocked`，绝不是 `approved`）；出口满足 → `approved` + `status: complete`。`status: partial` 不是批准。
+
 Supervisor 把确切 `reviewed_revision` 的原始 diff 和相关原始检查输出提供给 reviewer。reviewer 检查的是提供的这份 diff；它**不**运行 `git diff`，也不从仓库重建一份 diff。被评审对象是未提交工作区时，用 `skills/agentflow/scripts/review_snapshot.py` 生成评审快照目录（含 MANIFEST），把快照路径作为 `reviewed_revision` 与 `read_scope` 的对象——快照在修复后不失效，delta 轮不必逐文件重算哈希。
 
-**跨阶段不复用。** 需求 → 设计 → 代码跨阶段评审时优先派发**新的** reviewer 子代理：复用同一子代理跨多阶段会让上下文持续累积、独立性逐轮递减（实测一轮登录批次复用同一 reviewer 八轮，其单轮输入从约 70 万 token 涨到 446 万，且「自己审自己上轮的判断」）。确需复用（如宿主并发额度受限）时，简报必须写明累计轮次与上轮结论锚点，reviewer 报告须声明「本结论部分依赖上轮判断」。`reviewed_revision` 标识实际被评审的 revision。`status: partial` 意味着 reviewer 因缺少必需的 diff、证据产物或用户可见检查而无法给出完整决策；它不是批准。
+**跨阶段不复用。** 需求 → 设计 → 代码跨阶段评审时优先派发**新的** reviewer 子代理：复用同一子代理跨多阶段会让上下文持续累积、独立性逐轮递减（实测一轮登录批次复用同一 reviewer 八轮，其单轮输入从约 70 万 token 涨到 446 万，且「自己审自己上轮的判断」）。确需复用（如宿主并发额度受限）时，简报必须写明累计轮次与上轮结论锚点，reviewer 报告须声明「本结论部分依赖上轮判断」。`reviewed_revision` 标识实际被评审的 revision。**整份 diff / 快照 / 必需检查输出缺失属于入口不满足（blocked）**；`status: partial` 只用于已开始评审后某个具体断言缺 diff、证据产物或用户可见检查、无法给出完整决策的情况；它不是批准。
 
 **批准后冻结。** approved 之后至提交之前，被评审文件不得改动；批次收口（提交前）用
 `review_snapshot.py --verify <快照目录>` 对当前树逐文件核对一次，把「绑定仍成立」变成可复核

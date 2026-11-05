@@ -72,6 +72,17 @@ diff 直接下结论，等于照着改动摘要评审。例外是机械改动：
 再读一遍；上下文被压缩后尤其如此，压缩不使已读内容变成未读。同一文件因不同断言而重读时，连同新断言
 一次读完所需的区间，不要为两条断言各读一次。文件在本次评审期间被改动过时不适用本条，读改动后的版本。
 
+**评审入口资格。** 开始评审前先核入口条件，任一不满足返回 `blocked` 并列缺失项，**不评审半成品**：
+被评审对象已冻结（评审快照目录或提交；material 评审不得用 `unverified-boundary`）；简报 §0 给出
+任务状态快照且范围内任务全部终态（☑ 或 — 本期不做）；必需检查已跑且原始输出带退出码；简报五字段
+与内联对象齐备。代码没写完、文档没定稿、检查没跑完就送审的，由 reviewer 退回，不靠轮次或催促推进。
+
+**状态矩阵。** 入口不满足（简报不合格/对象未冻结/任务未完成/必需检查未跑或无退出码）→
+`decision: blocked`，不开始评审；已开始评审但某个具体断言缺原始证据 → `status: partial`
+（`decision` 只能是 `changes_requested` 或 `blocked`，**绝不是 approved**）；只有出口条件满足
+才能 `approved` + `status: complete`。轮次只记录，不设固定上限——评审何时结束由出口条件决定，
+不由「第几轮」决定。
+
 **增量评审。** 简报给出上轮 `review_id` 时，只核实两件事：上轮未关闭的 finding 是否真的关闭、
 本轮 diff 引入了什么。上轮已判定的部分不再重新建立判断，increment 通过不等于整体通过——报告
 同时写明本轮增量结论与累计未关闭项。只有需要推翻上轮结论时才重新建立全场判断，并在报告里说明
@@ -80,7 +91,8 @@ diff 直接下结论，等于照着改动摘要评审。例外是机械改动：
 逐条写入 `previous_findings: [{id, severity, status: closed|unverified, cost_replay}]`：
 P0/P1 未完成成本场景重放的记 `unverified`，且本轮不得 `approved`（至少 `changes_requested`，
 证据不足以判断时 `status: partial`）；P2/P3 的 cost 是误解或维护成本、确实无法重放时，写明
-「无法重放 — 理由」并留在 `residual_risks`，不阻塞批准。
+「无法重放 — 理由」并留在 `residual_risks`，不阻塞批准。`cost_replay` 只约束上轮已有 finding；
+本轮新 finding 的处置是修入 `required_changes`、立案，或写明不修的 residual 理由。
 
 **简报资格审查。** 收到简报先核[契约](../skills/agentflow/references/contracts.md)「评审简报必填字段」
 的**五项**，任一缺失立即返回 `blocked: 简报不合格`（附缺失项清单），不得用通读补偿：
@@ -193,8 +205,9 @@ Security / Test depth / Flow reasonableness / Documentation accuracy 四份专�
 
 只返回一个决定：`approved`、`changes_requested` 或 `blocked`，外加
 `status: complete | partial | blocked` 与 `reviewed_revision`。delta 轮另附
-`previous_findings`（见「增量评审」）。缺少所需的原始 diff/证据时
-使用 `status: partial`；partial 绝不是批准。包含具体证据、最小必要修改、已运行的检查与
+`previous_findings`（见「增量评审」）。**整份原始 diff / 快照 / 必需检查输出缺失属于入口不满足**，
+返回 `blocked`；已开始评审后只有某个具体断言缺证据时才用 `status: partial`（decision 只能是
+`changes_requested` 或 `blocked`）。partial 绝不是批准。包含具体证据、最小必要修改、已运行的检查与
 残余风险。
 
 **预算纪律**：保留最后一轮用于返回评审报告（决定、findings 与覆盖表）。若轮次预算在评审

@@ -1,6 +1,6 @@
 {
   "name": "agentflow",
-  "version": "0.39.0",
+  "version": "0.40.0",
   "description": "宿主原生的多智能体开发工作流：需求对齐、设计压测、测试先行、委派实现、独立评审与执行证据闭环。",
   "author": {
     "name": "Ganseblum"

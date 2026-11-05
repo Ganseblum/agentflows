@@ -24,7 +24,7 @@
 | 证据工具 seal / verify / run 的接口 | `skills/agentflow/references/workflow-tool.md` | ## 命令 | 批次 `testing/` 写用法实例，不重定义命令语义 |
 | 埋点评审清单 | `skills/agentflow/references/telemetry.md` | ## 评审检查清单 | SKILL 的埋点节明写「本文不复述那十条」，只指路径 |
 | 设计图画法（三层选图、事件号、怎么读、九列表） | `skills/design-diagram/SKILL.md` | ## 三条铁律 | **要哪些图**仍归文档链（形态判据不在此复述）；本 skill 只定画成什么样算合格。时间序/状态/ER 的骨架在 `skills/design-diagram/templates/`，报错处置在 `references/gate-findings.md`，`skills/agentflow/SKILL.md` 的入口表只留指针 |
-| 评审与测试的成本分档（S/M/L 判据与配套默认纪律） | `skills/agentflow/references/execution.md` | ## 评审与测试的成本分档（按改动量定成本，不按轮次惯性） | SKILL 的分档节只留两条不可让渡（原型前置、收口用户验收）与指针，不复制分档表 |
+| 评审与测试的成本分档（S/M/L 判据与配套默认纪律） | `skills/agentflow/references/execution.md` | ## 评审与测试的成本分档（按改动量定证据深度，不按轮次惯性） | SKILL 的分档节只留两条不可让渡（原型前置、收口用户验收）与指针，不复制分档表 |
 | 外部文档二次评审的桥工作流（快照、`source_revision`、`provenance` 分流、记录契约） | `skills/agentflow/references/repo-audit.md` | ## 外部文档二次评审（另一套规则下产出的文档） | SKILL 的该节只留触发条件、两个升级回路与指针；四步流程不出现第二份 |
 | 仓库整体审核档位与铁律 | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 审核节只留指针，档位与铁律以 repo-audit.md 为准，不抄铁律正文 |
 | 检索纪律（存在性结论不用裸 grep、先打印命中原文再判 PASS/FAIL） | `skills/agentflow/references/repo-audit.md` | ## 铁律 | SKILL 的 Init 节已指针化（指向 repo-rules 模板第 4 节与本铁律清单）；`templates/hub/repo-rules.md` 第 4 节是写进目标仓的安装态固定块（同步机制随版本标记重跑 Init 刷新），`templates/host/global-rules.md` 第 11 节同理 |

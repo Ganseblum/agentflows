@@ -3,12 +3,20 @@
 > 0.22.1 及更早版本的历史条目已移入 [docs/changelog-archive.md](docs/changelog-archive.md)（按原样保留）。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.40.0 — 2026-11-05（评审轮次改为入口/出口门，取消固定轮次上限）
+
+- **gen_review_brief.py**：撤销 0.39.0 的 `--tier` 与 S/M/L 轮次上限；新增 `review_gate`（入口/出口条件）与状态矩阵，`--review-round` 仅记录第几轮、不封顶；新增 `--reviewed-revision`（快照目录须含 MANIFEST，或提交号）与 `--task-status`（逐任务终态校验，拒绝进行中/未开始）；`DEFAULT_STOP_RULE` 改为引用 review_gate 的单句；自测 12/12。
+- **agents/reviewer.md**：新增「评审入口资格」与「状态矩阵」——入口不满足返回 `blocked`（不评审半成品）；已开评但具体断言缺证据用 `status: partial` 且 decision 不得 approved；轮次只记录，结束由出口条件决定。
+- **contracts.md / execution.md / SKILL.md / carrier-map.md**：分档表从「评审轮次」改为「入口/出口门槛」；评审结果节明确入口/出口与状态矩阵；删除「delta ≤1 轮」「S/M 2 轮、L 3 轮」等固定轮次口径；补全量检查/全矩阵/收口核对定义；carrier-map 锚点同步。
+- 来源：`ISS-2026-11-05-评审轮次被设成固定上限与「按入口/出口条件」相悖`（test-login issues/，defect_class 流程，attribution workflow_policy）；0.39.0 未发布即在本版纠正。
+- 评审：第 1 轮 `changes_requested`（P1×3、P2×3：blocked/partial 分叉、reviewed_revision 未冻结、任务状态不可判定、stop_rule 双源、自测弱、carrier-map 锚点）→ 修入；第 2 轮 `partial`（F6 不在快照 + 3 条新 P2：参数未校验、verify 只核清单内、CHANGELOG 9/9）→ 修入并补快照；第 3 轮 `changes_requested`（N1 校验器仅形状检查、N2 review_snapshot.py 未入快照）→ 修入；第 4 轮 `approved`（snapshot-3，7 文件，`tasks: 6` 全 ☑，F1–F6/N1–N3 全 closed）。残余：§1.1 差分基线未覆盖 review_snapshot/carrier-map 旧侧（不影响本轮快照绑定）；宿主未重装，运行时生效 unverified。
+
 ## 0.39.0 — 2026-11-05（评审关闭判定 + 分档护栏 + AC 可定性机检 + 计划测试链任务）
 
 - **reviewer.md**：delta 轮新增 `previous_findings: [{id, severity, status: closed|unverified, cost_replay}]`——关闭判定必须回到 finding 的 cost 场景重放；P0/P1 未重放记 `unverified` 且本轮不得 `approved`，P2/P3 无法重放的写理由留 residual_risks。输出形态与 contracts.md 同步。
-- **gen_review_brief.py**：新增 `--review-round N --tier S|M|L`，S/M 上限 2 轮、L 3 轮，超限渲染「偏离分档默认」；修正 `DEFAULT_STOP_RULE` 与 L 档「不自动开第 3 轮」的自相矛盾；`--review-round < 1` 拒绝；交付形态补 `previous_findings`；自测 8/8。
+- **gen_review_brief.py**：新增 `--review-round N --tier S|M|L`，S/M 上限 2 轮、L 3 轮，超限渲染「偏离分档默认」（**0.40.0 已撤销该固定上限**）；修正 `DEFAULT_STOP_RULE` 与 L 档「不自动开第 3 轮」的自相矛盾；`--review-round < 1` 拒绝；交付形态补 `previous_findings`；自测 8/8。
 - **check_ac_clarity.py（新增）**：按验收表逐行软检「模糊词 + 无量纲」，默认 WARN 不阻塞、`--strict` 失败；表头兼容模板的「可观察结果（断言什么）」、目录两种布局取并集、无验收表/无 AC 行/缺列行退出 2 不报假 PASS、裸名词不再当锚点、引号内模糊词仍报警（仅否定语境的引号豁免）；自测 8/8，真实 acceptance 54 条 AC 行 0 WARN。
-- **计划模板**：任务清单强制测试记录链任务（plan/run 各一行，S 档可合并；不适用写「— 本期不做」+ 证据列理由），自检项同步；review-checklists 改为指向 reviewer.md 单点定义，避免双源。
+- **计划模板**：任务清单强制测试记录链任务（plan/run 各一行，run 依赖 plan + 实现任务；不适用写「— 本期不做」+ 证据列理由），自检项同步；review-checklists 改为指向 reviewer.md 单点定义，避免双源。
 - **版本收口**：plugin.json / marketplace.json 与 .zcode-plugin / .claude-plugin / .codex-plugin / .qoder-plugin 四份宿主 manifest 统一 0.39.0；`build_runtime.py` 重建生成树，`diff -r` 源面与 runtime 一致。
 - 评审链：首轮 `changes_requested`（P1×2、P2×6）→ 修入；delta 复核 approved 但 F3/F8 记 unverified + 2 条新 P2 → 再修；L 档第 3 轮 spot：F3/Q1/Q2/R1 closed；F8 的 S 档合并例外按确定性检查删除（合并例外残留 0、run 依赖 plan+实现任务在文），未再开模型轮。残余：`has_anchor` 仍以整格具体引号为弱锚点（同一格另有引号外模糊词会漏报），软层可接受，记入 residual。
 

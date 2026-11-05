@@ -18,6 +18,7 @@
   4. 打印可直接粘进评审简报的 reviewed_revision 与 read_scope 段
 
   --verify：按 MANIFEST 对当前仓库工作树逐文件重算 sha256，输出逐文件 一致/改动/缺失 与汇总。
+  只核对 MANIFEST 清单内文件——清单外的工作树改动不在核对面，快照必须包含完整变化文件清单。
   存在漂移时退出码 1——用于「批准后冻结」核对（contracts.md 评审结果节）：approved 之后至提交
   之前被评审文件不得改动，批次收口（提交前）运行一次，把「绑定仍成立」变成可复核输出。
   退出码：0 = 全部一致；1 = 有漂移；2 = 用法或 MANIFEST 问题。
@@ -182,6 +183,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     drift = sum(1 for status, _, _ in rows if status != "一致")
     total = len(rows)
     print(f"汇总：{total - drift}/{total} 一致，{drift} 漂移")
+    print("注：仅核对 MANIFEST 清单内文件；清单外工作树改动未覆盖——快照必须包含完整变化文件清单。")
     if drift:
         print("结论：快照与当前树不一致——approved 绑定已失效；"
               "按 contracts.md「批准后冻结」重开 spot 评审或重新快照。")
