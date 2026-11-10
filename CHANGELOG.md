@@ -9,7 +9,7 @@
 - **三层载体去重**：宿主全局块从 11 条收到 6 条（分支、落点、合并/推送授权、证据、合并收口、评审 revision），通用行为纪律交项目规则与 skill；maker / repo-rules / hosts / carrier-map 同步指针化，全局块 97→54 行。
 - **历史归档**：`docs/design-decisions.md` §3（改进环与评测装置）迁至 `docs/design-decisions-archive.md`；清理 linter / C9 / episode 现行主张与角色提示词里的 `记录 schema（见模板）` 占位符。
 - **验证**：init 20/20、brief 22/22、snapshot 15/15、feature 22/22、record 6/6、回归 31/31、skill-refs 4/4 + 实跑 PASS、六份 manifest 一致为 0.42.0；`packaging/build_runtime.py` 重建完成。
-- **安装**：ZCode 本地插件已由 0.41.0 升级到 0.42.0；安装载荷 102/102 文件字节与执行位一致。新会话实际加载未观察，需重启后核实；ZCode 全局托管块仍是旧版，需按 Host Init 重跑。交付结论仍为 `partial`，直到新会话加载与 Host Init 完成。
+- **安装**：ZCode 本地插件已由 0.41.0 升级到 0.42.0（102/102 字节与执行位一致）；`~/.zcode/AGENTS.md` 托管块已重跑 Host Init 至 0.42.0 六条，块外/块内两项校验通过，第三项（新会话复述首行）待重启后完成，Host Init 记 `blocked`。交付结论仍为 `partial`。
 
 ## 0.41.0 — 2026-11-05（审计修复：安全默认值、冻结对象与风险减负）
 
