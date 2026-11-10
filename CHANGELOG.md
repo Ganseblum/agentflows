@@ -3,6 +3,14 @@
 > 0.22.1 及更早版本通过 Git 历史中的 `docs/changelog-archive.md` 回溯；精简基线已移除该文件，不把历史路径当当前文件。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.42.0 — 2026-11-10（规则收敛：阅读面、载体去重与历史归档）
+
+- **规则阅读面**：SKILL 主干从 14 份收到 5 份（约 700 行），低频条款移到「按产物触发」；contracts 新增「执行面」表与规则预算——14 条硬边界逐条标明由脚本 / 宿主 / 人工执行，能写检查的才写成 MUST；check_skill_refs 新增 R4 主干行数检查。
+- **三层载体去重**：宿主全局块从 11 条收到 6 条（分支、落点、合并/推送授权、证据、合并收口、评审 revision），通用行为纪律交项目规则与 skill；maker / repo-rules / hosts / carrier-map 同步指针化，全局块 97→54 行。
+- **历史归档**：`docs/design-decisions.md` §3（改进环与评测装置）迁至 `docs/design-decisions-archive.md`；清理 linter / C9 / episode 现行主张与角色提示词里的 `记录 schema（见模板）` 占位符。
+- **验证**：init 20/20、brief 22/22、snapshot 15/15、feature 22/22、record 6/6、回归 31/31、skill-refs 4/4 + 实跑 PASS、六份 manifest 一致为 0.42.0；`packaging/build_runtime.py` 重建完成。
+- **未完成**：本地宿主重装未执行，0.42.0 的新规则尚未进入已安装快照；ZCode 全局托管块仍是旧版，需按 Host Init 重跑。交付结论 `partial`，不写成运行时已生效。
+
 ## 0.41.0 — 2026-11-05（审计修复：安全默认值、冻结对象与风险减负）
 
 - **初始化**：逐字保留用户附录、CRLF 与空白；按归属配对多块；Claude-only 建立 AGENTS 依赖；拒绝链接路径；冲突整计划零写、旧 manifest 不缩水，显式接管后才恢复。

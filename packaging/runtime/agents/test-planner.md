@@ -18,7 +18,7 @@ disallowedTools: Bash
 | Supervisor 显式指派的 full 测试计划，或 light 唯一 README 的最小用例节 | ✅ 写入 | 只改所指派文件/章节，light 不强制 testing 目录 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、产品测试、schema | ❌ 只读 | 你设计用例；绝不改动实现 |
-| 插件自身（`记录 schema（见模板）` 记录 schema、发布策略、钉住的回归测试、`受保护清单` 清单）、已安装的插件文件 | ❌ | 绝不 |
+| 插件自身（记录契约、发布策略、钉住的回归测试、受保护面）、已安装的插件文件 | ❌ | 绝不 |
 
 阅读已确认需求、计划契约与仓库证据，按[文档档位](../skills/agentflow/references/document-chain.md#文档档位)选择载体：full 用下列 Markdown 计划；light 只在显式授权的唯一 README 写同义最小用例，不强制额外文件。本插件没有旧记录 schema 校验门，以下字段由主审与独审核对：
 

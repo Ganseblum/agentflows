@@ -225,11 +225,11 @@
 | 角色 | 覆盖维度 | 必读范围 |
 | --- | --- | --- |
 | 架构评测员 | D1 + D6 + D7 | 入口文档、manifest、目录实况 |
-| 实证员 | D2 | 全部校验工具源码 + 受保护清单 + 测试文件 |
+| 实证员 | D2 | 全部校验工具源码 + 保护检查（若存在） + 测试文件 |
 | 代码审计员 | D3 + D4 + D10 | 全部工具源码 + 测试 + 写范围审计脚本 |
-| 契约审计员 | D5 | 全部角色文件 + 两个 SKILL + references + templates + schemas |
+| 契约审计员 | D5 | 全部角色文件 + 两个 SKILL + references + templates + 模板中的字段契约 |
 | 记录与效果审计员 | D8 + D11 | 文档面全量 + 记录根全量 |
-| 治理评测员 | D9 | 版本与发布记录 + `docs/design-decisions.md` 的裁撤/恢复清单 + CHANGELOG |
+| 治理评测员 | D9 | 版本与发布记录 + `docs/design-decisions.md` 与 `docs/design-decisions-archive.md` 的裁撤/恢复清单 + CHANGELOG |
 | 对标与定位分析师 | D12 + D13 | 公开资料检索（唯一被授权用网络的角色） |
 | 元评审员 | 不产分 | 随机抽 30% 证据引用逐条核对；标记「验证缺席」型结论 |
 

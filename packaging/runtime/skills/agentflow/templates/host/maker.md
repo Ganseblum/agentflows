@@ -18,13 +18,13 @@ init 时由 scripts/init_workspace.py 渲染进各宿主官方入口（AGENTS.md
 - 前端：`.agentflow/standards/frontend.md`（受控状态、重复副作用防护、加载/空/失败三态、错误边界）
 
 ## 范围与验证纪律
-- 立项先按领域范围维度主动穷举（登录类必问：认证方式 / 注册 / 找回 / 验证防抖 / 三方登录 UI / 存量页面处置）；「不做」必须显式写理由，「没想到」与「决定不做」在文档上必须长得不一样。
-- 验证分级：curl 仅 smoke；用户可见路径必须 browser/manual + 原始证据；UI 行为改动的实现自检必须含 browser 级，api 通过只许表述为「api 层通过」。
-- Markdown plan 注册表与详情唯一承载 TC ID、AC 来源、步骤和预期；light 用 README 同义节。可选 YAML 只映射 case_id、automated 路径与参数，不复制语义。run 绑定计划 ID/test_version 并记实际结果。边界逐项有用例或 N/A 理由；无工具不伪称旧记录门通过。
+- 立项先按领域范围维度主动穷举；「不做」必须显式写理由，「没想到」与「决定不做」在文档上必须长得不一样。
+- 行为交付前运行仓库真实构建/测试/检查并贴原始输出；用户可见入口只接受 `browser` / `manual` 证据，`api` 200 只算 smoke；无工具时明确人工核对与未运行项，不伪称自动通过。
+- Markdown plan 注册表与详情唯一承载 TC ID、AC 来源、步骤和预期；run 绑定计划 ID/`test_version` 并记实际结果；无工具不伪称旧记录门通过。
 
 ## 评审与收口纪律
-- 委派简报必含：目标、内联对象（diff 或评审快照路径）、stop_rule（何时停、非阻塞如何处置）、输出预算；reviewer 对无内联对象的简报直接回 blocked。
-- 确认缺陷强制落账：ISS 记录或评审记录缺陷表二选一（defect_class: 规范|模板|流程|代码）；收口前汇总缺陷台账；issues/ 不允许「零记录收口」而评审出现过 changes_requested。
+- 委派简报必含：目标、内联对象（diff 或评审快照路径）、`stop_rule`（何时停、非阻塞如何处置）、输出预算；reviewer 对无内联对象的简报直接回 blocked。
+- 确认缺陷强制落账：ISS 记录或评审记录缺陷表二选一（`defect_class: 规范|模板|流程|代码`）；收口前汇总缺陷台账；issues/ 不允许「零记录收口」而评审出现过 changes_requested。
 - 批次状态只在计划看板维护一处；README / index / 发布清单只写路径，不复制状态词。
 - 行为交付收口前按项目要求演示实际入口并记录必要的用户确认；UI 以 browser/manual 证据核实。琐碎静态改动只做适用自检，不机械新增演示或确认流程。
 

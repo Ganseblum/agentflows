@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """check_skill_refs.py — 校验 skill（触发层）与 references（正文层）的接线一致性。
 
-要防的三类漂移：
+要防的四类漂移：
   R1 断链：skill 里 `../agentflow/references/X.md` 指向的文件不存在。
   R2 孤儿条款：skill 的硬约束写了 `（正文：§X）`，但该 references 里没有对应标题——
      说明摘要已跑在正文前面（条款只活在提醒里，正文没依据）。
   R3 反向失联：references 头部「加载者」声明了某个入口，但那个入口并没引用它——
      说明入口已迁移而声明没跟上（读者按声明去找会落空）。
+  R4 主干超预算：SKILL.md 的「主干」表超过 5 行——默认阅读面会重新膨胀回「全量预读」。
 
 设计取舍：R2 依赖 skill 里显式的 `（正文：§X）` 标注，不用中文分词猜关键词——
 猜出来的覆盖度既不可复现也不可审计。标注是本脚本的接口，与 C18 记录归属表同思路。
@@ -25,6 +26,22 @@ from pathlib import Path
 REF_LINK_RE = re.compile(r"\]\(([^)]*references/([A-Za-z0-9._-]+\.md))(?:#[^)]*)?\)")
 CITE_RE = re.compile(r"（正文：§\s*([^）]+)）")
 LOADER_RE = re.compile(r"^\s*>\s*\*\*加载者\*\*[：:]\s*(.+)$", re.MULTILINE)
+MAIN_TRUNK_MAX = 5
+
+
+def main_trunk_rows(text: str) -> int:
+    """Count data rows in the **主干** table; 0 when the marker is absent."""
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("**主干**"):
+            rows: list[str] = []
+            for row in lines[index + 1:]:
+                if row.startswith("|"):
+                    rows.append(row)
+                elif rows:
+                    break
+            return max(0, len(rows) - 2)
+    return 0
 
 
 def headings(text: str) -> list[str]:
@@ -89,6 +106,15 @@ def check_skill(skill: Path, root: Path) -> list[str]:
                     f"R3 反向失联: {target.relative_to(root).as_posix()} 声明加载者是 "
                     f"「{declared[:60]}」，但没提到 {skill.parent.name}"
                 )
+
+    # R4 — the default reading surface stays bounded.
+    if "**主干**" in text:
+        rows = main_trunk_rows(text)
+        if rows > MAIN_TRUNK_MAX:
+            errors.append(
+                f"R4 主干超预算: {rel_skill} 主干表 {rows} 行 > {MAIN_TRUNK_MAX}；"
+                "把低频条目移到「按产物触发」，不要恢复全量预读"
+            )
     return errors
 
 
@@ -118,7 +144,7 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}")
         return 1
-    print("PASS skill-refs（R1 断链 / R2 孤儿条款 / R3 反向失联 均无）")
+    print("PASS skill-refs（R1 断链 / R2 孤儿条款 / R3 反向失联 / R4 主干预算 均无）")
     return 0
 
 
@@ -171,9 +197,19 @@ def _self_test() -> int:
                  "读 [`../agentflow/references/intake.md`](../agentflow/references/intake.md)\n\n"
                  "- **缺依据先问**（正文：§依据缺失时）\n")
 
+    def t_main_trunk(base: Path) -> None:
+        mk_ref(base, "execution.md", "# Execution\n\n## 测试\n\n内容\n")
+        rows = "\n".join(
+            f"| 工作{i} | [执行](../agentflow/references/execution.md) |" for i in range(6)
+        )
+        mk_skill(base, "agentflow",
+                 "**主干**（每次委派）：\n\n| 工作 | 入口 |\n| --- | --- |\n" + rows + "\n\n"
+                 "**按产物触发**：其余内容。\n")
+
     case("干净接线通过", t_clean, 0, "")  # 无 findings 即通过；PASS 字样由 main() 打印
     case("R1 断链", t_broken_link, 1, "R1 断链")
     case("R2 孤儿条款（正文节不存在）", t_orphan, 1, "R2 孤儿条款")
+    case("R4 主干超预算", t_main_trunk, 1, "R4 主干超预算")
 
     failed = [r for r in results if not r[1]]
     for name, ok, detail in results:

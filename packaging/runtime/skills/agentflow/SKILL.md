@@ -20,35 +20,37 @@ when_to_use: 跨前端后端的功能或契约改动、并行调查、委派实�
 
 ## 先读哪份规则
 
-**主干**（每个批次几乎必然用到）：
+**主干**（每次委派都会用到，共 5 份，合计约 700 行；不要预读其余 references）：
 
 | 当前工作 | 权威入口 |
 | --- | --- |
 | 开工、测试先行、预检、选测、证据复用、补测、失败分流 | [执行与验证](references/execution.md) |
-| 需求不清、开工前对齐、任务简报 | [开工提问](references/intake.md) · 用户主动叫入口：[agentflow-intake](../agentflow-intake/SKILL.md) |
-| 接一个新项目（六问、接入约定、基线对齐） | [Init 细则](references/init.md) |
-| 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) · 用户主动叫入口：[agentflow-grilling](../agentflow-grilling/SKILL.md) |
-| 选择角色与交接 | [角色路由](references/roles.md) · [契约](references/contracts.md) |
+| 选择角色与交接、简报/结果字段、硬边界 | [角色路由](references/roles.md) · [契约](references/contracts.md) |
 | 独立评审要加载哪几份深度清单、评审档位与交付前自检 | [评审清单](references/review-checklists.md) |
 | 功能文档的档位与必需骨架 | [文档交付链](references/document-chain.md) |
-| 测试计划、执行记录及 Bug 状态联动 | [测试记录](references/test-records.md) |
-| 工程内容标准（写代码时） | [服务端](references/standards/server-side.md) · [数据模型](references/standards/data-model.md) · [前端](references/standards/frontend.md) |
-| 问题闭环：发现 → 落账 → 复发台账 | [问题闭环](references/issue-tracking.md) |
-| 验证分级：curl 仅 smoke，e2e 必须 browser+证据 | [验证分级](references/verification-grading.md) |
-| 测试用例结构化（AC 权威在 plan 注册表） | [测试用例](references/testcases.md) |
-| 开工范围维度主动确认 | [范围维度](references/intake-scope-dimensions.md) |
-| 产品决策简报（分类头 + 九段） | [决策简报模板](templates/decision/decision-brief.md) |
+| 需求说不清、开工前对齐、任务简报 | [开工提问](references/intake.md) · 用户主动叫入口：[agentflow-intake](../agentflow-intake/SKILL.md) |
 
-**按需包**（低频，命中具体场景才读；不在主路由里，读到这一行就够了）：
+**按产物触发**（命中该产物才读；不在主干里，读到这一行就够了）：
 
 | 场景 | 入口 |
 | --- | --- |
+| 第一次接一个新项目（六问、接入约定、基线对齐） | [Init 细则](references/init.md) |
+| 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) · 用户主动叫入口：[agentflow-grilling](../agentflow-grilling/SKILL.md) |
+| 写测试计划 / 执行记录、Bug 状态联动 | [测试记录](references/test-records.md) |
+| 写代码（服务端 / 数据模型 / 前端工程底线） | [服务端](references/standards/server-side.md) · [数据模型](references/standards/data-model.md) · [前端](references/standards/frontend.md) |
+| 缺陷发现 → 落账 → 复发台账 | [问题闭环](references/issue-tracking.md) |
+| 收口用户可见行为（curl 仅 smoke，e2e 必须 browser+证据） | [验证分级](references/verification-grading.md) |
+| 设计测试用例（AC 权威在 plan 注册表） | [测试用例](references/testcases.md) |
+| 进入某类功能前主动穷举范围维度 | [范围维度](references/intake-scope-dimensions.md) |
+| 产品决策简报（分类头 + 九段） | [决策简报模板](templates/decision/decision-brief.md) |
 | 画、改、评设计图（时序 / 状态 / 架构 / ER） | [设计图](../design-diagram/SKILL.md) |
 | 跨仓全局纪律、Host Init 协议、宿主矩阵 | [宿主接入](references/hosts.md) |
 | 用户行为事件与埋点评审 | [埋点契约](references/telemetry.md) |
 | 仓库整体审核 / 体检 / 复盘 | [审核契约](references/repo-audit.md) |
 | 证据工具 seal / verify / run 的命令语义 | [证据工具用法](references/workflow-tool.md) |
 | 载体归属（哪份规则落在哪个物理文件） | [载体地图](references/carrier-map.md) |
+
+**规则预算。** 主干只保留每次委派都会用到的 5 份；其余条款按产物触发，不预读。新增一条 MUST 之前先写清三件事：由谁执行（脚本 / 宿主 / 人工）、在哪份产物上留下可复核证据、失败时如何被观察到；三问答不全的，写成评审清单项或删除，不写成 MUST。硬边界的执行面与现有机器检查清单见[契约](references/contracts.md#执行面)。
 
 同一任务可以命中多项，但只读取实际适用的内容。规则、状态和行为正文各维持一个权威来源，不复制第二套流程或记录。
 
