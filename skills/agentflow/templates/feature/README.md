@@ -1,15 +1,13 @@
 # `feature-<日期>-<主题>` Feature 总览
 <一句话：本 README 是当前 Feature 的唯一入口；推荐阅读顺序 proposal/需求提案 → spec/{be,fe,qa} → design/{be,fe,qa} → plan/execution>
 > 段落映射：逐段声明落点（下表），落点指向本目录之外的活文档时写对方路径；落点非空且非「—」的段落可缺目录，其余段落齐全。
-> 轻量降档：必须在元信息里写出一行字面标记 `轻量模式：无 spec/design 轨（理由：…）`——
-> 判据按这条正则识别降档（文档链 linter 的 `轻量模式[：:][^\n]*无\s*spec/design\s*轨`），
-> **只在段落映射表里把落点写成「—」不构成降档**，那样 proposal/plan 之外的阶段仍按完整链要求判。
+> 本模板用于 full；light 按[唯一文档档位](../../references/document-chain.md#文档档位)使用 lightweight.md 生成唯一 README，不用旧 linter 标记降档。选轨与 N/A 理由写在元信息；QA 必需，BE/FE/UI 按实际范围。
 > 落点形态：<文档枢纽仓（`<repo>/<name>-workflow-ai/`）｜普通业务仓（`docs/features/`）> 二选一，随接入约定。
 ## 元信息
 - 需求原文/页面链接：<路径或链接>；主实施仓：<仓>；相关系统/仓库：<仓>；UI 轨：<已启用（spec/ui/visual.md + design/ui/visual.md）｜未启用>；最后更新时间：<日期>
 - 落点基准：<任务表代码落点相对 <主实施仓根（默认）｜<name>-workflow-ai/｜本批次目录>>——不声明时按主实施仓根解析，跨基准书写的路径一律写全前缀
 - 视觉基线：<A 复用本仓既有基线（<组件/主题/token 源文件 path>）｜B 移植自 <仓/页面>｜C 冷启动新建基线 v1｜`N/A: 无 UI 改动`>
-- 原型：<形态 A（目标仓已维护原型库：批次 `prototype/index.html` 只做入口页）｜形态 B（确无原型库：批次 `prototype/index.html` 即正文）｜`N/A: 无用户界面`｜`N/A: 复用 <页面> 既有结构（仅限完全复用且无界面改动）`>——判据与入口页/依赖闭包要求见 `templates/feature/prototype/README.md`
+- 原型：<真实页面预览（页面@revision 与 browser 证据）｜形态 A（已维护原型库）｜形态 B（需独立批次原型）｜`N/A: 无用户界面`>——按风险选择，不为小 UI 强制新建离线副本；独立原型判据见 `templates/feature/prototype/README.md`
 - 原型基线：<原型正文 `path@revision`（可解析的提交号；形态 A 与入口页登记的一致，跨仓写 `<repo>@<revision>:<path>`）；目标页面实现 `path:line@revision`；若沿用上一版，再列上游 feature 的 `prototype/index.html@revision`；全新页面写「新建」；无 UI 写 `N/A: 原因`>
 - 埋点：<本期新增 n 个事件（design/fe §1.7）｜复用既有事件 <事件名>｜`N/A: 理由`>
 ## 段落映射
@@ -22,15 +20,12 @@
 | design | — | 同上 |
 | plan | — | 正文或目标仓自有计划落盘后回填 |
 ## 目标承接
-> 立项当天把 `agentflow 目标承接` 标记独立成行写进本文件后，必须同时填写本表；目标编号取 proposal §1.2，spec 承接列写模块号（`M-A`）或验收点编号，plan 任务列写任务号，状态列随计划看板回写。
-| 目标 | proposal 出处 | spec 承接 | plan 任务 | 状态 |
-| --- | --- | --- | --- | --- |
-| G1 | `proposal/proposal.md` §1.2 | `spec/qa/acceptance.md` M01-AC-01 | T01 | ☐ 未开始 |
+> 立项当天填写目标→规格→原计划任务的承接关系；本表只存引用，状态仅在计划任务行维护，不复制或回写状态列。
+| 目标 | proposal 出处 | spec 承接 | plan 任务指针 |
+| --- | --- | --- | --- |
+| G1 | `proposal/proposal.md` §1.2 | `spec/qa/acceptance.md` M01-AC-01 | `plan/execution.md` T01 |
 ## 记录归属
-> 立项当天把 `agentflow 决策归属` 标记独立成行写进本文件后，本表负责关闭 C18：`status: open` 的缺陷
-> 记录要么在这里挂上任务号，要么在记录自己的 frontmatter 写 `disposition: deferred/not-doing`。
-> **表头两列 `记录编号 | 任务号` 是判据的接口**（按列名匹配，见 `checks.py` 的 `ownership_findings`），
-> 上面那张目标承接表顶替不了它——写错表头等于没写，登记当天即红。
+> 开放缺陷在本表引用原计划任务，或在记录写 `disposition: deferred/not-doing` 与理由。主审与独审核对归属和真实证据；本插件已不提供 C18/checks.py 自动门，标记不代表机器强制。
 | 记录编号 | 任务号 | 说明 |
 | --- | --- | --- |
 | ISS-YYYY-MM-DD-<slug> | T01 | <这条开放记录由本批哪个任务关闭> |

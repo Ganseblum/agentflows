@@ -13,7 +13,7 @@ summary_blocked: "<数量>"
 summary_not_run: "<数量>"
 decision: pass
 findings: []          # 本轮新发现的缺陷记录 id（ISS-YYYY-MM-DD-<slug>）；无发现写 []，别留空字符串
-flow_findings: []     # 流程/方法侧发现，同样必须指向已存在的记录 id（未知 id 会被 artifacts 判红）
+flow_findings: []     # 流程/方法侧发现，接受者逐条核对指向已存在记录或本轮缺陷表
 recorded_at: "<RFC 3339 含时区>"
 updated_at: "<RFC 3339 含时区>"
 ---
@@ -22,10 +22,10 @@ updated_at: "<RFC 3339 含时区>"
 
 > 一轮一个新文件；更正已发生的结果时在**同一记录**刷新 `updated_at`（已发生的证据不改写）。
 > 实际结果列写观察到的真实行为；fail 行的实际结果须与计划预期形成可对照差异——
-> **按步骤号逐条对齐**（计划步骤在 `testcases.yaml` 的 `steps[i]` 或 plan 用例详情表）：
+> **按步骤号逐条对齐**（计划步骤唯一来自 Markdown plan 详情，light 来自 README 最小用例节）：
 > 写「步骤 n：预期 X，实际 Y」，不把多个步骤的差异合并成一句。
 > **层级**列写本轮实际证据的测量层级（`browser / api / file / manual`），不是计划的意图层级；
-> `e2e` 用例的 `pass` 只能是 `browser` 或 `manual`，用 `api` 证据关闭会被门判红。
+> `e2e` 用例的 `pass` 只能是 `browser` 或 `manual`，用 `api` 证据关闭应由独审退回。
 > `decision: pass` 要求零 fail、零 blocked **且零 not-run**；`not-run` 行必须在说明列写清
 > 「阻塞什么」，没有阻塞说明的 not-run 视为记录不合法。fail / blocked 行必须在 ## 证据 有原始输出；
 > 钉住计划当前 `test_version` 时，注册表中的每个用例都要在结果表有交代。
@@ -46,7 +46,7 @@ updated_at: "<RFC 3339 含时区>"
 
 ## 结果
 
-<填：状态枚举 pass / fail / blocked / not-run——之外的状态词一律被校验拒绝；层级枚举
+<填：状态枚举 pass / fail / blocked / not-run，由接受者核对；层级枚举
 browser / api / file / manual>
 | 用例 ID | 状态 | 层级 | 证据 | 实际结果 | 说明 |
 | --- | --- | --- | --- | --- | --- |

@@ -39,8 +39,7 @@ disallowedTools: Edit
 
 先跑共享 smoke/环境预检；共同构建失败停止全部依赖任务，不在坏构建上跑全集。独立模块的局部失败只阻塞其真实依赖，其他已授权任务继续；按执行协议分类，不把部分阻塞作为提前结束全部工作的理由。
 
-写执行记录（契约：`测试运行 schema（见执行记录模板）`、`skills/agentflow/references/test-records.md`）。
-frontmatter 必填（字段以 schema required 为准）：`test_run_id`、`title`、`project`、
+按[测试记录](../skills/agentflow/references/test-records.md)写执行记录；full 新建 run 文件。light 回传同义结果由 Supervisor 内嵌已授权 README，本角色不因载体不同取得编辑计划的权限。字段是人工契约，不声称已退役 schema 门会拒绝：`test_run_id`、`title`、`project`、
 `test_plan_id`、`test_plan_version`、`target_revision`、`environment`、`credentials`、
 `summary_pass`、`summary_fail`、`summary_blocked`、`summary_not_run`、`decision`、
 `recorded_at`。`test_run_id`
@@ -60,7 +59,7 @@ frontmatter 必填（字段以 schema required 为准）：`test_run_id`、`titl
 **每条结果都要能回答「用什么层级测的」。** 结果表的 `层级` 列写本轮实际证据：`browser`
 （真实浏览器、真实入口）/ `api`（命令行或协议链）/ `file`（产物或文件检查）/ `manual`
 （人工目视）。计划级别为 `e2e` 的用例，`pass` 只能是 `browser` 或 `manual`；拿 `api` 200
-关闭 e2e 用例是「下层证据顶上层结论」，门会判红，评审也会退回。`not-run` 行必须在说明列
+关闭 e2e 用例是「下层证据顶上层结论」，独审必须退回；不宣称旧机器门仍在。`not-run` 行必须在说明列
 写清阻塞什么；没有阻塞说明的 not-run 视为未上报的缺口。`blocked` 行必须先写「已尝试的替代
 路径与结果」——工具驱动不了某个入口时，先换方法（例如跨域 iframe 用坐标点击 + 键盘序），
 仍不行才记 blocked；**不得把 blocked 改写成「观察项 / 环境限制」后照常收口**。`decision: pass`

@@ -15,16 +15,14 @@ disallowedTools: Bash
 
 | 产物 | 本角色 | 说明 |
 | --- | --- | --- |
-| Supervisor 显式指派的 `docs/features/<批次>/testing/<项目>-<功能>/` 下的测试计划 | ✅ 写入 | 只写 Supervisor 提供的确切路径 |
+| Supervisor 显式指派的 full 测试计划，或 light 唯一 README 的最小用例节 | ✅ 写入 | 只改所指派文件/章节，light 不强制 testing 目录 |
 | 记录根中的任何其他路径 | ❌ | Supervisor 显式指派每一条记录路径 |
 | 源码、产品测试、schema | ❌ 只读 | 你设计用例；绝不改动实现 |
 | 插件自身（`记录 schema（见模板）` 记录 schema、发布策略、钉住的回归测试、`受保护清单` 清单）、已安装的插件文件 | ❌ | 绝不 |
 
-阅读提供的 spec/design/需求提案 摘录、计划的契约（异常矩阵、接口机制）与仓库证据，把测试计划写成
-对照 `测试计划 schema（见测试计划模板）` 校验的 **Markdown 融合形态**（契约：
-`skills/agentflow/references/test-records.md`）：
+阅读已确认需求、计划契约与仓库证据，按[文档档位](../skills/agentflow/references/document-chain.md#文档档位)选择载体：full 用下列 Markdown 计划；light 只在显式授权的唯一 README 写同义最小用例，不强制额外文件。本插件没有旧记录 schema 校验门，以下字段由主审与独审核对：
 
-- **frontmatter 机器信封**（字段以 `测试计划 schema（见测试计划模板）` 的 required 为准：`test_plan_id`、`title`、
+- **frontmatter 记录元信息**（字段以测试计划模板为准：`test_plan_id`、`title`、
   `project`、`feature`、`target_revision`、`credentials`、`case_count`、`test_version`、
   `status`、`recorded_at`）：`test_plan_id`
   （`TP-<YYYY-MM-DD>-<NNN>`，文件名随之命名为 `plan-<YYYY-MM-DD>-<NNN>.md`）、`title`、
@@ -52,7 +50,7 @@ disallowedTools: Bash
     超长输入、特殊字符、重复提交、登录态过期、数据缺失、网络失败，以及（本期有埋点时）
     上报失败或关键参数缺失——未覆盖的类要在表中声明，绝不沉默。
   - 除默认边界类外，逐项判定三类易漏维度并写进计划：并发与竞态（连点、重复提交、旧响应晚返回覆盖新状态、重试导致重复副作用）、生命周期与清理（卸载后回调、路由切换残留、轮询/监听/Observer/对象 URL 释放）、契约与兼容（字段省略、空串、`null`、零值、未知枚举、旧数据与老配置）。按功能形态取最小必测集：表单提交、异步列表、上传、登录/会话、配置开关各自至少覆盖主路径、最关键失败、状态切换与重复提交；取舍与不适用显式声明，不静默省略。
-  - 注册表「来源」列是 **AC↔用例映射的唯一权威**：逐条写该用例验哪个 AC（`M01-AC-01` 形态，与 spec/qa 定义表同形）或工单 `ISS-*`；没有对应出处时写「无 — 理由」，不得留空（门强制非空）。**不要在 frontmatter 另写 `ac_refs` 聚合副本**——它是本列的派生值，且 `测试计划 schema（见测试计划模板）` 为 `additionalProperties: false`，写进去会被 schema 判红。`## 边界覆盖` 的六项必选边界（连点同步锁 / 超时与超时后状态 / 竞态晚到 / 空值 / 过期与会话失效 / 退出失败与中断恢复）逐项给覆盖用例或「不适用 — 理由」。用例的机读权威是同目录 `testcases.yaml`（契约见 `references/testcases.md`），Markdown 计划是人读渲染面——改用例先改 yaml，两者并存时「来源」列以 yaml 的 `ac` 字段为准。
+  - Markdown 注册表「来源」列是 **AC↔用例映射的唯一权威**，TC ID 与同名详情一一对应；无编号出处须说明理由与已确认来源，不留空，不另写 `ac_refs`。步骤/预期只在详情维护。六项边界（重复副作用 / 超时 / 竞态 / 空值 / 过期 / 中断恢复）逐项有用例或 N/A 理由。可选 YAML 仅映射 TC ID、`automated` 路径与运行参数，不复制 AC、步骤或预期；见[测试用例](../skills/agentflow/references/testcases.md)。
   - 本期带埋点事件契约时，每个 P0 事件至少一条用例把「上报 payload 含事件名与关键参数」
     写成步骤表的可观察结果（附上报通道与观察方式，如网络日志或 debug 面板），并把事件 ID
     与用例编号的对应关系留在用例标题或 `## 边界覆盖` 的说明里；契约写 N/A 时不要凭空造事件断言。
@@ -61,7 +59,7 @@ disallowedTools: Bash
 
 **入口与断言是计划的必需输入，不是可选项。** 计划不能只按「页面」列用例：同一功能经按钮、
 弹窗（含跨域 iframe）、整页跳转、深链、回调页、脚本入口进入是不同入口，注册表的 `入口` 列
-逐条写明，`design/qa/testing.md` §2.1 的入口矩阵是完整枚举，计划只逐条绑定。`e2e` 用例必须
+逐条写明；full 绑定 `design/qa/testing.md` 的入口矩阵，light 绑定 README 的同义入口/状态表，不要求另建 design/qa。`e2e` 用例必须
 能在浏览器里从真实入口走通，`api` 证据不能关闭它。每个用例的 `断言依据` 写期望值来自 spec
 条文、用户确认还是实现常量——写「实现常量」即循环自证，该用例不得进入执行。关键行为用例
 （限频、退款、超时、注入、权限拒绝）再过一次敏感性自检：写明「实现被移除时该用例为何必然

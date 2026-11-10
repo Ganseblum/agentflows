@@ -1,48 +1,29 @@
-# 测试用例结构化：testcases.yaml
+# 测试用例：Markdown 权威与可选执行映射
 
-> **加载者**：`skills/agentflow/SKILL.md` 工程内容标准节；`agents/test-planner.md` 与 `templates/feature/plan/execution.md` 写用例时读。AC 权威口径（plan 注册表「来源」列）在这里。
+> **加载者**：`skills/agentflow/SKILL.md`、测试角色与计划模板。用例语义只有一个来源；记录形态与状态联动见[测试记录](test-records.md)。
 
-> **解决什么**：痛点 12——验收标准（AC 表 M01-AC-*）是 markdown 散文，改动用例时无法机械校验「是否破坏了某条 AC 的覆盖」。引入以 AC 为键的结构化用例文件，让 design 必须表述操作过程 + 预期结果，并可用 `scripts/用例校验` 机械校验覆盖。**口径如实**：该校验是目标仓侧的按需独立脚本（门外工具），本插件未把它接入 CI 或交付前检查——是否接入由各仓自己的门配置决定，不得宣称已默认门校验。
+## 1. 唯一语义来源
 
-## 0. 文件位置与形态
+full 的用例权威是 `testing/<项目>-<功能>/plan-*.md` 的注册表与同名详情：注册表给出唯一 `case_id`（`TC-*`）、级别、优先级、入口和验收来源（AC/ISS）；详情给出前置、步骤、输入与预期可观察结果。AC 定义仍在已确认规格中；**AC↔用例映射只在注册表「来源」列维护**，不在 spec、design、frontmatter 或 YAML 再抄一份。
 
-- 落点：`<feature>/testing/<项目>-<功能>/testcases.yaml`（与 `run-*.md` 同目录）。
-- 形态：YAML 列表，每条用例以 `ac` 为键指向 `spec/qa/acceptance.md` 的 AC 编号。
+light 在唯一 README 的「最小用例」节承载同义注册表与详情、`test_plan_id` / `test_version` 和运行结果；无需额外 plan 文件。可以内嵌本轮 run，也可引用已有执行报告；不得为满足测试记录形态强制另建文档链。
 
-## 1. 字段 schema
+用例 ID 在本计划内唯一，注册表与详情一一对应；来源必须指向已确认的 AC、需求条款或 ISS，确无编号时写「无 — 理由与已确认出处」，不留空。修改步骤、预期或覆盖关系时递增 `test_version`。期望来自契约或用户确认，不能由当前响应、实现常量或被测算法反推。
+
+## 2. YAML 只作可选执行映射
+
+目标 runner 需要时可用 `testcases.yaml`，它不是第二份用例库。每项只引用 Markdown 中的 TC ID，并给出 `automated` 执行路径与运行参数；不复制 `steps`、`expect`、`ac`、来源或验收正文。
 
 ```yaml
-- ac: M01-AC-01            # 必填，指向 spec/qa 的 AC 编号
-  title: 正确凭据登录成功
-  priority: P0             # P0/P1/P2
-  source: proposal §1.2 G1 # 来源可追溯
-  type: browser            # browser | api | unit
-  steps:                   # design 必须表述操作过程
-    - 打开登录页
-    - 输入 demo@example.com / Demo@12345
-    - 点击登录
-  expect: 进入 upload 视图且导航显示邮箱   # 预期结果必须明确可判定
-  automated: server/*.test.mjs + browser    # 承载自动化用例的路径；api/unit 填对应测试文件
-  evidence: run-2026-11-02-001.md#TR-03     # 最近一次执行的证据锚点
+- case_id: TC-LOGIN-001
+  automated: tests/login.spec.ts
+  args: ["--grep", "TC-LOGIN-001"]
 ```
 
-## 2. 强制规则
+`automated` 是当前字段名；所有当前消费者保持同名。旧历史格式不批量回改。测试路径与参数必须在目标仓实际存在或明确标待实现，不宣称本插件提供并不存在的用例校验脚本。
 
-1. **design 必须表述操作过程 + 预期结果**才能写进 yaml——空 `steps` / 空 `expect` 不允许。
-2. **每条 AC 至少 1 条用例**：`用例校验` 校验「AC × 用例映射无空白」（沿用 `document-chain` 的映射检查精神；按需运行，未默认接入门——见开头口径）。
-3. **改动用例不影响其他 AC 覆盖**：结构化后可做 diff / 影响面分析——删除 / 改名某用例时，校验器报「X 条 AC 失去覆盖」而非静默。
-4. `source` 必须可追溯到 `proposal` / `spec` 的具体节，杜绝「自造验收点」。
+## 3. 执行与核对
 
-## 3. 与既有体系衔接
+run 用 `test_plan_id` 绑定计划、用 `test_plan_version` 绑定该计划的 `test_version`（light 时定位 README 的最小用例节），逐 TC 记本轮状态、实际证据层级、实际结果与原始输出。YAML 不写最近结果，计划不写本轮结果。
 
-- `spec/qa/acceptance.md` 的「AC × 用例覆盖映射」改为**指向本 yaml**（不再手工维护 markdown 映射表）。
-- `plan/execution.md` 的验证命令引用本 yaml 的 `automated` 字段所指测试。
-- `test-records.md` 的 bug 状态联动不变（bug 仍用 `ISS-*`）。
-
-## 4. 校验（新增，非校验脚本内改）
-
-`scripts/用例校验 <feature-dir>`：
-- 解析 `spec/qa/acceptance.md` 的全部 `M##-AC-##`；
-- 解析 `testcases.yaml` 的 `ac` 键；
-- 报告：未覆盖 AC、孤儿用例（ac 不在 AC 表）、缺 `steps`/`expect` 的用例。
-- 该脚本为**新增独立脚本**，不改本仓校验的既有权限边界。
+接受前由主审与独审核对：注册表/详情 ID 唯一且闭合；全部必需 AC 有来源映射；执行映射无孤儿 ID；执行路径与具名用例真实可运行；结果属于被绑定的版本。目标仓已有实际检查命令时运行并留原始输出；无工具则如实记人工核对，不能写成自动门通过。e2e 的 pass 只接受 browser/manual，API 200 不能关闭用户可见路径。

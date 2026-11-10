@@ -29,22 +29,108 @@ from .snapshots import (
 MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 
 
-def _stop(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
+def _group_members(pgid: int) -> dict[int, str]:
+    # killpg(pgid, 0) alone cannot distinguish runnable children from zombies:
+    # macOS can return EPERM even for our zombie-only group. Do not reap the
+    # leader while inspecting/terminating its group; its PID pins the group ID.
     try:
-        if os.name != "nt":
-            os.killpg(process.pid, signal.SIGTERM)
-        else:
-            process.terminate()
+        table = subprocess.run(
+            ["ps", "-A", "-o", "pid=,pgid=,stat="],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=True,
+        )
+        members = {}
+        for line in table.stdout.splitlines():
+            pid, group, state = line.split()
+            if int(group) == pgid:
+                members[int(pid)] = state
+        return members
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise WorkflowError(
+            "process-cleanup-failed", f"Cannot inspect process group {pgid}: {exc}", 3
+        ) from exc
+
+
+def _live_group(process: subprocess.Popen[bytes], pgid: int) -> set[int]:
+    members = _group_members(pgid)
+    if process.returncode is not None or process.pid not in members:
+        raise WorkflowError(
+            "process-group-identity-lost", "Process group leader lost before cleanup", 3
+        )
+    return {pid for pid, state in members.items() if not state.startswith(("Z", "X"))}
+
+
+def _stop_after_inspection_failure(process: subprocess.Popen[bytes], pgid: int, error: WorkflowError) -> None:
+    # An unreaped Popen leader pins its PID/PGID. Inspector failure must not
+    # prevent termination of this owned group. Never signal a reaped leader.
+    if process.returncode is not None or process.pid != pgid:
+        raise error
+    failures = [str(error)]
+    for sig, pause in ((signal.SIGTERM, 0.2), (signal.SIGKILL, 0.0)):
+        try:
+            os.killpg(pgid, sig)
+        except ProcessLookupError:
+            pass
+        except OSError as exc:
+            failures.append(str(exc))
+        if pause:
+            time.sleep(pause)
+    try:
         process.wait(timeout=1)
-    except (ProcessLookupError, subprocess.TimeoutExpired):
-        if process.poll() is None:
-            if os.name != "nt":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-            process.wait()
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        failures.append(str(exc))
+    # Signals are best effort when inspection failed: refuse finalization rather
+    # than claiming the whole group was verified, even after reaping the parent.
+    raise WorkflowError("process-cleanup-failed", "; ".join(failures), 3)
+
+
+def _stop(process: subprocess.Popen[bytes], pgid: int) -> None:
+    try:
+        _stop_inspected(process, pgid)
+    except WorkflowError as exc:
+        if exc.kind == "process-group-identity-lost":
+            raise WorkflowError("process-cleanup-failed", str(exc), 3) from exc
+        _stop_after_inspection_failure(process, pgid, exc)
+
+
+def _stop_inspected(process: subprocess.Popen[bytes], pgid: int) -> None:
+    errors = []
+    # A normal parent exit may leave children. TERM must address the saved group,
+    # and escalation must not depend on the parent's exit/wait status.
+    if _live_group(process, pgid):
+        try:
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        except OSError as exc:
+            errors.append(str(exc))
+        deadline = time.monotonic() + 0.2
+        while _live_group(process, pgid) and time.monotonic() < deadline:
+            time.sleep(0.02)
+        if _live_group(process, pgid):
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            except OSError as exc:
+                errors.append(str(exc))
+        deadline = time.monotonic() + 1
+        while _live_group(process, pgid):
+            if time.monotonic() >= deadline:
+                raise WorkflowError(
+                    "process-cleanup-failed", "Process group remains runnable after KILL", 3
+                )
+            time.sleep(0.02)
+    # No more group signals after reaping: the OS may reuse the PID/PGID.
+    try:
+        process.wait(timeout=1)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        errors.append(str(exc))
+    if errors:
+        raise WorkflowError("process-cleanup-failed", "; ".join(errors), 3)
 
 
 def _command(task: dict[str, Any], root: Path, output: Path) -> dict[str, Any]:
@@ -59,6 +145,14 @@ def _command(task: dict[str, Any], root: Path, output: Path) -> dict[str, Any]:
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
     reason: str | None = None
     returncode: int | None = None
+    if os.name != "posix":
+        raise WorkflowError(
+            "unsupported-process-control",
+            "Command execution requires POSIX process groups; Windows needs a job object",
+            3,
+        )
+    # Check that group inspection is available before starting any command.
+    _group_members(os.getpgrp())
     out_fd = os.open(stdout_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     err_fd = os.open(stderr_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(out_fd, "wb") as stdout, os.fdopen(err_fd, "wb") as stderr:
@@ -71,28 +165,46 @@ def _command(task: dict[str, Any], root: Path, output: Path) -> dict[str, Any]:
                 stdin=subprocess.DEVNULL,
                 shell=False,
                 env=environment,
-                start_new_session=os.name != "nt",
+                start_new_session=True,
             )
         except OSError as exc:
             evidence["process_error"] = str(exc)
             reason = "command-unavailable"
         else:
-            while process.poll() is None:
-                if time.monotonic() - start >= task["timeout_seconds"]:
-                    reason = "command-timeout"
-                    _stop(process)
-                    break
-                if (
-                    stdout_path.stat().st_size + stderr_path.stat().st_size
-                    > MAX_OUTPUT_BYTES
-                ):
-                    reason = "output-limit"
-                    _stop(process)
-                    break
-                time.sleep(0.02)
-            returncode = process.wait()
-    if stdout_path.stat().st_size + stderr_path.stat().st_size > MAX_OUTPUT_BYTES:
-        reason = "output-limit"
+            # start_new_session establishes PID == PGID before exec. Keep this
+            # leader unreaped until the last group signal and quiescence check,
+            # including when it exits normally. poll()/wait() would release its
+            # PID and make a later group signal unsafe under ID reuse.
+            pgid = process.pid
+            try:
+                while True:
+                    live = _live_group(process, pgid)
+                    if process.pid not in live:
+                        if live:
+                            reason = "orphaned-process-group"
+                        break
+                    if time.monotonic() - start >= task["timeout_seconds"]:
+                        reason = "command-timeout"
+                        break
+                    if (
+                        stdout_path.stat().st_size + stderr_path.stat().st_size
+                        > MAX_OUTPUT_BYTES
+                    ):
+                        reason = "output-limit"
+                        break
+                    time.sleep(0.02)
+            except Exception as exc:
+                evidence["process_error"] = str(exc)
+                reason = "command-monitor-failed"
+            finally:
+                _stop(process, pgid)
+            returncode = process.returncode
+    try:
+        if stdout_path.stat().st_size + stderr_path.stat().st_size > MAX_OUTPUT_BYTES:
+            reason = "output-limit"
+    except OSError as exc:
+        evidence["process_error"] = str(exc)
+        reason = "command-monitor-failed"
     evidence.update(
         {
             "returncode": returncode,
@@ -258,6 +370,10 @@ def run_plan(
                     )
                 _report(task, result, root, phase)
             except WorkflowError as exc:
+                # Unconfirmed cleanup must not reach snapshots, later commands,
+                # report parsing, or finalization while a child may still run.
+                if exc.kind in {"process-cleanup-failed", "unsupported-process-control"}:
+                    raise
                 if "result" not in locals() or result.get("id") != task["id"]:
                     result = {"id": task["id"], "cases": [], "evidence": {}}
                 result.update({"status": "fail", "error_kind": exc.kind})

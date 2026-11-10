@@ -51,9 +51,21 @@ def envelope(
 
 
 def read_json(path: Path | str) -> dict[str, Any]:
+    def unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in result:
+                raise ValueError(f"Duplicate JSON key: {key}")
+            result[key] = item
+        return result
+
+    def invalid_constant(value: str) -> Any:
+        raise ValueError(f"Non-finite JSON value: {value}")
+
     try:
-        value = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        value = json.loads(Path(path).read_text(encoding="utf-8"),
+                           object_pairs_hook=unique, parse_constant=invalid_constant)
+    except (OSError, UnicodeError, ValueError) as exc:
         raise WorkflowError("invalid-json", f"Cannot read JSON {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise WorkflowError("invalid-json", f"JSON object required: {path}")

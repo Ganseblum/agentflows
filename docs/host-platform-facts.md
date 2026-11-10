@@ -91,6 +91,10 @@
 | H7 | Copilot 载体落在 `.github/copilot-instructions.md`，与 `AGENTS.md` 同一份托管块正文。 | 同上探针：该文件第 1 行即版本标记，正文与 `AGENTS.md` 相同。 | GitHub Copilot（生成物形态） | 位置符合 Copilot 仓库指令文件的公开约定；加载未验证。 |
 | H8 | Codex 与 ZCode 共用 `AGENTS.md`，init 去重后只处理一次。 | 同上探针：`--hosts zcode,codex,…` 只产生一份 `AGENTS.md`。 | Codex / ZCode | 两端不会因重复写入产生冲突。 |
 
+## 0.41.0 本机交付观察（2026-11-05）
+
+本轮用户授权本地重装与仅 ZCode 既有全局块同步。ZCode、Codex、Qoder 磁盘载荷各102/102文件与冻结运行时字节及执行位相同；这不是所有宿主加载证明。ZCode 公开CLI的新会话在不调用工具的情况下逐字复述全局块首行、报告v0.41.0与`/0.41.0/skills/agentflow/SKILL.md`安装路径，退出0；块内等于模板、块外与写前原文逐字一致。Codex新会话启动后因usage limit退出1，加载未验证；Qoder沿用本地缓存/登记更新，无新会话加载证据。原始命令、返回和适用边界见[本轮第二次验收](features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-002.md)。这些观察不追溯改写上表历史时点。
+
 ## 重新验证
 
 - C1/C4：重跑一次 `claude --print --output-format json --json-schema <schema>` 调用，看带 `$schema`/`$id` 的 schema 是否仍被拒，以及受约束对象是否仍包在 `.result` 里返回（原适配器冒烟已随装置裁撤，改用一次直接 CLI 调用）。

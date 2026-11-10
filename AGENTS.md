@@ -9,7 +9,7 @@
 - 用 Read / Grep 直接看实际产物，确认它存在且符合要求；
 - 失败的检查是编译错误：修好它，或把输出退回 worker。无法复现的检查记为未运行，绝不计为通过。
 
-委派产物的写范围按[硬边界 14](../skills/agentflow/references/contracts.md)对照；本仓提供 `skills/agentflow/scripts/check-write-scope.sh` 作**人工步骤**，由接受产物的人手动运行，不接入 CI。
+委派产物的写范围按[硬边界 14](skills/agentflow/references/contracts.md#硬边界)对照；本仓提供 `skills/agentflow/scripts/check-write-scope.sh` 作**人工步骤**，由接受产物的人手动运行，不接入 CI。
 
 ## 编辑角色或 skill
 

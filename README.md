@@ -21,7 +21,9 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 - Codex：安装插件并调用 `$agentflow`。
 - Claude Code：用 `claude --plugin-dir .` 启动开发，然后调用 `/agentflow:agentflow`。
-- ZCode：运行 `python3 packaging/build_runtime.py`，再从 [`marketplace.json`](marketplace.json) 中的本地 marketplace 安装（它指向 `packaging/runtime`，不是本目录）。Skill 通过 `.zcode/skills/` 符号链接解析，但 **agent 从安装快照加载**——改动 `agents/*.md` 之后，重新生成运行时树、刷新 marketplace 并重装，让宿主全局指令文件里的托管块与当前版本对齐（见 [`skills/agentflow/references/hosts.md`](skills/agentflow/references/hosts.md)）。
+- ZCode：先运行 `python3 packaging/build_runtime.py`，本地 marketplace 的 [`marketplace.json`](marketplace.json) 指向 `packaging/runtime`；远端 marketplace 刷新其既有远端来源。升级入口 `python3 skills/agentflow/scripts/workflow.py upgrade-zcode --repo <REPO> --marketplace <NAME> --plugin <NAME> --mode auto|local|remote [--dry-run]`；Codex 对应 `upgrade-codex`。`auto` 读取既有市场来源，不静默重绑；local 使用已授权本地树，remote 使用已配置远端源。shell upgrade-* 只是薄适配，安装不等于提交或推送。
+
+安装后用 `workflow.py install-verify --expected-tree <TREE> --installed <CACHE> [--codex-source]` 核对递归文件集合、字节与执行位；维护入口也可用 `packaging/build_runtime.py --verify-installed <CACHE> --expected-tree <TREE> [--codex-source]`。Codex 源树模式只放行显式维护的顶层 extras 白名单，不能以版本目录存在、manifest 同号或 CLI exit 0 代替载荷正确。再开新会话核实实际加载来源与新内容，分别报告「载荷已核验」和「会话已加载」；工作区同名技能可能遮蔽插件。全局规则另按 [Host Init](skills/agentflow/references/hosts.md) 核验，不由插件重装顺带证明。
 
 ## 执行入口
 
@@ -38,7 +40,7 @@ Agentflow 是一个宿主原生的多 agent 开发工作流，面向 Codex、Cla
 
 三个 Bug 角色是可选择的能力，而不是每个问题都必须走的固定仪式。对 material、不确定、反复出现、跨层或高风险的 bug，使用完整的 Investigator → Fixer → Reviewer → Recorder 流程。对已有已知复现的小型低风险 bug，主审可以合并诊断或记录环节，同时保持同样的证据要求。Plan Architect 写计划；主审授权并协调执行。
 
-改进环已于 2026-10-29 整体裁撤：方法改动改走「明确反馈 + 有界候选 + 独立评审 + 人工授权」的成批流程；跨会话遥测、持久检索、私有 holdout 服务、canary 灰度上线与自动回滚未实现；人工批准是默认的发布边界。检索是一次性的 SQLite FTS5 词法索引（`记录检索`，若仍随本仓提供），源记录保持权威，不使用向量数据库。
+改进环已于 2026-10-29 整体裁撤：方法改动改走「明确反馈 + 有界候选 + 独立评审 + 人工授权」的成批流程；跨会话遥测、持久检索、私有 holdout 服务、canary 灰度上线与自动回滚未实现；人工批准是默认的发布边界。源记录保持权威；本插件不再提供旧记录检索命令，目标仓按现有文件或真实索引入口检索。
 
 ## 仓库布局
 

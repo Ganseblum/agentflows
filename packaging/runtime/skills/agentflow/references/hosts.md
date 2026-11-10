@@ -72,6 +72,12 @@ begin 标记含版本号时，用 `--begin-marker` 指定文件中的旧标记�
 
 该工具不授予 home 写入权限，不自动安装或升级插件。它只执行单文件协议；摘要重检不等于对恶意并发写入者的原子隔离，也不承诺跨文件事务。失败时报告实际状态和备份，不盲目恢复以覆盖用户随后修改。
 
+## 插件升级与安装载荷核验
+
+插件升级另用 `workflow.py upgrade-zcode|upgrade-codex --repo <REPO> --marketplace <NAME> --plugin <NAME> --mode auto|local|remote [--dry-run]`。auto 读取既有市场来源，不重绑；local 安装已授权本地树，remote 沿用已配置远端市场。shell upgrade-* 为薄入口；remote 需要未发布内容时，不能自行获得 push/发布授权。
+
+`workflow.py install-verify --expected-tree <TREE> --installed <CACHE> [--codex-source]` 递归核对文件集合、字节和执行位；维护薄入口为 `packaging/build_runtime.py --verify-installed <CACHE> --expected-tree <TREE> [--codex-source]`，共享 inventory 在 installation.py。Codex 源模式的顶层 extras 只按显式白名单处理。输出分别记录源模式、期望树、安装载荷结果；版本目录存在或 CLI exit 0 均不够。载荷核验后还需新会话观察加载来源与内容，拿不到加载证据就写未验证，不将模拟 CLI 测试算真实宿主成功。
+
 ## 宿主矩阵
 
 | 宿主 | 全局指令文件 | 状态 |
@@ -89,5 +95,5 @@ begin 标记含版本号时，用 `--begin-marker` 指定文件中的旧标记�
 - 托管块头的版本号必须等于当前插件版本（manifest 的 `version`）。插件升级后，Host Init 需要重跑一次；版本不同就是漂移。
 - **改模板必须同时 bump 插件版本。** 只改 [global-rules.md](../templates/host/global-rules.md) 而不 bump 时，按规则 4「版本相同不写」，重跑 Host Init 是 no-op，宿主里会留下旧副本——这正是"模板改了、宿主里旧副本没人发现"的路径，必须避免。
 - README 的升级步骤（重建生成树、刷新 marketplace、重装）里应同时包含"用过 Host Init 的宿主重跑一次"。
-- `插件漂移检查` 只比对**插件快照**，不检查宿主全局指令文件。本仓尚未提供 独立的托管块初始化校验：`本仓校验` 在受保护面内，新增校验项属于受保护面变更，需单独人工评审。在那之前，托管块的版本行、第 6 条的三项校验输出、以及 `docs/host-platform-facts.md` 的记录就是审计线索。
+- 插件载荷核验只检查插件文件，不检查宿主全局指令文件；本插件不再提供旧「插件漂移检查/本仓校验」门。全局块仍按本节版本行与第 6 条三项核对，输出和已观察宿主事实是加载证据，不能以安装缓存存在代替。
 - 不要手工编辑托管块。要改规则，改 [templates/host/global-rules.md](../templates/host/global-rules.md) 并 bump 版本，再重跑 Host Init——否则宿主里的副本会和模板分叉，且没有东西会发现。

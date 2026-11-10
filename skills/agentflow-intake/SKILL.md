@@ -21,7 +21,7 @@ description: 开工前把需求问清楚——六要素对齐、红线确认、�
 
 1. 先读 [`../agentflow/references/intake.md`](../agentflow/references/intake.md) 的**起步先判状态**、
    **六要素**、**提问预算**与**依据缺失时**：先判小事 / 已完整 / 混沌 / 其余四档，混沌时按「最近 3 轮」
-   先猜 2～3 个让用户挑；一次最多 2 个问题（每题最多 3 选项并标推荐）、能假设就假设但要列出来；
+   先猜 2～3 个让用户挑；一次最多 2 个问题（每题最多 3 选项并标推荐），只对已授权可逆低风险细节明示假设；必要决定未答就等待，沉默、超时与预选不算答复；
    依据缺失（简报 / design 目录 / 字段级契约 / diff / 测试原始输出）时停下问，不替用户补空白。
 2. 进入某类功能时，读 [`../agentflow/references/intake-scope-dimensions.md`](../agentflow/references/intake-scope-dimensions.md)
    的对应领域表，**主动逐维确认**（这一张勾选表不计入上面的 2 问预算）——领域清单治「范围想全」，

@@ -9,7 +9,7 @@
 | 场景 | 入口 |
 | --- | --- |
 | **第一次用 / 5 分钟上手** | `docs/quickstart.md`（先判断要不要用这套，再决定走哪条路） |
-| 日常两轨 | 小修与零星事项随会话结论落档；成批 / 跨层工作立 `docs/features/<批次>/`；拍板事项落到目标仓的拍板口文件 |
+| 按风险选择材料 | [唯一分档判据](skills/agentflow/references/document-chain.md#文档档位)：琐碎静态自检；light 唯一 README（含最小用例/run/独审）；full 按选轨建链，材料权限优先 |
 | 改角色定义 | `agents/README.md`（<!-- count:agents -->10<!-- /count --> 个角色文件 + 工作链调度入口） |
 | 改方法契约与流程文本 | `skills/agentflow/`（`SKILL.md`、`references/`）；仓库整体审核契约见 [`skills/agentflow/references/repo-audit.md`](skills/agentflow/references/repo-audit.md) |
 | 开工提问、设计压测 | [开工提问](skills/agentflow/references/intake.md)（六要素、红线、证据层级）· [压设计](skills/agentflow/references/grilling.md)（设计树、前沿、逐轮推荐）；**用户主动叫的直接入口**：[agentflow-intake](skills/agentflow-intake/SKILL.md) · [agentflow-grilling](skills/agentflow-grilling/SKILL.md) |
@@ -20,6 +20,7 @@
 | 看设计、指南与事实 | `docs/`：`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`host-platform-facts.md`（宿主事实） |
 | 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节 |
 | 目标仓侧工具（init 安装 / 立项 / 评审快照） | `skills/agentflow/scripts/`：[init_workspace.py](skills/agentflow/scripts/init_workspace.py)（多宿主安全安装）· [new_feature.py](skills/agentflow/scripts/new_feature.py)（一键立项）· [review_snapshot.py](skills/agentflow/scripts/review_snapshot.py)（评审快照） |
+| 当前审计修复批次 | [入口](docs/features/feature-2026-11-05-审计修复/README.md) · [执行计划](docs/features/feature-2026-11-05-审计修复/plan/PLAN-2026-11-05-AUDIT-FIXES.md) · [验收用例](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/plan-2026-11-05-001.md) · [首轮执行](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-001.md) · [补充验收](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-002.md) · [交付决策](docs/features/feature-2026-11-05-审计修复/decision.md)；缺陷记录及脚本在批次内索引，不复制状态 |
 | 看每个版本为何变更 | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## 维护纪律

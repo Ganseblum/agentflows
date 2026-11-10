@@ -15,26 +15,19 @@ import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills" / "agentflow" / "scripts"))
+from workflow_lib.installation import RUNTIME_DIRECTORIES, RUNTIME_FILES, inventory, verify_inventory
+from workflow_lib.snapshots import WorkflowError
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 DEFAULT_DEST = SCRIPT_DIR / "runtime"
 
-RUNTIME_DIRECTORIES = (
-    "agents",
-    "skills",
-    ".zcode-plugin",
-    ".claude-plugin",
-    ".codex-plugin",
-    ".qoder-plugin",
-)
+# The installation verifier and builder share this payload definition.
 # 早期版本曾把文档链检查器（tools/lab/doc_chain.py）随插件交付，让目标仓能就地跑链检查。
 # 2026-11-04 门禁整体移除后，检查器不再随插件发布；目标仓的文档链检查改由本仓在交付前完成，
 # 不向目标仓注入工具。
 RUNTIME_SUBTREES = ()
-RUNTIME_FILES = (
-    "plugin.json",
-    "marketplace.json",
-)
 FORBIDDEN_TOP_LEVEL = frozenset(
     {
         "docs",
@@ -159,7 +152,17 @@ def main(argv: list[str] | None = None) -> int:
         default=str(DEFAULT_DEST),
         help="输出目录（会被销毁并重建）；默认 packaging/runtime",
     )
+    parser.add_argument("--verify-installed", help="只读核验安装载荷，不重建生成树")
+    parser.add_argument("--expected-tree", default=str(DEFAULT_DEST))
+    parser.add_argument("--codex-source", action="store_true", help="允许声明的 Codex 源码快照顶层维护文件")
     args = parser.parse_args(argv)
+    if args.verify_installed:
+        try:
+            verify_inventory(inventory(Path(args.expected_tree)), Path(args.verify_installed),
+                             codex_source=args.codex_source)
+        except (OSError, ValueError, WorkflowError) as exc:
+            return fail(str(exc))
+        return 0
     destination = Path(args.destination).expanduser().resolve()
     try:
         assert_safe_destination(destination)
