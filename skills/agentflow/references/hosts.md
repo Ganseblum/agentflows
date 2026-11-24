@@ -86,6 +86,7 @@ begin 标记含版本号时，用 `--begin-marker` 指定文件中的旧标记�
 | ZCode | `~/.zcode/AGENTS.md` | **已观察**：本机会话启动时作为用户级默认指令加载（证据见 `docs/host-platform-facts.md` H1） |
 | Codex | `~/.codex/AGENTS.md` | **未观察，勿声称已生效**：已知 Codex 读取仓库 `AGENTS.md`，用户级文件是否加载需按 H2 的实验验证 |
 | Claude Code | `~/.claude/CLAUDE.md` | **未观察**：属官方约定，本仓未做过加载实验（H3） |
+| Qoder | 全局指令文件未确认 | **未验证**：本机只有 IDE、无 Qoder CLI；插件按缓存 + 登记表加载（Q6），全局文件写入前先确认路径与加载行为。只装 IDE 时用桌面端扩展入口（Q5），不要假设 `qoder plugins install` 可用 |
 | Cursor | 项目级候选 `.cursor/rules/*.mdc`；全局位置未知 | **未验证**：在 H4 的实验通过前，不提供适配器、不声称支持 |
 | 其它兼容 Agent Skills 的宿主 | 该宿主自己的指令文件 | 写入前先确认路径与加载行为，确认不了就不写 |
 

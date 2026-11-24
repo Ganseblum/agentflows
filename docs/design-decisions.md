@@ -18,9 +18,8 @@
 README、安装方式、版本与发布对象保持歧义。用户安装和使用的产品只有 Plugin；评测脚本、证据存储
 或 MCP 属于维护与治理控制面，不提供第二套聊天 CLI。
 
-**仓库边界**（现状）：运行时面 = `agents/` + `skills/` + 各 manifest + 宿主包装，由
-`packaging/build_runtime.py` 生成瘦快照；维护面 = `docs/`、`packaging/`；记录面 =
-`记录根`、`docs/features/`（布局见 [`index.md`](../index.md)）。
+**仓库边界**：插件源码包括 `agents/`、`skills/` 及宿主清单。打包生成 `packaging/runtime`。
+项目说明和历史批次见[索引](../index.md)。
 
 **宿主职责划分**：Codex / Claude Code 负责模型、认证、代码工具、权限、对话与子 Agent 生命周期；
 Agentflow 负责角色、协作步骤、交接契约、评审、自迭代规则与版本治理。
@@ -92,11 +91,10 @@ Supervisor 与技术决策与独立复核职责分离、重试有边界（连续
 当前方法改动走「明确反馈 + 有界候选 + 独立评审 + 人工授权」的批次流程；方法级改动一律
 `measurement: none`，不表述为已验证的自动学习系统。
 
-## §4 产品链结论（2026-10-30 并入，原 docs/product/）
+## §4 产品链历史（2026-10-30 并入，原 docs/product/）
 
-2026-10-30 关闭「产品线完善」批：产品链结论并入本节，`docs/product/` 与批次目录删除；原文可从
-git 历史 `40147df:docs/product/` 取回。自此产品链状态只有本节、`CHANGELOG.md` 与该日批次决策记录
-三处同源记录，不再存在「method-spec 生效 / acceptance-matrix 部分 / pending-test 已验证」的状态三说。
+2026-10-30 关闭「产品线完善」批，原文可从 Git 修订 `40147df:docs/product/` 取回。
+下列内容记录当时的决定；现行入口见[文档交付链](../skills/agentflow/references/document-chain.md)和[打包与安装](../packaging/README.md)。
 
 - **产品定位**：宿主原生多角色协作方法插件，不是运行时、Flow 画布或组织图；方法写一次，
   循环交给宿主。分发形态为 ZCode / Claude Code / Codex 插件，`marketplace.json` 的 `source`
@@ -118,8 +116,6 @@ git 历史 `40147df:docs/product/` 取回。自此产品链状态只有本节、
 
 ## 对外口径（版本号以 manifest 为准）
 
-已具备受治理的方法演进流程与数据契约（十条主工作流、<!-- count:agents -->10<!-- /count --> 角色能力库、14 条硬边界、独立评审、
-确定性检查门与记录契约）。业务任务度量切片已裁撤，改进三件套与逐版本发布记录同批退役；
-改进环本身于 2026-10-29 整体裁撤，方法改动走批次流程，方法级改动一律 `measurement: none`
-口径，不表述为已验证的自动学习系统。评测装置已整线裁撤（设计知识与恢复清单见 §3）；
-持久反馈检索与自动发布控制面未实现。
+Agentflow 提供风险分档、角色协作、独立评审和证据工具。机器检查范围以工具命令为准，
+文档内容和业务验收由目标仓检查、主审与独立评审共同确认。方法改动按批次推进，无度量证据时记
+`measurement: none`。已退役的评测与反馈设施见[历史归档](design-decisions-archive.md)。

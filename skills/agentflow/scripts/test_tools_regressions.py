@@ -139,9 +139,11 @@ class Case:
         self.facts: list[dict[str, Any]] = []
         self.groups: dict[int, set[int]] = {}
         self.sequence = 0
+        self.tools = tools
         # Only known tools enter PATH. In particular no real codex/zcode is reachable.
         for name_, executable in {**tools, "python3": PYTHON}.items():
-            (self.bin / name_).symlink_to(executable)
+            if executable:
+                (self.bin / name_).symlink_to(executable)
         stub = (f"#!{PYTHON} -B\nimport json,os,pathlib,sys\n"
                 "p=pathlib.Path(os.environ['AF_STUB_CALLS'])\n"
                 "with p.open('a') as f: f.write(json.dumps(sys.argv)+'\\n')\n"
@@ -293,17 +295,31 @@ class Case:
         # old group later. Only still-live PIDs from our fixture handshake can
         # authorize a group signal, and their command must name this case root.
         if self.groups:
-            table = self.run(["ps", "-A", "-o", "pid=,pgid=,stat=,command="], expected=0).stdout.decode()
-            for pgid, owned_pids in self.groups.items():
-                live = []
-                for line in table.splitlines():
-                    parts = line.strip().split(None, 3)
-                    if len(parts) == 4 and int(parts[1]) == pgid and not parts[2].startswith(("Z", "X")):
-                        live.append((int(parts[0]), parts[3]))
-                if live:
-                    if not any(pid in owned_pids and str(self.root) in command for pid, command in live):
-                        raise Failed(f"Cannot establish ownership of live cleanup group {pgid}: {live}")
-                    self.kill_group(pgid)
+            if self.tools.get("ps"):
+                try:
+                    table = self.run(["ps", "-A", "-o", "pid=,pgid=,stat=,command="], expected=0).stdout.decode()
+                    for pgid, owned_pids in self.groups.items():
+                        live = []
+                        for line in table.splitlines():
+                            parts = line.strip().split(None, 3)
+                            if len(parts) == 4 and int(parts[1]) == pgid and not parts[2].startswith(("Z", "X")):
+                                live.append((int(parts[0]), parts[3]))
+                        if live:
+                            if not any(pid in owned_pids and str(self.root) in command for pid, command in live):
+                                raise Failed(f"Cannot establish ownership of live cleanup group {pgid}: {live}")
+                            self.kill_group(pgid)
+                except Exception:
+                    for pgid in self.groups:
+                        try:
+                            self.kill_group(pgid)
+                        except Exception:
+                            pass
+            else:
+                for pgid in self.groups:
+                    try:
+                        self.kill_group(pgid)
+                    except Exception:
+                        pass
         shutil.rmtree(self.root)
 
 
@@ -679,6 +695,115 @@ def workflow_run(c: Case, repo: Path, sealed: Path, fingerprint: str, output: Pa
     return result
 
 
+def execution_index_scope(c: Case) -> None:
+    repo = git_repo(c)
+    (repo / "plan.md").write_text("# Bound plan\n")
+    outside = repo / "outside.txt"
+    outside.write_text("baseline\n")
+    commit_fixture(c, repo)
+    request = {"plan": "plan.md", "allowed_writes": ["allowed.txt"], "tasks": [
+        {"id": "check", "depends_on": [], "argv": [PYTHON, "--version"], "cwd": ".",
+         "timeout_seconds": 10, "kind": "preflight", "reporter": "exit", "cases": []}
+    ]}
+    sealed, fingerprint = seal(c, repo, request)
+    outside.write_text("staged change\n")
+    c.run(["git", "add", "outside.txt"], cwd=repo, expected=0)
+    outside.write_text("baseline\n")
+    result = c.cli("workflow.py", "verify", "--root", repo, "--sealed", sealed,
+                   "--fingerprint", fingerprint, expected=3)
+    refused = json.loads(result.stdout)
+    c.check(refused["error_kind"] == "out-of-scope" and "outside.txt" in refused["evidence"]["message"],
+            "the seal refuses stage-only outside changes", actual=refused)
+    result = c.run(["bash", c.source / SCRIPTS / "check-write-scope.sh", "HEAD", "allowed.txt"],
+                   cwd=repo, expected=1)
+    c.check("[暂存区] outside.txt" in result.stdout.decode(), "write-scope identifies the staged layer",
+            actual=result.stdout.decode())
+
+    sealed, fingerprint = seal(c, repo, request, "existing-index")
+    allowed = repo / "allowed.txt"
+    allowed.write_text("staged allowed\n")
+    c.run(["git", "add", "allowed.txt"], cwd=repo, expected=0)
+    allowed.unlink()
+    result = c.cli("workflow.py", "verify", "--root", repo, "--sealed", sealed,
+                   "--fingerprint", fingerprint, expected=0)
+    observed = json.loads(result.stdout)["evidence"]
+    c.check(observed["allowed_index_changes"] == ["allowed.txt"] and observed["allowed_worktree_changes"] == [],
+            "prior index state is preserved as baseline and changes are reported by layer", actual=observed)
+
+    previous = json.loads(sealed.read_text())
+    previous.pop("fingerprint")
+    previous["schema_version"] = 1
+    old_fingerprint = "sha256:" + digest(
+        json.dumps(previous, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    )
+    previous["fingerprint"] = old_fingerprint
+    legacy = c.root / "legacy-seal.json"
+    dump(legacy, previous)
+    result = c.cli("workflow.py", "verify", "--root", repo, "--sealed", legacy,
+                   "--fingerprint", old_fingerprint, expected=3)
+    c.check(json.loads(result.stdout)["error_kind"] == "stale-seal-format", "legacy seal requests a new seal")
+
+
+def execution_ignored_link(c: Case) -> None:
+    repo = git_repo(c)
+    (repo / "plan.md").write_text("# Bound plan\n")
+    (repo / ".gitignore").write_text(".venv/\n")
+    commit_fixture(c, repo)
+    environment = repo / ".venv/bin"
+    environment.mkdir(parents=True)
+    (environment / "generated.txt").write_text("generated fixture\n")
+    link = environment / "python3"
+    link.symlink_to(PYTHON)
+    request = {"plan": "plan.md", "allowed_writes": [], "tasks": [
+        {"id": "check", "depends_on": [], "argv": [PYTHON, "--version"], "cwd": ".",
+         "timeout_seconds": 10, "kind": "preflight", "reporter": "exit", "cases": []}
+    ]}
+    sealed, fingerprint = seal(c, repo, request)
+    rows = {row["path"]: row for row in json.loads(sealed.read_text())["baseline_inputs"]}
+    observed = rows[".venv/bin/python3"]
+    c.check(observed.get("kind") == "symlink" and observed.get("link_target") == PYTHON and "sha256" not in observed,
+            "ignored symlink target is recorded without reading bytes through the link", actual=observed)
+    c.check("sha256" in rows[".venv/bin/generated.txt"], "ignored regular inputs remain in the content snapshot")
+    link.unlink()
+    link.symlink_to("other-python3")
+    result = c.cli("workflow.py", "verify", "--root", repo, "--sealed", sealed,
+                   "--fingerprint", fingerprint, expected=3)
+    c.check(json.loads(result.stdout)["error_kind"] == "out-of-scope", "ignored symlink target drift is refused")
+    request["plan"] = ".venv/bin/python3"
+    invalid = c.root / "link-request.json"
+    dump(invalid, request)
+    result = c.cli("workflow.py", "seal", "--root", repo, "--input", invalid,
+                   "--output", c.root / "refused.json", expected=3)
+    c.check(json.loads(result.stdout)["error_kind"] == "symlink", "declaring a symlink as a plan is still refused")
+
+
+def execution_cached_go(c: Case) -> None:
+    repo = git_repo(c)
+    (repo / "plan.md").write_text("# Bound plan\n")
+    commit_fixture(c, repo)
+    package = "example.com/fixture"
+    task = {"id": "go", "depends_on": [], "cwd": ".", "timeout_seconds": 10, "kind": "test", "reporter": "go",
+            "cases": [{"id": "TC-1", "report_name": package + "/TestValue"}]}
+    for cached in (True, False):
+        lines = [{"Package": package, "Action": "start"},
+                 {"Package": package, "Action": "run", "Test": "TestValue"},
+                 {"Package": package, "Action": "pass", "Test": "TestValue"},
+                 {"Package": package, "Action": "output", "Output": "ok  \t" + package +
+                  ("\t(cached)\n" if cached else "\t0.25s\n")},
+                 {"Package": package, "Action": "pass"}]
+        body = "\n".join(json.dumps(line) for line in lines)
+        name = "cached" if cached else "fresh"
+        task["argv"] = [PYTHON, "-c", f"print({body!r})"]
+        sealed, fingerprint = seal(c, repo, {"plan": "plan.md", "allowed_writes": [], "tasks": [task]}, name=name)
+        result = workflow_run(c, repo, sealed, fingerprint, c.root / (name + "-output"),
+                              expected=1 if cached else 0)
+        row = json.loads(result.stdout)["evidence"]["tasks"][0]
+        correct = row["error_kind"] == "cached-report" and not row["cases"] if cached else (
+            row["error_kind"] is None and row["cases"][0]["status"] == "pass"
+        )
+        c.check(correct, "cached native Go report is not new case evidence", actual=row)
+
+
 def descendant(c: Case, orphan: bool) -> None:
     repo = git_repo(c); (repo / "plan.md").write_text("# Bound process lifecycle fixture\n")
     commit_fixture(c, repo)
@@ -881,7 +1006,7 @@ def install_upgrade_modes(c: Case) -> None:
     for host in ("codex", "zcode"):
         sub = c.root / host; sub.mkdir()
         child = Case(c.group, host + "-modes", c.source, sub, c.logs, {
-            n: str((c.bin / n).resolve()) for n in ("node", "git", "bash", "ps")})
+            n: str((c.bin / n).resolve()) for n in ("node", "git", "bash", "ps") if (c.bin / n).exists()})
         try:
             repo, cache = upgrade_fixture(child, host)
             for mode in ("auto", "local", "remote"):
@@ -994,6 +1119,9 @@ CASES: list[tuple[str, str, Callable[[Case], None]]] = [
     ("G05", "execution.timeout-descendant", execution_timeout_descendant),
     ("G05", "execution.orphan-descendant", execution_orphan_descendant),
     ("G05", "execution.tap-cycle", execution_tap_cycle),
+    ("G02", "execution.index-scope", execution_index_scope),
+    ("G21", "execution.ignored-link", execution_ignored_link),
+    ("G06", "execution.cached-go", execution_cached_go),
     ("G12", "install.payload-valid", install_payload_valid),
     ("G12", "install.payload-drift", install_payload_drift),
     ("G12", "install.upgrade-codex-stale", install_upgrade_codex_stale),
@@ -1008,26 +1136,52 @@ CASES: list[tuple[str, str, Callable[[Case], None]]] = [
 def preflight(output: Path) -> dict[str, str]:
     tools: dict[str, str] = {}
     failures = []
-    for name, flags in (("node", ["--version"]), ("git", ["--version"]),
-                        ("bash", ["--version"]), ("ps", ["-p", str(os.getpid()), "-o", "pid=,pgid=,stat="])):
+    for name, flags in (("node", ["--version"]), ("git", ["--version"]), ("bash", ["--version"])):
         executable = shutil.which(name)
         if executable is None:
             failures.append(name + " not on PATH (no dependencies are installed)")
             continue
         tools[name] = str(Path(executable).resolve())
-        result = subprocess.run([tools[name], *flags], stdin=subprocess.DEVNULL, capture_output=True,
-                                timeout=10, cwd=output)
-        (output / ("preflight-" + name + ".stdout")).write_bytes(result.stdout)
-        (output / ("preflight-" + name + ".stderr")).write_bytes(result.stderr)
-        dump(output / ("preflight-" + name + ".json"), {
-            "argv": [tools[name], *flags], "actual_exit": result.returncode})
-        print(f"PREFLIGHT {name} native_exit={result.returncode} {result.stdout.decode(errors='replace').splitlines()[:1]}", flush=True)
-        if result.returncode:
-            failures.append(name + " version probe failed")
+        try:
+            result = subprocess.run([tools[name], *flags], stdin=subprocess.DEVNULL, capture_output=True,
+                                    timeout=10, cwd=output)
+            (output / ("preflight-" + name + ".stdout")).write_bytes(result.stdout)
+            (output / ("preflight-" + name + ".stderr")).write_bytes(result.stderr)
+            dump(output / ("preflight-" + name + ".json"), {
+                "argv": [tools[name], *flags], "actual_exit": result.returncode})
+            print(f"PREFLIGHT {name} native_exit={result.returncode} {result.stdout.decode(errors='replace').splitlines()[:1]}", flush=True)
+            if result.returncode:
+                failures.append(name + " version probe failed")
+        except OSError as exc:
+            failures.append(f"{name} probe failed ({exc})")
+
+    # ps is an environment monitoring helper; sandbox restrictions may block /bin/ps
+    executable = shutil.which("ps")
+    if executable:
+        try:
+            ps_path = str(Path(executable).resolve())
+            result = subprocess.run([ps_path, "-p", str(os.getpid()), "-o", "pid=,pgid=,stat="],
+                                    stdin=subprocess.DEVNULL, capture_output=True, timeout=10, cwd=output)
+            if result.returncode == 0:
+                tools["ps"] = ps_path
+                (output / "preflight-ps.stdout").write_bytes(result.stdout)
+                (output / "preflight-ps.stderr").write_bytes(result.stderr)
+                dump(output / "preflight-ps.json", {"argv": [ps_path, "-p", str(os.getpid())], "actual_exit": 0})
+                print(f"PREFLIGHT ps native_exit=0 {result.stdout.decode(errors='replace').splitlines()[:1]}", flush=True)
+            else:
+                print(f"PREFLIGHT ps probe returned {result.returncode}; process checks degraded", flush=True)
+        except OSError as exc:
+            print(f"PREFLIGHT ps unavailable in sandbox ({exc}); process checks degraded", flush=True)
+
     if os.name != "posix":
         failures.append("POSIX process-group tests require a POSIX host")
     if failures:
         raise Blocked("; ".join(failures))
+    for name in ("mktemp", "rm"):
+        executable = shutil.which(name)
+        if executable is None:
+            raise Blocked(f"{name} not on PATH (required by the write scope fixture)")
+        tools[name] = str(Path(executable).resolve())
     return tools
 
 

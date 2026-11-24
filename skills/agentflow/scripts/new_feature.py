@@ -26,7 +26,8 @@ import re
 import stat
 import sys
 import tempfile
-from datetime import date
+from datetime import date, datetime
+from html import escape
 from pathlib import Path
 
 # Match the other portable script entry points: local imports never create files.
@@ -183,46 +184,27 @@ def _file_snapshot(path: Path) -> tuple[tuple[int, int, int, int, int], bytes]:
 
 
 def _render_readme(text: str, tracks: tuple[str, ...], prototype: bool) -> str:
-    """Replace only the shipped README's known scaffolding, not business facts."""
-    specs = "、".join(f"`{TRACK_FILES[track][0]}`" for track in tracks)
-    designs = "、".join(f"`{TRACK_FILES[track][1]}`" for track in tracks)
+    """Render declared navigation slots while preserving authored text."""
+    unselected = "、".join(track.upper() for track in TRACKS if track not in tracks)
     replacements = {
-        "spec/{be,fe,qa} → design/{be,fe,qa}": (
-            "spec/{" + ",".join(tracks) + "} → design/{" + ",".join(tracks) + "}"
+        "{{feature_spec_links}}": "、".join(
+            f"[{track.upper()}]({TRACK_FILES[track][0]})" for track in tracks
         ),
-        "<已启用（spec/ui/visual.md + design/ui/visual.md）｜未启用>": (
-            "已启用（spec/ui/visual.md + design/ui/visual.md）" if "ui" in tracks
-            else "未启用（本次 --tracks 未选择 ui）"
+        "{{feature_design_links}}": "、".join(
+            f"[{track.upper()}]({TRACK_FILES[track][1]})" for track in tracks
         ),
-        "| spec | — | 各轨落盘后回填；确无该轨写「—」并在说明列给理由 |": (
-            f"| spec | — | 已生成所选轨模板：{specs}；正文确认后回填落点，未选轨不生成 |"
+        "{{feature_unselected_tracks}}": (
+            f"{unselected}（补充理由，受影响的既有契约在对应规格中引用）。" if unselected else "各轨均已选择。"
         ),
-        "| design | — | 同上 |": (
-            f"| design | — | 已生成所选轨模板：{designs}；正文确认后回填落点，未选轨不生成 |"
+        "{{feature_preview}}": (
+            "已生成离线草稿：[预览说明](prototype/README.md) · [HTML 骨架](prototype/index.html)。按实际界面完善并记录确认依据。"
+            if prototype else
+            "未生成离线原型。需要界面确认时登记实际页面、版本与浏览器证据；无界面时登记不适用理由。"
         ),
-        "BE/FE/QA/UI 各条": "/".join(track.upper() for track in tracks) + " 各条",
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
-    if not prototype:
-        # Choosing no offline copy says nothing about whether this feature has UI.
-        # Match the shipped placeholders, never replace a custom template's facts.
-        text = re.sub(
-            r"^- 原型：<形态 A（目标仓已维护原型库：.*$",
-            "- 原型：未生成离线目录（未传 --prototype）；<真实产品预览的入口与确认依据，或不适用理由，待填写>",
-            text, flags=re.MULTILINE,
-        )
-        text = re.sub(
-            r"^- 原型基线：<原型正文 `path@revision`.*$",
-            "- 原型基线：<实际预览或既有原型的 path@revision、确认记录，或不适用理由，待填写>",
-            text, flags=re.MULTILINE,
-        )
-    return text.replace(
-        "## 元信息\n",
-        "## 元信息\n- 生成档位：full；已选轨：" + ",".join(tracks)
-        + "；离线原型：" + ("已生成" if prototype else "未生成") + "（只生成草稿，未判定适用性）\n",
-        1,
-    )
+    return text
 
 
 def _template_plan(
@@ -255,6 +237,14 @@ def _template_plan(
             text = text.replace(old, value)
         if tier == "full" and target_name == "README.md":
             text = _render_readme(text, tracks, prototype)
+        elif target_name == "plan/execution.md":
+            plan_id = f"PLAN-{day}-{slug}"
+            recorded_at = datetime.now().astimezone().isoformat(timespec="seconds")
+            text = text.replace("{{feature_plan_id}}", plan_id).replace(
+                "{{feature_plan_recorded_at}}", recorded_at
+            )
+        elif target_name == "prototype/index.html":
+            text = text.replace("&lt;feature 名&gt;", escape(slug))
         planned[relative_name(target_name)] = text.encode("utf-8")
     return planned
 
@@ -549,11 +539,10 @@ def _self_test() -> int:
         for absent in ("spec/fe/", "spec/ui/", "design/fe/", "design/ui/", "prototype/index.html"):
             # Generic telemetry instructions may mention design/fe without a path.
             assert absent not in readme, readme
-        assert "spec/{be,qa} → design/{be,qa}" in readme
-        assert "UI 轨：未启用" in readme and "BE/QA 各条" in readme
-        assert "| spec | — | 已生成所选轨模板：`spec/be/backend.md`、`spec/qa/acceptance.md`" in readme
-        assert "| design | — | 已生成所选轨模板：`design/be/backend.md`、`design/qa/testing.md`" in readme
-        assert "最后更新时间：2026-11-05" in readme
+        assert "[BE](spec/be/backend.md)、[QA](spec/qa/acceptance.md)" in readme
+        assert "[BE](design/be/backend.md)、[QA](design/qa/testing.md)" in readme
+        assert "FE、UI（补充理由" in readme
+        assert "未生成离线原型" in readme
         print("  actual files=" + repr(sorted(generated(hub))))
 
     def full_fe_prototype(base: Path) -> None:
@@ -564,7 +553,7 @@ def _self_test() -> int:
         assert generated(hub) == expected, generated(hub)
         readme = (hub / "features" / rel_dir / "README.md").read_text(encoding="utf-8")
         assert "tracks=fe,qa；prototype=yes" in output
-        assert "离线原型：已生成" in readme and "prototype/index.html" in readme
+        assert "已生成离线草稿" in readme and "prototype/index.html" in readme
         assert not (hub / "features" / rel_dir / "spec/be").exists()
         print("  actual files=" + repr(sorted(generated(hub))))
 
@@ -577,7 +566,7 @@ def _self_test() -> int:
         for track in TRACKS:
             expected.update(TRACK_FILES[track])
         assert generated(hub) == expected
-        assert "UI 轨：已启用" in (hub / "features" / rel_dir / "README.md").read_text(encoding="utf-8")
+        assert "各轨均已选择。" in (hub / "features" / rel_dir / "README.md").read_text(encoding="utf-8")
 
     def dry_run(base: Path) -> None:
         hub = hub_at(base)
@@ -887,13 +876,13 @@ def _self_test() -> int:
         shutil.copytree(template, custom)
         readme = custom / "README.md"
         text = readme.read_text(encoding="utf-8")
-        text = re.sub(r"^- 原型：.*$", "- 原型：真实页面 /reviewed-preview", text, flags=re.MULTILINE)
-        text = re.sub(r"^- 原型基线：.*$", "- 原型基线：existing@0123456", text, flags=re.MULTILINE)
+        text = re.sub(r"^- 预览：.*$", "- 预览：真实页面 /reviewed-preview", text, flags=re.MULTILINE)
+        text = text + "\n- 原型基线：existing@0123456\n"
         readme.write_text(text, encoding="utf-8")
         code, output = run(hub, ["--tier", "full", "--tracks", "qa", "--template-dir", str(custom)])
         assert code == 0, output
         actual = (hub / "features" / rel_dir / "README.md").read_text(encoding="utf-8")
-        assert "- 原型：真实页面 /reviewed-preview" in actual
+        assert "- 预览：真实页面 /reviewed-preview" in actual
         assert "- 原型基线：existing@0123456" in actual
         print("  custom template facts retained; only known placeholders rendered")
 

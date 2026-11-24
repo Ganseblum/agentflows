@@ -10,13 +10,13 @@
   §2 断言表（每条断言 → 判据 → 核实点 path:line）
   §3 已执行的检查与逐字输出（supervisor 先跑，reviewer 不重跑）
   §4 上轮未关闭项（delta 轮）
-并强制写出五个必填字段：review_scope / reviewed_revision / inline_objects / stop_rule / output_budget
-（契约见 references/contracts.md）。缺任何一项的简报，reviewer 可以直接回 blocked。
+并写出评审类型、范围、冻结的对象、停止条件和交付预算（契约见 references/contracts.md）。
 
 用法：
   python3 gen_review_brief.py --out brief.md --objective "确认登录..."
       --files spec/qa/acceptance.md design/be/backend.md
-      [--repo .] [--scope full|delta|spot] [--assertions asserts.txt]
+      [--repo .] [--scope full|delta|spot] [--review-type document|implementation]
+      [--assertions asserts.txt]
       [--checks checks.txt] [--prev-findings prev.txt] [--budget 12]
       [--stop-rule "..."] [--self-test]
       [--task-status tasks.txt --task-ids T01 T02]
@@ -36,8 +36,10 @@
 
   --checks 文件格式：每条一行，`命令 :: exit=N :: 逐字输出`（或 `命令 :: exit=N :: @路径`）；
       旧两段式 `命令 :: 逐字输出` / `命令 :: @路径` 仍接受，但渲染为「退出码未验证」
-  --diff-base 目录：按仓库相对路径与该目录（评审快照）逐文件生成 unified diff，内联为 §1.1；
-      delta 轮的变化面以 §1.1 为准，§1 全文用于核对上下文（reviewer 无 Bash，diff 必须内联）
+  --review-type：document 评审冻结的阶段文档或外部文档；implementation 用原计划状态映射。
+      未填类型的旧调用继续生成，缺少任务范围或冻结对象时仅供准备。
+  --diff-base 目录：按仓库相对路径生成 unified diff。delta 须同时给出该目录与
+      --prev-findings，或用 --no-previous-findings 写明上轮结论的可复核来源与零遗留。
   --reuse-round N：复用同一 reviewer 的累计轮次（N ≥ 2）；必须与 --prev-findings 同时给出，
       元信息块渲染 reviewer_reuse 声明（契约：contracts.md「跨阶段不复用」）
 """
@@ -52,9 +54,15 @@ import sys
 from datetime import date
 from pathlib import Path
 
+if sys.version_info < (3, 10):
+    raise SystemExit("gen_review_brief.py 需要 Python 3.10 或以上版本，请检查 python3 --version")
+sys.dont_write_bytecode = True
+
 from workflow_lib.review_bundle import (
     freeze_diff_base, freeze_review, safe_path, source_path,
 )
+from workflow_lib.managed import write_managed_file
+from workflow_lib.snapshots import WorkflowError
 
 DEFAULT_STOP_RULE = (
     "按简报 `review_gate`：入口不满足不开始（reviewer 返回 blocked）；出口满足即收口；"
@@ -63,9 +71,8 @@ DEFAULT_STOP_RULE = (
 
 REVIEW_GATE_ENTRY = (
     "被评审对象已冻结（评审快照目录或提交；material 评审不得用 unverified-boundary）；"
-    "提交者在简报 §0 给出任务状态快照，受评任务及递归前置全部终态（☑ 或 — 本期不做）；"
-    "评审/收口后继可待办，范围映射须对照原计划；"
-    "必需检查已跑且原始输出带退出码；简报必填字段与内联对象齐备。"
+    "{stage}已知必需检查有命令、原始输出和退出码，无适用命令时注明依据；"
+    "简报必填字段与内联对象齐备。"
     "任一不满足 → reviewer 返回 blocked 并列缺失项，不开始评审。"
 )
 REVIEW_GATE_EXIT = (
@@ -75,7 +82,7 @@ REVIEW_GATE_EXIT = (
     "（无新证据且无 finding 关闭）即停并升级。"
 )
 STATUS_MATRIX = (
-    "入口不满足（简报不合格/对象未冻结/任务未完成/必需检查未跑或无退出码）→ decision: blocked，"
+    "入口不满足（简报不合格/对象未冻结/{task}必需检查未跑或无退出码）→ decision: blocked，"
     "不开始评审；已开始评审但某个具体断言缺原始证据 → status: partial（decision 只能是 "
     "changes_requested 或 blocked，绝不是 approved）。"
 )
@@ -84,6 +91,8 @@ UNVERIFIED_BOUNDARY = (
 )
 _TASKS_HEADER_RE = re.compile(r"^tasks:\s*(\d+)\s*$")
 _TASK_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
+TERMINAL_TASK_STATES = {"☑", "☑ 已完成", "— 本期不做", "N/A"}
+PENDING_TASK_STATES = {"☐", "☐ 未开始", "☐ 待开始", "◐", "◐ 进行中", "⚠", "⚠ 阻塞"}
 
 
 def validate_reviewed_revision(value: str, repo: Path, files: list[Path]) -> None:
@@ -92,7 +101,7 @@ def validate_reviewed_revision(value: str, repo: Path, files: list[Path]) -> Non
 
 
 def _terminal(line: str) -> bool:
-    return (not any(mark in line for mark in ("◐", "☐", "进行中", "未开始"))
+    return (not any(mark in line for mark in ("◐", "☐", "⚠", "进行中", "未开始", "阻塞"))
             and any(mark in line for mark in ("☑", "—", "N/A")))
 
 
@@ -129,7 +138,7 @@ def validate_task_status(text: str, task_ids: list[str] | None = None) -> list[s
         if (any(not _TASK_ID_RE.fullmatch(dep) for dep in deps)
                 or len(deps) != len(set(deps))):
             raise ValueError(f"任务前置缺失或重复：{identifier}")
-        if state not in {"☑", "— 本期不做", "N/A", "☐", "◐"}:
+        if state not in TERMINAL_TASK_STATES | PENDING_TASK_STATES:
             raise ValueError(f"未知任务状态：{identifier} {state}")
         tasks[identifier] = (deps, state)
     for identifier, (deps, _) in tasks.items():
@@ -164,7 +173,7 @@ def validate_task_status(text: str, task_ids: list[str] | None = None) -> list[s
             closure.add(identifier)
             pending.extend(tasks[identifier][0])
     for identifier in sorted(closure):
-        if not _terminal(tasks[identifier][1]):
+        if tasks[identifier][1] not in TERMINAL_TASK_STATES:
             raise ValueError(f"受评任务或递归前置未终态：{identifier} {tasks[identifier][1]}")
     return sorted(closure)
 
@@ -179,7 +188,7 @@ def git_head(repo: Path) -> str:
 
 
 def parse_assertions(path: Path | None) -> list[tuple[str, str, str]]:
-    if not path or not path.is_file():
+    if not path:
         return []
     rows: list[tuple[str, str, str]] = []
     for raw in path.read_text(encoding="utf-8").splitlines():
@@ -194,13 +203,15 @@ def parse_assertions(path: Path | None) -> list[tuple[str, str, str]]:
 
 
 def parse_checks(path: Path | None) -> list[tuple[str, str, int | None]]:
-    if not path or not path.is_file():
+    if not path:
         return []
     out: list[tuple[str, str, int | None]] = []
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        if "::" not in raw:
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not raw.strip() or raw.lstrip().startswith("#"):
             continue
-        cmd, _, rest = raw.partition("::")
+        cmd, delimiter, rest = raw.partition("::")
+        if not cmd.strip() or not delimiter:
+            raise ValueError(f"{path}:{number} 缺少检查命令或 :: 分隔符")
         exit_code: int | None = None
         body = rest.strip()
         # 三段式：`命令 :: exit=N :: 输出`；两段式旧格式仍接受（exit 记 None）。
@@ -211,9 +222,18 @@ def parse_checks(path: Path | None) -> list[tuple[str, str, int | None]]:
         body = body.strip()
         if body.startswith("@"):
             p = Path(body[1:].strip())
-            body = p.read_text(encoding="utf-8") if p.is_file() else f"<文件不存在：{p}>"
+            body = read_text_exact(p)
         out.append((cmd.strip(), body, exit_code))
     return out
+
+
+def read_text_exact(path: Path) -> str:
+    return safe_path(path).read_bytes().decode("utf-8")
+
+
+def literal_block(body: str, language: str = "text") -> str:
+    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", body)), default=0))
+    return f"{fence}{language}\n{body}" + ("" if body.endswith("\n") else "\n") + fence + "\n"
 
 
 def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
@@ -222,13 +242,31 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
                 diff_base: Path | None = None, reuse_round: int | None = None,
                 review_round: int | None = None, task_status: str = "",
                 reviewed_revision: str | None = None,
-                task_ids: list[str] | None = None) -> str:
+                task_ids: list[str] | None = None,
+                review_type: str | None = None,
+                no_previous_findings: str = "",
+                snapshot_source_repo: Path | None = None) -> str:
+    if scope == "delta" and (diff_base is None or not (prev.strip() or no_previous_findings.strip())):
+        raise ValueError("delta 评审须提供 --diff-base 及非空 --prev-findings 或 --no-previous-findings")
+    if prev.strip() and no_previous_findings.strip():
+        raise ValueError("--prev-findings 与 --no-previous-findings 不可同时给出")
+    if reuse_round is not None and not prev.strip():
+        raise ValueError("--reuse-round 需要 --prev-findings 的可核对上轮锚点")
+    if review_type == "document" and (task_status.strip() or task_ids):
+        raise ValueError("document 评审无需任务映射；请移除 --task-status 和 --task-ids")
+    if review_type == "implementation" and not (task_status.strip() and task_ids):
+        raise ValueError("implementation 评审须同时提供 --task-status 与 --task-ids")
+    if review_type is not None and not reviewed_revision:
+        raise ValueError(f"{review_type} 评审须提供 --reviewed-revision 的快照或提交")
+    if review_type is not None and not objective.strip():
+        raise ValueError(f"{review_type} 评审须用 --objective 说明评审对象或目标")
+    kind = review_type or "implementation"
     closure = validate_task_status(task_status, task_ids) if task_status.strip() else []
     if task_ids and not task_status.strip():
         raise ValueError("--task-ids 必须与 --task-status 完整原计划映射同时给出")
-    base_objects = freeze_diff_base(diff_base) if diff_base is not None else None
+    base_objects = freeze_diff_base(diff_base, safe_path(repo), snapshot_source_repo) if diff_base is not None else None
     bundle = freeze_review(repo, files, reviewed_revision,
-                           set(base_objects) if base_objects is not None else None)
+                           set(base_objects) if base_objects is not None else None, snapshot_source_repo)
     # Decode strictly once; neither the body nor the diff can reread a mutable source.
     bodies = {name: data.decode("utf-8") if data is not None else None
               for name, data in bundle.objects.items()}
@@ -239,36 +277,36 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
     L: list[str] = []
     L.append(f"# 评审简报（{date.today().isoformat()} 生成）\n")
     L.append("> 本简报由 `scripts/gen_review_brief.py` 生成，**手写简报不被接受**。")
-    L.append("> reviewer 收到后先核五个必填字段（下方元信息块），缺一项即可回 `blocked: 简报不合格`。\n")
+    L.append("> reviewer 收到后先核下方元信息和对应类型的入口条件，缺项即返回 `blocked: 简报不合格`。\n")
 
-    L.append("## 元信息（五个必填字段）\n")
+    L.append("## 评审元信息\n")
+    L.append(f"- `review_type`: {kind}")
     L.append(f"- `review_scope`: {scope}")
     L.append(f"- `reviewed_revision`: {revision}（生成时工作树 HEAD {head}）")
     if bundle.kind == "draft":
-        L.append("> 草稿：对象未冻结，material 评审不得据此 approved；须提供快照或提交重新生成。")
+        L.append("> 草稿：对象未冻结。派发前须提供快照或提交重新生成。")
     L.append(f"- `inline_objects`: 下方 §1 逐文件内联（{len(files)} 个文件，逐字）")
     L.append(f"- `stop_rule`: {stop_rule}")
     if reuse_round is not None and prev.strip():
         L.append(
             f"- `reviewer_reuse`: 本轮为同一 reviewer 的第 {reuse_round} 轮（累计）；"
             "上轮结论锚点见 §4。报告须声明「本结论部分依赖上轮判断」。")
-    elif reuse_round is not None:
-        L.append(
-            "- `reviewer_reuse`: 未附上轮锚点——简报不合格：--reuse-round 必须与 --prev-findings "
-            "同时给出，复用声明没有上轮结论锚点不成立。")
-    elif prev.strip():
-        L.append(
-            "- `reviewer_reuse`: 未声明累计轮次（--reuse-round 缺失）；复用同一 reviewer 时契约要求"
-            "写明累计轮次与上轮锚点，报告须声明「本结论部分依赖上轮判断」。")
     L.append(f"- `output_budget`: findings ≤{budget} 条，报告正文 ≤6000 字符；超限按严重度截断并声明")
-    L.append(f"- `review_gate`: 入口 = {REVIEW_GATE_ENTRY}")
+    stage_gate = (
+        "被审文档及直接相关上游材料、来源固定，无需实现任务映射；" if kind == "document"
+        else "提交者在简报 §0 给出任务状态快照，受评任务及递归前置全部终态；"
+             "评审/收口后继可待办，范围映射须对照原计划；"
+    )
+    L.append(f"- `review_gate`: 入口 = {REVIEW_GATE_ENTRY.format(stage=stage_gate)}")
     L.append(f"  出口 = {REVIEW_GATE_EXIT}")
-    L.append(f"  状态矩阵 = {STATUS_MATRIX}")
+    L.append(f"  状态矩阵 = {STATUS_MATRIX.format(task='任务未完成/' if kind == 'implementation' else '')}")
     if review_round is not None:
         L.append(f"- `review_round`: 第 {review_round} 轮（仅记录，不设上限；轮次由入口/出口条件决定）")
     L.append("")
 
-    L.append("## §0 任务状态（入口条件：受评任务及递归前置须全部终态）\n")
+    L.append("## §0 评审输入\n")
+    if kind == "document":
+        L.append("> 文档评审。以冻结的阶段产物、直接相关上游材料和判据为输入，任务状态不适用。\n")
     if task_ids:
         L.append(f"- 受评原计划任务 IDs：{', '.join(task_ids)}")
         L.append(f"- 递归前置闭包（含受评任务）：{', '.join(closure)}")
@@ -276,12 +314,9 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
                  "未自动验证它与原计划内容一致。独立评审须对照原计划，核实没有漏任务或漏前置；"
                  "闭包外评审/收口后继允许待办。\n")
     if task_status.strip():
-        L.append("```text")
-        L.append(task_status.rstrip())
-        L.append("```")
-        L.append("")
-    else:
-        L.append("> 未提供任务状态——**实现评审入口不满足，reviewer 应返回 blocked**；纯文档评审可写 `N/A: 无实现任务` 并说明。\n")
+        L.append(literal_block(task_status))
+    if kind == "implementation" and not task_ids:
+        L.append("> 未提供受评原计划任务映射——**实现评审入口不满足，派发前须提供 --task-status 和 --task-ids**。\n")
 
     L.append("## 目标\n")
     L.append(objective.strip() + "\n")
@@ -294,7 +329,7 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
             continue
         digest = hashlib.sha256(data).hexdigest()[:12]
         L.append(f"### `{path}`（sha256 前 12 位 `{digest}`，{len(body.splitlines())} 行）\n")
-        L.append("```text\n" + body + ("" if body.endswith("\n") else "\n") + "```\n")
+        L.append(literal_block(body))
 
     if base_bodies is not None:
         L.append(f"## §1.1 逐文件 diff（相对 `{diff_base}`；delta 轮的变化面以本节为准，§1 全文用于核对上下文）\n")
@@ -316,7 +351,7 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
             patch = "".join(line if line.endswith("\n")
                             else line + "\n\\ No newline at end of file\n" for line in diff_lines)
             L.append(f"### `{name}`（{len(patch.splitlines())} 行 diff）\n")
-            L.append("```text\n" + patch + ("" if patch.endswith("\n") else "\n") + "```\n")
+            L.append(literal_block(patch))
         extras = sorted(base_bodies.keys() - set(bundle.names))
         if extras:
             L.append(f"> 基线存在但本轮清单未列的文件（{len(extras)} 个）；若属删除/移出评审面，须显式处置：")
@@ -343,9 +378,7 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
         for cmd, body, exit_code in checks:
             stamp = f"（exit {exit_code}）" if exit_code is not None else "（退出码未验证）"
             L.append(f"**`{cmd}`**{stamp}\n")
-            L.append("```text")
-            L.append(body.rstrip())
-            L.append("```\n")
+            L.append(literal_block(body))
         L.append("> 这些检查已由 supervisor 跑过。你不必重跑，也不必采信摘要——正文就是逐字输出；")
         L.append("> 标注「退出码未验证」的检查不得引用为「已通过」，要么补退出码重跑，要么按未运行处理。\n")
     else:
@@ -354,14 +387,18 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
     L.append("## §4 上轮未关闭项（delta 轮必填）\n")
     if prev.strip():
         L.append(prev.strip() + "\n")
+    elif no_previous_findings.strip():
+        L.append(no_previous_findings.strip() + "\n")
     else:
-        L.append("> 首轮评审，无上轮遗留。\n")
+        L.append("> 本简报未附上轮结论。\n")
 
     L.append("## 交付形态\n")
     L.append("```yaml")
     L.append("decision: approved | changes_requested | blocked")
-    L.append("status: complete | partial")
-    L.append("findings: 每条 = 严重度 + 位置(path:line) / 原因 / 代价 / 建议修法")
+    L.append("status: complete | partial | blocked")
+    L.append("findings: []  # 无发现时保留空数组")
+    L.append("# 有发现时改成缩进列表，每条包含 id、severity、issue、location；")
+    L.append("# 可附 cause、evidence、cost、fix。")
     L.append("previous_findings: 每条 = id + severity + status(closed|unverified) + cost_replay（delta 轮必填）")
     L.append("passed: PASS A1, PASS A3 …（一行一条）")
     L.append("residual_risks: 未覆盖面与建议")
@@ -370,15 +407,18 @@ def build_brief(*, objective: str, files: list[Path], repo: Path, scope: str,
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="生成评审简报（内联对象 + 五必填字段）")
+    ap = argparse.ArgumentParser(description="生成文档或实现评审简报，保留冻结对象和原始检查证据")
     ap.add_argument("--out", help="输出文件路径")
     ap.add_argument("--objective", default="", help="本轮评审目标（一句话）")
     ap.add_argument("--files", nargs="*", default=[], help="被评审文件（相对 --repo）")
     ap.add_argument("--repo", default=".", help="仓库根（默认当前目录）")
     ap.add_argument("--scope", default="full", choices=["full", "delta", "spot"])
+    ap.add_argument("--review-type", choices=("document", "implementation"),
+                    help="指定阶段文档或实现评审；未指定时兼容旧实现简报")
     ap.add_argument("--assertions", default=None, help="断言表文件（断言 | 判据 | 核实点）")
     ap.add_argument("--checks", default=None, help="已执行检查文件（命令 :: 输出 或 命令 :: @文件）")
     ap.add_argument("--prev-findings", default=None, help="上轮未关闭项文件")
+    ap.add_argument("--no-previous-findings", default="", help="没有遗留项时，写明上轮结论和可复核来源")
     ap.add_argument("--budget", type=int, default=12, help="findings 上限（默认 12）")
     ap.add_argument("--stop-rule", default=DEFAULT_STOP_RULE)
     ap.add_argument("--diff-base", default=None,
@@ -393,6 +433,7 @@ def main() -> int:
                     help="受评原计划 IDs；映射行格式 ID | deps: -或ID,ID | status: ☑/☐/◐/— 本期不做/N/A；递归前置须终态")
     ap.add_argument("--reviewed-revision", default=None,
                     help="评审快照目录或提交号；未给时渲染 unverified-boundary（material 评审不得据此 approved）")
+    ap.add_argument("--snapshot-source-repo", help="迁移同一仓库后，显式指定快照 MANIFEST 记录的原仓根")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -405,6 +446,16 @@ def main() -> int:
         repo = safe_path(Path(args.repo))
         files = [source_path(repo, f) for f in args.files]
         diff_base = safe_path(Path(args.diff_base)) if args.diff_base else None
+        source_repo = safe_path(Path(args.snapshot_source_repo)) if args.snapshot_source_repo else None
+        out = safe_path(Path(args.out))
+        if out.exists():
+            raise ValueError(f"简报要求新输出文件，不覆盖：{out}")
+        if diff_base and out.is_relative_to(diff_base):
+            raise ValueError("简报输出不得位于 diff 基线目录内")
+        if args.reviewed_revision:
+            candidate = Path(args.reviewed_revision)
+            if candidate.is_dir() and out.is_relative_to(safe_path(candidate)):
+                raise ValueError("简报输出不得位于评审快照目录内")
     except (OSError, ValueError) as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 1
@@ -431,22 +482,21 @@ def main() -> int:
             objective=args.objective, files=files, repo=repo, scope=args.scope,
             assertions=parse_assertions(Path(args.assertions) if args.assertions else None),
             checks=parse_checks(Path(args.checks) if args.checks else None),
-            prev=(Path(args.prev_findings).read_text(encoding="utf-8") if args.prev_findings
-                  and Path(args.prev_findings).is_file() else ""),
+            prev=read_text_exact(Path(args.prev_findings)) if args.prev_findings else "",
             budget=args.budget, stop_rule=args.stop_rule,
             diff_base=diff_base, reuse_round=args.reuse_round,
             review_round=args.review_round,
             task_status=task_status, reviewed_revision=args.reviewed_revision,
-            task_ids=args.task_ids,
+            task_ids=args.task_ids, review_type=args.review_type,
+            no_previous_findings=args.no_previous_findings, snapshot_source_repo=source_repo,
         )
-        out = safe_path(Path(args.out))
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(brief, encoding="utf-8")
-    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        write_managed_file(out, brief.encode("utf-8"), {"exists": False})
+    except (OSError, ValueError, WorkflowError, subprocess.TimeoutExpired) as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 1
     print(f"[ok] 简报 -> {out}（{len(brief)} 字符，内联 {len(files)} 个文件）")
-    print("     五必填字段已写入元信息块。")
+    print("     已写入评审入口和元信息。")
     return 0
 
 
@@ -489,8 +539,10 @@ def _self_test() -> int:
         return git(repo, "rev-parse", "HEAD")
 
     def render(repo: Path, files: list[str], **extra) -> str:
+        delta = extra.get("diff_base") is not None
         return build_brief(objective="frozen regression", files=[repo / f for f in files], repo=repo,
-                           scope="delta", assertions=[], checks=[], prev="", budget=3,
+                           scope="delta" if delta else "full", assertions=[], checks=[], prev="", budget=3,
+                           no_previous_findings="REV-TEST 无遗留" if delta else "",
                            stop_rule="test", **extra)
 
     def t_basic(base: Path) -> None:
@@ -545,7 +597,8 @@ def _self_test() -> int:
         (base / "base" / "gone.md").write_text("# 将删\n", encoding="utf-8")
         brief = build_brief(objective="delta 评审", files=[base / "cur" / "a.md", base / "cur" / "b.md"],
                             repo=base / "cur", scope="delta", assertions=[], checks=[],
-                            prev="", budget=3, stop_rule="1 轮", diff_base=base / "base")
+                            prev="", budget=3, stop_rule="1 轮", diff_base=base / "base",
+                            no_previous_findings="REV-TEST 判定无遗留")
         assert "## §1.1" in brief, "缺 §1.1 diff 节"
         assert "-旧行" in brief and "+新行" in brief, "缺 diff 正文"
         assert "**新增（基线无此文件）**" in brief, "缺新增标注"
@@ -553,17 +606,15 @@ def _self_test() -> int:
 
     def t_reuse_round(base: Path) -> None:
         (base / "a.md").write_text("# 文档 A\n", encoding="utf-8")
-        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="delta",
+        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="full",
                   assertions=[], checks=[], budget=3, stop_rule="1 轮")
         brief1 = build_brief(prev="上轮遗留", reuse_round=4, **kw)
         assert "第 4 轮（累计）" in brief1 and "部分依赖上轮判断" in brief1, "reuse_round=4 未渲染"
         brief2 = build_brief(prev="上轮遗留", **kw)
-        assert "未声明累计轮次" in brief2, "缺未声明标记"
+        assert "reviewer_reuse" not in brief2, "仅附上轮遗留不等于复用同一评审者"
         brief3 = build_brief(prev="", **kw)
         assert "reviewer_reuse" not in brief3, "首轮不应渲染 reviewer_reuse"
-        brief4 = build_brief(prev="", reuse_round=4, **kw)
-        assert "未附上轮锚点——简报不合格" in brief4, "reuse_round 缺 prev 应判简报不合格"
-        assert "第 4 轮（累计）" not in brief4, "无锚点时不得渲染累计声明"
+        rejects(lambda: build_brief(prev="", reuse_round=4, **kw), "上轮锚点")
 
     def t_diff_base_name_collision(base: Path) -> None:
         for name in ("repo", "x", "y"):
@@ -582,7 +633,7 @@ def _self_test() -> int:
 
     def t_review_gate(base: Path) -> None:
         (base / "a.md").write_text("# 文档 A\n", encoding="utf-8")
-        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="delta",
+        kw = dict(objective="o", files=[base / "a.md"], repo=base, scope="full",
                   assertions=[], checks=[], prev="", budget=3, stop_rule="1 轮")
         brief = build_brief(review_round=999, **kw)
         for token in ("`review_gate`: 入口 =", "出口 =", "任务状态快照", "cost_replay",
@@ -606,7 +657,7 @@ def _self_test() -> int:
         assert f"`reviewed_revision`: {snap}" in brief, "快照路径未渲染"
         assert "`reviewed_revision`: unverified-boundary" not in brief, "给了快照不应再写 unverified-boundary"
         brief2 = build_brief(**kw)
-        assert "未提供任务状态——**实现评审入口不满足" in brief2, "缺任务状态告警"
+        assert "未提供受评原计划任务映射——**实现评审入口不满足" in brief2, "缺任务状态告警"
         assert "unverified-boundary（未提供评审快照或提交" in brief2, "缺 unverified-boundary"
 
     def t_invalid_tier_and_task(base: Path) -> None:
@@ -844,7 +895,7 @@ def _self_test() -> int:
         (snap / "same.md").write_bytes(outside.read_bytes())
         digest = hashlib.sha256(outside.read_bytes()).hexdigest()
         (snap / "MANIFEST.txt").write_text(f"files: 1\n{digest}  9  same.md\n")
-        rejects(lambda: render(repo, [str(outside)], reviewed_revision=str(snap)), "请重建")
+        rejects(lambda: render(repo, [str(outside)], reviewed_revision=str(snap)), "重新生成快照")
         current = make_snapshot(base, repo, [str(outside)])
         outside.unlink()
         assert "external" in render(repo, [str(outside)], reviewed_revision=str(current))
@@ -874,7 +925,7 @@ def _self_test() -> int:
 
     def t_task_closure(base: Path) -> None:
         text = ("tasks: 4\nT01 | deps: - | status: ☑\nT02 | deps: T01 | status: ☑\n"
-                "T03 | deps: T02 | status: ☐\nT04 | deps: T03 | status: ☐\n")
+                "T03 | deps: T02 | status: ☐\nT04 | deps: T03 | status: ⚠ 阻塞\n")
         assert validate_task_status(text, ["T02"]) == ["T01", "T02"]
         (base / "a.md").write_bytes(b"reviewed\n")
         snap = make_snapshot(base, base, ["a.md"])
@@ -903,6 +954,49 @@ def _self_test() -> int:
         rejects(lambda: render(base, ["a.md"], task_ids=["T02"]), "同时给出")
         assert validate_task_status("tasks: 2\nT01 ☑\nT02 — 本期不做") == []
 
+    def t_document_delta_and_outputs(base: Path) -> None:
+        repo = base / "repo"
+        repo.mkdir()
+        source = repo / "proposal.md"
+        source.write_text("# 原提案\n", encoding="utf-8")
+        before = make_snapshot(base, repo, [source.name])
+        body = "# 新提案\n```sh\nprintf example\n```\n## 正文续节\n"
+        source.write_text(body, encoding="utf-8")
+        current = make_snapshot(base, repo, [source.name], 2)
+        evidence = ["--review-type", "document", "--reviewed-revision", str(current)]
+        result, out = cli(repo, [source.name], evidence)
+        assert result.returncode == 0, result.stderr
+        brief = out.read_text()
+        assert "`review_type`: document" in brief and "任务状态不适用" in brief
+        assert "````text\n" + body + "````" in brief
+        assert "任务未完成/" not in brief
+        for incomplete in ([], ["--diff-base", str(before)], ["--no-previous-findings", "REV-1 无遗留"]):
+            result, out = cli(repo, [source.name], [*evidence, "--scope", "delta", *incomplete])
+            assert result.returncode != 0 and not out.exists()
+        result, out = cli(repo, [source.name], [
+            *evidence, "--scope", "delta", "--diff-base", str(before),
+            "--no-previous-findings", "REV-1 无遗留",
+        ])
+        assert result.returncode == 0, result.stderr
+        assert "## §1.1" in out.read_text() and "REV-1 无遗留" in out.read_text()
+        result = subprocess.run([sys.executable, __file__, "--repo", str(repo), "--out", str(source),
+                                 "--files", source.name, *evidence], capture_output=True)
+        assert result.returncode != 0 and source.read_text() == body
+
+    def t_wrong_snapshot_repo(base: Path) -> None:
+        original = base / "original"
+        other = base / "other"
+        original.mkdir()
+        other.mkdir()
+        (original / "a.md").write_text("ORIGINAL")
+        (other / "a.md").write_text("OTHER")
+        snap = make_snapshot(base, original, ["a.md"])
+        args = ["--review-type", "document", "--reviewed-revision", str(snap)]
+        result, out = cli(other, ["a.md"], args)
+        assert result.returncode != 0 and not out.exists() and "快照仓库不匹配" in result.stderr
+        result, out = cli(other, ["a.md"], [*args, "--snapshot-source-repo", str(original)])
+        assert result.returncode == 0 and "ORIGINAL" in out.read_text()
+
     for name, fn in [("五个必填字段与内联正文齐备", t_basic),
                      ("断言表解析（注释/缺列容错）", t_assertion_parsing),
                      ("检查输出支持 @文件引用", t_check_file_ref),
@@ -924,7 +1018,9 @@ def _self_test() -> int:
                      ("简报拒绝坏清单/重复/逃逸/缺快照文件/大小hash漂移", t_snapshot_rejections),
                      ("旧仓外basename无来源映射明确要求重建", t_legacy_external_rebuild),
                      ("§1与diff复用一次读取的冻结内容", t_read_once),
-                     ("原计划映射闭包终态、后继待办及unknown/cycle/遗漏拒绝", t_task_closure)]:
+                     ("原计划映射闭包终态、后继待办及unknown/cycle/遗漏拒绝", t_task_closure),
+                     ("冻结文档入口、delta 必需项、围栏与输出保护", t_document_delta_and_outputs),
+                     ("跨仓快照拒绝，显式原仓迁移可回放", t_wrong_snapshot_repo)]:
         case(name, fn)
 
     failed = [r for r in results if not r[1]]

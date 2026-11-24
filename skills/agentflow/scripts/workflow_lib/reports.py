@@ -127,6 +127,13 @@ def _go(text: str) -> list[dict[str, str]]:
             raise _bad("Go test event has no package")
         packages.add(package)
         if not test:
+            output = event.get("Output")
+            if action == "output" and isinstance(output, str) and re.fullmatch(
+                r"ok\s+" + re.escape(package) + r"\s+\(cached\)\s*", output
+            ):
+                raise WorkflowError(
+                    "cached-report", "Go replayed cached results; rerun go test with -count=1", 1
+                )
             if action in {"pass", "fail", "skip"}:
                 if package in ended_packages or action == "skip":
                     raise _bad("Duplicate/skipped Go package completion")

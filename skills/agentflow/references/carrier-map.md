@@ -14,8 +14,8 @@
 | 简报与 worker 结果字段 | `skills/agentflow/references/contracts.md` | ## Worker 任务简报 与 ## Worker 结果 | 角色文件写「按契约的哪些字段产出」，不另立字段表 |
 | 定位即预算（读取定位与上限） | `skills/agentflow/SKILL.md` | ## 评审简报的定位义务 | `contracts.md` 只留一条判据与指针，详细口径不复制第二份 |
 | 调度判断词（小改动 / risky work / 相同原因，材料判据引用文档链） | `skills/agentflow/SKILL.md` | ## 判断词的可判定定义 | `skills/agentflow/references/roles.md` 与契约只指向这三条，不各写一套阈值 |
-| 角色路由与工作链默认入口 | `skills/agentflow/references/roles.md` | ## 工作链 | SKILL 不复述路由表；角色文件不重复「何时选我」的整段 |
-| 文档链阶段骨架、唯一风险档位与阶段评审 | `skills/agentflow/references/document-chain.md` | ## 文档档位 与 ## 阶段评审与完成证据 | 角色、模板与入口只引用六条件，不另立有无 UI、行数或作者身份阈值 |
+| 角色路由与工作链默认入口 | [角色路由](roles.md) | 工作链、阶段与角色 | 主技能与角色索引按需导航；写范围以角色文件和具体简报为准 |
+| 文档阶段骨架、唯一材料档位与计划状态 | [文档交付链](document-chain.md) | 文档档位、阶段评审、计划状态 | 项目自有载体按阶段映射；角色、模板引用同一判据 |
 | 测试计划与运行记录形态、bug 状态联动 | `skills/agentflow/references/test-records.md` | ## 契约 与 ## Bug 回归用例与状态联动 | SKILL 的自动化测试节只指路径，不重复联动表 |
 | 开工预检、选测、证据复用与失败分流 | `skills/agentflow/references/execution.md` | ## 环境预检与选测 与 ## 三种结论分开 | 契约与 SKILL 只引用该节，不再列一份测试纪律 |
 | 开工提问（六要素、红线、证据层级、任务简报） | `skills/agentflow/references/intake.md` | ## 六要素 | SKILL 的 Intake 步骤只写指针；角色文件不复述六要素，验收层级以本文件与 `test-records.md` 为准；宿主全局块不再复制六要素，由项目规则与 skill 承载 |
@@ -34,7 +34,7 @@
 | 表达与沉淀纪律（白话优先、反复提醒要落成条款） | `AGENTS.md` | ## 表达与沉淀纪律 | 文档链「表达纪律」只说明单源、证据与当前/历史区分 |
 | 首次接入（Init）六问与三句约束条款 | `skills/agentflow/SKILL.md` | ## 首次接入（Init） | `skills/agentflow/templates/hub/repo-rules.md` 是必产出载体：固定块写死判据，槽位由 Init 填充，不另立第二份接入清单 |
 | 缺陷记录契约与状态机 | `skills/agentflow/templates/issue/issue-template.md` | `open → fixed-pending-review → verified` | 字段口径以模板为准；如需机器校验，目标仓自行配置，不随本插件强制 |
-| 评审记录契约（含 `review_tier` / `dispatch_errors`） | `skills/agentflow/references/contracts.md` | ## 评审能力分级 | 链契约与 SKILL 只写「按评审契约落记录」，不复制字段表 |
+| 文档与实施评审入口、结果与能力分级 | [委派契约](contracts.md) | 按对象核对入口、评审结果、评审能力分级 | 角色引用统一 YAML；工具按 `review_type` 渲染入口 |
 | 实验、快照与不可逆 git 操作的保全纪律 | `AGENTS.md` | ## 实验与恢复 | `skills/agentflow/references/execution.md` 只写执行侧的证据要求，不重抄快照生命周期 |
 | 本仓记录根、命名与落点 | `AGENTS.md` | ## 在本仓库工作 | 各目录 README 写本域的形态细节，顶层归属只在 AGENTS |
 | 本仓计划形态与人工核对（看板、任务枚举、分支策略） | `docs/features/README.md` | ## 计划形态 | `skills/agentflow/templates/feature/plan/execution.md` 是可复制骨架，不另写一份断言表 |

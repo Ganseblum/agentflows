@@ -18,9 +18,10 @@
 | 抄模板（提案/规格/方案/计划） | `skills/agentflow/templates/README.md`（含目标仓工程基线的可复制骨架） |
 | 查计划形态与看板约定 | `docs/features/README.md`（批次目录结构、计划形态） |
 | 看设计、指南与事实 | `docs/`：`quickstart.md`（5 分钟上手）、`system-guide.md`（体系指南）、`design-decisions.md`（设计决策）、`design-decisions-archive.md`（已裁撤项的历史设计与恢复清单）、`host-platform-facts.md`（宿主事实） |
-| 看仓库怎么分级、各面怎么装 | [`README.md`](README.md) 的「仓库布局」节 |
+| 构建、安装与检查 | [打包和安装指南](packaging/README.md) |
 | 目标仓侧工具（init 安装 / 立项 / 评审快照） | `skills/agentflow/scripts/`：[init_workspace.py](skills/agentflow/scripts/init_workspace.py)（多宿主安全安装）· [new_feature.py](skills/agentflow/scripts/new_feature.py)（一键立项）· [review_snapshot.py](skills/agentflow/scripts/review_snapshot.py)（评审快照） |
-| 当前审计修复批次 | [入口](docs/features/feature-2026-11-05-审计修复/README.md) · [执行计划](docs/features/feature-2026-11-05-审计修复/plan/PLAN-2026-11-05-AUDIT-FIXES.md) · [验收用例](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/plan-2026-11-05-001.md) · [首轮执行](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-001.md) · [补充验收](docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-002.md) · [交付决策](docs/features/feature-2026-11-05-审计修复/decision.md)；缺陷记录及脚本在批次内索引，不复制状态 |
+| 模板与工作流改进 | [批次入口](docs/features/feature-2026-11-23-模板与工作流改进/README.md) · [执行计划](docs/features/feature-2026-11-23-模板与工作流改进/plan/PLAN-2026-11-23-WORKFLOW-QUALITY.md)；提案、规格及设计在批次入口 |
+| 0.41.0 审计修复与历史重放 | [批次入口及浏览器重放](docs/features/feature-2026-11-05-审计修复/README.md) · [交付决策](docs/features/feature-2026-11-05-审计修复/decision.md) |
 | 看每个版本为何变更 | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## 维护纪律

@@ -1,9 +1,10 @@
 // Controlled fixture validation; run with ego-browser nodejs, not a second runner.
 const fs=await import('node:fs/promises');
-const task=await taskSpace(25);const page=task.page('p1');
-const root='/Users/lihanghang1/.zcode/v2/artifacts/agentflows-fixes-20261105-184849';
-const servers=JSON.parse(await fs.readFile(root+'/extended-browser-servers.json','utf8'));
-const url=name=>servers.find(s=>s.name===name).baseUrl;
+const { spaceId, pageLabel, evidence, servers } = globalThis.agentflowReplay ?? {};
+if (!spaceId || !pageLabel || !evidence || !servers) throw new Error('请使用 replay-browser.py 提供本轮空间、页面、夹具和证据目录');
+const task=await taskSpace(spaceId);
+const page=task.page(pageLabel);
+const url=name=>servers[name];
 const observations=[];
 const check=(ok,message)=>{if(!ok)throw new Error(message);};
 const parse=r=>typeof r.body==='string'?JSON.parse(r.body):r.body;
@@ -102,7 +103,7 @@ for(const key of ['audit-once','audit-next','','x'.repeat(81),'x'.repeat(80)]){
  actionApi.push({keyLength:key.length,key:key.length<20?key:'<long fixture>',status:response.status,body:parse(response),before,after});
 }
 await capture('CARD4 complete API contract and side effect counts');
-const result={spaceId:25,scope:'controlled local fixtures, not general host or business effectiveness',observations,listMessageTrace,api,browserActionTrace,concurrent,actionApi,status:'pass'};
-await fs.writeFile(root+'/representative-browser-extended-results.json',JSON.stringify(result,null,2)+'\n');
+const result={spaceId:task.spaceId,scope:'controlled local fixtures',observations,listMessageTrace,api,browserActionTrace,concurrent,actionApi,status:'pass'};
+await fs.writeFile(evidence+'/representative-browser-extended-results.json',JSON.stringify(result,null,2)+'\n',{flag:'wx'});
 console.log('PASS controlled late response + CARD3 browser/API + CARD4 independent browser/API variants');
 console.log(await page.snapshot({scope:'full_page'}));

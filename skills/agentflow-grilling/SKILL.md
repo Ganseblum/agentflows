@@ -5,9 +5,7 @@ description: 设计冻结前把方案里没说出口的假设逼出来——设�
 
 # 压设计（Grilling）
 
-**这是 Agentflow 主 skill 的执行细则的单点入口，不是第二份正文。** 方法契约只有一份，在
-`../agentflow/references/grilling.md`（设计树与前沿、事实归属、收尾门、与决策记录的衔接）。
-本文件只把触发条件与三个硬约束写清楚。
+本入口适用于设计冻结前的决策核对。执行方法见[压设计正文](../agentflow/references/grilling.md)。
 
 ## 何时进这里
 

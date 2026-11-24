@@ -10,10 +10,10 @@ command-code-session-*.html
 # packaging/runtime is generated but MUST stay tracked: the git marketplace clones this repo and
 # resolves marketplace.json's `source: ./packaging/runtime` inside the clone. While it was
 # ignored, every fresh clone lacked the directory and install failed with "plugin source not
-# found". `validate.py manifests` keeps the committed snapshot byte-identical to the source.
+# found". The runtime builder and publish preflight check the distributed copy.
 .workbuddy/
 .workbuddy-ai/
-# Local dev interpreter for the `lint` gate item (see README). Generated, never shipped.
+# Local Python environment, outside the plugin payload.
 .venv/
 # 本地临时备份：宿主全局规则改写前的 `<文件名>.agentflow-backup-<时间戳>`（见 AGENTS.md「实验与恢复」）。
 # 这类文件记录的是改写前的一次性现场，不得进入版本库。

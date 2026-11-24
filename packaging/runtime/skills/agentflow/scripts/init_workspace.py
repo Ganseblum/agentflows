@@ -28,8 +28,12 @@ import hashlib
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
+
+if sys.version_info < (3, 10):
+    raise SystemExit("init_workspace.py 需要 Python 3.10 或以上版本，请检查 python3 --version")
+sys.dont_write_bytecode = True
 
 from workflow_lib.managed import file_state, locate_managed_block, write_managed_file
 from workflow_lib.snapshots import WorkflowError, no_symlinks, project_path
@@ -362,7 +366,7 @@ def manifest_data(target: Path, version: str, hosts: list[str], plan: Plan,
         raise WorkflowError("incomplete-manifest", f"安装清单缺少：{sorted(missing)}", 3)
     value = {
         "tool": "agentflow-init", "version": version,
-        "installed_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "installed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "hosts": hosts, "files": files, "scopes": scopes,
     }
     # Preserve bytes (including installed_at) on a true noop reinstall.

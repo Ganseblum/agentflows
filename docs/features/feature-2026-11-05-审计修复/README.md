@@ -3,14 +3,13 @@
 目标：修复 0.40.0 审核 G01—G16 的工具可靠性、规则一致性与默认使用成本，并以原始运行证据验收。
 
 - 用户授权：全部修复；2026-11-05 批准实施方案，采用按风险减负、三端本地重装及 ZCode 全局既有托管块同步。
-- 主仓：`/Users/lihanghang1/Desktop/TestProject/agentflows`
+- 主仓：`.`（仓库根目录）
 - 基线：`511b9ef7b66a4b23cb859345d1810981aa083f5b`
 - 开发分支：`feature-audit-fixes-0.41.0`
 - 计划与状态权威：[执行看板](plan/PLAN-2026-11-05-AUDIT-FIXES.md)。本文件不复制进度。
 - 测试设计：[验收计划](testing/agentflows-audit-fixes/plan-2026-11-05-001.md)。[首轮执行](testing/agentflows-audit-fixes/run-2026-11-05-001.md)与[第二轮验收](testing/agentflows-audit-fixes/run-2026-11-05-002.md)按事实追加，不改历史。
 - 最终实现、验证、评审和逐项结论：[交付决策](decision.md)。真实缺陷闭环：[初始化用户内容丢失记录](issues/ISS-2026-11-05-初始化用户内容丢失.md)。
-- 修前诊断与日志：`/Users/lihanghang1/.zcode/v2/artifacts/agentflows-design-audit-20261105-174945/AGENTFLOW-设计与可用性评估-2026-11-05.md`。
-- 本轮原始证据：`/Users/lihanghang1/.zcode/v2/artifacts/agentflows-fixes-20261105-184849/`。
+- 修前原报告和部分原始日志是当时本机附件。可在[交付决策](decision.md)复核整改范围与判定，在两轮执行记录核对已保留的原始输出和未运行项。
 
 约束：不恢复已退役的大门禁、schema、运行时或常驻服务；不增加角色；不自动提交、合并、推送或远端发布；只改 `~/.zcode/AGENTS.md` 中现有 Agentflow 块，块外逐字保留。故障注入只在一次性副本，真实源码不做回滚实验。
 
@@ -27,3 +26,17 @@
 工具 G01/G02/G03/G04/G05/G08/G12 以修前同一反例、修后同一断言和邻接回归关闭；规则及模板 G06/G07/G09/G10/G11/G13/G14/G15 以权威原文、实际生成/调用和独立语义评审关闭；G16 以本仓真实缺陷闭环、四类受控任务和如实记录的成本/效果证据验收。缺证据的子项保留未验证。
 
 UI 原型：本插件无新增产品界面。四类演练中的临时 UI 通过浏览器操作验证，不把接口结果当 UI 可用。
+
+## 在新环境重放
+
+在仓库根执行以下命令。需要 Python 3.10+、Node.js、ego-browser 和其已连接的桌面浏览器。命令开启新的本地夹具与任务空间，把核心及扩展结果写入新目录。
+
+```sh
+evidence_parent="$(mktemp -d)"
+python3 'docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/scripts/replay-browser.py' \
+  --output "$evidence_parent/browser"
+```
+
+`--mode smoke` 和 `--mode extended` 可单独执行一组。同一目录拒绝重跑，避免覆盖上次证据。生成对照脚本
+`representative-comparison.py` 接受 `--baseline`、`--source`、各自的 revision 和新的 `--output` 文件。
+本轮重放使用新的证据版本，历史两轮原始记录仍按当时结果解读。

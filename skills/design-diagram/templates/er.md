@@ -1,9 +1,11 @@
 # ER 图模板（正文内嵌 mermaid，涉及新表或改表时必须出）
 
 > 用法：复制到设计正文的数据关系小节。
-> 硬要求：只画表、主键、外键与关系；每条关系标基数；多对多必须画出中间表；只画本次新增或改动的表。
+> 只画表、主键、外键与关系。每条关系标基数，多对多画出中间表，依赖的既有表标注「既有」。
 
 ## 正例
+
+**范围**：本例为目标设计。日历表每个统计日期一条记录，每条日指标必须归属到一个日期。
 
 ```mermaid
 %%{init: {"theme":"base","themeVariables":{
@@ -13,29 +15,25 @@
   "lineColor":"#6F8193","noteBkgColor":"#fff2cc","noteBorderColor":"#d6b656"
 }}}%%
 erDiagram
-    accTitle: 事件明细与日聚合表的关系
-    accDescr: 明细表按统计日期与聚合表对齐，两者无物理外键，靠业务键关联
-    client_events {
-      char id PK
-      char event_id UK
-      varchar product
-      char stat_date
+    accTitle: 统计日期与日指标的关系
+    accDescr: 每个统计日期可没有指标或有多条指标，每条指标归属一个已登记日期
+    reporting_days {
+      date reporting_date PK
     }
-    metric_daily {
-      char stat_date PK
-      char metric_key PK
-      bigint value_count
+    daily_metrics {
+      string metric_id PK
+      date reporting_date FK
     }
-    client_events ||--o{ metric_daily : "按统计日期聚合成日指标"
+    reporting_days ||..o{ daily_metrics : "归属统计日期"
 ```
 
-**怎么读**：`client_events` 是明细，`metric_daily` 是聚合——两者**靠统计日期这个业务键对齐，不是物理外键**，删明细不会级联删聚合。`event_id` 上的唯一键是幂等写入的唯一依据，不落在聚合表里。上图演示「逻辑关联也画成线」的形态：线表示读路径，不表示约束。
+**怎么读**：`reporting_days.reporting_date` 是主键。同一天允许有多条 `daily_metrics`，各自有不同的 `metric_id`。新增或改动指标的日期须通过已登记日期的外键约束。核对样例时，同一天添加第二条指标应允许，使用未登记日期应拒绝。若项目只有业务键关联，则在实际图中说明执行检查的责任方和没有物理外键的边界。
 
 ## 写法要点
 
 | 要点 | 做法 | 反例 |
 | --- | --- | --- |
-| 只画必要字段 | 主键、外键、关键状态字段；其余进正文表格 | 把三十个字段全列进实体框 |
+| 只画必要字段 | 主键和外键，其余进正文表格 | 把三十个字段全列进实体框 |
 | 基数必须标 | `||--o{`、`||--||`、`}o--o{` 明确标 1:1 / 1:N / M:N | 画了线不标基数，读不出有没有中间表 |
 | 多对多出中间表 | 两个一对多指向中间表 | 两个实体画一条多对多线了事 |
 | 只画本批 | 新增表正常画；既有表灰底标「既有」 | 把全库几十张表全画一遍 |

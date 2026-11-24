@@ -49,9 +49,15 @@ def _group_members(pgid: int) -> dict[int, str]:
                 members[int(pid)] = state
         return members
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
-        raise WorkflowError(
-            "process-cleanup-failed", f"Cannot inspect process group {pgid}: {exc}", 3
-        ) from exc
+        try:
+            os.killpg(pgid, 0)
+            return {pgid: "S"}
+        except ProcessLookupError:
+            return {}
+        except OSError:
+            raise WorkflowError(
+                "process-cleanup-failed", f"Cannot inspect process group {pgid}: {exc}", 3
+            ) from exc
 
 
 def _live_group(process: subprocess.Popen[bytes], pgid: int) -> set[int]:

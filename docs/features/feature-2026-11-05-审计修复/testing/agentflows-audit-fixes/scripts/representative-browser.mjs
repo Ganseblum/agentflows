@@ -1,8 +1,10 @@
-// Run with ego-browser nodejs; BASE_URL and EVIDENCE are explicit inputs.
+// Called by replay-browser.py with a fresh fixture and an explicit page.
 const fs = await import('node:fs/promises');
-const task = await taskSpace(25);
-const page = task.page('p1');
-const evidence = '/Users/lihanghang1/.zcode/v2/artifacts/agentflows-fixes-20261105-184849';
+const { spaceId, pageLabel, evidence, baseUrl } = globalThis.agentflowReplay ?? {};
+if (!spaceId || !pageLabel || !evidence || !baseUrl) throw new Error('请使用 replay-browser.py 提供本轮空间、页面、夹具和证据目录');
+const task = await taskSpace(spaceId);
+const page = task.page(pageLabel);
+await page.goto(baseUrl);
 const results = [];
 const expect = (condition, message) => { if (!condition) throw new Error(message); };
 const status = async name => await page.evaluate(id => document.querySelector('[data-testid="'+id+'"]').textContent, name);
@@ -57,6 +59,6 @@ const finalState = await page.fetch('/api/state');
 const final = typeof finalState.body === 'string' ? JSON.parse(finalState.body) : finalState.body;
 expect(final.count === 2 && final.operations.length === 2, 'operation receiver count differs');
 results.push({card:'CARD-4',status:'pass',evidence:'browser+api',sameKeyOperation:payloads[0].operationId,finalCount:final.count,requestCount:final.requests,snapshot:await page.snapshot({scope:'full_page'})});
-await fs.writeFile(evidence+'/representative-browser-results.json',JSON.stringify({spaceId:task.spaceId,url:await page.url(),results},null,2)+'\n');
+await fs.writeFile(evidence+'/representative-browser-results.json',JSON.stringify({spaceId:task.spaceId,url:await page.url(),results},null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify(results.map(({card,status,evidence})=>({card,status,evidence}))));
 console.log(await page.snapshot({scope:'full_page'}));

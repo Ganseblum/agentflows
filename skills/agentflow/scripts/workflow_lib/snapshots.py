@@ -175,26 +175,42 @@ def project_root(value: Path | str) -> Path:
     return root
 
 
+def _git_names(root: Path, *args: str) -> set[str]:
+    return {os.fsdecode(raw) for raw in git(root, "ls-files", *args, "-z").split(b"\0") if raw}
+
+
+def ignored_files(root: Path) -> set[str]:
+    return _git_names(root, "--others", "--ignored", "--exclude-standard")
+
+
 def git_files(root: Path) -> set[str]:
     """Include tracked, untracked and ignored files; Git administrative data is not source."""
-    names: set[str] = set()
-    for args in [
-        ("ls-files", "--cached", "--others", "--exclude-standard", "-z"),
-        ("ls-files", "--others", "--ignored", "--exclude-standard", "-z"),
-    ]:
-        names.update(os.fsdecode(raw) for raw in git(root, *args).split(b"\0") if raw)
-    return names
+    return _git_names(root, "--cached", "--others", "--exclude-standard") | ignored_files(root)
 
 
 def tracked_files(root: Path) -> set[str]:
-    return {
-        os.fsdecode(raw)
-        for raw in git(root, "ls-files", "--cached", "-z").split(b"\0")
-        if raw
-    }
+    return _git_names(root, "--cached")
 
 
-def file_entry(root: Path, name: str) -> dict[str, Any]:
+def index_entries(root: Path) -> dict[str, list[dict[str, str]]]:
+    entries: dict[str, list[dict[str, str]]] = {}
+    for raw in git(root, "ls-files", "--stage", "-z").split(b"\0"):
+        if not raw:
+            continue
+        meta, path = raw.split(b"\t", 1)
+        mode, oid, stage = meta.decode("ascii").split()
+        entries.setdefault(os.fsdecode(path), []).append({"mode": mode, "oid": oid, "stage": stage})
+    return entries
+
+
+def file_entry(root: Path, name: str, *, ignored: bool = False) -> dict[str, Any]:
+    if ignored:
+        # An ignored dependency link stays visible as metadata. Do not read
+        # its target, and never relax validation for explicitly named inputs.
+        leaf = root / relative_name(name)
+        no_symlinks(leaf.parent)
+        if leaf.is_symlink():
+            return {"path": name, "exists": True, "kind": "symlink", "link_target": os.readlink(leaf)}
     path = project_path(root, name)
     if not path.exists():
         return {"path": name, "exists": False}
@@ -223,22 +239,37 @@ def snapshot(
 ) -> list[dict[str, Any]]:
     exclusions = excluded_files or set()
     result = []
-    for name in sorted(git_files(root)):
+    index = index_entries(root)
+    ignored = ignored_files(root)
+    untracked = _git_names(root, "--others", "--exclude-standard")
+    for name in sorted(set(index) | ignored | untracked):
         if name in exclusions:
             continue
         if excluded_directory and (
             name == excluded_directory or name.startswith(excluded_directory + "/")
         ):
             continue
-        result.append(file_entry(root, name))
+        entry = file_entry(root, name, ignored=name in ignored and name not in index)
+        if name in index:
+            entry["index"] = index[name]
+        result.append(entry)
     return result
 
 
 def changed_paths(
-    before: list[dict[str, Any]], after: list[dict[str, Any]]
+    before: list[dict[str, Any]], after: list[dict[str, Any]], *, layer: str | None = None
 ) -> list[str]:
-    left = {row["path"]: row for row in before}
-    right = {row["path"]: row for row in after}
+    def project(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        if layer == "index":
+            return {row["path"]: row["index"] for row in rows if "index" in row}
+        if layer == "worktree":
+            return {
+                row["path"]: {key: value for key, value in row.items() if key != "index"}
+                for row in rows if row["exists"]
+            }
+        return {row["path"]: row for row in rows}
+
+    left, right = project(before), project(after)
     return sorted(
         name for name in left.keys() | right.keys() if left.get(name) != right.get(name)
     )
@@ -439,7 +470,7 @@ def seal_plan(
         task["report_path"] for task in request["tasks"] if "report_path" in task
     )
     bundle: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "execution",
         "root": str(root),
         "request": request,
@@ -499,8 +530,14 @@ def load_sealed(
         raise WorkflowError(
             "fingerprint-mismatch", "The supplied plan fingerprint does not match", 3
         )
+    if sealed.get("schema_version") == 1 and sealed.get("kind") == "execution":
+        raise WorkflowError(
+            "stale-seal-format",
+            "This seal does not bind the Git index; rerun seal with the approved inputs",
+            3,
+        )
     if (
-        sealed.get("schema_version") != 1
+        sealed.get("schema_version") != 2
         or sealed.get("kind") != "execution"
         or sealed.get("root") != str(root)
     ):
@@ -542,6 +579,8 @@ def verify_plan(
         {
             "fingerprint": sealed["fingerprint"],
             "allowed_changes": changed_paths(sealed["baseline_inputs"], current),
+            "allowed_index_changes": changed_paths(sealed["baseline_inputs"], current, layer="index"),
+            "allowed_worktree_changes": changed_paths(sealed["baseline_inputs"], current, layer="worktree"),
             "execution_snapshot": fingerprint(current),
         },
         next_action="run_verification",

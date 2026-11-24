@@ -17,11 +17,7 @@
 
 full 使用[测试计划模板](../templates/testing/plan.md)与[执行记录模板](../templates/testing/run.md)。light 在已授权的唯一 README 中承载同义最小用例与运行节，不强制额外 plan/run 文件。字段、引用和计数是主审与独审核对义务；0.36 已按用户决定删除重复机器门，本插件不再附带记录 schema/旧记录校验器。目标仓有真实同类命令才运行并留输出；没有工具不得写成自动校验通过。以下要求均为当前人工契约：
 
-- **布局**：两份记录都位于 `docs/features/<批次>/testing/<project>-<feature-slug>/`；文件名与
-  id 一致（`TP-<YYYY-MM-DD>-<NNN>` → `plan-<YYYY-MM-DD>-<NNN>.md`，
-  `TR-<YYYY-MM-DD>-<NNN>` → `run-<YYYY-MM-DD>-<NNN>.md`），且 id 的日期与 `recorded_at` 的日期
-  相符。目录锚在被测的 feature 而不是日期：同一个 feature 的计划修订与执行轮次累积在一处。
-  full 不将运行记录散落在 feature 根；light 的 README 内嵌记录按同义字段核对。
+- **布局**：用目标仓确认的测试记录位置。默认按功能目录下 `testing/<project>-<feature-slug>/` 保存计划、运行记录与证据。默认 ID 与文件名对应：`TP-<YYYY-MM-DD>-<NNN>` → `plan-<YYYY-MM-DD>-<NNN>.md`，`TR-<YYYY-MM-DD>-<NNN>` → `run-<YYYY-MM-DD>-<NNN>.md`，日期取 `recorded_at`。同一功能的轮次留在同一入口。light 在 README 使用同义内容。
 - **计划正文**：`## 用例` 以注册表开头（`| 用例 ID | 级别 | 优先级 | 标题 | 入口 | 来源 |`），
   且每个用例一个 `### <用例 id>` 详情标题；用例 id（`TC-*`）唯一；级别与优先级是固定枚举；
   **入口列写这条用例从哪个用户可见入口进入**（按钮 / 弹窗（含 iframe）/ 深链 / 回调页 /
@@ -54,11 +50,7 @@ full 使用[测试计划模板](../templates/testing/plan.md)与[执行记录模
 - **计划解析**：full 的 `test_plan_id` 解析到同一 feature 下的计划记录，light 解析到唯一 README 的最小用例节及其版本，且
   `project` 匹配。当执行轮次钉住计划当前的 `test_version` 时，注册表中的每个用例都在结果表里
   有交代（针对旧版本的一次执行则记录它自己的覆盖情况）。
-- **Findings**：`findings` / `flow_findings` 列出必须存在于 `记录根` 下的 `ISS-*` id
-  （本仓示例编号家族为 `ISS-<YYYY-MM-DD>-<slug>`；目标仓沿用自身已确认的记录约定，由接受者核对引用实际存在）。
-  失败的用例带可直接复现的 findings（步骤、期望与实际、证据引用），让 supervisor 无需重新推导
-  即可立 bug 记录；归因遵循标准规则（目标项目缺陷取 `external`，Agentflow 自身方法缺口取
-  `agentflow`）。
+- **发现与引用**：`findings` / `flow_findings` 只引用目标仓已创建且可读的缺陷 ID。失败用例附最小复现、预期、实况和证据。主审按[缺陷记录](issue-tracking.md)登记或追加引用；回归执行者给事实和建议。
 
 ## 策略、用例与执行的分工
 

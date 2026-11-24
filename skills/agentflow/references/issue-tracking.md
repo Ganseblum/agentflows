@@ -2,13 +2,11 @@
 
 > **加载者**：`skills/agentflow/SKILL.md` 路由「问题闭环」行与工程内容标准节；`execution.md` 与 `templates/host/maker.md` 指向它。缺陷落账、复发台账与按层归因时读。
 
-> **解决什么**：痛点 5d / 6——评审、代码评审、测试执行发现的 F/B/N/P 系列问题，**只进 changelog 与评审文件，从不登记 ISSUE**，导致「同样的坑反复踩、无法归纳成 agentflow 升级项」。本册把「发现」强制闭环到 `issues/`，并接上既有的 `class_id` / `occurrence` 复发台账。
->
-> **与既有体系的关系**：`templates/issue/issue-template.md`（bug 记录，带 `error_kind` / `attribution` / `provenance` / `class_id` / `occurrence`）已存在；本册是**强制触发协议**——把评审 / 测试发现也转化为该模板的 ISSUE 记录，并新增 `defect_class` 维度（规范 / 模板 / 流程 / 代码）。
+> 把已确认缺陷留在可追踪的记录中，后续修复和复验使用同一编号。目标仓已有缺陷或评审系统时按已确认落点工作，字段可映射到[缺陷模板](../templates/issue/issue-template.md)。
 
 ## 0. 强制规则（分级落账）
 
-落账分级——不是每条 finding 都升级成永久记录，但**确认缺陷不允许只活在会话里**：
+在已授权的记录位置按下列规则登记。审核未获持久化授权时，先把发现、证据和处置交回会话。
 
 1. **必须落账**：确认且需改代码（或确认需改规范 / 模板 / 流程）的缺陷，二选一——
    ① ISS 记录（复制 `templates/issue/issue-template.md` 到 `issues/ISS-<YYYY-MM-DD>-<slug>.md`）；
@@ -16,20 +14,17 @@
    来源包括：独立评审的 finding（F/B/N/P 系列）、测试执行发现、运行中识别的流程 / 模板 / 规范缺陷。
 2. **留在评审记录即可**：同轮立即修复、无外部影响、复验由确定性检查覆盖的低风险细节（错别字、
    措辞、临时未完成项）。不升 ISS，但批次收口的缺陷台账要在说明里给出这类条目的计数与去向。
-3. **不得**：把确认缺陷只写进评审文件 / changelog / 会话而两处落账都没有；批次收口时
-   issues/ 零记录、台账空表，而评审出现过 `changes_requested`。
+3. 批次收口时，每条 `changes_requested` 都能追到实际修复、已登记的承接或未关闭的阻塞。评审的缺陷表已经保留四项证据时继续引用该表。
 
 同根因合并：同一根因的多个 finding 立一条记录，保留复现与影响面，`occurrence` 递增。
 
-**推荐载体（机械立案）**：评审轮末用插件脚本 `scripts/record_findings.py` 立案——读 reviewer
-返回的 findings YAML，逐条生成 ISS 记录（含模板合法性自检）、追加台账行、输出 finding→ISS
-映射（回填评审记录），并把 reviewer 原始 YAML 归档进评审记录；同根因合并决策仍由 supervisor
-在映射表上执行（脚本不自动合并）。手写立案仍然合法——两种载体的记录都必须与
-`templates/issue/issue-template.md` 同形，脚本产物只是该模板的机械生成形态。
+需要在本地批量登记时，可把[评审结果 YAML](contracts.md#评审结果)交给 `scripts/record_findings.py`，先预览
+发现到缺陷编号的映射，再按授权落盘。合并同根因、选择目标仓落点及维护归属仍由主审核对。已有缺陷平台或
+只需接受评审缺陷表时沿用其实际流程。
 
 ## 1. defect_class 维度（核心新增）
 
-在 `issue-template.md` frontmatter 中**新增**字段（模板见 §4）：
+`defect_class` 字段与[缺陷模板](../templates/issue/issue-template.md)同义：
 
 ```yaml
 defect_class: 规范 | 模板 | 流程 | 代码
@@ -59,15 +54,4 @@ escape_stage: 需求 | 设计 | 实现 | 测试 | 评审
 
 ## 3. 闭环到升级
 
-- `defect_class: 规范 | 模板 | 流程` 的 ISSUE 在 `verified` 后，**必须**提一条 agentflow 自身的改进（改 `references/` / `templates/` / `SKILL.md`），并把 commit / PR 填回 `fix_revision`；否则只修目标仓、根因仍在。
-- 改进落点反馈到 `CHANGELOG.md`（不在 SKILL.md 写版本号）。
-
-## 4. 模板补丁（加到 issue-template.md frontmatter）
-
-在 `provenance` 之后新增一行（其它字段不变）：
-
-```yaml
-defect_class: <规范 | 模板 | 流程 | 代码>
-```
-
-并在填写说明中补一句：「`defect_class` 必填；规范 / 模板 / 流程类在 verified 后须回填 agentflow 改进 commit 到 `fix_revision`。」
+- 已证实属于 Agentflow 规范、模板或流程的问题，附证据及最小改进建议，由维护批次处理。改进实际落地后按授权回填 commit 或 PR，版本说明沿用维护仓 `CHANGELOG.md`。

@@ -1,9 +1,9 @@
 # templates — 按任务选择材料
 
-> 先按[文档档位](../references/document-chain.md#文档档位)选择轻量或完整模板。完整链固定标题不得改名或删除，不适用节写 `N/A: 原因`；轻量使用唯一 README 的同义最小内容（含用例、run 与独审），不按章节数另立判据。目标仓已有体系时复用，不另建重复正文。
+> 先按[文档档位](../references/document-chain.md#文档档位)选择轻量或完整模板。轻量使用唯一 README。完整档按范围选择材料，保留必要章节；风险项按实际范围展开。已有体系时映射相应章节。
 > 写前自查（术语与指称）：按「换 > 释 > 删」处理；**代号裸用**（代号只在定义处出现，正文以「白话（代号）」或「代号（白话）」成对伴随）与**模式词分域**（标识符留在代码、SQL、日志语境，正文用业务白话）两条形态同受约束；判据见 [`document-chain.md` 表达纪律节](../references/document-chain.md)。
 > 命名与目录形态：骨架按链契约的角色目录组织——`spec/be/backend.md` ↔ `design/be/backend.md`、`spec/fe/frontend.md` ↔ `design/fe/frontend.md`、`spec/qa/acceptance.md` ↔ `design/qa/testing.md`、`spec/ui/visual.md` ↔ `design/ui/visual.md` 镜像；proposal 使用 `proposal/proposal.md`。计划按使用位置选择：目标仓使用自身约定；没有约定时复制 `plan/execution.md`。Agentflow 仓库的批次记录使用 `plan/<plan_id>.md` 混合契约。复制时保持对应形态的文件名与信封。
-> **模板内链接**：`feature/`、`testing/` 等模板里的相对链接指向插件安装树（`skills/agentflow/references/…`）。复制到目标仓后这些链接会断——复制时按「目标仓相对路径或插件根路径」改写，或删除链接只留文字说明。
+> **模板内链接**：相对链接指向同批次随所选轨道生成的文件；插件方法写成「已安装 Agentflow」下的相对入口。手工复制时填写导航和元信息槽位，核对实际落点。
 > 按实际范围选择贯通项：**页面预览或原型**（小 UI 可直接引用真实页面@revision 与 browser 证据；已决定制作独立原型时，复用现有原型库，或无库时用批次 HTML；不为满足形式复制真实页面。预览使用真实视觉基线并登记确认结论）；**视觉来源** `spec/ui` §2.1 → `design/ui` §0.1（组件库/主题机制/token 源文件给 `path:line`，A 复用 / B 移植 / C 冷启动三档，禁凭空造色值）；**埋点** 三处口径——`proposal/proposal.md` §6.2 决策 → `spec/fe/frontend.md` §4 口径 → `design/fe/frontend.md` §1.7 事件契约，验收在 `spec/qa` 与 `design/qa`（评审清单与隐私红线见 [`telemetry.md`](../references/telemetry.md)）。
 
 ## 落地映射（哪个模板落到项目哪里、谁创建、何时）
@@ -26,7 +26,7 @@
 | 模板 | 用法（复制到 feature 目录的对应路径） |
 | --- | --- |
 | [feature/lightweight.md](feature/lightweight.md) | 满足六条适用判据的任务：复制为 feature README，集中需求、实施证据与恢复；不能用轻量省略评审或验证 |
-| [feature/README.md](feature/README.md) | 批次入口：元信息 + 推进进度（阶段评审）+ 当前步骤 + 模块总览 + 分支基线与落库映射 |
+| [feature/README.md](feature/README.md) | 批次入口：元信息、导航、目标承接、评审与交付证据；进度引用执行计划 |
 | [feature/proposal/proposal.md](feature/proposal/proposal.md) | 需求提案（单文档阶段，`proposal/proposal.md`） |
 | [feature/spec/be/backend.md](feature/spec/be/backend.md) · [fe](feature/spec/fe/frontend.md) · [qa](feature/spec/qa/acceptance.md) · [ui](feature/spec/ui/visual.md) | 各角色规格（`spec/<角色>/`） |
 | [feature/spec/checklist.md](feature/spec/checklist.md) | Spec 待确认问题唯一登记表（`spec/checklist.md`，`Q-01/Q-02`…；阻塞阶段、来源、答案与关闭条件集中维护） |

@@ -1,38 +1,33 @@
 # 验证分级：smoke / integration / e2e
 
-> **加载者**：`skills/agentflow/SKILL.md` 工程内容标准节与分档纪律；`execution.md` 的实现自检节；`templates/host/maker.md` 的验收条款。判断「链路通没通」之前读——curl 只算 smoke。
+> **加载者**：`skills/agentflow/SKILL.md` 工程内容标准节；`execution.md` 的执行路线；`templates/host/maker.md` 的验收条款。评估真实入口的证据时读。
 
-> **解决什么**：痛点 5c——「接口通 ≠ 链路通」。会话里出现把 `curl` 四步（login→me→logout→me）当「会话闭环」「登录成功」验证，结果页面一测全是 bug。SKILL.md §运行工作流 第 8 步已写「`curl`/API 200 只能证明协议链，不能关闭用户可见路径」，本册把它**强制化并落到 plan/design/qa 模板**，消除模板级自相矛盾。
+证据层级由真实入口、实际执行和断言决定。测试工具或命令名本身不决定证据层级。
 
 ## 0. 三级定义
 
 | 级别 | 手段 | 能证明什么 | 不能证明什么 |
 | --- | --- | --- | --- |
-| **smoke** | `curl` / `healthz` / 端口监听 | 服务起了、接口契约存在、路由可达 | 任何用户可见行为正确 |
-| **integration** | API 契约测试（`npm test` 后端）、单接口断言 | 单个接口的输入输出符合契约 | 多步骤用户旅程、前端状态、跨页面 |
+| **smoke** | 健康端点、状态码或端口检查 | 服务启动、传输可达 | 接口语义和用户可见行为 |
+| **integration** | 原生 runner 或 API 客户端断言业务结果及副作用 | 受测接口或服务之间的契约 | 浏览器中的真实用户入口、交互和页面状态 |
 | **e2e** | 浏览器 / 手动走查 + **原始证据**（截图 / DOM / 网络） | 用户真实入口到终态的链路正确 | — |
 
 ## 1. 强制规则
 
-1. **`curl` 只能用于 smoke**：证明「服务起没起 / 接口契约存在 / 路由可达」。
-2. **`curl` / API 200 不得作为「登录成功」「会话闭环」「功能可用」的通过证据**——这是反模式，发现即 `changes_requested`。
-3. **端到端验收（AC 表的 M 系列用户可见路径）必须用 `browser` 或 `manual` 证据关闭**，证据落 `testing/<项目>-<功能>/run-*.md` + `evidence/`（沿用 test-login 已建范式）。
-4. plan 的「验证命令」节中，凡标「用户可见路径」的命令，依据只能是 `人工确认：<理由>` 指向 browser/manual 证据，**不得写 `curl ... && echo ok` 充当通过**。
+1. 只探测端口、状态码或连通性的 `curl` 命令记为 smoke。API 契约检查须断言请求、响应或真实副作用，按实际覆盖登记 `api`。
+2. 用户可见路径的端到端验收用 `browser` 或 `manual`，证据包含真实入口、前置、步骤、观察值与来源。
+3. full 使用目标仓已确认的测试记录和证据位置。light 在唯一获授权的 README 留同义记录或证据引用；无持久写入授权时按[文档档位](document-chain.md#文档档位)交回会话。
 
-## 2. 入口矩阵（来自 SKILL.md §8）
+## 2. 入口覆盖 <span id="入口覆盖"></span>
 
-每个用户可见入口（按钮、弹窗含 iframe、整页跳转、深链、回调页、脚本）都要有执行记录；e2e 通过证据必须是 `browser` 或 `manual`。`curl`/API 200 只证明协议链。
+核对测试策略列出的实际入口与状态，包括影响同一行为的按钮、弹窗、跳转、深链、回调或脚本。full 取映射后的 QA 测试策略，默认模板为 `design/qa/testing.md`。light 读唯一 README 的同义内容。每个适用入口有对应执行结果，未覆盖项标明理由与影响。产品实际运行规则适用于实现或测试结果评审。文档阶段只核对拟定覆盖及其可执行性。
 
 ## 3. Reviewer 检查点
 
-- [ ] 是否有把 `curl` 当 e2e / 会话闭环通过证据的地方 → 有即 `changes_requested`
-- [ ] 每个 M 系列 AC 是否有 browser/manual 原始证据
-- [ ] 证据是否落 `run-*.md` + `evidence/`，而非只在会话里说「测过了」
+- [ ] 是否用真实入口和状态、可观察断言及原始证据支持验收
+- [ ] 是否按实际用例及计划版本登记 `browser`、`manual`、`api` 或 `file`
+- [ ] 阻塞、未执行和已验证的范围是否可从证据记录区分
 
-## 4. browser 证据的形态：Ego Light 操作序列
+## 4. 浏览器与人工证据的记录
 
-执行路线遵守[执行与验证](execution.md)：无既有 runner 时用 Ego Light，有既有 runner 时沿用。用例的 TC、AC 来源、步骤与预期唯一在 Markdown plan 注册表与详情，light 在唯一 README 的同义节。可选 YAML 仅映射 TC ID、`automated` 路径与运行参数，不复制语义；run 绑定计划 ID/版本并留原始输出，见[测试用例](testcases.md)。
-
-重复提交 / 超时 / 过期 / 退出失败等边界在 Markdown 用例详情写可重放序列；边界清单在测试计划中必选，不适用也要逐项写理由（见 [`execution.md`](execution.md)）。需要重复执行的序列从一次性草稿提升为 `testing/<项目>-<功能>/scripts/` 下的进仓脚本——仍是同一套 Ego Light 路线。
-
-脚本通过不替代 `manual` 目视验收（视觉与文案判不了），也不证明 api 契约；反过来 `api` 通过只许表述为「api 层通过」。目标仓**本来就有** Playwright / Cypress 时按 [`execution.md`](execution.md) 的 D1 口径用既有 runner，不新起平行套件；为一个纯 Ego Light 项目新增 runner 才是被禁的形态。
+按[执行与验证](execution.md#执行路线与数据)选择路线，并按[测试用例](testcases.md)保存可重放步骤或脚本、精确用例名称与绑定版本。项目明确要求视觉人工确认或自动化回归时，分别保留实际状态。

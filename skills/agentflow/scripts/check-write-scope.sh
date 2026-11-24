@@ -42,40 +42,34 @@ if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
 fi
 
 tmp_diff="$(mktemp)" || exit 2
+tmp_index="$(mktemp)" || { rm -f "$tmp_diff"; exit 2; }
 tmp_others="$(mktemp)" || exit 2
 tmp_ignored="$(mktemp)" || exit 2
-cleanup() { rm -f "$tmp_diff" "$tmp_others" "$tmp_ignored"; }
+cleanup() { rm -f "$tmp_diff" "$tmp_index" "$tmp_others" "$tmp_ignored"; }
 trap cleanup EXIT
 
 # 使用 -z 输出原始（非 C-quote）路径，避免含非 ASCII 字符（如中文）的路径被 git 转义后
 # 与 scope 模式失配而误判越界；并显式检查 git 退出码，git 失败时 fail-closed 而非静默 OK。
-if ! git diff --name-only --no-renames -z "$base" >"$tmp_diff" 2>/dev/null; then
+if ! git diff --name-only --no-renames -z "$base" -- >"$tmp_diff"; then
   echo "error: git diff failed for base: $base" >&2
   exit 1
 fi
-if ! git ls-files --others --exclude-standard -z >"$tmp_others" 2>/dev/null; then
+if ! git diff --cached --name-only --no-renames -z "$base" -- >"$tmp_index"; then
+  echo "error: git diff --cached failed for base: $base" >&2
+  exit 1
+fi
+if ! git ls-files --others --exclude-standard -z >"$tmp_others"; then
   echo "error: git ls-files failed" >&2
   exit 1
 fi
 # 被忽略的文件只在显式开启时计入（AGENTFLOW_WRITE_SCOPE_INCLUDE_IGNORED=1）。默认关闭：
 # 基线之前就存在的缓存目录在每次调用里都会被列为越界，使工具整体不可用。
 if [ "${AGENTFLOW_WRITE_SCOPE_INCLUDE_IGNORED:-0}" = "1" ]; then
-  if ! git ls-files --others --ignored --exclude-standard -z >"$tmp_ignored" 2>/dev/null; then
+  if ! git ls-files --others --ignored --exclude-standard -z >"$tmp_ignored"; then
     echo "error: git ls-files --ignored failed" >&2
     exit 1
   fi
 fi
-
-changed=()
-while IFS= read -r -d '' path; do
-  [ -n "$path" ] && changed+=("$path")
-done <"$tmp_diff"
-while IFS= read -r -d '' path; do
-  [ -n "$path" ] && changed+=("$path")
-done <"$tmp_others"
-while IFS= read -r -d '' path; do
-  [ -n "$path" ] && changed+=("$path")
-done <"$tmp_ignored"
 
 # `case` 模式不会进行路径名展开，这与 `[ ]` 内不加引号的 `*` 不同。
 in_scope() {
@@ -94,19 +88,26 @@ in_scope() {
 
 out_of_scope=()
 count=0
-for path in ${changed[@]+"${changed[@]}"}; do
-  count=$((count + 1))
-  if ! in_scope "$path"; then
-    out_of_scope+=("$path")
-  fi
-done
+check_paths() {
+  local kind="$1" file="$2" path
+  while IFS= read -r -d '' path; do
+    count=$((count + 1))
+    if ! in_scope "$path"; then
+      out_of_scope+=("[$kind] $path")
+    fi
+  done <"$file"
+}
+check_paths 工作区 "$tmp_diff"
+check_paths 暂存区 "$tmp_index"
+check_paths 未跟踪 "$tmp_others"
+check_paths 忽略文件 "$tmp_ignored"
 
 if [ "${#out_of_scope[@]}" -gt 0 ]; then
-  echo "FAIL: 共 $count 个变更路径中有 ${#out_of_scope[@]} 个在声明的写范围之外："
   for path in ${out_of_scope[@]+"${out_of_scope[@]}"}; do
     echo "  $path"
   done
+  echo "FAIL: 共 $count 条变更记录中有 ${#out_of_scope[@]} 条在声明的写范围之外。"
   exit 1
 fi
 
-echo "OK: 共 $count 个变更路径，全部位于声明的写范围之内。"
+echo "OK: 共 $count 条变更记录，全部位于声明的写范围之内（同一文件可出现在两个比较层）。"

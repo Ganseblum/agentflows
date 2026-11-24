@@ -19,7 +19,8 @@
   4. 打印可直接粘进评审简报的 reviewed_revision 与 read_scope 段
 
   --verify：先校验清单与快照自身file/大小/hash，再核当前来源（仓内相对路径或仓外source映射），
-  输出逐文件 一致/改动/缺失 与汇总。旧无映射外部basename身份不可恢复，须重建；普通旧仓内快照兼容。
+  输出逐文件 一致/改动/缺失 与汇总。缺仓库身份或旧外部 basename 归属无映射时，须从原仓重建。
+  同仓迁移后的验证用 --snapshot-source-repo 明确指定快照记录的原仓根。
   只核对 MANIFEST 清单内文件——清单外的工作树改动不在核对面，快照必须包含完整变化文件清单。
   存在漂移时退出码 1——用于「批准后冻结」核对（contracts.md 评审结果节）：approved 之后至提交
   之前被评审文件不得改动，批次收口（提交前）运行一次，把「绑定仍成立」变成可复核输出。
@@ -33,8 +34,12 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
+
+if sys.version_info < (3, 10):
+    raise SystemExit("review_snapshot.py 需要 Python 3.10 或以上版本，请检查 python3 --version")
+sys.dont_write_bytecode = True
 
 from workflow_lib.review_bundle import (
     MANIFEST_NAME, load_snapshot, parse_manifest as strict_manifest,
@@ -82,7 +87,7 @@ def make_snapshot(repo: Path, feature: Path, round_no: int, files: list[str],
     try:
         lines = [
             "# review snapshot manifest",
-            f"created_at: {datetime.now(UTC).isoformat(timespec='seconds')}",
+            f"created_at: {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
             f"reviewed_revision: snapshot {snap.name} @ {git_head(repo)}",
             f"repo: {repo}",
             f"files: {len(frozen)}",
@@ -112,7 +117,7 @@ def parse_manifest(manifest: Path) -> tuple[list[tuple[str, int, str]], int, int
             0, int(parsed.headers["files"]))
 
 
-def verify_snapshot(repo: Path, snap: Path) -> list[tuple[str, str, str]]:
+def verify_snapshot(repo: Path, snap: Path, source_repo: Path | None = None) -> list[tuple[str, str, str]]:
     """按 MANIFEST 对当前工作树逐文件核对。
 
     返回 [(状态, 相对路径, 细节)]，状态 ∈ 一致 | 改动 | 缺失。
@@ -121,6 +126,7 @@ def verify_snapshot(repo: Path, snap: Path) -> list[tuple[str, str, str]]:
     """
     repo = safe_path(repo)
     snapshot = load_snapshot(snap)  # Validate the frozen objects before comparing current sources.
+    snapshot.validate_repo(repo, source_repo)
     rows: list[tuple[str, str, str]] = []
     for entry in snapshot.manifest.entries:
         target = safe_path(snapshot.manifest.sources.get(entry.name, repo / entry.name))
@@ -142,7 +148,9 @@ def cmd_verify(args: argparse.Namespace) -> int:
         if not repo.is_dir():
             raise ValueError(f"仓库根不存在：{repo}")
         snap = safe_path(Path(args.verify))
-        rows = verify_snapshot(repo, snap)
+        source = getattr(args, "snapshot_source_repo", None)
+        source_repo = safe_path(Path(source)) if source else None
+        rows = verify_snapshot(repo, snap, source_repo)
     except (OSError, ValueError) as exc:
         print(f"[错误] {exc}", file=sys.stderr)
         return 2
@@ -174,6 +182,7 @@ def main() -> int:
     ap.add_argument("--out", default=None, help="快照父目录（默认 <feature>/reviews）")
     ap.add_argument("--verify", default=None, metavar="SNAPSHOT",
                     help="核对模式：按 MANIFEST 对当前工作树逐文件重算 sha256，报漂移")
+    ap.add_argument("--snapshot-source-repo", help="迁移同一仓库后核对快照时，显式指定 MANIFEST 记录的原仓根")
     ap.add_argument("--self-test", action="store_true", help="在临时目录跑快照自测")
     args = ap.parse_args()
 
@@ -181,6 +190,8 @@ def main() -> int:
         return _self_test()
     if args.verify:
         return cmd_verify(args)
+    if args.snapshot_source_repo:
+        ap.error("--snapshot-source-repo 仅用于 --verify")
     if not (args.feature and args.round and args.files):
         ap.error("需要 --feature、--round、--files（或 --verify <快照目录>，或 --self-test）")
 
@@ -403,7 +414,17 @@ def _self_test() -> int:
         manifest = snap / MANIFEST_NAME
         entry = manifest.read_text(encoding="utf-8").splitlines()[-1]
         manifest.write_text("files: 1\n" + entry + "\n", encoding="utf-8")
-        assert verify_snapshot(repo, snap)[0][0] == "一致", "普通旧仓内快照应继续读取"
+        rejects(lambda: verify_snapshot(repo, snap))
+        assert load_snapshot(snap).objects["src/a.py"] == (repo / "src/a.py").read_bytes()
+
+    def t_repo_binding(base: Path) -> None:
+        repo, feature, source = setup(base)
+        snap = make(repo, feature, 1, ["src/a.py"])
+        moved = base / "different-repo"
+        (moved / "src").mkdir(parents=True)
+        (moved / "src/a.py").write_bytes(source.read_bytes())
+        rejects(lambda: verify_snapshot(moved, snap))
+        assert verify_snapshot(moved, snap, source_repo=repo)[0][0] == "一致"
 
     def t_symlinks(base: Path) -> None:
         repo, feature, a = setup(base)
@@ -458,7 +479,8 @@ def _self_test() -> int:
         ("仓外同名文件分离、稳定来源映射与漂移核对", t_external_sources),
         ("预检重复来源、保留名与路径逃逸无半成品", t_preflight_collisions),
         ("严格清单头/数量/路径/重复与快照缺失/大小/hash漂移", t_strict_manifest),
-        ("普通旧仓内快照兼容", t_legacy_snapshot),
+        ("旧清单字节可读，缺仓身份时提示重建", t_legacy_snapshot),
+        ("绑定仓身份，只有显式迁移才重映射", t_repo_binding),
         ("源/父目录/输出/冻结对象/MANIFEST拒绝symlink", t_symlinks),
         ("复制与MANIFEST写入失败只清本轮目录", t_failure_cleanup),
     ]:

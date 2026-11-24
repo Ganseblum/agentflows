@@ -98,33 +98,44 @@ Supervisor 负责执行状态的记账：执行期间，它是计划状态与证
 
 ## 评审简报必填字段（缺一 reviewer 可直接判 blocked）
 
-评审简报是 worker 简报的特化。除 `task_id` / `baseline_revision` 外，以下字段必填——缺失或
-填了无法校验的替身时，reviewer 返回 `blocked: 简报不合格` 并列缺失项，不得凭通读补偿：
+评审简报是 worker 简报的特化，按 `review_type` 选择入口。除 `task_id` / `baseline_revision` 外，
+下列对象、范围、取证与预算字段必填。缺失或填了无法校验的替身时，Reviewer 返回
+`blocked: 简报不合格` 并列缺失项。
 
 ```yaml
+review_type: document | implementation
 review_scope: full | delta | spot
   # full=首轮或全新文档（无 diff 基线时把文档快照当新增 diff）；delta=只读变化文件与其上游引用面；
   # spot=只核上轮未关闭项
-reviewed_revision: commit 号、评审快照目录（由 review_snapshot.py 生成）
-  或显式 unverified-boundary；只给一串 sha256 不算绑定——无 Bash 的评审者无法校验哈希，
-  转述它们只会消耗简报
+reviewed_revision: 完整或唯一可解析的提交号，或 review_snapshot.py 生成的快照目录；
+  unverified-boundary 只用于草稿，禁止作为独立评审或批准依据
 inline_objects: 被评审文件逐字内容或原始 diff 的落点（路径必须存在）；简报不含任何内联对象即不合格
 stop_rule: 本轮何时停——按入口/出口条件，如「入口不满足不开始（blocked）；出口无未关闭 P0/P1、
   本轮 finding 已修入 required_changes 或已立案、上轮 finding 有 cost_replay 或 residual 理由
   即收口；同一原因两次失败或一轮无进展即停」；非阻塞建议默认写入 residual_risks 后收口
 reviewer_reuse: 复用同一 reviewer 子代理时必填（首轮省略）——累计轮次与上轮结论锚点；
   生成用 `gen_review_brief.py --reuse-round N`；reviewer 报告须声明「本结论部分依赖上轮判断」
-review_gate: 生成器默认渲染（脚本生成的简报必含）——入口条件（对象冻结为快照/提交、简报 §0 中受评任务及递归真实前置全部终态、必需检查带退出码、五字段与内联对象齐备）与出口条件（本轮 finding 已修/立案、
-  上轮 finding 有 cost_replay 或 residual 理由、无未关闭 P0/P1、用户可见断言有检查或 unverified
-  ≤ partial、同因两次失败/一轮无进展即停）；入口不满足 reviewer 返回 blocked；轮次仅记录，不设固定上限
+review_gate: 由生成器按 review_type 渲染本节入口与「评审结果」出口；轮次仅记录，不设固定上限
 output_budget: findings 上限（默认 12）与报告正文上限（默认 6000 字符）；超限按严重度截断并声明截断
 ```
+
+### 按对象核对入口
+
+两类评审都要冻结对象，给出逐字对象或原始 diff、目标与可核实的来源。主审先运行已经确定适用的检查，
+附命令、退出码与原始结果。无适用命令时说明原因，文档评审仍可按清单直接核对来源和内容。Reviewer 可提出
+尚未被覆盖的检查，主审按原命令补证；检查的新增请求与上游证据缺失须区分。
+
+| `review_type` | 审什么 | 额外入口条件 |
+| --- | --- | --- |
+| `document` | 提案、规格、设计、实施计划，含目标仓的自有文档 | 指明阶段、已确认的上游材料和适用核对项；计划内未实施任务仍按原状保留。仅审文档时不用任务状态映射，也无需预先运行文档所计划的产品用例 |
+| `implementation` | 代码、行为配置、修复与实际测试结果 | 对照原实施计划或 light README，给出全部任务的状态映射、受评任务及其真实前置、相关必需检查原始输出；任务闭包按下节核对 |
 
 **delta 轮的证据形态**（由 `gen_review_brief.py --diff-base <基线快照>` 承载）：
 
 - **变化面用 diff，不用全文凑**：delta 简报必须内联相对基线的逐文件 diff（生成器 §1.1），
   全文内联只作上下文核对——修复说明与新哈希不能替代 diff，reviewer 要能看出同一文件内
-  是否夹带其它改动。
+  是否夹带其它改动。提供 `--prev-findings <文件>`；上轮确无遗留项时可用
+  `--no-previous-findings <有出处的原文>` 显式说明。复用评审者须有实际的上轮结论锚点。
 - **检查输出带退出码**：checks 行写 `命令 :: exit=N :: @日志`；渲染为「退出码未验证」的检查
   不得引用为「已通过」，要么补退出码重跑，要么按未运行处理。
 - **delta 轮的证据范围要声明**：只重跑受本轮改动影响的检查；沿用前轮检查时在简报写明沿用项
@@ -139,7 +150,11 @@ output_budget: findings 上限（默认 12）与报告正文上限（默认 6000
 
 ### 任务状态快照的来源
 
-`gen_review_brief.py --task-status <文件> --task-ids T01 T02` 从完整原计划派生状态映射，不建立独立看板。文件首行 `tasks:N`，随后每行如 `T01 | deps: - | status: ☑` 或 `T02 | deps: T01,T03 | status: ☑`。原计划 ID 唯一且保持不变，所有计划任务都列出；生成器核对行数、ID 唯一、未知依赖、环，以及受评 ID 与递归前置是否终态（`☑` 或 `—`）。后继允许 `☐`，尤其评审记录/最终收口任务不能为满足入口而提前勾完。旧纯终态格式不带 `--task-ids` 时仅作兼容输入。
+实施计划沿用[文档交付链的计划状态](document-chain.md#计划状态与交付状态)。`gen_review_brief.py
+--review-type implementation --task-status <文件> --task-ids T01 T02` 从完整原计划派生状态映射。
+首行 `tasks:N`，每行如 `T01 | deps: - | status: ☑`。生成器核对行数、ID、依赖和闭包状态。
+受评任务须有已验的交付物，真实前置须终态；`—` 仅可登记实际不适用的任务，仍是执行依赖就不能
+把它当完成。评审与最终收口等后继可以保持待办。旧调用可保留草稿，派发前按对象类型重新生成。
 
 快照与原计划逐行一致性仍由主审与独审核对；生成器并未自动证明其来源真实。把原计划/README 的确切版本与状态映射一起交给 reviewer，禁止改用另一套 ID 或隐藏未完成前置。
 
@@ -197,7 +212,10 @@ Supervisor 验证共享工作区，因为 worker 摘要可能过期、不完整�
 
 ## 评审结果
 
-评审按**入口/出口条件**开始与结束，不设固定轮数。入口条件：被评审对象已冻结为快照或提交（material 评审不得用 `unverified-boundary`）、简报 §0 中受评任务及递归真实前置全部终态（依赖本轮评审收口的后继可 pending）、必需检查的原始输出带退出码、简报五字段与内联对象齐备；任一不满足，reviewer 返回 `blocked`，不评审半成品。出口条件：本轮 finding 已修入 `required_changes` 或已立案、上轮 finding 为 `closed` 且 cost_replay 成立（或 residual_risks 写明无法关闭的理由）、无未关闭 P0/P1、用户可见断言有「若为假会失败」的检查或标 unverified（此时结论 ≤ partial）；同一原因连续两次失败或一轮无进展即停并升级。轮次只记录，不作为预算或停止条件。
+按[对象入口](#按对象核对入口)开评。当前与以前的 P0/P1 均已关闭、适用断言有可证伪证据、
+其余发现已处置或写明残余风险，才可批准。有未关闭 P0/P1 时返回 `changes_requested` 并列出
+`required_changes`，立案本身不改变结论。增量轮用 `previous_findings` 回放上轮缺陷场景；
+P2/P3 无法重放的说明可进入 `residual_risks`。同因两次失败或一轮无进展则停下并升级。
 
 **状态矩阵。** 入口不满足 → `decision: blocked`，不开始评审；已开始评审但某个具体断言缺原始证据 → `status: partial`（`decision` 只能是 `changes_requested` 或 `blocked`，绝不是 `approved`）；出口满足 → `approved` + `status: complete`。`status: partial` 不是批准。
 
@@ -223,15 +241,29 @@ findings 总数注明计数口径（跟进项是否另算），使「逐轮编�
   不入永久台账；立案是记账，不限制修复/重审轮数，仍按同因两次失败或一轮无进展停止。
 
 ```yaml
-reviewed_revision: revision whose supplied raw diff and evidence were reviewed
-status: complete | partial | blocked
-decision: approved | changes_requested | blocked
-previous_findings: delta 轮必填——每条 = id + severity + status(closed|unverified) + cost_replay；
-  P0/P1 未完成 cost 场景重放记 unverified 且不得 approved；P2/P3 无法重放的写理由并留 residual_risks
-evidence: concrete findings tied to supplied diff or raw output
-required_changes: minimal changes needed for approval
-residual_risks: limits that remain even if approved
+reviewed_revision: '<冻结对象的提交或快照>'
+status: complete
+decision: changes_requested
+findings:
+  - id: F01
+    severity: P1
+    issue: 回退步骤缺少可验证的恢复入口
+    location: 'design/be/backend.md:42'
+    cause: 变更步骤没有说明怎样恢复已部署版本
+    cost: 发布失败后无法确认何时可以恢复流量
+    fix: 补充回退入口和健康检查预期
+    evidence: 原文只有「按需回退」
+previous_findings: []
+evidence: []
+required_changes: [F01]
+residual_risks: []
 ```
+
+`findings` 始终存在，无发现时写 `findings: []`。条目必填 `id`、`severity`（P0–P3）、
+`issue`、`location`；`cause`、`cost`、`fix`、`evidence` 适用时提供。`required_changes` 引用发现 ID；
+`evidence`（顶层）用来登记适用的检查或覆盖情况。delta 的 `previous_findings` 按 `id`、`severity`、
+`status: closed|unverified`、`cost_replay` 填写，P0/P1 没有重放证据不得批准。
+交脚本时使用示例的缩进、普通文本字段或等价 JSON，保留原始评审结果供复核。
 
 reviewer 不得接受一个仍在变动的 worktree：如果提供的 revision 与被评审的 revision 不同，它返回 `status: blocked` 并指出这处不一致。执行期间 Supervisor 仍是计划状态/证据的唯一写入者，并把评审结果记录在指派的记录路径。
 
@@ -261,7 +293,9 @@ reviewer 应优先处理正确性、回归、安全边界、状态恢复和缺�
 
 **镜像型简报。** 行为必须与另一层的既有实现一致（状态折叠、缺省、终态收敛、名单、顺序）时，简报把参照实现以 `path:function` 点名，并要求先出分支表：参照实现的每个分支（输入态 → 输出）配上镜像行为，或显式偏离加原因。reviewer 按参照源码核对这张表，所以产物是表——不是事后补的 diff。
 
-**重要特性的设计完备性。** 重要特性的计划或技术设计必须携带三件隐式行为检查不覆盖的产物（那一件守横切机制；这三件守声明流程本身）：
+## 重要特性的设计完备性
+
+重要特性的设计应写明以下三项，计划引用对应章节并补充执行所需的信息：
 
 1. **关键链路时序**——每条关键路径（用户或调用方实际走到的请求链）以步骤表为基准描述；可以配一张 mermaid 时序图，两者绝不得有不同口径——冲突时步骤表为准，图即缺陷。架构图只画关系与流向；流程步骤与异常分支属于时序章节，绝不堆进架构图。
 2. **异常矩阵**——每条关键路径一张表，每个失败模式一行：超时、重复/重放请求、状态冲突、异步回调失败（加上任何领域特有的），每行回答：检测方式、处理策略、重试方/次数/退避、幂等前提、用户可见结果、告警/日志。只写「重试」而不写明谁重试、重试几次、用什么退避、在哪个幂等前提下，就是缺陷；「fail-safe 兜底」或「显示错误」这类笼统表述不带信息，按同样方式退回。空格子写 `N/A` 加原因，绝不空着。
@@ -290,4 +324,5 @@ reviewer 应优先处理正确性、回归、安全边界、状态恢复和缺�
 - verification：通过的检查以及任何无法运行的检查；
 - claims：目标中的每一条用户可见断言，各自映射到若该断言为假便会失败的检查，并附原始结果。只靠阅读代码支撑的断言记为 `unverified` 并写明能验证它的命令；任何 `unverified` 的用户可见断言都使 outcome 为 `partial`，而不是 `complete`。
 - review：评审有理由时的独立决策；
+- review_roundtrips：各轮冻结对象、评审者、结论及发现的处置；可以引用实际评审结果；
 - remaining work：只列重要限制或下一个具体里程碑。

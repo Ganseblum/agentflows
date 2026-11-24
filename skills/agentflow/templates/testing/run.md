@@ -11,7 +11,7 @@ summary_pass: "<数量>"
 summary_fail: "<数量>"
 summary_blocked: "<数量>"
 summary_not_run: "<数量>"
-decision: pass
+decision: "<根据实际结果填写>"
 findings: []          # 本轮新发现的缺陷记录 id（ISS-YYYY-MM-DD-<slug>）；无发现写 []，别留空字符串
 flow_findings: []     # 流程/方法侧发现，接受者逐条核对指向已存在记录或本轮缺陷表
 recorded_at: "<RFC 3339 含时区>"
@@ -50,7 +50,7 @@ updated_at: "<RFC 3339 含时区>"
 browser / api / file / manual>
 | 用例 ID | 状态 | 层级 | 证据 | 实际结果 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| TC-<域>-<序号> | pass | browser | — | <观察到的真实行为> | <补充> |
+<!-- 示例：| TC-EXPORT-001 | pass | browser | 按钮点击录像与下载列表截图 | 空列表提示可见，下载条目为 0 | 本例实测通过 | -->
 
 ## 证据
 
@@ -69,7 +69,7 @@ browser / api / file / manual>
 ## 结论
 
 - 冒烟集与主流程：<通过 / 有失败逐条说明>
-- 失败项：<可直接照跑的 Ego 操作序列（步骤、期望与实际、证据）、bug 记录去向（`ISS-<YYYY-MM-DD>-<slug>` id）>
+- 失败项：<可直接照跑的浏览器操作序列或复现步骤（步骤、期望与实际、证据）、bug 记录去向（`ISS-<YYYY-MM-DD>-<slug>` id）>
 - 状态联动：<本轮为已立 bug 的回归轮时，逐条点名结果支撑的 bug 状态变化——用例 pass 即支撑
   该 `ISS-*` 的 `regression_status: pass`（供主对话评审后转 fixed-pending-review）；
   fail/blocked 则写明对应 bug 不前进或退回。executor 只报证据，bug 状态由主对话与记录角色回写>

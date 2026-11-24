@@ -14,7 +14,7 @@
   python3 check_ac_clarity.py <文件> --strict          # WARN 也退出 1
 
 退出码：0 = 无问题（或软层仅 WARN）；1 = --strict 下有 WARN；2 = 输入/格式错误
-（路径不存在、没找到验收表、识别到表但没有 AC 行）。
+（路径不存在、没找到验收表、没有 AC 行、AC 行列数不一致或结果未填写）。
 """
 from __future__ import annotations
 
@@ -39,8 +39,9 @@ ANCHOR_RE = re.compile(
 # 引号/否定语境里的词是「要求出现/禁止出现」的具体文案，不按模糊词处理
 QUOTED_RE = re.compile(r"「[^」]*」|\"[^\"]*\"")
 NEGATION_PREFIX = ("不得", "禁止", "不要", "不出现")
-AC_ID_RE = re.compile(r"([A-Za-z0-9]+-AC-\d+|\bAC-\d+)")
-SEPARATOR_RE = re.compile(r"^\|?[\s:\-|]+\|?$")
+AC_ID_RE = re.compile(r"(?:[A-Za-z0-9]+-)?AC-\d+")
+SEPARATOR_CELL_RE = re.compile(r":?-+:?")
+FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 
 
 def find_acceptance_files(paths: list[Path]) -> list[Path]:
@@ -66,11 +67,20 @@ def find_acceptance_files(paths: list[Path]) -> list[Path]:
 
 def split_row(line: str) -> list[str]:
     body = line.strip()
+    cells = []
+    start = 0
+    escaped = False
+    for i, char in enumerate(body):
+        if char == "|" and not escaped:
+            cells.append(body[start:i].strip())
+            start = i + 1
+        escaped = char == "\\" and not escaped
+    cells.append(body[start:].strip())
     if body.startswith("|"):
-        body = body[1:]
-    if body.endswith("|"):
-        body = body[:-1]
-    return [cell.strip() for cell in body.split("|")]
+        cells.pop(0)
+    if start == len(body) and body:
+        cells.pop()
+    return cells
 
 
 def normalize_cell(cell: str) -> str:
@@ -103,47 +113,60 @@ def is_vague(cell: str) -> list[str]:
     return hits
 
 
-def scan_file(path: Path) -> tuple[list[tuple[str, str, str, str]], int, int, int]:
-    """返回 ([(AC id, 模糊词们, 单元格原文, 文件)], 验收表数, AC 行数, 缺列行数)。"""
+def scan_file(path: Path) -> tuple[list[tuple[str, str, str, str]], int, int, list[str]]:
+    """返回措辞警告、验收表数、有效 AC 行数和带原文的格式问题。"""
     rows: list[tuple[str, str, str, str]] = []
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    in_table = False
-    result_col: int | None = None
+    lines = path.read_text(encoding="utf-8").splitlines()
+    columns: tuple[int, int, int] | None = None
+    fence = ""
     tables = 0
     ac_rows = 0
-    malformed = 0
-    for raw in lines:
-        stripped = raw.strip()
-        if "|" not in stripped:
-            in_table = False
-            result_col = None
+    malformed = []
+    for index, raw in enumerate(lines):
+        marker = FENCE_RE.match(raw)
+        if fence:
+            if marker and marker[1].startswith(fence) and not marker[2].strip():
+                fence = ""
             continue
+        if marker:
+            fence = marker[1]
+            columns = None
+            continue
+        if "|" not in raw:
+            columns = None
+            continue
+
         cells = split_row(raw)
-        norm = [normalize_cell(c) for c in cells]
-        header_result = next((i for i, c in enumerate(norm) if c.startswith("可观察结果")), None)
-        has_ac_header = any("验收点" in c for c in norm)
-        if header_result is not None and has_ac_header:
-            in_table = True
-            result_col = header_result
-            tables += 1
+        if cells and all(SEPARATOR_CELL_RE.fullmatch(cell) for cell in cells):
             continue
-        if not in_table or result_col is None:
+        next_cells = split_row(lines[index + 1]) if index + 1 < len(lines) else []
+        if next_cells and all(SEPARATOR_CELL_RE.fullmatch(cell) for cell in next_cells):
+            columns = None
+            header = [normalize_cell(cell) for cell in cells]
+            id_cols = [i for i, cell in enumerate(header) if cell.startswith("验收点")]
+            result_cols = [i for i, cell in enumerate(header) if cell.startswith("可观察结果")]
+            if id_cols and result_cols:
+                tables += 1
+                if len(id_cols) != 1 or len(result_cols) != 1 or len(next_cells) != len(cells):
+                    malformed.append(f"{index + 1}: 表头歧义或分隔行列数不一致：{raw.strip()}")
+                else:
+                    columns = (id_cols[0], result_cols[0], len(cells))
             continue
-        if SEPARATOR_RE.match(stripped):
+        if columns is None:
             continue
-        ac_id = None
-        for candidate in cells:
-            m = AC_ID_RE.search(candidate)
-            if m:
-                ac_id = m.group(1)
-                break
-        if not ac_id:
+
+        id_col, result_col, column_count = columns
+        if id_col >= len(cells) or not AC_ID_RE.fullmatch(normalize_cell(cells[id_col])):
             continue
-        if result_col >= len(cells):
-            malformed += 1
+        ac_id = normalize_cell(cells[id_col])
+        if len(cells) != column_count:
+            malformed.append(
+                f"{index + 1}: {ac_id} 期望 {column_count} 列，实际 {len(cells)} 列：{raw.strip()}"
+            )
             continue
         cell = cells[result_col].strip()
-        if not cell or cell in ("—", "-", "（填写）"):
+        if normalize_cell(cell) in ("", "—", "-", "（填写）", "待填写"):
+            malformed.append(f"{index + 1}: {ac_id} 的可观察结果未填写：{raw.strip()}")
             continue
         ac_rows += 1
         if has_anchor(cell):
@@ -179,14 +202,16 @@ def main() -> int:
     for f in files:
         try:
             rows, tables, ac_rows, malformed = scan_file(f)
-        except OSError as exc:
+        except (OSError, UnicodeError) as exc:
             print(f"[错误] 读取失败：{exc}", file=sys.stderr)
             return 2
         if tables == 0:
             print(f"[错误] {f} 未识别到验收表（表头需含「验收点」与「可观察结果」）", file=sys.stderr)
             return 2
         if malformed:
-            print(f"[错误] {f} 有 {malformed} 行 AC 缺「可观察结果」列——格式不完整，拒绝核对", file=sys.stderr)
+            for issue in malformed:
+                print(f"  {f}:{issue}", file=sys.stderr)
+            print(f"[错误] {f} 有 {len(malformed)} 处验收表格式错误", file=sys.stderr)
             return 2
         if ac_rows == 0:
             print(f"[错误] {f} 识别到验收表但没有 AC 行（验收点列需含 M01-AC-01 形态）", file=sys.stderr)
@@ -213,12 +238,14 @@ def _self_test() -> int:
 
     def case(name, fn):
         base = Path(tempfile.mkdtemp(prefix="af-ac-"))
+        original_argv = sys.argv
         try:
             fn(base)
             results.append((name, True, ""))
         except AssertionError as exc:
             results.append((name, False, str(exc)))
         finally:
+            sys.argv = original_argv
             import shutil
             shutil.rmtree(base, ignore_errors=True)
 
@@ -240,7 +267,7 @@ def _self_test() -> int:
         ))
         rows, tables, ac_rows, malformed = scan_file(f)
         ids = {ac for ac, _, _, _ in rows}
-        assert tables == 1 and ac_rows == 5 and malformed == 0, (tables, ac_rows, malformed)
+        assert tables == 1 and ac_rows == 5 and not malformed, (tables, ac_rows, malformed)
         assert "M01-AC-01" in ids and "M01-AC-02" in ids, ids
         assert "M01-AC-03" not in ids, "有数字阈值不应报警"
         assert "M01-AC-04" not in ids, "有具体引号文案不应报警"
@@ -264,7 +291,7 @@ def _self_test() -> int:
             "| M01-AC-02 |\n"  # 缺结果列
         ))
         rows, tables, ac_rows, malformed = scan_file(f)
-        assert malformed == 1, f"缺列行应计入 malformed，实际 {malformed}"
+        assert len(malformed) == 1 and "M01-AC-02" in malformed[0], malformed
         import contextlib
         import io
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
@@ -281,7 +308,7 @@ def _self_test() -> int:
             "| M02-AC-02 | 状态 | `响应`正常 | P1 |\n"
         ))
         rows, tables, ac_rows, malformed = scan_file(f)
-        assert tables == 1 and ac_rows == 2 and malformed == 0, (tables, ac_rows, malformed)
+        assert tables == 1 and ac_rows == 2 and not malformed, (tables, ac_rows, malformed)
         ids = {ac for ac, _, _, _ in rows}
         assert "M02-AC-01" in ids, "带括号表头应被识别"
         assert "M02-AC-02" in ids, "裸名词「响应」不应豁免模糊词"
@@ -316,6 +343,33 @@ def _self_test() -> int:
         assert code_strict == 1, f"--strict 应退出 1，实际 {code_strict}"
         assert "WARN 视为失败" in buf2.getvalue(), "严格模式提示文案不对"
 
+    def t_six_columns(base: Path) -> None:
+        f = write(base, (
+            "~~~md\n| 验收点 | 可观察结果 |\n| --- | --- |\n| M01-AC-99 | 正常 |\n~~~\n\n"
+            "| 验收点 | 目标 | 条件 | 可观察结果 | 优先级 | 来源 |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+            "| M01-AC-01 | 导出 | CSV \\| TSV | 处理合理 | P1 | 需求 |\n"
+            "| M01-AC-02 | 导出 | 已选择 TSV | 返回 HTTP 200 | P1 | 需求 |\n"
+        ))
+        rows, tables, ac_rows, malformed = scan_file(f)
+        assert tables == 1 and ac_rows == 2 and not malformed, (tables, ac_rows, malformed)
+        assert [(ac, cell) for ac, _, cell, _ in rows] == [("M01-AC-01", "处理合理")], rows
+        assert len(split_row(r"| a\|b | c\|")) == 2, "尾部转义竖线仍是单元格内容"
+        assert len(split_row(r"| a\\| b |")) == 2, "偶数反斜线不转义分隔符"
+
+    def t_incomplete_result(base: Path) -> None:
+        f = write(base, (
+            "验收点 | 目标 | 可观察结果 | 来源\n"
+            "--- | --- | --- | ---\n"
+            "M01-AC-01 | 读取 | 返回 HTTP 200 | 需求\n"
+            "M01-AC-02 | 读取 | | 需求\n"
+            "M01-AC-03 | 读取 | 返回 HTTP 200\n"
+            "M01-AC-04 | 读取 | 返回 HTTP 200 | 新增一列 | 需求\n"
+        ))
+        rows, tables, ac_rows, malformed = scan_file(f)
+        assert not rows and tables == 1 and ac_rows == 1 and len(malformed) == 3, malformed
+        assert "未填写" in malformed[0] and "实际 3 列" in malformed[1] and "实际 5 列" in malformed[2], malformed
+
     def t_directory_union(base: Path) -> None:
         (base / "a" / "spec" / "qa").mkdir(parents=True)
         (base / "b").mkdir()
@@ -339,6 +393,8 @@ def _self_test() -> int:
         ("模板表头（括号说明/粗体/反引号）与裸名词不漏报", t_template_header),
         ("无验收表退出 2（不报假 PASS）", t_no_table_is_error),
         ("软层退出 0 / --strict 退出 1", t_cli),
+        ("六列表处理转义竖线，跳过代码围栏", t_six_columns),
+        ("区分空结果、少列和多列", t_incomplete_result),
         ("目录两种布局取并集", t_directory_union),
         ("路径不存在退出 2", t_missing),
     ]:

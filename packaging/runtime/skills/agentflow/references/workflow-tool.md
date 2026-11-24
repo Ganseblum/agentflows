@@ -2,7 +2,7 @@
 
 > **加载者**：`skills/agentflow/SKILL.md` 按需包「证据工具用法」行；`execution.md` 的执行证据工具节；`hosts.md` 提到 seal / verify 时指向它。
 
-入口为插件根下的 `skills/agentflow/scripts/workflow.py`，需要 Python 3.10 或更高版本及 Git；工具本身只用标准库。它不提供模型运行时、沙箱、批准或任务状态系统。执行原则以[执行与验证](execution.md)为准。
+插件 Python 工具要求 Python 3.10+，使用标准库；`workflow.py` 需要 Git，`workflow.py run` 需要 POSIX 环境。它记录证据，不提供模型运行时、沙箱、批准或任务状态系统。执行原则见[执行与验证](execution.md)。
 
 ## 命令与结果
 
@@ -69,7 +69,7 @@ python3 <工具路径> run --root <项目根> --sealed <封存文件> --fingerpr
 | --- | --- | --- |
 | TAP | 顶层用例的准确名称 | 单一非空计划、顺序完整、无重名或skip/todo；嵌套跳过同样拒绝 |
 | JUnit XML | 有classname时为`classname::name`，否则`name` | 本次stdout或新文件，套件计数一致，无跳过；拒绝外部实体声明 |
-| Go JSON | `Package/Test` | run及终态事件完整，包与测试结果一致 |
+| Go JSON | `Package/Test` | 用 `go test -count=1 -json ...` 产出当前运行报告；核对完整 run 与终态，包和测试结果一致 |
 | Jest JSON | `fullName` | 完整JSON、精确计数、套件及总结果一致，无pending/todo |
 
 不支持的输出格式保持失败，不用 `echo`、旧文件或改写测试结果凑格式。报告解析不能防止同权限进程伪造生成器，也不能证明测试断言充分。

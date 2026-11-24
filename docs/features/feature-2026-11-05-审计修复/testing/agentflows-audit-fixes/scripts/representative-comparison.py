@@ -1,5 +1,6 @@
 """Matched 0.40/0.41 generation samples and CARD-1 red/green, outside real trees."""
 from __future__ import annotations
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -9,10 +10,6 @@ import sys
 import tempfile
 import time
 
-REPO = Path(__file__).resolve().parents[6]
-EVIDENCE = Path('/Users/lihanghang1/.zcode/v2/artifacts/agentflows-fixes-20261105-184849')
-BASELINE = Path('/Users/lihanghang1/.zcode/v2/artifacts/agentflows-design-audit-20261105-174945/source-snapshot')
-
 def run(argv, cwd):
     started=time.monotonic()
     p=subprocess.run([str(v) for v in argv],cwd=cwd,capture_output=True,text=True,timeout=30)
@@ -20,14 +17,29 @@ def run(argv, cwd):
             'stdout':p.stdout,'stderr':p.stderr,'duration_seconds':time.monotonic()-started}
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--baseline', type=Path, required=True, help='0.40-compatible frozen checkout')
+    parser.add_argument('--baseline-revision', required=True, help='Revision of the supplied baseline tree')
+    parser.add_argument('--source', type=Path, required=True, help='Current checkout or frozen candidate')
+    parser.add_argument('--source-revision', required=True, help='Revision or freeze identity of the candidate')
+    parser.add_argument('--output', type=Path, required=True, help='New JSON evidence file')
+    args = parser.parse_args()
+    baseline, source = args.baseline.resolve(), args.source.resolve()
+    if baseline == source:
+        parser.error('baseline and candidate must be different trees')
+    for tree in (baseline, source):
+        if not (tree / 'skills/agentflow/scripts/new_feature.py').is_file():
+            parser.error(f'invalid Agentflow checkout: {tree}')
+    if args.output.exists() or args.output.is_symlink():
+        parser.error('choose a new --output file')
     results=[]
     with tempfile.TemporaryDirectory(prefix='af-representative-comparison-',dir='/tmp') as directory:
         root=Path(directory).resolve()
         for card,tier,tracks in [('CARD-1','light',[]),('CARD-2','light',[]),('CARD-3','full',['be','fe']),('CARD-4','full',['be','fe'])]:
-            for label,source in [('old',BASELINE),('new',REPO)]:
+            for label,source_root in [('old',baseline),('new',source)]:
                 hub=root/(card+'-'+label);hub.mkdir()
                 (hub/'index.md').write_text('| 批次 | 一句话范围 | 进度板 |\n| --- | --- | --- |\n')
-                argv=[sys.executable,'-B',source/'skills/agentflow/scripts/new_feature.py','--hub',hub,'--slug',card.lower(),'--date','2026-11-05']
+                argv=[sys.executable,'-B',source_root/'skills/agentflow/scripts/new_feature.py','--hub',hub,'--slug',card.lower(),'--date','2026-11-05']
                 if label=='new':
                     argv+=['--tier',tier]
                     if tracks:argv+=['--tracks',','.join(tracks)]
@@ -67,11 +79,13 @@ test('CARD-1 rejects invalid',()=>assert.throws(()=>clamp('not-number'),/finite 
         (small/'value.cjs').write_text("module.exports = value => { if (!Number.isFinite(value)) throw new TypeError('finite number required'); return Math.max(0,Math.min(10,value)); };\n")
         green=run(['node','--test','--test-reporter=tap','value.test.cjs'],small)
         assert green['exit']==0 and '# pass 5' in green['stdout'],green
-        report={'baseline_revision':'511b9ef7b66a4b23cb859345d1810981aa083f5b','samples':results,
+        report={'baseline_revision':args.baseline_revision,'source_revision':args.source_revision,'samples':results,
                 'card1':{'test_sha256':hashlib.sha256(tests.encode()).hexdigest(),'red':red,'green':green},
                 'limits':['generation time is native CLI time, not model latency','normalization operations are actual fixture file operations, not observed human effort',
                           'UI/API fixture is identical in both versions; no model productivity or general business gain claimed']}
-        (EVIDENCE/'representative-comparison-results.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+        with args.output.open('x', encoding='utf-8') as output:
+            json.dump(report, output, ensure_ascii=False, indent=2)
+            output.write('\n')
         print('PASS four matched generation samples; CARD-1 native red -> green (5 cases)')
         for row in results:print(row['card'],row['version'],row['initial_count'],row['first_pass_material_shape'],row['normalization_count'])
     return 0

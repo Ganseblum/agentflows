@@ -10,32 +10,19 @@ local-directory marketplace 可以在不包含仓库维护面（docs/、packagin
 from __future__ import annotations
 
 import argparse
-import hashlib
 import shutil
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills" / "agentflow" / "scripts"))
-from workflow_lib.installation import RUNTIME_DIRECTORIES, RUNTIME_FILES, inventory, verify_inventory
-from workflow_lib.snapshots import WorkflowError
+from check_skill_refs import manifest_version_errors, run as check_skill_refs
+from workflow_lib.installation import RUNTIME_DIRECTORIES, RUNTIME_FILES, inventory, read_object, verify_inventory
+from workflow_lib.snapshots import WorkflowError, no_symlinks
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 DEFAULT_DEST = SCRIPT_DIR / "runtime"
-
-# The installation verifier and builder share this payload definition.
-# 早期版本曾把文档链检查器（tools/lab/doc_chain.py）随插件交付，让目标仓能就地跑链检查。
-# 2026-11-04 门禁整体移除后，检查器不再随插件发布；目标仓的文档链检查改由本仓在交付前完成，
-# 不向目标仓注入工具。
-RUNTIME_SUBTREES = ()
-FORBIDDEN_TOP_LEVEL = frozenset(
-    {
-        "docs",
-        "packaging",
-        ".git",
-    }
-)
-
 
 def fail(message: str) -> int:
     print(f"packaging: {message}", file=sys.stderr)
@@ -43,25 +30,23 @@ def fail(message: str) -> int:
 
 
 def assert_safe_destination(destination: Path) -> None:
-    resolved = destination.resolve()
-    # 拒绝仓库根本身及其任意祖先目录（如 `..`、`../..`、`/`）。
-    # 否则 build() 的 shutil.rmtree(destination) 会销毁仓库根与其父目录的全部内容。
-    if ROOT.is_relative_to(resolved):
+    if ROOT.is_relative_to(destination):
         raise ValueError("拒绝覆盖仓库根或其任意祖先目录")
-    if resolved == SCRIPT_DIR:
+    if destination == SCRIPT_DIR:
         raise ValueError("拒绝覆盖 packaging/")
-    for name in RUNTIME_DIRECTORIES:
-        source = (ROOT / name).resolve()
-        if resolved == source or source in resolved.parents:
+    for name in (*RUNTIME_DIRECTORIES, ".git", "docs"):
+        if destination.is_relative_to(ROOT / name):
             raise ValueError(f"拒绝覆盖源树 {name}")
-    for name in RUNTIME_SUBTREES:
-        source = (ROOT / name).resolve()
-        if resolved == source or source in resolved.parents:
-            raise ValueError(f"拒绝覆盖源路径 {name}")
     for name in RUNTIME_FILES:
-        source = (ROOT / name).resolve()
-        if resolved == source:
+        if destination == ROOT / name:
             raise ValueError(f"拒绝覆盖源文件 {name}")
+    if destination.exists():
+        try:
+            inventory(destination)
+            if read_object(destination / "plugin.json").get("name") != read_object(ROOT / "plugin.json").get("name"):
+                raise ValueError("插件名称不同")
+        except (ValueError, OSError, WorkflowError) as exc:
+            raise ValueError(f"目标并非本插件的生成树，拒绝覆盖：{destination}（{exc}）") from exc
 
 
 def copy_file(source: Path, destination: Path) -> None:
@@ -76,7 +61,7 @@ def copy_tree(source: Path, destination: Path) -> None:
         raise ValueError(f"不允许符号链接：{source}")
     for path in sorted(source.rglob("*")):
         relative = path.relative_to(source)
-        if any(part == "__pycache__" for part in relative.parts):
+        if "__pycache__" in relative.parts or path.name == ".DS_Store" or path.suffix in {".pyc", ".pyo"}:
             continue
         if path.is_dir() and not path.is_symlink():
             continue
@@ -87,17 +72,8 @@ def copy_tree(source: Path, destination: Path) -> None:
         copy_file(path, destination / relative)
 
 
-def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def build(destination: Path) -> list[str]:
-    if destination.resolve() == ROOT:
-        raise ValueError("拒绝以 runtime 树覆盖仓库根")
-    if destination.exists():
-        shutil.rmtree(destination)
-    destination.mkdir(parents=True)
-
+    destination.mkdir()
     copied: list[str] = []
     for name in RUNTIME_DIRECTORIES:
         source = ROOT / name
@@ -105,44 +81,51 @@ def build(destination: Path) -> list[str]:
             raise ValueError(f"缺少必需目录：{name}")
         copy_tree(source, destination / name)
         copied.append(name)
-    for name in RUNTIME_SUBTREES:
-        source = ROOT / name
-        if not source.exists():
-            raise ValueError(f"缺少必需路径：{name}")
-        target = destination / name
-        if source.is_dir():
-            copy_tree(source, target)
-        else:
-            copy_file(source, target)
-        copied.append(name)
     for name in RUNTIME_FILES:
         source = ROOT / name
         if not source.is_file():
             raise ValueError(f"缺少必需文件：{name}")
         copy_file(source, destination / name)
         copied.append(name)
-        if digest(source) != digest(destination / name):
-            raise ValueError(f"复制摘要不匹配：{name}")
     return copied
 
 
-def verify(destination: Path) -> None:
-    names = {entry.name for entry in destination.iterdir()}
-    forbidden = sorted(names & FORBIDDEN_TOP_LEVEL)
-    if forbidden:
-        raise ValueError("runtime 树包含 lab/evidence 路径： " + ", ".join(forbidden))
-    required = set(RUNTIME_DIRECTORIES) | set(RUNTIME_FILES) | _subtree_top_levels()
-    missing = sorted(required - names)
-    if missing:
-        raise ValueError("runtime 树缺少： " + ", ".join(missing))
-    unexpected = sorted(names - required)
-    if unexpected:
-        raise ValueError("runtime 树存在未声明的顶层名称： " + ", ".join(unexpected))
-
-
-def _subtree_top_levels() -> set[str]:
-    """Top-level names contributed by RUNTIME_SUBTREES (e.g. `tools/lab/docchain` → `tools`)."""
-    return {Path(name).parts[0] for name in RUNTIME_SUBTREES}
+def rebuild(destination: Path) -> list[str]:
+    assert_safe_destination(destination)
+    errors = manifest_version_errors(ROOT, source_only=True)
+    if errors:
+        raise ValueError("源码清单检查失败：\n" + "\n".join(errors))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix=f".{destination.name}.build-", dir=destination.parent) as staged:
+        payload = Path(staged) / "payload"
+        copied = build(payload)
+        errors = check_skill_refs(payload)
+        if errors:
+            raise ValueError("生成包检查失败：\n" + "\n".join(errors))
+        inventory(payload)
+        lock = destination.with_name(f".{destination.name}.agentflow-build.lock")
+        try:
+            lock.mkdir()
+        except FileExistsError as exc:
+            raise ValueError(f"另一构建正在替换目标，或有待恢复的上一份产物：{lock}") from exc
+        previous = lock / "previous"
+        try:
+            assert_safe_destination(destination)
+            if destination.exists():
+                destination.rename(previous)
+            try:
+                payload.rename(destination)
+            except BaseException:
+                if previous.exists():
+                    previous.rename(destination)
+                raise
+        finally:
+            # 留下无法恢复的上一份产物，便于人工恢复。
+            if previous.exists() and destination.exists() and not payload.exists():
+                shutil.rmtree(previous)
+            if not previous.exists():
+                lock.rmdir()
+        return copied
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -150,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--destination",
         default=str(DEFAULT_DEST),
-        help="输出目录（会被销毁并重建）；默认 packaging/runtime",
+        help="输出目录；只可替换同名插件生成树，默认 packaging/runtime",
     )
     parser.add_argument("--verify-installed", help="只读核验安装载荷，不重建生成树")
     parser.add_argument("--expected-tree", default=str(DEFAULT_DEST))
@@ -163,12 +146,10 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, ValueError, WorkflowError) as exc:
             return fail(str(exc))
         return 0
-    destination = Path(args.destination).expanduser().resolve()
     try:
-        assert_safe_destination(destination)
-        copied = build(destination)
-        verify(destination)
-    except (OSError, ValueError) as exc:
+        destination = no_symlinks(Path(args.destination).expanduser())
+        copied = rebuild(destination)
+    except (OSError, ValueError, WorkflowError) as exc:
         return fail(str(exc))
     print(f"已写入 {destination}")
     print("已复制 " + ", ".join(copied))

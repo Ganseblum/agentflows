@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-2026-11-05-AUDIT-FIXES
-plan_version: 1.0.0
+plan_version: 1.0.1
 status: approved
 objective: 修复 G01–G16，交付 0.41.0 源码、可复核回归及三端本地安装与 ZCode 全局既有块同步证据
 recorded_at: 2026-11-05T10:48:14Z
-updated_at: 2026-11-05T12:37:41Z
+updated_at: 2026-11-23T21:50:10+08:00
 ---
 
 # 审计修复执行计划
@@ -14,25 +14,25 @@ updated_at: 2026-11-05T12:37:41Z
 | 输入 | 确切版本或证据 |
 | --- | --- |
 | 批次规则与已定选择 | [批次 README](../README.md)；本次工作区版本由主审在 T01 冻结原始 bytes；未提供该未提交文件的独立 revision，不编造 |
-| 已接受审计 | [原报告](/Users/lihanghang1/.zcode/v2/artifacts/agentflows-design-audit-20261105-174945/AGENTFLOW-设计与可用性评估-2026-11-05.md:45) G01–G16；source_version=0.40.0，recorded_at=2026-11-05T18:14:03+08:00，source_revision 见分支表；保留修前日志及原评分 |
-| 用户批准的实施方案 | [会话方案](/Users/lihanghang1/Desktop/TestProject/agentflows/.zcode/plans/plan-sess_3265d419-ff8c-444f-8a16-471640ff8138.md)；ExitPlanMode 已获用户明确批准；其中开工前 main 状态是历史事实，当前以主审分支确认及下表为准 |
+| 已接受审计 | [交付决策逐项表](../decision.md)保留 G01–G16 的范围与关闭证据。原报告出自 0.40.0，记录于 2026-11-05T18:14:03+08:00，是本机历史附件。 |
+| 用户批准的实施方案 | [批次入口](../README.md)记录确认过的方案与授权。原方案为本机历史附件。 |
 | 方法参考 | `skills/agentflow/references/contracts.md`、`skills/agentflow/references/test-records.md`；宿主本角色加载插件快照 0.36.0。审计指名的失效门及矛盾规则是整改对象，不据此恢复旧 schema/大门禁 |
-| 本轮证据 E | `/Users/lihanghang1/.zcode/v2/artifacts/agentflows-fixes-20261105-184849`；候选输出、修前/修后逐字输出、退出码及各轮快照保留于此，run 绑定精确路径与版本 |
+| 本轮证据 E | `~/.zcode/v2/artifacts/agentflows-fixes-20261105-184849`；候选输出、修前/修后逐字输出、退出码及各轮快照保留于此，run 绑定精确路径与版本 |
 
-不恢复已退役的大门禁、schema、运行时或常驻服务；不增加角色；no commit/merge/push/remote release。只改 `/Users/lihanghang1/.zcode/AGENTS.md` 中现有 Agentflow 块，块外逐字保留；不修改其他宿主全局文件。新增源码入口只限本计划列出的共享模块和一个跨工具回归入口，不另立记录根或文档类型。
+不恢复已退役的大门禁、schema、运行时或常驻服务；不增加角色；no commit/merge/push/remote release。只改 `~/.zcode/AGENTS.md` 中现有 Agentflow 块，块外逐字保留；不修改其他宿主全局文件。新增源码入口只限本计划列出的共享模块和一个跨工具回归入口，不另立记录根或文档类型。
 
 ## 分支策略
 
 | 仓库/工作区 | 分支 | 基线 | 确认依据及用途 |
 | --- | --- | --- | --- |
-| `/Users/lihanghang1/Desktop/TestProject/agentflows` | `feature-audit-fixes-0.41.0` | `511b9ef7b66a4b23cb859345d1810981aa083f5b` | 主审在本次指派前已查分支；该确认供无 Bash 的计划角色使用；后续写入仍由执行者先查当前分支 |
+| `.`（仓库根目录） | `feature-audit-fixes-0.41.0` | `511b9ef7b66a4b23cb859345d1810981aa083f5b` | 主审在本次指派前已查分支；该确认供无 Bash 的计划角色使用；后续写入仍由执行者先查当前分支 |
 | E 下 `candidate-init`、`candidate-review`、`candidate-execution`、`candidate-generator`、`candidate-docs` | 依次为 `feature-audit-fixes-init-0.41.0`、`feature-audit-fixes-review-0.41.0`、`feature-audit-fixes-execution-0.41.0`、`feature-audit-fixes-generator-0.41.0`、`feature-audit-fixes-docs-0.41.0` | 同上，由主审复核各工作区实际 HEAD | 五个独立候选，一处一写者；共享接口先定，调用方后集成 |
 
 落点基准为主仓根；E 及其子目录均按上文绝对路径展开。候选代码绝不靠 merge/cherry-pick 集成：主审先保全主树未提交内容，再按逐文件显式复制清单增量集成，复跑检查后才接受；重叠文件串行处理，不整树覆盖。不运行 `git restore`、`reset --hard` 或真实树故障注入。
 
 ## 进展概览
 
-完成 10 / 进行中 0 / 阻塞 2 / 未开始 0；统计范围为 T01–T12 的接受状态，候选已开工不计已接受。
+本计划补记了两项待验证工作的独立依赖。此前记录的部分完成结论保留，实际任务状态见任务表。
 
 | 范围 | 业务侧解读 | 技术侧解读 | 交付效果 |
 | --- | --- | --- | --- |
@@ -40,7 +40,7 @@ updated_at: 2026-11-05T12:37:41Z
 | 使用规则 | 小事少写材料，行为变更仍有独立判断，验收只维护一份 | G06/G07/G09–G11/G13–G15；风险路由、授权、用例与图例收敛 | 实际生成/调用与权威规则一致 |
 | 交付与效果 | 三端装对，并如实知道哪些效果已测到 | G16；49 项既有自测、四类受控任务、安装/加载分开 | 有原始记录；未实测子项保持未验证，不外推普遍提效 |
 
-我们在哪：实现修复、独审和三端载荷同步已完成；T09剩余浏览器变体及T11部分新会话加载缺证据，整体partial。下一步：只在相关确认/环境恢复后补测，保留已完成结果。阻塞风险：环境或加载证据缺失、同因两次失败、源码与已定规则冲突均须具名上报；只阻塞相关依赖，不把摘要当验证。
+实现修复、限定范围的独审和三端载荷同步已完成。T13 的扩展浏览器验收及 T14 的新会话加载当轮缺证据，整体为 partial。后续验证另记版本与证据。
 
 ## 任务清单
 
@@ -54,10 +54,12 @@ updated_at: 2026-11-05T12:37:41Z
 | T06 | generator 候选修 G02/G09/G13：显式档位/轨道、路径安全、只生成所需材料 | P1 | `skills/agentflow/scripts/new_feature.py` | T03, T07 | ☑ 已完成 | file/manual：generator-evidence/supervisor-main-self-test.log 22/22；slug-boundaries.json；四类旧新版立项1/10文件对照。 |
 | T07 | docs 候选按 W07 精确集收敛 G06/G07/G09/G10/G11/G13/G14/G15 | P0 | `skills/agentflow/SKILL.md`；`skills/agentflow/references/document-chain.md`；`skills/design-diagram/SKILL.md`；其余见 W07 | T02 | ☑ 已完成 | file/manual：54文件范围对账与refs通过；首轮独审消费者问题已聚焦修入，语义独审接受仍在T10，不提前记approved。 |
 | T08 | 主审或显式 worker 修 G12：唯一安装库、既有 CLI/升级脚本及维护薄入口 | P0 | `skills/agentflow/scripts/workflow_lib/installation.py`；`skills/agentflow/scripts/workflow_lib/cli.py`；`skills/agentflow/scripts/upgrade-codex.sh`；`skills/agentflow/scripts/upgrade-zcode.sh`；`packaging/build_runtime.py` | T03, T07 | ☑ 已完成 | file/manual：install-verifier-checks-02.json六边界；真实两端dry-run；安装mock拒绝；review-timeout-replay修后分类JSON，最终真实安装在T11。 |
-| T09 | test-executor 执行全量回归与四类受控任务，主审复跑接受；覆盖 G01–G16 | P0 | `skills/agentflow/scripts/test_tools_regressions.py`；`docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-001.md`；E 原始证据 | T02, T03, T04, T05, T06, T07, T08 | ⚠ 阻塞 | file/api/browser：七组96/96、跨工具31/31、补充17/17已运行；首轮browser顺序样本保留。run2中TC23/24/25扩展变体未运行，原space25消失，新建替代空间问题未获明确答复。 |
-| T10 | 非作者独立 reviewer 评审冻结实现与 G01–G16 关闭依据 | P0 | E 下 `review-evidence/`；本计划关联任务证据 | T09 | ☑ 已完成 | file/manual：REVIEW-TOOLS-041与REVIEW-DOCS-041各snapshot-2均approved/complete，首轮三项工具/三项规则finding均cost_replay关闭；review-decisions.json及两轮原始输出保留。 |
-| T11 | 主审升 0.41.0、更新 CHANGELOG/索引、build、三端本地安装与 ZCode 既有全局块 | P0 | `./plugin.json`；`./marketplace.json`；`.zcode-plugin/plugin.json`；`.claude-plugin/plugin.json`；`.codex-plugin/plugin.json`；`.qoder-plugin/plugin.json`；`./CHANGELOG.md`；`./index.md`；`packaging/runtime/`；`/Users/lihanghang1/.zcode/AGENTS.md` | T10 | ⚠ 阻塞 | file/manual：0.41.0源/生成树/三端各102文件一致，ZCode全局内外逐字校验和新会话复述通过；Codex加载探针因usage limit退出1，Qoder仅磁盘安装未取得新会话加载证据，不宣称三端均已生效。 |
+| T09 | 执行核心工具回归及已完成的第一组受控任务 | P0 | `skills/agentflow/scripts/test_tools_regressions.py`；测试记录 | T02, T03, T04, T05, T06, T07, T08 | ☑ 已完成 | [首轮记录](../testing/agentflows-audit-fixes/run-2026-11-05-001.md)及[补充记录](../testing/agentflows-audit-fixes/run-2026-11-05-002.md)。尚缺的扩展变体归 T13。 |
+| T10 | 独立评审冻结的工具与规则实现 | P0 | 交付决策的评审轮次 | T09 | ☑ 已完成 | [交付决策](../decision.md)记录两条独立评审及接受范围，未批准尚缺的扩展验收或宿主加载。 |
+| T11 | 构建 0.41.0 并核对三端本地载荷与 ZCode 既有全局块 | P0 | 源码清单、`packaging/runtime/`、宿主事实 | T10 | ☑ 已完成 | [补充记录](../testing/agentflows-audit-fixes/run-2026-11-05-002.md)。三端各 102 文件一致，ZCode 全局块和加载证明齐备。其余新会话归 T14。 |
 | T12 | 主审收集最终 delta 独审、逐 G 验收及完整交付结论 | P0 | 本计划；`docs/features/feature-2026-11-05-审计修复/testing/agentflows-audit-fixes/run-2026-11-05-001.md`；`docs/host-platform-facts.md`；E 原始证据 | T11 | ☑ 已完成 | file/manual：decision.md与run2逐项收口，G01–G15已修且验证，G16部分；已审工具/规则未漂移，后续仅索引/事实/验收记录；整批partial，明确剩余动作，不自动提交合并推送。 |
+| T13 | 复跑扩展浏览器变体 TC23/24/25 | P1 | [补充记录](../testing/agentflows-audit-fixes/run-2026-11-05-002.md) | T09 | ⚠ 阻塞 | 原任务空间在历史轮次已不可用，三项保留未运行。新的夹具复跑应单独记录。 |
+| T14 | 确认 Codex 与 Qoder 新会话实际加载 0.41.0 | P1 | [历史宿主观察](../../../host-platform-facts.md#0410-本机交付观察2026-11-05) | T11 | ⚠ 阻塞 | 当轮 Codex 配额报错，Qoder 只核对磁盘载荷。 |
 
 W07 为以下逐文件集合；候选之外的索引和批次登记由主审串行维护，未列文件先报范围变更，禁止 worker 扩写。
 
@@ -198,7 +200,7 @@ W07 为以下逐文件集合；候选之外的索引和批次登记由主审串�
 
 ## 验证命令
 
-由主审/获工具的执行者运行，计划角色没有 Bash，不把下列待执行命令写成已通过。设置 `SRC=/Users/lihanghang1/Desktop/TestProject/agentflows`、`S=$SRC/skills/agentflow/scripts`、`E` 为上文路径；市场名、CACHE、EXPECTED_*、CASE_ROOT/REQUEST/SEALED/FINGERPRINT 由对应任务从实际登记或冻结文件赋值，不猜测。每条留完整 stdout/stderr/exit，不用屏蔽输出换绿。
+由主审/获工具的执行者运行，计划角色没有 Bash，不把下列待执行命令写成已通过。设置 `SRC=.`（仓库根目录）、`S=$SRC/skills/agentflow/scripts`、`E` 为上文路径；市场名、CACHE、EXPECTED_*、CASE_ROOT/REQUEST/SEALED/FINGERPRINT 由对应任务从实际登记或冻结文件赋值，不猜测。每条留完整 stdout/stderr/exit，不用屏蔽输出换绿。
 
 | 命令/操作 | 预期结果与依据 |
 | --- | --- |
@@ -214,7 +216,7 @@ W07 为以下逐文件集合；候选之外的索引和批次登记由主审串�
 | `python3 "$S/workflow.py" upgrade-zcode --repo "$SRC" --marketplace "$ZCODE_MARKETPLACE" --plugin agentflow --mode local --dry-run`；Codex 同形 `upgrade-codex`；通过后去 --dry-run 实跑 | 确认现有 local 源为本仓，无自动推送/市场重绑；接受 --mode auto/local/remote，但本批只执行 local。入口待 Coding：T08；维护 shell 只转调同库 |
 | `python3 "$S/workflow.py" install-verify --expected-tree "$EXPECTED_RUNTIME" --installed "$ZCODE_CACHE"`；Qoder 换实际 cache；Codex 用 `--expected-tree "$EXPECTED_CODEX_SOURCE" --installed "$CODEX_CACHE" --codex-source` | 三端完整集合/类型/bytes/版本/执行位一致，stub 假安装非零；Qoder 更新按 T11 已核实本地缓存/登记逐步留原始操作。入口待 Coding：T08 |
 | `python3 "$SRC/packaging/build_runtime.py" --verify-installed "$CODEX_CACHE" --expected-tree "$EXPECTED_CODEX_SOURCE" --codex-source` | 维护薄入口与 workflow 核验同结论，不复制实现。入口待 Coding：T08 |
-| `python3 "$S/workflow.py" managed-preview --target /Users/lihanghang1/.zcode/AGENTS.md --content "$GLOBAL_BODY" --output "$GLOBAL_PREVIEW" --begin-marker "$OLD_BEGIN" --end-marker '<!-- agentflow:end -->' --new-begin-marker '<!-- agentflow:begin v0.41.0 -->'`；随后 `managed-apply --preview "$GLOBAL_PREVIEW" --fingerprint "$GLOBAL_FINGERPRINT"` | 仅既有块，应用前摘要重检；T11 保留备份并分别逐字比较块外/渲染块内；新会话复述首行。标准：既有 managed CLI 与 hosts 协议 |
+| `python3 "$S/workflow.py" managed-preview --target ~/.zcode/AGENTS.md --content "$GLOBAL_BODY" --output "$GLOBAL_PREVIEW" --begin-marker "$OLD_BEGIN" --end-marker '<!-- agentflow:end -->' --new-begin-marker '<!-- agentflow:begin v0.41.0 -->'`；随后 `managed-apply --preview "$GLOBAL_PREVIEW" --fingerprint "$GLOBAL_FINGERPRINT"` | 仅既有块，应用前摘要重检；T11 保留备份并分别逐字比较块外/渲染块内；新会话复述首行。标准：既有 managed CLI 与 hosts 协议 |
 | 执行 [测试计划](../testing/agentflows-audit-fixes/plan-2026-11-05-001.md) 的 smoke 集及全部必需 e2e | T02 注册 INIT/FREEZE/CLEANUP/TIER/INSTALL 五链 smoke，并明确脚本/入口/断言；UI 场景 browser 原始证据，其他 CLI 用户路径 manual+file；run 绑定计划版本。未跑不得 pass，e2e 不接受 api/file 关闭 |
 
 ## 变更记录
@@ -224,3 +226,5 @@ W07 为以下逐文件集合；候选之外的索引和批次登记由主审串�
 2026-11-05T11:55:51Z · 主审接受计划与用例、回写已复验实现T01–T08；T09/T10仍进行中，T11/T12待办。首轮工具/规则独审changes_requested保留，聚焦修复后绑定新快照复审。
 
 2026-11-05T12:37:41Z · 最终收口：10任务已完成，2任务按具体浏览器/加载限制阻塞；实现与独审完成不代替父目标完整验收，结论partial，剩余动作见decision.md。
+
+2026-11-23T21:50:10+08:00 · v1.0.1 补记 T13/T14，从已确认的 T09/T11 核心工作中拆出尚待核实的扩展用例和宿主加载。历史 partial 结论保留。

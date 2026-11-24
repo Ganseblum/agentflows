@@ -152,6 +152,20 @@ class Snapshot:
     manifest: Manifest
     objects: dict[str, bytes]
 
+    def validate_repo(self, repo: Path, source_repo: Path | None = None) -> None:
+        recorded = self.manifest.headers.get("repo")
+        if not recorded or not Path(recorded).is_absolute():
+            raise ValueError("快照缺少可核对的仓库身份（MANIFEST 的 repo）；请从原仓重新生成快照")
+        allowed = {repo}
+        if source_repo is not None:
+            allowed.add(safe_path(source_repo))
+        if Path(recorded) not in allowed:
+            expected = " 或 ".join(str(path) for path in sorted(allowed))
+            raise ValueError(
+                f"快照仓库不匹配：MANIFEST 记录 {recorded}，本次要求 {expected}；"
+                "迁移同一仓库时可显式用 --snapshot-source-repo 指定旧根路径"
+            )
+
     def name_for(self, repo: Path, source: Path) -> str:
         name, external = source_name(repo, source)
         if external:
@@ -196,13 +210,15 @@ def _git(repo: Path, *args: str) -> bytes:
 
 
 def freeze_review(repo: Path, files: list[Path], revision: str | None,
-                  deletion_names: set[str] | None = None) -> ReviewBundle:
+                  deletion_names: set[str] | None = None,
+                  source_repo: Path | None = None) -> ReviewBundle:
     repo = safe_path(repo)
     paths = tuple(source_path(repo, f) for f in files)
     if len(paths) != len(set(paths)):
         raise ValueError("--files 含重复来源路径")
     if revision and not _COMMIT.fullmatch(revision):
         snap = load_snapshot(Path(revision))
+        snap.validate_repo(repo, source_repo)
         names = tuple(snap.name_for(repo, path) for path in paths)
         unique_paths(list(names))
         return ReviewBundle(str(snap.root), paths, names,
@@ -241,10 +257,12 @@ def freeze_review(repo: Path, files: list[Path], revision: str | None,
                         {name: read_regular(path) for name, path in zip(names, paths)}, "draft")
 
 
-def freeze_diff_base(path: Path) -> dict[str, bytes]:
+def freeze_diff_base(path: Path, repo: Path, source_repo: Path | None = None) -> dict[str, bytes]:
     root = safe_path(path)
     if (root / MANIFEST_NAME).exists() or (root / MANIFEST_NAME).is_symlink():
-        return load_snapshot(root).objects
+        snapshot = load_snapshot(root)
+        snapshot.validate_repo(repo, source_repo)
+        return snapshot.objects
     if not root.is_dir():
         raise ValueError(f"--diff-base 不是目录：{root}")
     objects = {}
