@@ -12,6 +12,7 @@ Agentflow 是宿主原生的多智能体开发插件。它帮助团队明确验�
 | Claude Code | 在源码根运行 claude --plugin-dir .，或加载与项目约定一致的插件目录。 | /agentflow:agentflow |
 | ZCode | 构建 packaging/runtime 后使用 upgrade-zcode。auto 沿用配置来源，也可显式指定 local 或 remote。 | 在宿主中调用 Agentflow skill。 |
 | Qoder | 用 qoder plugins install packaging/runtime --scope user 安装。只有桌面端时从扩展安装入口载入该目录打包的 ZIP。 | 在宿主中调用 Agentflow skill 或已注册角色。 |
+| Cursor | 运行 python3 skills/agentflow/scripts/export_cursor_rules.py 导出规则至目标仓 .cursor/rules/。 | 规则自动生效或在提示词中调用。 |
 
 升级命令、载荷校验和新会话确认见[打包与安装指南](packaging/README.md)。工具白名单的实际执行取决于宿主，已有实测范围见[宿主平台事实](docs/host-platform-facts.md)。跨项目全局规则单独走[宿主接入](skills/agentflow/references/hosts.md)。
 

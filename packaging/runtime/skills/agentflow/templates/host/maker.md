@@ -16,6 +16,9 @@ init 时由 scripts/init_workspace.py 渲染进各宿主官方入口（AGENTS.md
 - 服务端：`.agentflow/standards/server-side.md`（幂等 / 鲁棒 / 分层 / 可维护性 / 稳定性）
 - 数据模型：`.agentflow/standards/data-model.md`（字段级冻结——无库也要给等效结构契约，禁止「无 DDL 即免写字段定义」）
 - 前端：`.agentflow/standards/frontend.md`（受控状态、重复副作用防护、加载/空/失败三态、错误边界）
+- 安全审计：`.agentflow/standards/security.md`（SEC-01~SEC-10，认证鉴权 / 防越权 / 防注入 / 凭据保全）
+- API 契约：`.agentflow/standards/api-docs.md`（API-01~API-08，RESTful 动词 / 响应信封 / 统一错误模型 / 分页排序）
+- Git 提交：`.agentflow/standards/git-commits.md`（GIT-01~GIT-07，三段式结构 / 语义分类 / 任务绑定 / PR 边界）
 
 ## 范围与验证纪律
 - 立项先按领域范围维度主动穷举；「不做」必须显式写理由，「没想到」与「决定不做」在文档上必须长得不一样。

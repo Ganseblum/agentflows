@@ -17,7 +17,7 @@
 | 角色路由与工作链默认入口 | [角色路由](roles.md) | 工作链、阶段与角色 | 主技能与角色索引按需导航；写范围以角色文件和具体简报为准 |
 | 文档阶段骨架、唯一材料档位与计划状态 | [文档交付链](document-chain.md) | 文档档位、阶段评审、计划状态 | 项目自有载体按阶段映射；角色、模板引用同一判据 |
 | 测试计划与运行记录形态、bug 状态联动 | `skills/agentflow/references/test-records.md` | ## 契约 与 ## Bug 回归用例与状态联动 | SKILL 的自动化测试节只指路径，不重复联动表 |
-| 开工预检、选测、证据复用与失败分流 | `skills/agentflow/references/execution.md` | ## 环境预检与选测 与 ## 三种结论分开 | 契约与 SKILL 只引用该节，不再列一份测试纪律 |
+| 开工预检、选测、证据复用与失败分流 | `skills/agentflow/references/execution.md` | ## 环境预检与选测 与 ## 三种结论分开 | 契约与 SKILL 只引用该节。可复跑启动步骤落工程基线或目标仓运行手册，批次计划引用，执行记录写实际结果 |
 | 开工提问（六要素、红线、证据层级、任务简报） | `skills/agentflow/references/intake.md` | ## 六要素 | SKILL 的 Intake 步骤只写指针；角色文件不复述六要素，验收层级以本文件与 `test-records.md` 为准；宿主全局块不再复制六要素，由项目规则与 skill 承载 |
 | 设计压测（设计树、前沿、逐轮推荐、收尾门） | `skills/agentflow/references/grilling.md` | ## 设计树与前沿 | SKILL 的架构门与 `technical-director.md` 只写指针；`design/be` §1.2.9 与 `design/fe` §1.2.9 是它的**固定落点**（内嵌核对表，确保每次设计都过一遍前沿，不再依赖「模型自己想起来读」） |
 | 首次接入细则（脚本先行、六问、接入约定、基线对齐） | `skills/agentflow/references/init.md` | ## 0. 脚本先行，AI 只填项目事实 | SKILL 的 Init 节只留三条不变式与本文件指针；接入约定正文以 `templates/hub/repo-rules.md` 为准、工程基线以 `templates/engineering/baseline.md` 为准 |
@@ -38,6 +38,18 @@
 | 实验、快照与不可逆 git 操作的保全纪律 | `AGENTS.md` | ## 实验与恢复 | `skills/agentflow/references/execution.md` 只写执行侧的证据要求，不重抄快照生命周期 |
 | 本仓记录根、命名与落点 | `AGENTS.md` | ## 在本仓库工作 | 各目录 README 写本域的形态细节，顶层归属只在 AGENTS |
 | 本仓计划形态与人工核对（看板、任务枚举、分支策略） | `docs/features/README.md` | ## 计划形态 | `skills/agentflow/templates/feature/plan/execution.md` 是可复制骨架，不另写一份断言表 |
+| 安全工程与审计底线（SEC-01~SEC-10） | `skills/agentflow/references/standards/security.md` | ## 0. 适用范围与何时必查 | `review-checklists.md` 与 `reviewer.md` 指针化引用，不复述条款正文 |
+| API 规范与接口契约底线（API-01~API-08） | `skills/agentflow/references/standards/api-docs.md` | ## 0. 适用范围与何时必查 | `backend-engineer.md` 与 `design/be` 模板指针化引用 |
+| Git 提交与变更记录规范（GIT-01~GIT-07） | `skills/agentflow/references/standards/git-commits.md` | ## 1. 提交信息结构标准（GIT-01） | 宿主全局规则与工程基线指针化引用，不复述格式语法 |
+| 视觉方向与首屏层级（FE-12） | `skills/agentflow/references/standards/frontend.md` | ## 11. 视觉方向与首屏层级（FE-12） | `spec/ui` 写结论，评审清单只引用编号；不另立视觉规范文件 |
+| 设计稿还原与走查（FE-13） | `skills/agentflow/references/standards/frontend.md` | ## 12. 设计稿还原与走查（FE-13） | `design/ui` 登记设计源与证据，模板只引用编号；不复制截图流程 |
+| 根因门（缺陷与异常行为） | `skills/agentflow/references/execution.md` | ## 根因门（缺陷与异常行为） | `bug-investigator` 只补输出纪律，不另写第二套根因定义 |
+| 修复后沉淀（防再发） | `skills/agentflow/references/issue-tracking.md` | ## 3. 修复后沉淀（防再发） | 缺陷修复收口引用本节；不新开平行记忆文件 |
+| 浏览器执行纪律（不可信页面、黑盒、证据） | `skills/agentflow/references/execution.md` | ## 执行路线与数据 | `verification-grading.md` 只定证据层级，不复制操作纪律 |
+| 只读调研（非审核） | `skills/agentflow/references/repo-audit.md` | ## 只读调研（非审核） | SKILL 的审核节与角色路由只指路径，不复述调研步骤 |
+| 方案发散（进入设计前） | `skills/agentflow/references/intake.md` | ## 方案发散（进入设计前） | proposal / design 模板只留「决策与备选」节，不复制发散规则 |
+| PR / MR 标题、正文、拆分与合并边界（GIT-07） | `skills/agentflow/references/standards/git-commits.md` | ## 7. PR / MR 标题、正文与合并边界（GIT-07） | Plan Architect 在执行计划登记拆分结果；宿主全局块与 CI/CD 模板只引用授权边界 |
+| 工程门禁盘点（已有只验证、缺失才接入） | `skills/agentflow/references/init.md` | ## 1.5 工程门禁盘点（前端项目必做） | `templates/engineering/baseline.md` 的「工程门禁现状」表是落点；不另立接入清单 |
 
 ## 2. 表自身的规则
 

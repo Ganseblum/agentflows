@@ -54,6 +54,7 @@
 | 用户行为事件的新增/修改、事件采集端点、事件表结构或看板聚合口径变更 | 工程师（按 `design/fe` 事件契约实现并自验 payload）+ Reviewer（埋点专项，清单见 [`telemetry.md`](telemetry.md)）；三条运行时判据只认端到端路径证据或网络日志 |
 | 跨层功能、契约变更、迁移 | Technical Director → 双工程师（可并行调查）→ Reviewer |
 | 纯规划请求、暂不写码 | 专家并行 → Plan Architect |
+| 代码现状调研、实现说明、数据流梳理（不审核、不改） | Supervisor 只读调研；不派实现角色；输出事实与未覆盖范围，发现缺陷转缺陷链 |
 | 行为变更的目标验证、独立自动化测试或遗留补测 | Test Planner → Test Executor（宿主浏览器步骤由 supervisor 执行；禁 Edit，只写运行记录、不改被测对象）→ Reviewer（流程合理性模式） |
 | 测试执行产出失败或覆盖缺口 | Executor 证据 → bug 链路（Investigator → Fixer → Reviewer → Recorder） |
 | 重要、不确定、反复或跨层的 bug | Bug Investigator → Bug Fixer → Reviewer → Bug Recorder |

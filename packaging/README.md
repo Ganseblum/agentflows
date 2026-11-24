@@ -22,7 +22,14 @@ python3 packaging/build_runtime.py
 升级脚本支持 `--dry-run`、`--marketplace` 和 `--plugin`。安装后运行
 `python3 skills/agentflow/scripts/workflow.py install-verify --expected-tree packaging/runtime --installed <缓存目录>`，
 使用 Codex 源码缓存时加 `--codex-source`。这一步核对文件集合、字节和执行位。
-另开会话核对实际 skill 来源与新内容，留意工作区同名 skill 的优先级。观察范围见[宿主平台事实](../docs/host-platform-facts.md)。
+
+### 排查技能发现与加载
+
+1. 用上述安装核验确认运行时和缓存载荷一致。记录宿主版本、插件版本和安装路径。
+2. 在实际目标工作区重新枚举入口，保存宿主原始输出与警告。Codex CLI 可读 app-server 的 `skills/list`，ZCode 可用 `skills list --json`，Claude Code 可读新会话的技能菜单或 SDK 初始化清单，Cursor 在对应工作区看 Skills/Rules。已发现但路径不符时，检查是否被工作区或用户同名入口遮住。菜单条目存在且无法触发时，再查启用设置、元数据警告和触发描述。
+3. 需要证明生效时，在不含同名入口的临时工作区另开一次会话。Skill 探针验证加载路径及一个新版独有特征。常驻规则探针验证新会话在读文件前就能复述该规则中的唯一标记。记录所选入口、实际原始输出、退出码以及未验证的宿主或表面；枚举和会话行为分别记录。
+
+本机各宿主的观察见[宿主平台事实](../docs/host-platform-facts.md)。
 
 ## 发布检查
 

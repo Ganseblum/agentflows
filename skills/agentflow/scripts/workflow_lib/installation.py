@@ -24,7 +24,7 @@ RUNTIME_FILES = ("plugin.json", "marketplace.json")
 CODEX_SOURCE_EXTRAS = frozenset({
     ".git", ".gitignore", ".mypy_cache", ".ruff_cache", ".venv", ".workbuddy", ".zcode",
     ".workbuddy-ai", ".agentflow-records.sqlite3", "AGENTS.md", "CHANGELOG.md",
-    "README.md", "index.md", "docs", "packaging", "references",
+    "README.md", "index.md", "docs", "packaging",
 })
 
 
@@ -43,6 +43,17 @@ def read_object(path: Path) -> dict[str, Any]:
     return data
 
 
+def _empty_cursor_workspace(root: Path) -> bool:
+    """Recognize the inert folder that Cursor can create in a checkout."""
+    cursor, rules = root / ".cursor", root / ".cursor/rules"
+    if cursor.is_symlink() or not cursor.is_dir():
+        return False
+    entries = list(cursor.iterdir())
+    if not entries:
+        return True
+    return entries == [rules] and not rules.is_symlink() and rules.is_dir() and next(rules.iterdir(), None) is None
+
+
 def inventory(root: Path, *, codex_source: bool = False) -> dict[str, Any]:
     root = no_symlinks(root)
     if not root.is_dir():
@@ -51,6 +62,8 @@ def inventory(root: Path, *, codex_source: bool = False) -> dict[str, Any]:
     names = {p.name for p in root.iterdir()}
     missing = expected_roots - names
     extra = names - expected_roots - (CODEX_SOURCE_EXTRAS if codex_source else set())
+    if codex_source and ".cursor" in extra and _empty_cursor_workspace(root):
+        extra.remove(".cursor")
     if missing or extra:
         raise ValueError(f"Payload roots missing={sorted(missing)} extra={sorted(extra)}")
     entries: dict[str, Any] = {}
@@ -184,6 +197,7 @@ def upgrade(host: str, repo: Path, market: str, plugin: str, mode: str, dry_run:
     command([sys.executable, str(repo / "packaging/build_runtime.py")], cwd=repo)
     expected_root = repo / "packaging/runtime"
     expected = inventory(expected_root)
+    verify_inventory(expected, repo, codex_source=True)
     version = expected["version"]
     if host == "zcode":
         command(cli + ["plugins", "marketplace", "update", market], cwd=repo)

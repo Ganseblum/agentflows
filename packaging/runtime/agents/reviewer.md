@@ -146,7 +146,7 @@ P0/P1 未完成成本场景重放的记 `unverified`，且本轮不得 `approved
 | 分册 | 编号体系 | 高频引用点 |
 | --- | --- | --- |
 | `server-side.md` | `BE-02`（分层）/ `BE-10`（幂等）/ `BE-15`（稳定性） | 写接口无幂等声明、空 catch、下游无超时、无谓中转层 |
-| `data-model.md` | `DB-17`（实体不变量）/ `DB-24`（索引）/ `DB-25`（字段定义）/ `DB-45`（幂等键） | 无库却写「N/A: 无数据库」、字段缺类型/空值/唯一性、内存态无上限与清理 |
+| `data-model.md` | `DB-01`（实体不变量）/ `DB-02`（字段定义）/ `DB-03`（索引）/ `DB-04`（幂等键） | 无库却写「N/A: 无数据库」、字段缺类型/空值/唯一性、内存态无上限与清理 |
 | `frontend.md` | `FE-01…FE-09`（状态 / 防连点 / 三态 / 三方 UI / 生命周期 / 契约边界 / 命名 / a11y / 自检） | 防连点只靠 `loading` 位、双真源、晚到响应覆盖新状态、`value \|\| fallback` 吞零值 |
 
 「看起来还行」不构成放行理由；分册判不了的目标仓特有约定，按领域规范叠加检查处理。
@@ -175,7 +175,7 @@ P0/P1 未完成成本场景重放的记 `unverified`，且本轮不得 `approved
 **专项与文档评审模式的深度清单不在本档案里。** 按上面「标准包按 diff 形状选择」的表决定加载哪几份，
 然后整份读取 [`references/review-checklists.md`](../skills/agentflow/references/review-checklists.md)：
 Security / Test depth / Flow reasonableness / Documentation accuracy 四份专项清单，以及外部文档二次评审桥的
-需求提案 / Spec / Design / 埋点 / Plan 五种模式清单都在那里。规则只有三条留在本档案：
+需求提案 / Spec / Design / 埋点 / Plan 五种模式清单都在那里。安全工程通用底线（SEC-01~SEC-10）与核验清单见 [`references/standards/security.md`](../skills/agentflow/references/standards/security.md)。规则只有三条留在本档案：
 ① **加载**是整份读完，不是挑几条；② finding 必须引用到原文句子或 `path:line`（引不出即未评审），
 通过项报 `PASS <检查编号>` 一行即可，不逐条引用原文；清单要求的内容「没写」本身就是 finding；
 ③ 覆盖范围由 diff 形状决定，

@@ -4,6 +4,17 @@
 
 最后验证：2026-11-23（0.42.0 全局块第三项复核 / 0.42.1 Host Init）；2026-11-04（Z10 行 AGENTS.md 加载实验）；2026-10-28（Q1–Q6 行）；2026-10-24（H1 已观察；H2–H4 登记为 `doc` / 未验证）；2026-10-13（W1/W2 行）；2026-10-10（C12 行）；2026-09-18（Z5 行更正、Z7–Z9 行；C8 行 2026-09-17；其余各行 2026-09-14）；X1/C10 行为 2026-09-19 的现场探测。宿主：Qoder Desktop `0.4.11`（Qoder CLI 未常驻，Q1 用的是临时 npm 前缀，见 Q6）、Claude Code `2.1.268`、Codex CLI `0.154.0`、ZCode（桌面版）、WorkBuddy（CodeBuddy IDE，macOS 桌面版）。
 
+## 当前安装与加载核验
+
+按[打包与安装](../packaging/README.md#排查技能发现与加载)分别记录载荷一致、宿主发现和新会话加载。以下观察只对应列明的宿主和版本。
+
+| 对象 | 证据 | 结论 |
+| --- | --- | --- |
+| Codex CLI / Agentflow 0.47.0，2026-11-24 | `upgrade-codex.sh` 执行成功，112/112 文件、字节与执行位与生成树完全匹配。安装落点 `/Users/lihanghang1/.codex/plugins/cache/personal/agentflow/0.47.0`。 | 本地载荷已成功安装并校验。 |
+| ZCode 桌面版 / Agentflow 0.47.0，2026-11-24 | `upgrade-zcode.sh` 执行成功，本地市场更新并升级至 0.47.0，112/112 文件、字节与执行位完全匹配。安装落点 `/Users/lihanghang1/.zcode/cli/plugins/cache/agentflow-local/agentflow/0.47.0`。 | 本地载荷已成功安装并校验。重启 ZCode 桌面端后生效。 |
+| Codex CLI 0.161.0 / Agentflow 0.45.0，2026-11-24 | `skills/list` 返回 19 项，其中 4 项 Agentflow 路径指向安装缓存。宿主同时告警 `ignoring interface.defaultPrompt: prompt must be at most 128 characters`。 | Skill 已被发现。过长默认提示被宿主忽略。 |
+| Cursor Desktop 3.29.9，2026-11-24 | 对隔离仓导出规则，在 `global-rules.mdc` 末尾加入唯一标记。桌面端新建 Ask 会话，提示词未含标记，返回 `AF-CURSOR-046-M7V5T3N2`，会话中未见工具调用。Cursor CLI 的同一探针因未认证退出 1。 | 已观察桌面会话加载该常驻规则；其他按文件匹配的规则、全局载体与 CLI 会话加载未验证。 |
+
 ## ZCode（桌面版）
 
 | # | 事实 | 证据 | 适用范围 | 后果 |
@@ -77,7 +88,7 @@
 | H1 | ZCode 在会话启动时加载用户级 `~/.zcode/AGENTS.md`，其内容作为「user default instructions」进入系统提示。 | Observed 2026-10-24：2026-10-24 的 ZCode 会话系统提示逐字包含 `Contents of /Users/lihanghang1/.zcode/AGENTS.md (user default instructions)`，并附该文件全文。**2026-10-27 Host Init 实测**：向该文件追加 `<!-- agentflow:begin v0.18.4 -->` 托管块（11 条宿主级规则，来源 `skills/agentflow/templates/host/global-rules.md`）；块外 101 行逐字未变，块内容与模板（版本替换后）diff 为空，备份 `~/.zcode/AGENTS.md.agentflow-backup-20261027-113211`。**第 6 条第三项（新会话复述首行）尚未执行**，故本次仍记 `partial`，不记完成。 | ZCode 桌面版（本安装） | 写在其中的跨仓规则对每个工作区生效，不依赖插件安装；插件升级不会更新这份文件，需要按 `hosts.md` 重跑 Host Init。托管块由模板灌入，块外是用户手写内容，勿互相覆盖。 |
 | H2 | Codex 是否加载用户级 `~/.codex/AGENTS.md`，本仓尚未观察。已知 Codex 会话会读取仓库 `AGENTS.md`；2026-10-23 的合并会话加载了 `~/.codex/plugins/cache/personal/agentflow/0.13.0/skills/agentflow/SKILL.md`。 | `doc`（Codex 指令文件约定）+ 本仓尚未做过用户级加载实验 | Codex CLI / Codex 宿主 | 不要把「仓库 `AGENTS.md` 生效」外推为「用户级文件生效」。Host Init 写入后必须按 `hosts.md` 第 6 条验证，拿不到复述记 `blocked`。 |
 | H3 | Claude Code 的用户级指令文件为 `~/.claude/CLAUDE.md`；本仓未做过加载实验。 | `doc`（Claude Code 项目/用户记忆文件约定），未现场验证 | Claude Code | 同 H2：写入后必须验证加载，不得声称已生效。 |
-| H4 | Cursor 的规则载体与加载行为未验证：项目级候选为 `.cursor/rules/*.mdc`，全局规则位置未知；是否读取 `AGENTS.md` 亦未验证。 | 未实际触发——本仓未做过 Cursor 安装或加载实验 | Cursor | 在完成「写一条最小规则 → 新会话复述」的实验前，不提供 Cursor 适配器、不声称支持。 |
+| H4 | Cursor 项目规则载体为 `.cursor/rules/*.mdc`；全局规则位置与 `AGENTS.md` 加载未验证。 | 生成物见 H5；新会话的独立加载证据见本页「当前安装与加载核验」。 | Cursor | 生成与加载分别核验。加载观察以实际探针版本、工作区和规则为限。 |
 
 ## 三端载体的生成物形态（2026-11-04 实证，加载仍待验证）
 

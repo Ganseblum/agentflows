@@ -38,6 +38,8 @@ when_to_use: 跨前端后端的功能或契约改动、并行调查、委派实�
 | 方案已成形、设计冻结前压漏洞 | [压设计](references/grilling.md) · 用户主动叫入口：[agentflow-grilling](../agentflow-grilling/SKILL.md) |
 | 写测试计划 / 执行记录、Bug 状态联动 | [测试记录](references/test-records.md) |
 | 写代码（服务端 / 数据模型 / 前端工程底线） | [服务端](references/standards/server-side.md) · [数据模型](references/standards/data-model.md) · [前端](references/standards/frontend.md) |
+| UI 视觉方向、设计稿还原与走查 | [前端标准](references/standards/frontend.md)（FE-12 / FE-13） |
+| 安全审计、API 契约与 Git 规范 | [安全审计](references/standards/security.md) · [API 契约](references/standards/api-docs.md) · [Git 规范](references/standards/git-commits.md) |
 | 缺陷发现 → 落账 → 复发台账 | [问题闭环](references/issue-tracking.md) |
 | 核对真实入口、端到端验收与证据层级 | [验证分级](references/verification-grading.md) |
 | 设计测试用例（AC 权威在 plan 注册表） | [测试用例](references/testcases.md) |
@@ -47,6 +49,7 @@ when_to_use: 跨前端后端的功能或契约改动、并行调查、委派实�
 | 跨仓全局纪律、Host Init 协议、宿主矩阵 | [宿主接入](references/hosts.md) |
 | 用户行为事件与埋点评审 | [埋点契约](references/telemetry.md) |
 | 仓库整体审核 / 体检 / 复盘 | [审核契约](references/repo-audit.md) |
+| 只读代码调研、实现说明、数据流梳理（不审核、不改） | [只读调研](references/repo-audit.md#只读调研非审核) |
 | 证据工具 seal / verify / run 的命令语义 | [证据工具用法](references/workflow-tool.md) |
 | 载体归属（哪份规则落在哪个物理文件） | [载体地图](references/carrier-map.md) |
 
@@ -137,7 +140,7 @@ Reviewer 只读、不跑命令，它的取证轮次完全由简报的定位质�
 
 ## 工程内容标准与问题闭环
 
-实现与评审按实际改动选用[服务端](references/standards/server-side.md)、[数据模型](references/standards/data-model.md)和[前端](references/standards/frontend.md)标准。跟进已确认缺陷按[问题闭环](references/issue-tracking.md)登记；用户入口、证据层级与验收来源分别见[验证分级](references/verification-grading.md)和[测试用例](references/testcases.md)。
+实现与评审按实际改动选用[服务端](references/standards/server-side.md)、[数据模型](references/standards/data-model.md)、[前端](references/standards/frontend.md)、[安全审计](references/standards/security.md)、[API 契约](references/standards/api-docs.md)和[Git 规范](references/standards/git-commits.md)标准。跟进已确认缺陷按[问题闭环](references/issue-tracking.md)登记；用户入口、证据层级与验收来源分别见[验证分级](references/verification-grading.md)和[测试用例](references/testcases.md)。
 
 ## 保持控制与可追溯性
 

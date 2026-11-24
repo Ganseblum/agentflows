@@ -5,7 +5,8 @@
 
 | 文件 | 用法 |
 | --- | --- |
-| [global-rules.md](global-rules.md) | 托管块正文。整块复制进目标文件，只把 `{{version}}` 换成当前插件版本；不逐句改写 |
+| [global-rules.md](global-rules.md) | 跨仓宿主全局规则托管块正文（针对 `~/.zcode/AGENTS.md` 等用户级全局文件，Host Init 时由用户确认写入） |
+| [maker.md](maker.md) | 目标仓项目级规则托管块单一真源（Lean Entry，针对目标仓 `AGENTS.md` / `.cursor/rules/agentflow.mdc` 等，由 `init_workspace.py` 渲染分发） |
 
 ## 安装清单（每次都由用户明确确认）
 
@@ -25,7 +26,7 @@
 | ZCode | 纯 Markdown 块，追加到 `~/.zcode/AGENTS.md` |
 | Codex | 纯 Markdown 块，追加到 `~/.codex/AGENTS.md`（加载行为待验证） |
 | Claude Code | 纯 Markdown 块，追加到 `~/.claude/CLAUDE.md`（加载行为待验证） |
-| Cursor | 项目级候选 `.cursor/rules/*.mdc`，需要 frontmatter；全局位置未验证。实验通过前不提供适配器 |
+| Cursor | 项目级规则导出为 `.cursor/rules/*.mdc`（由 `export_cursor_rules.py` 导出，已验证桌面端加载）；全局规则位置待验证 |
 | 其它 | 该宿主的指令文件；确认不了路径或加载行为就不写 |
 
 ## 不要放进全局模板

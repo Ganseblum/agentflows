@@ -909,9 +909,22 @@ def compare_install(c: Case, tree: Path, cache: Path, *extra: Any,
 def install_payload_valid(c: Case) -> None:
     tree = install_tree(c); cache = c.root / "cache"; copy_path(tree, cache)
     compare_install(c, tree, cache, expected=0)
+    cursor_rules = cache / ".cursor/rules"
+    cursor_rules.mkdir(parents=True)
+    compare_install(c, tree, cache, expected=NONZERO)
     # Codex may store the whole source checkout, but runtime roots stay strict.
     (cache / ".git").mkdir(); (cache / ".venv").mkdir(); (cache / ".zcode").mkdir()
     (cache / "README.md").write_bytes(b"source maintenance file\n")
+    compare_install(c, tree, cache, "--codex-source", expected=0)
+    user_rule = cursor_rules / "user.mdc"
+    user_rule.write_bytes(b"User rule\n")
+    compare_install(c, tree, cache, "--codex-source", expected=NONZERO)
+    user_rule.unlink()
+    cursor_rules.rmdir()
+    cursor_rules.symlink_to(c.root / "outside", target_is_directory=True)
+    (c.root / "outside").mkdir()
+    compare_install(c, tree, cache, "--codex-source", expected=NONZERO)
+    cursor_rules.unlink()
     compare_install(c, tree, cache, "--codex-source", expected=0)
     (cache / "skills/UNDECLARED.txt").write_bytes(b"extra inside payload\n")
     compare_install(c, tree, cache, "--codex-source", expected=NONZERO)
@@ -1017,6 +1030,19 @@ def install_upgrade_modes(c: Case) -> None:
                 changed = [p for p in before.keys() | after.keys()
                            if before.get(p) != after.get(p) and p != "stub-calls.jsonl"]
                 child.check(not changed, "dry-run/mode mismatch makes no source/cache writes", mode=mode, actual=changed)
+            rules = repo / ".cursor/rules"
+            rules.mkdir(parents=True)
+            (rules / "user.mdc").write_bytes(b"User rule outside the payload\n")
+            before_cache = tree_state(cache)
+            call_log = child.root / "stub-calls.jsonl"
+            before_calls = call_log.read_bytes() if call_log.exists() else b""
+            result = upgrade(child, host, repo, "--mode", "local", expected=NONZERO)
+            after_calls = call_log.read_bytes() if call_log.exists() else b""
+            new_calls = [json.loads(line)[1:] for line in after_calls[len(before_calls):].splitlines()]
+            child.check(new_calls == ([["plugin", "marketplace", "list"]] if host == "codex" else []),
+                        "unexpected source rules stop upgrade before host install", actual=new_calls)
+            child.check(b"extra=['.cursor']" in result.stdout + result.stderr, "source preflight reports the extra root")
+            child.same_tree(cache, before_cache, "source preflight leaves the existing host cache unchanged")
             c.facts.extend(child.facts)
             c.commands.extend(child.commands)
         finally:

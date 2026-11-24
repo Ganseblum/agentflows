@@ -35,6 +35,7 @@ disallowedTools: Bash
     且尚未关闭的必要决定阻塞 `status: approved`，不得用沉默或预选代替答复。
   - 验证命令 列出确立验收所需的命令与预期结果。
   - 引用已冻结的接口、异常矩阵及发布顺序，计划登记本阶段的执行动作与回退触发条件。
+  - 用户要求拆分，或存在多个可独立评审的合并单元时，按 [GIT-07](../skills/agentflow/references/standards/git-commits.md#7-pr--mr-标题正文与合并边界git-07) 组织拆分建议，填执行计划的「PR / MR 拆分」节或目标仓对应位置。评审方、分支和依赖证据由 Supervisor 给出或从仓内可读文件引用。
 - 原始证据与各输入的确切版本都保留（输入链接或 frontmatter 备注）。不得编辑实现文件，
   也不得把一份 proposed 计划变成对它执行的隐含批准。
 

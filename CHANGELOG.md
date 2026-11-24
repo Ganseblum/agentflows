@@ -3,6 +3,43 @@
 > 0.22.1 及更早版本通过 Git 历史中的 `docs/changelog-archive.md` 回溯；精简基线已移除该文件，不把历史路径当当前文件。
 > 2026-10-30 按 T21 压缩为每版 ≤10 行；详细记录移入归档，原始提交历史可回溯。
 
+## 0.47.0 — 2026-11-24（全仓结构优化、数据模型底线规范化与跨宿主规则真源对齐）
+
+- **数据模型底线**：`data-model.md` 编号重整为 `DB-01~DB-06` 连续标准体系，与 `BE-*`、`FE-*`、`SEC-*`、`API-*`、`GIT-*` 规范矩阵完全对齐，并保持对历史编号兼容。
+- **模板与落点**：`templates/README.md` 与 `host/README.md` 补全 `maker.md` 索引并明确目标仓规则单一真源（Lean Entry）与宿主全局规则分工；模板标明目标仓 `.agentflow/standards/` 复制落点防断链。
+- **命名空间与角色**：新增 `skills/agentflow/agents/README.md` 消除与根目录 `agents/` 的命名空间歧义；`frontend-engineer.md` 增补 FE-10~FE-13 生命周期与设计走查规范；根目录清理意外残留空目录。
+- **构建与分发**：6 份 manifest 统一 bump 至 0.47.0，全量重建 `packaging/runtime/`；`check_skill_refs` 源面与 runtime 双 PASS；执行本地 ZCode 与 Codex 插件同步与安装核验。
+
+## 0.46.1 — 2026-11-24（本地安装核验）
+
+- 源码快照允许 Cursor 创建的空 `.cursor` 或 `.cursor/rules`。规则文件、符号链接与发布载荷中的额外目录仍会被拒绝。升级前后都核对源码与生成包。
+
+## 0.46.0 — 2026-11-24（规则导出、真实应用验证与交付规划）
+
+- **Cursor**：导出先检查全部目标。预览零写入，只刷新 Agentflow 托管内容，同名用户规则保留；补充安装、枚举和会话加载的核验方法。
+- **运行验证**：工程基线登记可复跑的启动、就绪、数据、真实操作和清理步骤；计划引用，Test Executor 留实际结果。
+- **规划**：Plan Architect 按维护归属、文件范围、真实依赖和独立验证拆分 PR/MR，执行沿用现有授权。
+- **模板与文档**：UI 设计模板补组件和变体映射，只读调研补带源码锚点的主链路示例。Codex 默认提示缩至宿主允许长度。
+
+## 0.45.0 — 2026-11-24（非 360 生态技能吸收：视觉、调试、协作与调研）
+
+- **前端视觉与设计还原**：吸收 `frontend-design` 与 `design-walkthrough` / `mastergo-*` 证据纪律，新增 FE-12（视觉主张与首屏层级）与 FE-13（设计稿还原与走查）；`spec/ui` 补视觉主张表，`design/ui` 补设计还原证据表。
+- **调试与防再发**：吸收 `systematic-debugging` 与 `mistake-memory`，在 `execution.md` 增根因门（根因未验证不改生产代码，临时止血须标注），在 `issue-tracking.md` 增修复后沉淀（同根因合并、按 `defect_class` 升级）。
+- **浏览器与只读调研**：吸收 `browser-use` / `ego-browser` / `web-gui-tester` 的不可信页面、黑盒与证据纪律；在 `repo-audit.md` 增只读调研模式（只讲现状、大仓采样、未覆盖范围）。
+- **开工与协作**：吸收 `brainstorming`、`github` PR/MR 与 `fe-engineering-onboarding`，在 `intake.md` 增方案发散，在 `git-commits.md` 增 GIT-07（PR/MR 标题/正文/合并边界），在 `init.md` 与工程基线增工程门禁盘点。
+- **版本与验证**：plugin.json、marketplace.json 与四份宿主 manifest 统一 0.45.0；runtime 重建；`check_skill_refs` 源面/runtime 双 PASS；工具回归 34/34；ZCode 与 Codex 均安装 0.45.0，payload 111/111 字节与执行位一致；ZCode 当前会话已出现 0.45.0 路径，Codex 新会话加载待确认。
+
+## 0.44.1 — 2026-11-24（前端生命周期守卫、国际化对齐、Mock指南与企业发布插槽）
+
+- **前端生命周期与文案**：吸收 `scan-lifecycle-guard` 与 `i18n-audit` 实战规则，在 `standards/frontend.md` 新增 FE-10（定时器/事件/WebSocket 成对销毁与卸载后更新拦截）与 FE-11（多语言键值对称性与动态插值类型约束），补齐 Reviewer 自检项。
+- **Mock 指南与企业发布**：新增 `testing/mock-guide.md`（MSW 网络层拦截规范与 Hybrid JSBridge 客户端模拟桩，吸收 `fe-testing-mock-onboarding`）；在 `engineering/ci-cd.md` 补充云原生发布插槽（凭据隔离、非对称注入及标准 Kubernetes / CD 流水线解耦对接）。
+
+## 0.44.0 — 2026-11-24（多宿主生态能力吸收与工程标准扩展）
+
+- **安全与接口标准**：吸收各大宿主生态优势，新增 `standards/security.md`（SEC-01~SEC-10，防注入/越权/SSRF/凭据硬编码）与 `standards/api-docs.md`（API-01~API-08，RESTful/响应信封/统一错误/分页排序），强化 `reviewer` 安全审计与 `backend-engineer` 契约约束。
+- **交付与测试模板**：新增 `engineering/docker.md`（多阶段构建非 root 镜像）与 `ci-cd.md`（GitHub Actions / GitLab CI 质量门禁流水线），测试模板扩充 `testing/e2e.md`（Playwright POM）与 `testing/performance.md`（k6 阶梯并发压测）。
+- **提交与宿主适配**：新增 `standards/git-commits.md`（Conventional Commits 规范与任务绑定），新增 `export_cursor_rules.py` 自动化适配生成 Cursor `.cursor/rules/*.mdc` 规则。
+
 ## 0.43.0 — 2026-11-23（模板与工作流改进）
 
 - **模板**：区分提案决策、可观察规格、设计失败与恢复、实施和回滚。轻量材料维持单 README；完整材料按轨道生成可解析的文档，收敛审批状态和验收引用。修正设计图、决策表和测试模板，增加可参考的填写示例。
